@@ -13,38 +13,6 @@ struct TabText: UIViewRepresentable {
     var content: String
     @Binding var textViewProxy: UITextView?
 
-    class Coordinator: NSObject {
-        var parent: TabText
-        var textView: UITextView?
-
-        init(parent: TabText) {
-            self.parent = parent
-            super.init()
-
-            NotificationCenter.default.addObserver(
-                self,
-                selector: #selector(orientationChanged),
-                name: UIDevice.orientationDidChangeNotification,
-                object: nil
-            )
-        }
-
-        deinit {
-            NotificationCenter.default.removeObserver(self)
-        }
-
-        @objc func orientationChanged() {
-            guard let textView = textView else { return }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                self.parent.adjustFontSizeToFit(textView: textView)
-            }
-        }
-    }
-
-    func makeCoordinator() -> Coordinator {
-        return Coordinator(parent: self)
-    }
-
     func makeUIView(context: Context) -> UITextView {
         let textView = UITextView()
         textView.isEditable = false
@@ -56,10 +24,9 @@ struct TabText: UIViewRepresentable {
             self.textViewProxy = textView
         }
 
-        textView.layoutIfNeeded()
-        DispatchQueue.main.async {
+        // Delay font adjustment very slightly after layout
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             self.adjustFontSizeToFit(textView: textView)
-            context.coordinator.textView = textView
         }
 
         return textView
@@ -80,7 +47,7 @@ struct TabText: UIViewRepresentable {
 
         if availableWidth > 0 && textWidth > 0 {
             let scaleFactor = availableWidth / textWidth
-            let newFontSize = max(min(fontSize * scaleFactor, 100), 8) // clamp between 8 and 100
+            let newFontSize = max(min(fontSize * scaleFactor, 18), 4) // clamp between 4 and 18
 
             if abs(newFontSize - fontSize) > 1 {
                 DispatchQueue.main.async {

@@ -17,55 +17,81 @@ struct ContentView: View {
     }
 
     var body: some View {
-        VStack {
-            HStack {
-                Button(action: {
-                    self.isDocumentPickerPresented = true
-                }) {
-                    Text("Select File")
-                        .font(.title3)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                }.padding(.horizontal)
-                Text("Scroll Speed")
-                Slider(value: $scrollSpeed, in: 0...5, step: 0.1, onEditingChanged: { editing in
-                    if editing {
-                        stopAutoScroll()
-                    } else {
-                        startAutoScroll()
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                VStack(spacing: 12) {
+                    // Top bar
+                    HStack {
+                        Button(action: { self.isDocumentPickerPresented = true }) {
+                            Text(LocalizedStringKey("select"))
+                                .font(.headline)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 16)
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                        Spacer()
+                        Text(LocalizedStringKey("scroll_speed"))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Slider(value: $scrollSpeed, in: 0...5, step: 0.1, onEditingChanged: { editing in
+                            if editing {
+                                stopAutoScroll()
+                            } else {
+                                startAutoScroll()
+                            }
+                        })
+                        .frame(width: 150)
                     }
-                }).padding(.horizontal)
-            }.padding()
-            
-            if let fileURL = fileURL {
-                if fileURL.pathExtension.lowercased() == "pdf" {
-                    TabPDFView(url: fileURL, scrollViewProxy: $scrollViewProxy)
-                        .padding()
-                        .id(fileURL)
-                } else {
-                    TabText(fontSize: $fontSize, content: readFileContent(fileURL: fileURL), textViewProxy: $textViewProxy)
-                        .gesture(
-                            MagnificationGesture()
-                                .onChanged { value in
-                                    let delta = value / self.currentScale
-                                    self.currentScale = value
-                                    fontSize *= delta
-                                    stopAutoScroll()
-                                }
-                                .onEnded { _ in
-                                    self.currentScale = 1.0
-                                    startAutoScroll()
-                                }
-                        )
-                        .padding()
-                        .id(fileURL)
+                    .padding(.horizontal)
                 }
-            } else {
-                Text("No file selected")
-                    .padding()
+                .padding(.vertical, 10)
+                .background(
+                    Color(.systemBackground)
+                        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 2)
+                )
+                .overlay(
+                    Rectangle()
+                        .frame(height: 1)
+                        .foregroundColor(Color(.separator)),
+                    alignment: .bottom
+                )
+
+                Divider()
+
+                // Only one of these below (and they scroll themselves)
+                if let fileURL = fileURL {
+                    if fileURL.pathExtension.lowercased() == "pdf" {
+                        TabPDFView(url: fileURL, scrollViewProxy: $scrollViewProxy)
+                            .padding()
+                            .id(fileURL)
+                    } else {
+                        TabText(fontSize: $fontSize, content: readFileContent(fileURL: fileURL), textViewProxy: $textViewProxy)
+                            .gesture(
+                                MagnificationGesture()
+                                    .onChanged { value in
+                                        let delta = value / self.currentScale
+                                        self.currentScale = value
+                                        fontSize *= delta
+                                        stopAutoScroll()
+                                    }
+                                    .onEnded { _ in
+                                        self.currentScale = 1.0
+                                        startAutoScroll()
+                                    }
+                            )
+                            .padding()
+                            .id(fileURL)
+                    }
+                } else {
+                    Text(LocalizedStringKey("no_file_selected"))
+                        .font(.title2)
+                        .foregroundColor(.secondary)
+                        .padding()
+                }
             }
+            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
         }
         .fileImporter(
             isPresented: $isDocumentPickerPresented,
@@ -88,12 +114,12 @@ struct ContentView: View {
             print("Loading TXT: \(fileURL)")
             
             guard fileURL.startAccessingSecurityScopedResource() else {
-                 return "Failed to load content: Failed to get permissions."
+                return "\(LocalizedStringKey("failed_load_permissions"))"
             }
             
             return try String(contentsOf: fileURL)
         } catch {
-            return "Failed to load content: \(error.localizedDescription)"
+            return error.localizedDescription
         }
     }
 

@@ -1,0 +1,54 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "failed_load_permissions" : {
+      "comment" : "Displayed when failed to load selected file due to permissions.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to load content due to permissions."
+          }
+        }
+      }
+    },
+    "no_file_selected" : {
+      "comment" : "Displayed when no file is selected.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No file selected."
+          }
+        }
+      }
+    },
+    "scroll_speed" : {
+      "comment" : "Speed to auto scroll the tab.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scroll speed"
+          }
+        }
+      }
+    },
+    "select" : {
+      "comment" : "Used when selecting a tab file.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

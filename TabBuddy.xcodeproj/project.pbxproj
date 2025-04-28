@@ -15,6 +15,7 @@
 		B1626C5529F631E600304E9E /* TabBuddyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1626C5429F631E600304E9E /* TabBuddyUITests.swift */; };
 		B1626C5729F631E600304E9E /* TabBuddyUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1626C5629F631E600304E9E /* TabBuddyUITestsLaunchTests.swift */; };
 		B1626C6829F6339E00304E9E /* TabPDFView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1626C6729F6339E00304E9E /* TabPDFView.swift */; };
+		B16E442F2DBF39D50089F9E6 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B16E442E2DBF39D50089F9E6 /* Localizable.xcstrings */; };
 		B1B0DD742C03F71100F52473 /* TabText.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B0DD732C03F71100F52473 /* TabText.swift */; };
 /* End PBXBuildFile section */
 
@@ -48,6 +49,7 @@
 		B1626C5429F631E600304E9E /* TabBuddyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBuddyUITests.swift; sourceTree = "<group>"; };
 		B1626C5629F631E600304E9E /* TabBuddyUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBuddyUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		B1626C6729F6339E00304E9E /* TabPDFView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabPDFView.swift; sourceTree = "<group>"; };
+		B16E442E2DBF39D50089F9E6 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		B1B0DD732C03F71100F52473 /* TabText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabText.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -106,6 +108,7 @@
 				B1626C3F29F631E600304E9E /* Preview Content */,
 				B1626C6729F6339E00304E9E /* TabPDFView.swift */,
 				B1B0DD732C03F71100F52473 /* TabText.swift */,
+				B16E442E2DBF39D50089F9E6 /* Localizable.xcstrings */,
 			);
 			path = TabBuddy;
 			sourceTree = "<group>";
@@ -199,7 +202,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1430;
-				LastUpgradeCheck = 1500;
+				LastUpgradeCheck = 1620;
 				TargetAttributes = {
 					B1626C3529F631E500304E9E = {
 						CreatedOnToolsVersion = 14.3;
@@ -241,6 +244,7 @@
 			files = (
 				B1626C4129F631E600304E9E /* Preview Assets.xcassets in Resources */,
 				B1626C3E29F631E600304E9E /* Assets.xcassets in Resources */,
+				B16E442F2DBF39D50089F9E6 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -362,6 +366,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -416,6 +421,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				VALIDATE_PRODUCT = YES;
 			};
@@ -428,7 +434,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = TabBuddy/TabBuddy.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"TabBuddy/Preview Content\"";
 				DEVELOPMENT_TEAM = ENSZYY2HUU;
 				ENABLE_PREVIEWS = YES;
@@ -443,7 +449,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.02;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gamicarts.TabBuddy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -459,7 +465,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = TabBuddy/TabBuddy.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"TabBuddy/Preview Content\"";
 				DEVELOPMENT_TEAM = ENSZYY2HUU;
 				ENABLE_PREVIEWS = YES;
@@ -474,7 +480,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.02;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gamicarts.TabBuddy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -486,7 +492,6 @@
 		B1626C5E29F631E600304E9E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -506,7 +511,6 @@
 		B1626C5F29F631E600304E9E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -526,7 +530,6 @@
 		B1626C6129F631E600304E9E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = ENSZYY2HUU;
@@ -544,7 +547,6 @@
 		B1626C6229F631E600304E9E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = ENSZYY2HUU;
