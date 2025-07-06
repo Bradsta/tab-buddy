@@ -17,6 +17,16 @@
 		B1626C6829F6339E00304E9E /* TabPDFView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1626C6729F6339E00304E9E /* TabPDFView.swift */; };
 		B16E442F2DBF39D50089F9E6 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B16E442E2DBF39D50089F9E6 /* Localizable.xcstrings */; };
 		B1B0DD742C03F71100F52473 /* TabText.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B0DD732C03F71100F52473 /* TabText.swift */; };
+		E92091A52E1B3D350043BC03 /* TagChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92091A42E1B3D330043BC03 /* TagChip.swift */; };
+		E92091A72E1B3F680043BC03 /* TagStat.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92091A62E1B3F680043BC03 /* TagStat.swift */; };
+		E92091A92E1B3FAB0043BC03 /* TagIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92091A82E1B3FAB0043BC03 /* TagIndexer.swift */; };
+		E9AB56732E1B28B000AFD8E2 /* FileItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9AB56722E1B28AD00AFD8E2 /* FileItem.swift */; };
+		E9D7A1C62E19F3130012F2B5 /* FileMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1C52E19F3090012F2B5 /* FileMetadata.swift */; };
+		E9D7A1C82E19F41E0012F2B5 /* FileBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1C72E19F4170012F2B5 /* FileBrowserView.swift */; };
+		E9D7A1CA2E19F5860012F2B5 /* TabViewerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1C92E19F5830012F2B5 /* TabViewerView.swift */; };
+		E9D7A1CC2E1A02400012F2B5 /* FileRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1CB2E1A023D0012F2B5 /* FileRowView.swift */; };
+		E9D7A1CE2E1A0AFB0012F2B5 /* TagEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1CD2E1A0AF80012F2B5 /* TagEditorView.swift */; };
+		E9D7A1D02E1B1FBE0012F2B5 /* FileImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1CF2E1B1FBA0012F2B5 /* FileImporter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,6 +61,16 @@
 		B1626C6729F6339E00304E9E /* TabPDFView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabPDFView.swift; sourceTree = "<group>"; };
 		B16E442E2DBF39D50089F9E6 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		B1B0DD732C03F71100F52473 /* TabText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabText.swift; sourceTree = "<group>"; };
+		E92091A42E1B3D330043BC03 /* TagChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagChip.swift; sourceTree = "<group>"; };
+		E92091A62E1B3F680043BC03 /* TagStat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagStat.swift; sourceTree = "<group>"; };
+		E92091A82E1B3FAB0043BC03 /* TagIndexer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagIndexer.swift; sourceTree = "<group>"; };
+		E9AB56722E1B28AD00AFD8E2 /* FileItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileItem.swift; sourceTree = "<group>"; };
+		E9D7A1C52E19F3090012F2B5 /* FileMetadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileMetadata.swift; sourceTree = "<group>"; };
+		E9D7A1C72E19F4170012F2B5 /* FileBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileBrowserView.swift; sourceTree = "<group>"; };
+		E9D7A1C92E19F5830012F2B5 /* TabViewerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabViewerView.swift; sourceTree = "<group>"; };
+		E9D7A1CB2E1A023D0012F2B5 /* FileRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileRowView.swift; sourceTree = "<group>"; };
+		E9D7A1CD2E1A0AF80012F2B5 /* TagEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagEditorView.swift; sourceTree = "<group>"; };
+		E9D7A1CF2E1B1FBA0012F2B5 /* FileImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileImporter.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,6 +121,16 @@
 		B1626C3829F631E500304E9E /* TabBuddy */ = {
 			isa = PBXGroup;
 			children = (
+				E92091A82E1B3FAB0043BC03 /* TagIndexer.swift */,
+				E92091A62E1B3F680043BC03 /* TagStat.swift */,
+				E92091A42E1B3D330043BC03 /* TagChip.swift */,
+				E9AB56722E1B28AD00AFD8E2 /* FileItem.swift */,
+				E9D7A1CF2E1B1FBA0012F2B5 /* FileImporter.swift */,
+				E9D7A1CD2E1A0AF80012F2B5 /* TagEditorView.swift */,
+				E9D7A1CB2E1A023D0012F2B5 /* FileRowView.swift */,
+				E9D7A1C92E19F5830012F2B5 /* TabViewerView.swift */,
+				E9D7A1C72E19F4170012F2B5 /* FileBrowserView.swift */,
+				E9D7A1C52E19F3090012F2B5 /* FileMetadata.swift */,
 				B11693A92C05991D005C37EA /* TabBuddy.entitlements */,
 				B1626C3929F631E500304E9E /* TabBuddyApp.swift */,
 				B1626C3B29F631E500304E9E /* ContentView.swift */,
@@ -270,9 +300,19 @@
 			buildActionMask = 2147483647;
 			files = (
 				B1626C6829F6339E00304E9E /* TabPDFView.swift in Sources */,
+				E9AB56732E1B28B000AFD8E2 /* FileItem.swift in Sources */,
+				E92091A92E1B3FAB0043BC03 /* TagIndexer.swift in Sources */,
+				E9D7A1D02E1B1FBE0012F2B5 /* FileImporter.swift in Sources */,
 				B1B0DD742C03F71100F52473 /* TabText.swift in Sources */,
+				E9D7A1CE2E1A0AFB0012F2B5 /* TagEditorView.swift in Sources */,
+				E9D7A1C62E19F3130012F2B5 /* FileMetadata.swift in Sources */,
+				E9D7A1C82E19F41E0012F2B5 /* FileBrowserView.swift in Sources */,
+				E9D7A1CC2E1A02400012F2B5 /* FileRowView.swift in Sources */,
+				E92091A52E1B3D350043BC03 /* TagChip.swift in Sources */,
 				B1626C3C29F631E500304E9E /* ContentView.swift in Sources */,
+				E92091A72E1B3F680043BC03 /* TagStat.swift in Sources */,
 				B1626C3A29F631E500304E9E /* TabBuddyApp.swift in Sources */,
+				E9D7A1CA2E19F5860012F2B5 /* TabViewerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -434,9 +474,9 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = TabBuddy/TabBuddy.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "\"TabBuddy/Preview Content\"";
-				DEVELOPMENT_TEAM = ENSZYY2HUU;
+				DEVELOPMENT_TEAM = SCM7P62X3K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Tab Buddy";
@@ -445,11 +485,12 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.02;
+				MARKETING_VERSION = 1.03;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gamicarts.TabBuddy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -465,9 +506,9 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = TabBuddy/TabBuddy.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "\"TabBuddy/Preview Content\"";
-				DEVELOPMENT_TEAM = ENSZYY2HUU;
+				DEVELOPMENT_TEAM = SCM7P62X3K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Tab Buddy";
@@ -476,11 +517,12 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.02;
+				MARKETING_VERSION = 1.03;
 				PRODUCT_BUNDLE_IDENTIFIER = com.gamicarts.TabBuddy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

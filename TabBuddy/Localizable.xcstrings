@@ -1,6 +1,36 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Add" : {
+
+    },
+    "Add Tag" : {
+
+    },
+    "Cancel" : {
+
+    },
+    "Close" : {
+
+    },
+    "Delete" : {
+
+    },
+    "Delete “%@”?" : {
+
+    },
+    "Done" : {
+
+    },
+    "Edit Tags" : {
+
+    },
+    "Edit Tags…" : {
+
+    },
+    "Existing Tags" : {
+
+    },
     "failed_load_permissions" : {
       "comment" : "Displayed when failed to load selected file due to permissions.",
       "extractionState" : "manual",
@@ -12,6 +42,28 @@
           }
         }
       }
+    },
+    "File name" : {
+
+    },
+    "Import Files" : {
+
+    },
+    "Import Folder" : {
+
+    },
+    "Importing %lld of %lld files…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Importing %1$lld of %2$lld files…"
+          }
+        }
+      }
+    },
+    "new tag" : {
+
     },
     "no_file_selected" : {
       "comment" : "Displayed when no file is selected.",
@@ -25,6 +77,18 @@
         }
       }
     },
+    "Remove All Files" : {
+
+    },
+    "Remove all imported files?" : {
+
+    },
+    "Rename" : {
+
+    },
+    "Rename…" : {
+
+    },
     "scroll_speed" : {
       "comment" : "Speed to auto scroll the tab.",
       "extractionState" : "manual",
@@ -37,6 +101,9 @@
         }
       }
     },
+    "Search tags or names" : {
+
+    },
     "select" : {
       "comment" : "Used when selecting a tab file.",
       "extractionState" : "manual",
@@ -48,6 +115,24 @@
           }
         }
       }
+    },
+    "Show in Files" : {
+
+    },
+    "Sort" : {
+
+    },
+    "Suggestions" : {
+
+    },
+    "Tags" : {
+
+    },
+    "Tags: %@" : {
+
+    },
+    "Undo" : {
+
     }
   },
   "version" : "1.0"
