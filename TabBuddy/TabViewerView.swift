@@ -5,6 +5,7 @@
 
 import SwiftUI
 import UniformTypeIdentifiers
+import QuartzCore
 
 struct TabViewerView: View {
     @Environment(\.modelContext) private var context
@@ -20,6 +21,14 @@ struct TabViewerView: View {
     @State private var scrollViewProxy: UIScrollView?
     @State private var textViewProxy: UITextView?
     @State private var textContent: String = "Loading…"
+    
+    @State private var displayLink: CADisplayLink?
+
+    private var coordinator: ScrollCoordinator {
+        ScrollCoordinator(scrollViewProxy: scrollViewProxy,
+                          textViewProxy: textViewProxy,
+                          currentFile: file)
+    }
 
     
     var monospacedFont: Font {
@@ -84,27 +93,25 @@ struct TabViewerView: View {
         stopAutoScroll()
         guard scrollSpeed > 0 else { return }
         isAutoScrolling = true
-        timer = Timer.scheduledTimer(withTimeInterval: (6 - scrollSpeed) / 35, repeats: true) { _ in
-            if file?.url?.pathExtension.lowercased() == "pdf" {
-                guard let scrollView = scrollViewProxy else { return }
-                let currentOffset = scrollView.contentOffset.y
-                let newOffset = min(currentOffset + 1, scrollView.contentSize.height - scrollView.bounds.size.height)
-                scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: newOffset), animated: false)
-            } else {
-                guard let textView = textViewProxy else { return }
-                let currentOffset = textView.contentOffset.y
-                let newOffset = min(currentOffset + 1, textView.contentSize.height - textView.bounds.size.height)
-                textView.setContentOffset(CGPoint(x: textView.contentOffset.x, y: newOffset), animated: false)
-            }
+
+        let link = CADisplayLink(target: coordinator, selector: #selector(ScrollCoordinator.handleScrollStep))
+
+        if #available(iOS 15.0, *) {
+            link.preferredFrameRateRange = CAFrameRateRange(minimum: 10, maximum: 30, preferred: 30)
+        } else {
+            link.preferredFramesPerSecond = 30
         }
+
+        link.add(to: .current, forMode: .common)
+        displayLink = link
     }
-    
+
     private func stopAutoScroll() {
-        timer?.invalidate()
-        timer = nil
+        displayLink?.invalidate()
+        displayLink = nil
         isAutoScrolling = false
     }
-    
+
     private func readFileContent(fileURL: URL) -> String {
         do {
             print("Loading TXT: \(fileURL)")
