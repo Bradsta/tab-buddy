@@ -25,9 +25,12 @@ struct TabViewerView: View {
     @State private var displayLink: CADisplayLink?
 
     private var coordinator: ScrollCoordinator {
-        ScrollCoordinator(scrollViewProxy: scrollViewProxy,
-                          textViewProxy: textViewProxy,
-                          currentFile: file)
+        ScrollCoordinator(
+            scrollViewProxy: scrollViewProxy,
+            textViewProxy: textViewProxy,
+            currentFile: file,
+            scrollSpeed: scrollSpeed
+        )
     }
 
     
@@ -84,6 +87,7 @@ struct TabViewerView: View {
             }
             stopAutoScroll()
         }
+
         .sheet(isPresented: $showTags)   { TagEditorView(file: file!) }
             .sheet(isPresented: $showRename) { renameSheet               }
             .onDisappear { stopAutoScroll() }           // safety
@@ -168,12 +172,12 @@ struct TabViewerView: View {
                 Image(systemName: "arrow.up.and.down")
                     .foregroundStyle(.secondary)
                 Slider(value: $scrollSpeed,
-                       in: 0...5,
-                       step: 0.1,
+                       in: 4...40,
+                       step: 1,
                        onEditingChanged: { editing in
                            editing ? stopAutoScroll() : startAutoScroll()
                        })
-                    .frame(width: 110)                // small but usable
+                    .frame(width: 150)                // small but usable
             }
             Spacer(minLength: 8)
 

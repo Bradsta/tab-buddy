@@ -42,6 +42,7 @@ private struct BrowserList: View {
     let rows: [FileItem]
     let delete: (FileItem) -> Void
     let open:   (FileItem) -> Void
+    @Binding var searchText: String
 
     var body: some View {
         List {
@@ -51,6 +52,9 @@ private struct BrowserList: View {
                             openFile:   { open(file) })
             }
         }
+        .searchable(text: $searchText,
+                    placement: .navigationBarDrawer(displayMode: .always),
+                    prompt: "Search tags or names")
     }
 }
 
@@ -146,16 +150,12 @@ struct FileBrowserView: View {
         defer { url.stopAccessingSecurityScopedResource() }
 
         file.lastOpenedAt = Date()
-        try? context.save()          // keep it lightweight – no undo needed
-
-//        currentFile = file                      // 1) set the file
-//        DispatchQueue.main.async {              // 2) push on next turn
-            onFileOpen(file)
-//        }
+        try? context.save()
+        onFileOpen(file)
     }
     
     var body: some View {
-        let visible  = visibleFiles                     // [FileItem]
+        let visible  = visibleFiles
 
         VStack(spacing: 0) {
             TagHeader(active: $activeTagFilter)
@@ -163,9 +163,8 @@ struct FileBrowserView: View {
             
             BrowserList(rows: visible,
                         delete: delete,
-                        open:   open)
-                .searchable(text: $searchText,
-                            prompt: "Search tags or names")
+                        open:   open,
+                        searchText: $searchText)
         }
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarLeading) {

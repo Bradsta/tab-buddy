@@ -52,10 +52,18 @@ struct FileRowView: View {
 
             // ── Centre: filename + tags ────────────────────────────────
             VStack(alignment: .leading, spacing: 2) {
-                Text(file.filename).font(.headline)
+                Button(action: openFile) {
+                    Text(file.filename)
+                        .font(.headline)
+                        // you can also add a highlight effect if you like:
+                        // .foregroundColor(.primary)
+                }
+                .buttonStyle(.plain)
+
                 if !file.tags.isEmpty {
                     Text("Tags: \(file.tags.joined(separator: ", "))")
-                        .font(.caption).foregroundColor(.gray)
+                        .font(.caption)
+                        .foregroundColor(.gray)
                 }
             }
 
@@ -78,8 +86,6 @@ struct FileRowView: View {
                 .buttonStyle(.borderless)
             }
         }
-        .contentShape(Rectangle())          // make the whole row hittable
-        .onTapGesture(perform: openFile)    // launch when row itself is tapped
         .padding(.vertical, 4)
 
         // Swipe-to-delete  (leading edge) ------------------------------
