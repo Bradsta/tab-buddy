@@ -33,7 +33,6 @@ struct TabViewerView: View {
         )
     }
 
-    
     var monospacedFont: Font {
         Font(UIFont.monospacedSystemFont(ofSize: fontSize, weight: .regular))
     }
@@ -51,32 +50,40 @@ struct TabViewerView: View {
             return
         }
 
-        do {
+        DispatchQueue.global(qos: .userInitiated).async {
             _ = url.startAccessingSecurityScopedResource()
             defer { url.stopAccessingSecurityScopedResource() }
 
-            textContent = try String(contentsOf: url)
-        } catch {
-            textContent = error.localizedDescription
+            do {
+                let contents = try String(contentsOf: url)
+                DispatchQueue.main.async {
+                    textContent = contents
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    textContent = error.localizedDescription
+                }
+            }
         }
     }
     
     var body: some View {
-        VStack (spacing: 0) {
-            header
-            Divider()
-            viewerBody
+        GeometryReader { geo in
+            VStack(spacing: 0) {
+                header
+                Divider()
+                viewerBody
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            }
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
         }
         .onAppear {
-            print("woo")
             if !hasAccess {
-                print("yeah")
                 hasAccess = file?.url?.startAccessingSecurityScopedResource() ?? false
                 loadText()
             }
             else
             {
-                print("nope")
                 loadText()
             }
         }

@@ -24,17 +24,20 @@ struct TabText: UIViewRepresentable {
             self.textViewProxy = textView
         }
 
-        // Delay font adjustment very slightly after layout
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            self.adjustFontSizeToFit(textView: textView)
-        }
-
         return textView
     }
 
     func updateUIView(_ uiView: UITextView, context: Context) {
         uiView.font = UIFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
-        uiView.text = content
+        
+        if uiView.text != content {
+            uiView.text = content
+
+            // Adjust font size after updating content
+            DispatchQueue.main.async {
+                self.adjustFontSizeToFit(textView: uiView)
+            }
+        }
     }
 
     private func adjustFontSizeToFit(textView: UITextView) {
