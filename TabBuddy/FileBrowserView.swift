@@ -19,7 +19,7 @@ private struct TagHeader: View {
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            LazyHStack(spacing: 8) {
                 ForEach(stats) { stat in
                     TagChip(label: "\(stat.name) (\(stat.count))",
                             isActive: active == stat.name) {
@@ -31,6 +31,7 @@ private struct TagHeader: View {
                 }
             }
             .padding(.horizontal).padding(.vertical, 6)
+            .fixedSize(horizontal: false, vertical: true)
         }
         Divider()
     }
@@ -55,6 +56,8 @@ private struct BrowserList: View {
         .searchable(text: $searchText,
                     placement: .navigationBarDrawer(displayMode: .always),
                     prompt: "Search tags or names")
+        .transaction { $0.animation = nil }
+        .listStyle(.plain)
     }
 }
 
