@@ -4,7 +4,7 @@ import Observation
 import UIKit
 import UniformTypeIdentifiers
 
-struct FileRowView: View {
+struct FileRowView: View, Equatable {
     @Environment(\.modelContext) private var context
     @Environment(\.undoManager) private var undoManager
 
@@ -22,6 +22,10 @@ struct FileRowView: View {
 
     /// retain controller to prevent deallocation
     @State private var docController: UIDocumentInteractionController?
+    
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        return lhs.file == rhs.file
+    }
 
     var body: some View {
         HStack(spacing: 12) {

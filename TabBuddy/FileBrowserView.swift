@@ -50,7 +50,7 @@ private struct BrowserList: View {
             ForEach(rows) { file in
                 FileRowView(file: file,
                             removeFile: { delete(file) },
-                            openFile:   { open(file) })
+                            openFile:   { open(file) }).equatable()
             }
         }
         .searchable(text: $searchText,

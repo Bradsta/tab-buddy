@@ -2,7 +2,7 @@ import Foundation
 import SwiftData         // ⬅️ new
 
 @Model                   // ➊ marks a SwiftData model
-final class FileItem {
+final class FileItem : Equatable {
     // MARK: Stored properties
     @Attribute(.unique)  var id: UUID
     var bookmark: Data
