@@ -14,19 +14,35 @@ enum ImportMode { case files, folder }
 private struct TagHeader: View {
     @Binding var active: String?
 
+    @Environment(\.modelContext) private var context
+    @Environment(\.undoManager) private var undoManager
+    @Query private var allFiles: [FileItem]
+
     @Query(sort: \TagStat.count, order: .reverse)
     private var stats: [TagStat]
+
+    @State private var showTagActions = false
+    @State private var tagForActions: String? = nil
+    @State private var renameText: String = ""
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: 8) {
                 ForEach(stats) { stat in
-                    TagChip(label: "\(stat.name) (\(stat.count))",
-                            isActive: active == stat.name) {
-                        withAnimation {
-                            active =
-                                (active == stat.name ? nil : stat.name)
+                    TagChip(
+                        label: "\(stat.name) (\(stat.count))",
+                        isActive: active == stat.name,
+                        action: {
+                            withAnimation {
+                                active = (active == stat.name ? nil : stat.name)
+                            }
                         }
+                    )
+                    .onLongPressGesture {
+                        // kickoff tag actions modal for this tag
+                        tagForActions = stat.name
+                        renameText = stat.name
+                        showTagActions = true
                     }
                 }
             }
@@ -34,6 +50,95 @@ private struct TagHeader: View {
             .fixedSize(horizontal: false, vertical: true)
         }
         Divider()
+        .sheet(isPresented: $showTagActions) {
+            NavigationView {
+                Form {
+                    Section(header: Text("Rename Tag")) {
+                        TextField("Tag name", text: $renameText)
+                    }
+                    Section {
+                        Button("Save") {
+                            guard let oldTag = tagForActions else { return }
+                            let newTagTrimmed = renameText.trimmingCharacters(in: .whitespacesAndNewlines)
+                            guard !newTagTrimmed.isEmpty else { return }
+                            // capture affected files and previous active filter
+                            let affectedFiles = allFiles.filter { $0.tags.contains(oldTag) }
+                            let previousActive = active
+                            // apply rename
+                            for file in affectedFiles {
+                                if let index = file.tags.firstIndex(of: oldTag) {
+                                    file.tags[index] = newTagTrimmed
+                                }
+                            }
+                            try? context.save()
+                            // register undo for rename
+                            undoManager?.registerUndo(withTarget: context) { ctx in
+                                for file in affectedFiles {
+                                    if let idx = file.tags.firstIndex(of: newTagTrimmed) {
+                                        file.tags[idx] = oldTag
+                                    }
+                                }
+                                try? ctx.save()
+                                if previousActive == oldTag {
+                                    active = oldTag
+                                }
+                                DispatchQueue.main.async {
+                                    TagIndexer.rebuild(in: ctx)
+                                }
+                            }
+                            undoManager?.setActionName("Rename Tag")
+                            // update active filter
+                            if previousActive == oldTag {
+                                active = newTagTrimmed
+                            }
+                            showTagActions = false
+                            TagIndexer.rebuild(in: context)
+                        }
+                        Button("Cancel", role: .cancel) {
+                            showTagActions = false
+                        }
+                    }
+                    Section {
+                        Button("Delete Tag", role: .destructive) {
+                            guard let tag = tagForActions else { return }
+                            let affectedFiles = allFiles.filter { $0.tags.contains(tag) }
+                            let previousActive = active
+                            // remove tag from all files
+                            for file in affectedFiles {
+                                file.tags.removeAll { $0 == tag }
+                            }
+                            try? context.save()
+                            // clear active filter if it was this tag
+                            if active == tag { active = nil }
+                            // register undo for deletion
+                            undoManager?.registerUndo(withTarget: context) { ctx in
+                                for file in affectedFiles {
+                                    if !file.tags.contains(tag) {
+                                        file.tags.append(tag)
+                                    }
+                                }
+                                try? ctx.save()
+                                if previousActive == tag {
+                                    active = tag
+                                }
+                                DispatchQueue.main.async {
+                                    TagIndexer.rebuild(in: ctx)
+                                }
+                            }
+                            undoManager?.setActionName("Delete Tag")
+                            showTagActions = false
+                            TagIndexer.rebuild(in: context)
+                        }
+                    }
+                }
+                .navigationTitle("Tag Actions")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") { showTagActions = false }
+                    }
+                }
+            }
+        }
     }
     
 }
@@ -44,13 +149,38 @@ private struct BrowserList: View {
     let delete: (FileItem) -> Void
     let open:   (FileItem) -> Void
     @Binding var searchText: String
+    @Binding var selectedFiles: Set<UUID>
+    @Binding var multiSelectMode: Bool
 
     var body: some View {
         List {
             ForEach(rows) { file in
-                FileRowView(file: file,
-                            removeFile: { delete(file) },
-                            openFile:   { open(file) }).equatable()
+                HStack(spacing: 8) {
+                    // show selection indicator in multi-select mode
+                    if multiSelectMode {
+                        Image(systemName: selectedFiles.contains(file.id) ? "checkmark.circle.fill" : "circle")
+                    }
+                    // file row content, disable taps when in multi-select mode
+                    FileRowView(file: file,
+                                removeFile: { delete(file) },
+                                openFile:   { if !multiSelectMode { open(file) } })
+                        .allowsHitTesting(!multiSelectMode)
+                }
+                .contentShape(Rectangle())
+                .background(multiSelectMode && selectedFiles.contains(file.id)
+                            ? Color.accentColor.opacity(0.2)
+                            : Color.clear)
+                .onTapGesture {
+                    if multiSelectMode {
+                        if selectedFiles.contains(file.id) {
+                            selectedFiles.remove(file.id)
+                        } else {
+                            selectedFiles.insert(file.id)
+                        }
+                    } else {
+                        open(file)
+                    }
+                }
             }
         }
         .searchable(text: $searchText,
@@ -65,7 +195,11 @@ private struct BrowserList: View {
 struct FileBrowserView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.undoManager) private var undoManager
+    @Environment(\.editMode) private var editMode
 
+    /// Multi-select support
+    @State private var selectedFiles: Set<UUID> = []
+    @State private var showMassTagModal = false
     
     // Live list, auto-refreshes when you insert / delete / edit
     @Query private var items: [FileItem]
@@ -82,6 +216,7 @@ struct FileBrowserView: View {
     // UI state
     @State private var searchText = ""
     @State private var showClearConfirmation = false
+    @State private var showDeleteSelectedConfirmation = false
     @State private var activeTagFilter: String? = nil   // nil → no filter
     @State private var sortByRecent   = false       // false → by name
     @State private var filterFavorite = false       // false → all files
@@ -163,57 +298,137 @@ struct FileBrowserView: View {
         VStack(spacing: 0) {
             TagHeader(active: $activeTagFilter)
             Divider()
-            
-            BrowserList(rows: visible,
-                        delete: delete,
-                        open:   open,
-                        searchText: $searchText)
+
+            List(selection: $selectedFiles) {
+                ForEach(visible) { file in
+                    FileRowView(file: file,
+                                removeFile: { delete(file) },
+                                openFile:   { open(file) })
+                        .tag(file.id)
+                }
+            }
+            .listStyle(.plain)
         }
+        .searchable(text: $searchText,
+                    placement: .toolbar,
+                    prompt: "Search tags or names")
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarLeading) {
-                            Picker("Sort", selection: $sortByRecent) {
-                                Image(systemName: "textformat").tag(false)  // Name
-                                Image(systemName: "clock").tag(true)        // Recent
-                            }
-                            .pickerStyle(.segmented)
+                Picker("Sort", selection: $sortByRecent) {
+                    Image(systemName: "textformat").tag(false)  // Name
+                    Image(systemName: "clock").tag(true)        // Recent
+                }
+                .pickerStyle(.segmented)
 
-                            Toggle(isOn: $filterFavorite) {
-                                Image(systemName: "star.fill")
-                            }
-                            .toggleStyle(.button)
-                        }
+                Toggle(isOn: $filterFavorite) {
+                    Image(systemName: "star.fill")
+                }
+                .toggleStyle(.button)
+            }
             ToolbarItemGroup(placement: .navigationBarTrailing) {
+                // button to exit selection mode
+                if editMode?.wrappedValue == .active {
+                    Button("Done Selecting") {
+                        withAnimation {
+                            editMode?.wrappedValue = .inactive
+                            selectedFiles.removeAll()
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
                 if (undoManager?.canUndo ?? false) {
                     Button("Undo") {
                         undoManager?.undo()
                     }
                 }
+                if editMode?.wrappedValue == .active {
+                    Button(selectedFiles.count == visible.count ? "Deselect All" : "Select All") {
+                        if selectedFiles.count == visible.count {
+                            // all selected: deselect all
+                            selectedFiles.removeAll()
+                        } else {
+                            // select all currently visible rows
+                            let allIds = Set(visible.map { $0.id })
+                            selectedFiles = allIds
+                        }
+                    }
+                }
+                // mass-tag selected files
+                if !selectedFiles.isEmpty {
+                    Button("Tag Selected (\(selectedFiles.count))") {
+                        showMassTagModal = true
+                    }
+                }
+                if !selectedFiles.isEmpty {
+                    Button("Delete Selected (\(selectedFiles.count))", role: .destructive) {
+                        showDeleteSelectedConfirmation = true
+                    }
+                }
 
                 // Import button (files or folder)
-                Menu {
-                    Button {
-                        importMode = .files
-                        showPicker = true
-                    } label: { Label("Import Files", systemImage: "doc.on.doc") }
-                    
-                    Button {
-                        importMode = .folder
-                        showPicker = true
-                    } label: { Label("Import Folder", systemImage: "folder") }
-                } label: { Label("Add", systemImage: "plus") }
-                
+                if editMode?.wrappedValue != .active {
+                    Menu {
+                        Button {
+                            importMode = .files
+                            showPicker = true
+                        } label: { Label("Import Files", systemImage: "doc.on.doc") }
+                        
+                        Button {
+                            importMode = .folder
+                            showPicker = true
+                        } label: { Label("Import Folder", systemImage: "folder") }
+                    } label: { Label("Add", systemImage: "plus") }
+                }
+
                 // Ellipsis menu
-                Menu {
-                    Button(role: .destructive) {
-                        showClearConfirmation = true
-                    } label: { Label("Remove All Files", systemImage: "trash") }
-                } label: { Image(systemName: "ellipsis.circle") }
+                if editMode?.wrappedValue != .active {
+                    Menu {
+                        // toggle multi-select mode
+                        Button {
+                            withAnimation {
+                                editMode?.wrappedValue = (editMode?.wrappedValue == .active ? .inactive : .active)
+                                if editMode?.wrappedValue == .inactive {
+                                    selectedFiles.removeAll()
+                                }
+                            }
+                        } label: {
+                            Label(editMode?.wrappedValue == .active ? "Done" : "Select", systemImage: "checkmark.circle")
+                        }
+                        Button(role: .destructive) {
+                            showClearConfirmation = true
+                        } label: { Label("Remove All Files", systemImage: "trash") }
+                    } label: { Image(systemName: "ellipsis.circle") }
+                }
             }
         }
         .confirmationDialog("Remove all imported files?",
                             isPresented: $showClearConfirmation,
                             titleVisibility: .visible) {
             Button("Remove All Files", role: .destructive, action: clearAll)
+            Button("Cancel", role: .cancel) { }
+        }
+        .alert(
+            "Delete \(selectedFiles.count) selected files?",
+            isPresented: $showDeleteSelectedConfirmation
+        ) {
+            Button("Delete", role: .destructive) {
+                let filesToDelete = items.filter { selectedFiles.contains($0.id) }
+                // 1. Remove selected files
+                for file in filesToDelete {
+                    context.delete(file)
+                }
+                try? context.save()
+                // 2. Register undo for group deletion
+                undoManager?.registerUndo(withTarget: context) { ctx in
+                    for file in filesToDelete {
+                        ctx.insert(file)
+                    }
+                    try? ctx.save()
+                }
+                undoManager?.setActionName("Delete Selected Files")
+                // 3. Clear selection
+                selectedFiles.removeAll()
+            }
             Button("Cancel", role: .cancel) { }
         }
         .fileImporter(
@@ -250,5 +465,22 @@ struct FileBrowserView: View {
                 }
             }
         }
+        .overlay {
+            if showMassTagModal {
+                ZStack {
+                    Color.black.opacity(0.4).ignoresSafeArea()
+                    // direct card without NavigationView
+                    MassTagView(
+                        files: visibleFiles.filter { selectedFiles.contains($0.id) }
+                    ) {
+                        showMassTagModal = false
+                    }
+                    .frame(maxWidth: 600)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    .padding(32)
+                }
+            }
+        }
     }
 }
+

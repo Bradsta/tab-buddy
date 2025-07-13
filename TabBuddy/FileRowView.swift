@@ -47,7 +47,7 @@ struct FileRowView: View, Equatable {
                  Image(systemName: file.isFavorite ? "star.fill" : "star")
              }
             .buttonStyle(.borderless)
-
+            
             Menu {
                 Button { showTags = true } label: {
                     Label("Edit Tags", systemImage: "tag")
@@ -57,8 +57,14 @@ struct FileRowView: View, Equatable {
                 }
             } label: {
                 Image(systemName: "ellipsis")
+                    .frame(minWidth: 24)
+                    .frame(maxHeight: .infinity)
+                    .contentShape(Rectangle())
             }
             .menuStyle(.borderlessButton)
+            .padding(.trailing, 12)
+            .padding(.leading, 12)
+
 
             // ── Centre: filename + tags ────────────────────────────────
             VStack(alignment: .leading, spacing: 2) {

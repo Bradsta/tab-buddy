@@ -7,10 +7,16 @@
     "Add Tag" : {
 
     },
+    "Apply to %lld files" : {
+
+    },
     "Cancel" : {
 
     },
     "Close" : {
+
+    },
+    "Common Tags" : {
 
     },
     "Delete" : {
@@ -19,7 +25,22 @@
     "Delete “%@”?" : {
 
     },
+    "Delete %lld selected files?" : {
+
+    },
+    "Delete Selected (%lld)" : {
+
+    },
+    "Delete Tag" : {
+
+    },
+    "Deselect All" : {
+
+    },
     "Done" : {
+
+    },
+    "Done Selecting" : {
 
     },
     "Edit Tags" : {
@@ -89,7 +110,13 @@
     "Rename" : {
 
     },
+    "Rename Tag" : {
+
+    },
     "Rename…" : {
+
+    },
+    "Save" : {
 
     },
     "scroll_speed" : {
@@ -119,13 +146,28 @@
         }
       }
     },
+    "Select" : {
+
+    },
+    "Select All" : {
+
+    },
     "Sort" : {
 
     },
-    "Suggestions" : {
+    "Tag Actions" : {
+
+    },
+    "Tag name" : {
+
+    },
+    "Tag Selected (%lld)" : {
 
     },
     "Tags" : {
+
+    },
+    "Tags to Add" : {
 
     },
     "Tags: %@" : {

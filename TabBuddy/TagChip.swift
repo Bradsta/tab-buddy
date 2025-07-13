@@ -1,9 +1,12 @@
 import SwiftUICore
+import SwiftUI
 
 struct TagChip: View {
     let label: String
     let isActive: Bool
     let action: () -> Void
+    var onRename: (() -> Void)? = nil
+    var onDelete: (() -> Void)? = nil
 
     var body: some View {
         Text(label)

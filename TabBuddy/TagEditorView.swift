@@ -5,6 +5,7 @@ import Observation            // for @Bindable
 struct TagEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
+    @Environment(\.undoManager) private var undoManager
 
     @Bindable var file: FileItem
     @Query(sort: \TagStat.count, order: .reverse)
@@ -13,25 +14,50 @@ struct TagEditorView: View {
     @State private var newTag = ""
 
     private func toggle(_ tag: String) {
+        let previousTags = file.tags
+        let isOn = file.tags.contains(tag)
         if let idx = file.tags.firstIndex(of: tag) {
             file.tags.remove(at: idx)
         } else {
             file.tags.append(tag)
         }
+        try? context.save()
+        undoManager?.registerUndo(withTarget: context) { ctx in
+            file.tags = previousTags
+            try? ctx.save()
+        }
+        undoManager?.setActionName(isOn ? "Remove Tag" : "Add Tag")
     }
     
     var body: some View {
         NavigationStack {
             List {
                 Section("Existing Tags") {
-                    ForEach(file.tags, id: \.self) { tag in
-                        Text(tag)
-                    }
-                    .onDelete { offsets in
-                        file.tags.remove(atOffsets: offsets)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        LazyHStack(spacing: 8) {
+                            ForEach(file.tags, id: \.self) { tag in
+                                TagChip(label: tag, isActive: true) {
+                                    toggle(tag)
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 4)
                     }
                 }
-
+                Section("Tags to Add") {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        LazyHStack(spacing: 8) {
+                            ForEach(stats.filter { !file.tags.contains($0.name) }) { stat in
+                                TagChip(label: stat.name, isActive: false) {
+                                    toggle(stat.name)
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 4)
+                    }
+                }
                 Section("Add Tag") {
                     HStack {
                         TextField("new tag", text: $newTag, onCommit: add)
@@ -40,19 +66,7 @@ struct TagEditorView: View {
                             .disabled(trimmed.isEmpty)
                     }
                 }
-                Section("Suggestions") {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(stats) { stat in
-                                let isOn = file.tags.contains(stat.name)
-                                TagChip(label: stat.name, isActive: isOn) {
-                                    toggle(stat.name)
-                                }
-                            }
-                        }
-                        .padding(.horizontal).padding(.vertical, 4)
-                    }
-                }
+
             }
             .navigationTitle(file.filename)
             .toolbar {
