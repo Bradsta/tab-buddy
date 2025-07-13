@@ -12,6 +12,9 @@ final class FileItem {
     var importedAt   : Date          // creation time
     var lastOpenedAt : Date          // always at least the import time
 
+    /// persisted scroll speed (points per second) last used for this file
+    var scrollSpeed: Double = 0
+
     /// Resolve the bookmark and *activate* its security scope
     var url: URL? {
         var stale = false
@@ -32,6 +35,7 @@ final class FileItem {
          bookmark: Data,
          filename: String,
          isFavorite: Bool = false,
+         scrollSpeed: Double = 0,
          tags: [String] = [],
          importedAt: Date = .now) {
 
@@ -42,5 +46,6 @@ final class FileItem {
         self.tags       = tags
         self.importedAt   = importedAt
         self.lastOpenedAt = importedAt        // ← default to import date
+        self.scrollSpeed = scrollSpeed
     }
 }

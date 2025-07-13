@@ -1,9 +1,12 @@
 import SwiftUI
 import SwiftData
 import Observation
+import UIKit
+import UniformTypeIdentifiers
 
 struct FileRowView: View {
     @Environment(\.modelContext) private var context
+    @Environment(\.undoManager) private var undoManager
 
     @Bindable var file: FileItem                     // SwiftData row
 
@@ -17,30 +20,33 @@ struct FileRowView: View {
     @State private var showRename = false
     @State private var newName    = ""
 
+    /// retain controller to prevent deallocation
+    @State private var docController: UIDocumentInteractionController?
+
     var body: some View {
         HStack(spacing: 12) {
 
             // ── Left-side controls ─────────────────────────────────────
             Button {
+                let wasFavorite = file.isFavorite
                 file.isFavorite.toggle()
                 try? context.save()
+
+                undoManager?.registerUndo(withTarget: context) { ctx in
+                    file.isFavorite = wasFavorite
+                    try? ctx.save()
+                }
+                undoManager?.setActionName(wasFavorite
+                                          ? "Unfavorite File"
+                                          : "Favorite File")
             } label: {
-                Image(systemName: file.isFavorite ? "star.fill" : "star")
-            }
+                 Image(systemName: file.isFavorite ? "star.fill" : "star")
+             }
             .buttonStyle(.borderless)
 
             Menu {
                 Button { showTags = true } label: {
                     Label("Edit Tags", systemImage: "tag")
-                }
-                Button("Rename…") {
-                    newName = file.filename
-                    showRename = true
-                }
-                Button {
-                    revealInFinder()
-                } label: {
-                    Label("Show in Files", systemImage: "folder")
                 }
                 Button(role: .destructive) { confirmDel = true } label: {
                     Label("Delete", systemImage: "trash")
@@ -73,7 +79,7 @@ struct FileRowView: View {
                 if file.lastOpenedAt > file.importedAt {
                     TimelineView(.periodic(from: file.lastOpenedAt, by: 60)) { _ in
                             Text(file.lastOpenedAt,
-                                 format: .relative(presentation: .named)) 
+                                 format: .relative(presentation: .named))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)

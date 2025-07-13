@@ -9,6 +9,7 @@ import QuartzCore
 
 struct TabViewerView: View {
     @Environment(\.modelContext) private var context
+    @Environment(\.undoManager) private var undoManager
 
     @Binding var file: FileItem?
     @Binding var path: [AppPage]
@@ -78,13 +79,21 @@ struct TabViewerView: View {
             .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
         }
         .onAppear {
+            // restore saved scroll speed for this file
+            if let saved = file?.scrollSpeed {
+                scrollSpeed = CGFloat(saved)
+            }
             if !hasAccess {
                 hasAccess = file?.url?.startAccessingSecurityScopedResource() ?? false
                 loadText()
-            }
-            else
-            {
+            } else {
                 loadText()
+            }
+            // automatically start auto-scroll if a saved speed exists (delay to ensure PDF proxy is set)
+            if scrollSpeed > 0 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    startAutoScroll()
+                }
             }
         }
         .onDisappear {
@@ -93,8 +102,21 @@ struct TabViewerView: View {
                 hasAccess = false
             }
             stopAutoScroll()
+            // persist scrollSpeed on exit
+            file?.scrollSpeed = Double(scrollSpeed)
+            try? context.save()
         }
-
+        .onChange(of: scrollViewProxy) { proxy in
+            // restart auto-scroll for PDF when the proxy becomes available
+            guard file?.url?.pathExtension.lowercased() == "pdf",
+                  proxy != nil,
+                  scrollSpeed > 0 else { return }
+            DispatchQueue.main.async {
+                // re-establish displayLink with the now-available scrollView
+                stopAutoScroll()
+                startAutoScroll()
+            }
+        }
         .sheet(isPresented: $showTags)   { TagEditorView(file: file!) }
             .sheet(isPresented: $showRename) { renameSheet               }
             .onDisappear { stopAutoScroll() }           // safety
@@ -105,7 +127,7 @@ struct TabViewerView: View {
         guard scrollSpeed > 0 else { return }
         isAutoScrolling = true
 
-        let link = CADisplayLink(target: coordinator, selector: #selector(ScrollCoordinator.handleScrollStep))
+        let link = CADisplayLink(target: coordinator, selector: #selector(ScrollCoordinator.handleScrollStep(_:)))
 
         if #available(iOS 15.0, *) {
             link.preferredFrameRateRange = CAFrameRateRange(minimum: 10, maximum: 30, preferred: 30)
@@ -143,8 +165,17 @@ struct TabViewerView: View {
 
             // ★ favourite toggle
             Button {
+                let wasFavorite = file!.isFavorite
                 file!.isFavorite.toggle()
                 try? context.save()
+
+                undoManager?.registerUndo(withTarget: context) { ctx in
+                    file!.isFavorite = wasFavorite
+                    try? ctx.save()
+                }
+                undoManager?.setActionName(wasFavorite
+                                          ? "Unfavorite File"
+                                          : "Favorite File")
             } label: {
                 Image(systemName: file!.isFavorite ? "star.fill" : "star")
                     .foregroundStyle(file!.isFavorite ? .yellow : .secondary)
@@ -174,17 +205,38 @@ struct TabViewerView: View {
 
             Spacer(minLength: 8)
 
-            // scroll-speed slider (narrow version)
+            // scroll-speed slider with fine-tune buttons
             HStack(spacing: 6) {
                 Image(systemName: "arrow.up.and.down")
                     .foregroundStyle(.secondary)
+                Button {
+                    // decrease speed by 1, clamped to 4
+                    scrollSpeed = max(scrollSpeed - 1, 4)
+                    // restart auto-scroll if currently scrolling
+                    if isAutoScrolling {
+                        stopAutoScroll()
+                        startAutoScroll()
+                    }
+                } label: {
+                    Image(systemName: "minus.circle")
+                }
                 Slider(value: $scrollSpeed,
-                       in: 4...40,
+                       in: 0...40,
                        step: 1,
                        onEditingChanged: { editing in
                            editing ? stopAutoScroll() : startAutoScroll()
                        })
-                    .frame(width: 150)                // small but usable
+                    .frame(width: 150)
+                Button {
+                    // increase speed by 1, clamped to 40
+                    scrollSpeed = min(scrollSpeed + 1, 40)
+                    if isAutoScrolling {
+                        stopAutoScroll()
+                        startAutoScroll()
+                    }
+                } label: {
+                    Image(systemName: "plus.circle")
+                }
             }
             Spacer(minLength: 8)
 

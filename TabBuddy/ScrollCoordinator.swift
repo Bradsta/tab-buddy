@@ -12,6 +12,8 @@ class ScrollCoordinator: NSObject {
     var currentFile: FileItem?
     /// How many points to scroll each frame
     var scrollSpeed: CGFloat
+    /// Accumulates fractional scroll amounts to ensure movement at low speeds
+    private var scrollResidual: CGFloat = 0
 
     init(scrollViewProxy: UIScrollView?,
          textViewProxy: UITextView?,
@@ -23,9 +25,14 @@ class ScrollCoordinator: NSObject {
         self.scrollSpeed = scrollSpeed
     }
 
-    @objc func handleScrollStep() {
+    @objc func handleScrollStep(_ link: CADisplayLink) {
         guard let file = currentFile else { return }
-        let step = scrollSpeed / 20.0
+        let dt = link.targetTimestamp - link.timestamp
+        scrollResidual += scrollSpeed * CGFloat(dt)
+        let stepPoints = floor(scrollResidual)
+        scrollResidual -= stepPoints
+        guard stepPoints > 0 else { return }
+        let step = stepPoints
         if file.url?.pathExtension.lowercased() == "pdf" {
             guard let sv = scrollViewProxy else { return }
             let y = min(sv.contentOffset.y + step,
