@@ -21,6 +21,7 @@
 		E92091A72E1B3F680043BC03 /* TagStat.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92091A62E1B3F680043BC03 /* TagStat.swift */; };
 		E92091A92E1B3FAB0043BC03 /* TagIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92091A82E1B3FAB0043BC03 /* TagIndexer.swift */; };
 		E979731D2E1B6C1400AC1A4D /* ScrollCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E979731C2E1B6C1400AC1A4D /* ScrollCoordinator.swift */; };
+		E979731F2E244B8400AC1A4D /* MassTagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E979731E2E244B7F00AC1A4D /* MassTagView.swift */; };
 		E9AB56732E1B28B000AFD8E2 /* FileItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9AB56722E1B28AD00AFD8E2 /* FileItem.swift */; };
 		E9D7A1C62E19F3130012F2B5 /* FileMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1C52E19F3090012F2B5 /* FileMetadata.swift */; };
 		E9D7A1C82E19F41E0012F2B5 /* FileBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1C72E19F4170012F2B5 /* FileBrowserView.swift */; };
@@ -66,6 +67,7 @@
 		E92091A62E1B3F680043BC03 /* TagStat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagStat.swift; sourceTree = "<group>"; };
 		E92091A82E1B3FAB0043BC03 /* TagIndexer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagIndexer.swift; sourceTree = "<group>"; };
 		E979731C2E1B6C1400AC1A4D /* ScrollCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollCoordinator.swift; sourceTree = "<group>"; };
+		E979731E2E244B7F00AC1A4D /* MassTagView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MassTagView.swift; sourceTree = "<group>"; };
 		E9AB56722E1B28AD00AFD8E2 /* FileItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileItem.swift; sourceTree = "<group>"; };
 		E9D7A1C52E19F3090012F2B5 /* FileMetadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileMetadata.swift; sourceTree = "<group>"; };
 		E9D7A1C72E19F4170012F2B5 /* FileBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileBrowserView.swift; sourceTree = "<group>"; };
@@ -123,6 +125,7 @@
 		B1626C3829F631E500304E9E /* TabBuddy */ = {
 			isa = PBXGroup;
 			children = (
+				E979731E2E244B7F00AC1A4D /* MassTagView.swift */,
 				E979731C2E1B6C1400AC1A4D /* ScrollCoordinator.swift */,
 				E92091A82E1B3FAB0043BC03 /* TagIndexer.swift */,
 				E92091A62E1B3F680043BC03 /* TagStat.swift */,
@@ -309,6 +312,7 @@
 				B1B0DD742C03F71100F52473 /* TabText.swift in Sources */,
 				E9D7A1CE2E1A0AFB0012F2B5 /* TagEditorView.swift in Sources */,
 				E9D7A1C62E19F3130012F2B5 /* FileMetadata.swift in Sources */,
+				E979731F2E244B8400AC1A4D /* MassTagView.swift in Sources */,
 				E9D7A1C82E19F41E0012F2B5 /* FileBrowserView.swift in Sources */,
 				E979731D2E1B6C1400AC1A4D /* ScrollCoordinator.swift in Sources */,
 				E9D7A1CC2E1A02400012F2B5 /* FileRowView.swift in Sources */,
