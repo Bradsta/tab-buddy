@@ -15,6 +15,16 @@ final class FileItem : Equatable {
     /// persisted scroll speed (points per second) last used for this file
     var scrollSpeed: Double = 0
 
+    /// name of the parent folder the file was imported from
+    var folderName: String = ""
+
+    /// persisted loop marker positions (scroll Y offsets)
+    var loopStartY: Double? = nil
+    var loopEndY: Double? = nil
+
+    /// relative path from the library root (nil for non-library files)
+    var libraryPath: String? = nil
+
     /// Resolve the bookmark and *activate* its security scope
     var url: URL? {
         var stale = false
@@ -37,6 +47,8 @@ final class FileItem : Equatable {
          isFavorite: Bool = false,
          scrollSpeed: Double = 0,
          tags: [String] = [],
+         folderName: String = "",
+         libraryPath: String? = nil,
          importedAt: Date = .now) {
 
         self.id         = id
@@ -44,6 +56,8 @@ final class FileItem : Equatable {
         self.filename   = filename
         self.isFavorite = isFavorite
         self.tags       = tags
+        self.folderName   = folderName
+        self.libraryPath  = libraryPath
         self.importedAt   = importedAt
         self.lastOpenedAt = importedAt        // ← default to import date
         self.scrollSpeed = scrollSpeed

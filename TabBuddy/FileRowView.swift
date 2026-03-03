@@ -68,13 +68,19 @@ struct FileRowView: View, Equatable {
 
             // ── Centre: filename + tags ────────────────────────────────
             VStack(alignment: .leading, spacing: 2) {
-                Button(action: openFile) {
-                    Text(file.filename)
-                        .font(.headline)
-                        // you can also add a highlight effect if you like:
-                        // .foregroundColor(.primary)
+                HStack(spacing: 4) {
+                    Button(action: openFile) {
+                        Text(file.filename)
+                            .font(.headline)
+                    }
+                    .buttonStyle(.plain)
+
+                    if !file.folderName.isEmpty {
+                        Text("(\(file.folderName))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                .buttonStyle(.plain)
 
                 if !file.tags.isEmpty {
                     Text("Tags: \(file.tags.joined(separator: ", "))")

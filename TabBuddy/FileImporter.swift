@@ -63,8 +63,8 @@ final class FolderImporter: ObservableObject {
             var seen = existingNames
 
             // ── 2️⃣  MAKE BOOKMARKS (Swift-6-safe) ───────────────────────────
-            let fresh: [(name: String, data: Data)] =
-                try! await withThrowingTaskGroup(of: (String, Data)?.self) { group in
+            let fresh: [(name: String, data: Data, folder: String)] =
+                try! await withThrowingTaskGroup(of: (String, Data, String)?.self) { group in
                     // enqueue first window
                     var next = candidates.startIndex
                     func queue() {
@@ -72,13 +72,14 @@ final class FolderImporter: ObservableObject {
                         let url = candidates[next]; next = candidates.index(after: next)
                         group.addTask {
                             guard let data = try? url.bookmarkData() else { return nil }
-                            return (url.lastPathComponent, data)
+                            let folder = url.deletingLastPathComponent().lastPathComponent
+                            return (url.lastPathComponent, data, folder)
                         }
                     }
                     for _ in 0..<4 { queue() }
 
                     // collect results in a local buffer ― no shared mutation
-                    var buffer: [(String, Data)] = []
+                    var buffer: [(String, Data, String)] = []
 
                     for try await result in group {
                         await MainActor.run { self.processed += 1 }
@@ -98,6 +99,7 @@ final class FolderImporter: ObservableObject {
                                  filename: rec.name,
                                  isFavorite: false,
                                  tags: [],
+                                 folderName: rec.folder,
                                  importedAt: Date())
                     )
                 }
@@ -111,6 +113,96 @@ final class FolderImporter: ObservableObject {
         }
     }
     
+    // MARK: – Library Copy Import ------------------------------------------------
+    func startWithLibraryCopy(urls: [URL], context: ModelContext, libraryManager: LibraryManager) {
+        cancel()
+        isRunning  = true
+        processed  = 0
+        total      = 0
+
+        // snapshot existing names for O(1) duplicate checks
+        let existingNames = Set(
+            (try? context.fetch(FetchDescriptor<FileItem>()))?.map(\.filename) ?? []
+        )
+
+        task = Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
+
+            // ── 1️⃣  Gather source files while directory scope is OPEN ──────────
+            var openedDirs: [URL] = []
+            var gathered: [URL] = []
+            var folderRoot: URL? = nil
+
+            for root in urls {
+                if root.hasDirectoryPath {
+                    if root.startAccessingSecurityScopedResource() {
+                        openedDirs.append(root)
+                        folderRoot = root
+                        if let enumr = FileManager.default.enumerator(
+                            at: root,
+                            includingPropertiesForKeys: [.isRegularFileKey],
+                            options: [.skipsHiddenFiles, .skipsPackageDescendants]
+                        ) {
+                            for case let f as URL in enumr where await Self.accepts(f) {
+                                gathered.append(f)
+                            }
+                        }
+                    }
+                } else if await Self.accepts(root) {
+                    // For individual files, start access to read them
+                    if root.startAccessingSecurityScopedResource() {
+                        openedDirs.append(root)
+                    }
+                    gathered.append(root)
+                }
+            }
+
+            let candidates = gathered
+            await MainActor.run { self.total = candidates.count }
+
+            // ── 2️⃣  Copy to library on main actor (needs security scope) ──────
+            let copied = await MainActor.run {
+                libraryManager.copyFilesToLibrary(
+                    sourceURLs: candidates,
+                    relativeTo: folderRoot
+                )
+            }
+
+            // ── 3️⃣  Create bookmarks for the copied files ─────────────────────
+            var seen = existingNames
+            var fresh: [(name: String, data: Data, folder: String, libPath: String)] = []
+
+            for (destURL, relativePath) in copied {
+                await MainActor.run { self.processed += 1 }
+
+                let name = destURL.lastPathComponent
+                guard seen.insert(name).inserted else { continue }
+                guard let data = try? destURL.bookmarkData() else { continue }
+                let folder = destURL.deletingLastPathComponent().lastPathComponent
+                fresh.append((name, data, folder, relativePath))
+            }
+
+            // ── 4️⃣  Commit inserts on main actor ──────────────────────────────
+            await MainActor.run {
+                for rec in fresh {
+                    context.insert(
+                        FileItem(bookmark: rec.data,
+                                 filename: rec.name,
+                                 folderName: rec.folder,
+                                 libraryPath: rec.libPath,
+                                 importedAt: Date())
+                    )
+                }
+                try? context.save()
+                TagIndexer.rebuild(in: context)
+            }
+
+            // ── 5️⃣  Close directory scopes & finish ───────────────────────────
+            for dir in openedDirs { dir.stopAccessingSecurityScopedResource() }
+            await MainActor.run { self.finish(cancelled: false) }
+        }
+    }
+
     /// Cancel any running import.
     func cancel() {
         task?.cancel()

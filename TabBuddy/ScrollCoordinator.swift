@@ -15,6 +15,10 @@ class ScrollCoordinator: NSObject, ObservableObject {
     /// Accumulates fractional scroll amounts to ensure movement at low speeds
     private var scrollResidual: CGFloat = 0
 
+    /// Loop marker positions (scroll Y offsets)
+    var loopStartY: CGFloat? = nil
+    var loopEndY: CGFloat? = nil
+
     init(scrollViewProxy: UIScrollView?,
          textViewProxy: UITextView?,
          currentFile: FileItem?,
@@ -35,13 +39,19 @@ class ScrollCoordinator: NSObject, ObservableObject {
         let step = stepPoints
         if file.url?.pathExtension.lowercased() == "pdf" {
             guard let sv = scrollViewProxy else { return }
-            let y = min(sv.contentOffset.y + step,
+            var y = min(sv.contentOffset.y + step,
                         sv.contentSize.height - sv.bounds.height)
+            if let start = loopStartY, let end = loopEndY, y >= end {
+                y = start
+            }
             sv.setContentOffset(.init(x: sv.contentOffset.x, y: y), animated: false)
         } else {
             guard let tv = textViewProxy else { return }
-            let y = min(tv.contentOffset.y + step,
+            var y = min(tv.contentOffset.y + step,
                         tv.contentSize.height - tv.bounds.height)
+            if let start = loopStartY, let end = loopEndY, y >= end {
+                y = start
+            }
             tv.setContentOffset(.init(x: tv.contentOffset.x, y: y), animated: false)
         }
     }

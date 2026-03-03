@@ -51,9 +51,22 @@ struct ContentView: View {
         }
         .onAppear {
             TagIndexer.rebuild(in: context)
+            backfillFolderNames()
+            LibraryManager.shared.processPendingImports(context: context)
         }
     }
 
+    private func backfillFolderNames() {
+        let needsBackfill = items.filter { $0.folderName.isEmpty }
+        guard !needsBackfill.isEmpty else { return }
+
+        for item in needsBackfill {
+            guard let url = item.url else { continue }
+            defer { url.stopAccessingSecurityScopedResource() }
+            item.folderName = url.deletingLastPathComponent().lastPathComponent
+        }
+        try? context.save()
+    }
 }
 
 struct ContentView_Previews: PreviewProvider {

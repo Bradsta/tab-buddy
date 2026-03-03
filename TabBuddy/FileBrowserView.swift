@@ -212,14 +212,22 @@ struct FileBrowserView: View {
     @State private var importMode: ImportMode = .files
     @State private var showPicker = false
     @StateObject private var folderImporter = FolderImporter()
-    
+
+    // Library state
+    @StateObject private var libraryManager = LibraryManager.shared
+    @State private var showLibraryPicker = false
+    @State private var showCopyToLibraryPrompt = false
+    @State private var pendingImportURLs: [URL] = []
+    @State private var showRescanDone = false
+
     // UI state
     @State private var searchText = ""
     @State private var isSearchPresented = false
     @State private var showClearConfirmation = false
     @State private var showDeleteSelectedConfirmation = false
     @State private var activeTagFilter: String? = nil   // nil → no filter
-    @State private var sortByRecent   = false       // false → by name
+    private enum SortMode: String { case name, recent, imported }
+    @State private var sortMode: SortMode = .name
     @State private var filterFavorite = false       // false → all files
     
     private var visibleFiles: [FileItem] {
@@ -231,7 +239,8 @@ struct FileBrowserView: View {
         if !needle.isEmpty {
             list = list.filter { file in
                 file.filename.localizedCaseInsensitiveContains(needle) ||
-                file.tags.contains { $0.localizedCaseInsensitiveContains(needle) }
+                file.tags.contains { $0.localizedCaseInsensitiveContains(needle) } ||
+                file.folderName.localizedCaseInsensitiveContains(needle)
             }
         }
 
@@ -246,12 +255,14 @@ struct FileBrowserView: View {
         }
 
         // –– 4) sort ––
-        if sortByRecent {
-            list.sort { ($0.lastOpenedAt) >
-                        ($1.lastOpenedAt) }
-        } else {
+        switch sortMode {
+        case .name:
             list.sort { ($0.isFavorite ? 0 : 1, $0.filename.lowercased())
                      < ($1.isFavorite ? 0 : 1, $1.filename.lowercased()) }
+        case .recent:
+            list.sort { $0.lastOpenedAt > $1.lastOpenedAt }
+        case .imported:
+            list.sort { $0.importedAt > $1.importedAt }
         }
         return list
     }
@@ -324,9 +335,10 @@ struct FileBrowserView: View {
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarLeading) {
                 Menu {
-                    Picker("Sort", selection: $sortByRecent) {
-                        Label("Name", systemImage: "textformat").tag(false)
-                        Label("Recent", systemImage: "clock").tag(true)
+                    Picker("Sort", selection: $sortMode) {
+                        Label("Name", systemImage: "textformat").tag(SortMode.name)
+                        Label("Recent", systemImage: "clock").tag(SortMode.recent)
+                        Label("Imported", systemImage: "arrow.down.circle").tag(SortMode.imported)
                     }
                 } label: {
                     Image(systemName: "arrow.up.arrow.down")
@@ -406,6 +418,37 @@ struct FileBrowserView: View {
                         } label: {
                             Label(editMode?.wrappedValue == .active ? "Done" : "Select", systemImage: "checkmark.circle")
                         }
+
+                        Divider()
+
+                        // Library folder
+                        Button {
+                            showLibraryPicker = true
+                        } label: {
+                            if let name = libraryManager.libraryName {
+                                Label("Change Library (\(name))", systemImage: "folder.badge.gearshape")
+                            } else {
+                                Label("Set Library Folder", systemImage: "folder.badge.plus")
+                            }
+                        }
+
+                        if libraryManager.isConfigured {
+                            Button {
+                                libraryManager.rescan(context: context)
+                                showRescanDone = true
+                            } label: {
+                                Label("Rescan Library", systemImage: "arrow.clockwise")
+                            }
+
+                            Button(role: .destructive) {
+                                libraryManager.removeLibraryFolder()
+                            } label: {
+                                Label("Remove Library", systemImage: "folder.badge.minus")
+                            }
+                        }
+
+                        Divider()
+
                         Button(role: .destructive) {
                             showClearConfirmation = true
                         } label: { Label("Remove All Files", systemImage: "trash") }
@@ -449,10 +492,51 @@ struct FileBrowserView: View {
             allowsMultipleSelection: importMode == .files,
             onCompletion: { result in
                 if case .success(let urls) = result {
-                    folderImporter.start(urls: urls, context: context)
+                    if libraryManager.isConfigured {
+                        pendingImportURLs = urls
+                        showCopyToLibraryPrompt = true
+                    } else {
+                        folderImporter.start(urls: urls, context: context)
+                    }
                 }
             }
         )
+        .fileImporter(
+            isPresented: $showLibraryPicker,
+            allowedContentTypes: [.folder],
+            allowsMultipleSelection: false,
+            onCompletion: { result in
+                if case .success(let urls) = result, let url = urls.first {
+                    libraryManager.setLibraryFolder(url: url)
+                }
+            }
+        )
+        .confirmationDialog(
+            "Copy files to your library?",
+            isPresented: $showCopyToLibraryPrompt,
+            titleVisibility: .visible
+        ) {
+            Button("Copy to Library (\(libraryManager.libraryName ?? "Library"))") {
+                folderImporter.startWithLibraryCopy(
+                    urls: pendingImportURLs,
+                    context: context,
+                    libraryManager: libraryManager
+                )
+                pendingImportURLs = []
+            }
+            Button("Import in Place") {
+                folderImporter.start(urls: pendingImportURLs, context: context)
+                pendingImportURLs = []
+            }
+            Button("Cancel", role: .cancel) {
+                pendingImportURLs = []
+            }
+        }
+        .alert("Rescan Complete", isPresented: $showRescanDone) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Library has been rescanned. New files were added and existing files updated.")
+        }
         .overlay {
             if folderImporter.isRunning {
                 ZStack {

@@ -33,6 +33,10 @@ struct TabViewerView: View {
         Font(UIFont.monospacedSystemFont(ofSize: fontSize, weight: .regular))
     }
     
+    // loop markers
+    @State private var loopStartY: CGFloat? = nil
+    @State private var loopEndY: CGFloat? = nil
+
     // local UI for rename / tag editing
     @State private var showRename = false
     @State private var newName    = ""
@@ -63,6 +67,20 @@ struct TabViewerView: View {
         }
     }
     
+    private var currentScrollY: CGFloat {
+        if let sv = scrollViewProxy {
+            return sv.contentOffset.y
+        } else if let tv = textViewProxy {
+            return tv.contentOffset.y
+        }
+        return 0
+    }
+
+    private func syncLoopToCoordinator() {
+        coordinator.loopStartY = loopStartY
+        coordinator.loopEndY = loopEndY
+    }
+
     var body: some View {
         GeometryReader { geo in
             VStack(spacing: 0) {
@@ -97,9 +115,14 @@ struct TabViewerView: View {
                 hasAccess = false
             }
             stopAutoScroll()
-            // persist scrollSpeed on exit
+            // persist scrollSpeed and loop markers on exit
             file?.scrollSpeed = Double(scrollSpeed)
+            file?.loopStartY = loopStartY.map { Double($0) }
+            file?.loopEndY = loopEndY.map { Double($0) }
             try? context.save()
+            // clear loop on coordinator for safety
+            coordinator.loopStartY = nil
+            coordinator.loopEndY = nil
         }
         .onChange(of: scrollSpeed) { newSpeed in
             coordinator.scrollSpeed = newSpeed
@@ -137,6 +160,7 @@ struct TabViewerView: View {
         coordinator.textViewProxy = textViewProxy
         coordinator.currentFile = file
         coordinator.scrollSpeed = scrollSpeed
+        syncLoopToCoordinator()
 
         let link = CADisplayLink(target: coordinator, selector: #selector(ScrollCoordinator.handleScrollStep(_:)))
 
@@ -217,6 +241,16 @@ struct TabViewerView: View {
                 }
             }
 
+            // loop indicator
+            if loopStartY != nil && loopEndY != nil {
+                Text("\u{27F3} Loop")
+                    .font(.caption2)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(.orange.opacity(0.2), in: Capsule())
+                    .foregroundStyle(.orange)
+            }
+
             Spacer(minLength: 8)
 
             // scroll-speed slider with fine-tune buttons
@@ -249,6 +283,42 @@ struct TabViewerView: View {
                 Button("Rename…") { newName = file!.filename; showRename = true }
                 Button("Edit Tags…") { showTags = true }
                 Button("Close") { path.removeLast() }
+
+                Divider()
+
+                Button("Set Loop Start") {
+                    loopStartY = currentScrollY
+                }
+
+                Button("Set Loop End") {
+                    guard loopStartY != nil else { return }
+                    loopEndY = currentScrollY
+                    // swap if end < start
+                    if let s = loopStartY, let e = loopEndY, e < s {
+                        loopStartY = e
+                        loopEndY = s
+                    }
+                    syncLoopToCoordinator()
+                }
+                .disabled(loopStartY == nil)
+
+                if loopStartY != nil || loopEndY != nil {
+                    Button("Clear Loop", role: .destructive) {
+                        loopStartY = nil
+                        loopEndY = nil
+                        syncLoopToCoordinator()
+                    }
+                }
+
+                if let f = file,
+                   f.loopStartY != nil && f.loopEndY != nil,
+                   loopStartY == nil && loopEndY == nil {
+                    Button("Resume Last Loop") {
+                        loopStartY = f.loopStartY.map { CGFloat($0) }
+                        loopEndY = f.loopEndY.map { CGFloat($0) }
+                        syncLoopToCoordinator()
+                    }
+                }
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
