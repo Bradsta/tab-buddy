@@ -7,6 +7,9 @@
     "Add Tag" : {
 
     },
+    "Apply Tag to Selection" : {
+
+    },
     "Apply to %lld files" : {
 
     },
@@ -28,7 +31,13 @@
     "Delete %lld selected files?" : {
 
     },
+    "Delete File" : {
+
+    },
     "Delete Selected (%lld)" : {
+
+    },
+    "Delete Selected Files" : {
 
     },
     "Delete Tag" : {
@@ -107,6 +116,12 @@
     "Remove all imported files?" : {
 
     },
+    "Remove Tag" : {
+
+    },
+    "Remove Tag from Selection" : {
+
+    },
     "Rename" : {
 
     },
@@ -174,6 +189,9 @@
 
     },
     "Undo" : {
+
+    },
+    "Unfavorite File" : {
 
     }
   },
