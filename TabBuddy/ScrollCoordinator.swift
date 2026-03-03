@@ -6,9 +6,9 @@
 import ObjectiveC
 import UIKit
 
-class ScrollCoordinator: NSObject {
-    weak var scrollViewProxy: UIScrollView?
-    weak var textViewProxy: UITextView?
+class ScrollCoordinator: NSObject, ObservableObject {
+    var scrollViewProxy: UIScrollView?
+    var textViewProxy: UITextView?
     var currentFile: FileItem?
     /// How many points to scroll each frame
     var scrollSpeed: CGFloat

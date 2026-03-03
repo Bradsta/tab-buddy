@@ -323,11 +323,14 @@ struct FileBrowserView: View {
         }
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarLeading) {
-                Picker("Sort", selection: $sortByRecent) {
-                    Image(systemName: "textformat").tag(false)  // Name
-                    Image(systemName: "clock").tag(true)        // Recent
+                Menu {
+                    Picker("Sort", selection: $sortByRecent) {
+                        Label("Name", systemImage: "textformat").tag(false)
+                        Label("Recent", systemImage: "clock").tag(true)
+                    }
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down")
                 }
-                .pickerStyle(.segmented)
 
                 Toggle(isOn: $filterFavorite) {
                     Image(systemName: "star.fill")
@@ -453,7 +456,7 @@ struct FileBrowserView: View {
         .overlay {
             if folderImporter.isRunning {
                 ZStack {
-                    Color.black.opacity(0.4).ignoresSafeArea()
+                    Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
                     
                     VStack(spacing: 16) {
                         Text("Importing \(folderImporter.processed) of \(folderImporter.total) files…")
@@ -477,7 +480,7 @@ struct FileBrowserView: View {
         .overlay {
             if showMassTagModal {
                 ZStack {
-                    Color.black.opacity(0.4).ignoresSafeArea()
+                    Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
                     // direct card without NavigationView
                     MassTagView(
                         files: visibleFiles.filter { selectedFiles.contains($0.id) }

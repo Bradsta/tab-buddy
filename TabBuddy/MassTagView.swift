@@ -27,6 +27,25 @@ struct MassTagView: View {
         undoManager?.setActionName("Apply Tag to Selection")
     }
 
+    private func applyNewTag() {
+        let tag = newTag.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !tag.isEmpty else { return }
+        let previousTags = files.map { ($0, $0.tags) }
+        for file in files where !file.tags.contains(tag) {
+            file.tags.append(tag)
+        }
+        try? context.save()
+        undoManager?.registerUndo(withTarget: context) { ctx in
+            for (file, tags) in previousTags {
+                file.tags = tags
+            }
+            try? ctx.save()
+        }
+        undoManager?.setActionName("Apply Tag to Selection")
+        newTag = ""
+        onFinish?()
+    }
+
     private func removeCommonTag(_ tag: String) {
         let previousTags = files.map { ($0, $0.tags) }
         for file in files {
@@ -78,18 +97,11 @@ struct MassTagView: View {
             }
             Section(header: Text("Add Tag")) {
                 TextField("Tag name", text: $newTag)
+                    .onSubmit { applyNewTag() }
             }
             Section {
                 Button("Apply to \(files.count) files") {
-                    let tag = newTag.trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard !tag.isEmpty else { return }
-                    for file in files {
-                        if !file.tags.contains(tag) {
-                            file.tags.append(tag)
-                        }
-                    }
-                    try? context.save()
-                    onFinish?()
+                    applyNewTag()
                 }
                 .disabled(newTag.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 

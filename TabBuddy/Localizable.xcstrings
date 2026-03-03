@@ -1,6 +1,12 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%lld" : {
+
+    },
+    "+%lld" : {
+
+    },
     "Add" : {
 
     },
@@ -95,6 +101,9 @@
     "Loading PDF..." : {
 
     },
+    "Name" : {
+
+    },
     "new tag" : {
 
     },
@@ -109,6 +118,9 @@
           }
         }
       }
+    },
+    "Recent" : {
+
     },
     "Remove All Files" : {
 

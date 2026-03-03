@@ -24,15 +24,10 @@ struct TabViewerView: View {
     @State private var textContent: String = "Loading…"
     
     @State private var displayLink: CADisplayLink?
-
-    private var coordinator: ScrollCoordinator {
-        ScrollCoordinator(
-            scrollViewProxy: scrollViewProxy,
-            textViewProxy: textViewProxy,
-            currentFile: file,
-            scrollSpeed: scrollSpeed
-        )
-    }
+    @StateObject private var coordinator = ScrollCoordinator(
+        scrollViewProxy: nil, textViewProxy: nil,
+        currentFile: nil, scrollSpeed: 0
+    )
 
     var monospacedFont: Font {
         Font(UIFont.monospacedSystemFont(ofSize: fontSize, weight: .regular))
@@ -106,13 +101,24 @@ struct TabViewerView: View {
             file?.scrollSpeed = Double(scrollSpeed)
             try? context.save()
         }
+        .onChange(of: scrollSpeed) { newSpeed in
+            coordinator.scrollSpeed = newSpeed
+            if newSpeed > 0 && !isAutoScrolling {
+                startAutoScroll()
+            } else if newSpeed == 0 && isAutoScrolling {
+                stopAutoScroll()
+            }
+        }
+        .onChange(of: textViewProxy) { proxy in
+            coordinator.textViewProxy = proxy
+        }
         .onChange(of: scrollViewProxy) { proxy in
+            coordinator.scrollViewProxy = proxy
             // restart auto-scroll for PDF when the proxy becomes available
             guard file?.url?.pathExtension.lowercased() == "pdf",
                   proxy != nil,
                   scrollSpeed > 0 else { return }
             DispatchQueue.main.async {
-                // re-establish displayLink with the now-available scrollView
                 stopAutoScroll()
                 startAutoScroll()
             }
@@ -127,6 +133,11 @@ struct TabViewerView: View {
         guard scrollSpeed > 0 else { return }
         isAutoScrolling = true
 
+        coordinator.scrollViewProxy = scrollViewProxy
+        coordinator.textViewProxy = textViewProxy
+        coordinator.currentFile = file
+        coordinator.scrollSpeed = scrollSpeed
+
         let link = CADisplayLink(target: coordinator, selector: #selector(ScrollCoordinator.handleScrollStep(_:)))
 
         if #available(iOS 15.0, *) {
@@ -135,7 +146,7 @@ struct TabViewerView: View {
             link.preferredFramesPerSecond = 30
         }
 
-        link.add(to: .current, forMode: .common)
+        link.add(to: .main, forMode: .common)
         displayLink = link
     }
 
@@ -188,17 +199,20 @@ struct TabViewerView: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
 
-            // tag chips (scrolls if they overflow)
-            if ((file?.tags.isEmpty) == nil) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
-                        ForEach(file!.tags, id: \.self) { tag in
-                            Text(tag)
-                                .font(.caption2)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(.secondary.opacity(0.15), in: Capsule())
-                        }
+            // tag chips (show first 2 + overflow count)
+            if let tags = file?.tags, !tags.isEmpty {
+                HStack(spacing: 6) {
+                    ForEach(tags.prefix(2), id: \.self) { tag in
+                        Text(tag)
+                            .font(.caption2)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(.secondary.opacity(0.15), in: Capsule())
+                    }
+                    if tags.count > 2 {
+                        Text("+\(tags.count - 2)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -209,31 +223,21 @@ struct TabViewerView: View {
             HStack(spacing: 6) {
                 Image(systemName: "arrow.up.and.down")
                     .foregroundStyle(.secondary)
+                Text("\(Int(scrollSpeed))")
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
                 Button {
-                    // decrease speed by 1, clamped to 4
                     scrollSpeed = max(scrollSpeed - 1, 4)
-                    // restart auto-scroll if currently scrolling
-                    if isAutoScrolling {
-                        stopAutoScroll()
-                        startAutoScroll()
-                    }
                 } label: {
                     Image(systemName: "minus.circle")
                 }
                 Slider(value: $scrollSpeed,
                        in: 0...40,
-                       step: 1,
-                       onEditingChanged: { editing in
-                           editing ? stopAutoScroll() : startAutoScroll()
-                       })
+                       step: 1)
                     .frame(width: 150)
                 Button {
-                    // increase speed by 1, clamped to 40
                     scrollSpeed = min(scrollSpeed + 1, 40)
-                    if isAutoScrolling {
-                        stopAutoScroll()
-                        startAutoScroll()
-                    }
                 } label: {
                     Image(systemName: "plus.circle")
                 }
