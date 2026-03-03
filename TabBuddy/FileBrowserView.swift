@@ -215,6 +215,7 @@ struct FileBrowserView: View {
     
     // UI state
     @State private var searchText = ""
+    @State private var isSearchPresented = false
     @State private var showClearConfirmation = false
     @State private var showDeleteSelectedConfirmation = false
     @State private var activeTagFilter: String? = nil   // nil → no filter
@@ -310,8 +311,16 @@ struct FileBrowserView: View {
             .listStyle(.plain)
         }
         .searchable(text: $searchText,
+                    isPresented: $isSearchPresented,
                     placement: .toolbar,
                     prompt: "Search tags or names")
+        .onChange(of: path) { newPath in
+            if newPath.isEmpty && !searchText.isEmpty {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    isSearchPresented = true
+                }
+            }
+        }
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarLeading) {
                 Picker("Sort", selection: $sortByRecent) {
