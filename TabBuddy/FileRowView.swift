@@ -92,6 +92,15 @@ struct FileRowView: View, Equatable {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 2) {
+                if file.playCount > 0 {
+                    HStack(spacing: 3) {
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 8))
+                        Text("\(file.playCount)")
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                }
                 if file.lastOpenedAt > file.importedAt {
                     TimelineView(.periodic(from: file.lastOpenedAt, by: 60)) { _ in
                             Text(file.lastOpenedAt,

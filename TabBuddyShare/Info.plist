@@ -4,12 +4,12 @@
 <dict>
 	<key>NSExtension</key>
 	<dict>
+		<key>NSExtensionActivationRule</key>
+		<string>SUBQUERY(extensionItems, $item, SUBQUERY($item.attachments, $att, ANY $att.registeredTypeIdentifiers UTI-CONFORMS-TO "com.adobe.pdf" OR ANY $att.registeredTypeIdentifiers UTI-CONFORMS-TO "public.plain-text").@count &gt; 0).@count &gt; 0</string>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.share-services</string>
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).ShareViewController</string>
-		<key>NSExtensionActivationRule</key>
-		<string>SUBQUERY(extensionItems, $item, SUBQUERY($item.attachments, $att, ANY $att.registeredTypeIdentifiers UTI-CONFORMS-TO "com.adobe.pdf" OR ANY $att.registeredTypeIdentifiers UTI-CONFORMS-TO "public.plain-text").@count > 0).@count > 0</string>
 	</dict>
 </dict>
 </plist>
