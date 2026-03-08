@@ -1,12 +1,5 @@
 import Foundation
 import SwiftData
-import SwiftUI
-
-private func bookmark(for url: URL) -> Data? {
-    guard url.startAccessingSecurityScopedResource() else { return nil }
-    defer { url.stopAccessingSecurityScopedResource() }
-    return try? url.bookmarkData()          // no .withSecurityScope on iOS
-}
 
 /// Recursively imports every `.pdf` / `.txt` in the chosen files / folders.
 /// Shows progress, supports cancel, avoids Swift-6 data-race violations.
@@ -63,9 +56,8 @@ final class FolderImporter: ObservableObject {
             var seen = existingNames
 
             // ── 2️⃣  MAKE BOOKMARKS (Swift-6-safe) ───────────────────────────
-            let fresh: [(name: String, data: Data, folder: String)] =
-                try! await withThrowingTaskGroup(of: (String, Data, String)?.self) { group in
-                    // enqueue first window
+            let fresh: [(name: String, data: Data, folder: String, hash: String?)] =
+                (try? await withThrowingTaskGroup(of: (String, Data, String, String?)?.self) { group in
                     var next = candidates.startIndex
                     func queue() {
                         guard next < candidates.endIndex else { return }
@@ -73,13 +65,13 @@ final class FolderImporter: ObservableObject {
                         group.addTask {
                             guard let data = try? url.bookmarkData() else { return nil }
                             let folder = url.deletingLastPathComponent().lastPathComponent
-                            return (url.lastPathComponent, data, folder)
+                            let hash = FileItem.fingerprint(of: url)
+                            return (url.lastPathComponent, data, folder, hash)
                         }
                     }
                     for _ in 0..<4 { queue() }
 
-                    // collect results in a local buffer ― no shared mutation
-                    var buffer: [(String, Data, String)] = []
+                    var buffer: [(String, Data, String, String?)] = []
 
                     for try await result in group {
                         await MainActor.run { self.processed += 1 }
@@ -88,8 +80,8 @@ final class FolderImporter: ObservableObject {
                         }
                         queue()
                     }
-                    return buffer              // ← returned to fresh
-                }
+                    return buffer
+                }) ?? []
 
             // ── 3️⃣  Commit inserts on main actor ────────────────────────────
             await MainActor.run {
@@ -100,6 +92,7 @@ final class FolderImporter: ObservableObject {
                                  isFavorite: false,
                                  tags: [],
                                  folderName: rec.folder,
+                                 contentHash: rec.hash,
                                  importedAt: Date())
                     )
                 }
@@ -170,7 +163,7 @@ final class FolderImporter: ObservableObject {
 
             // ── 3️⃣  Create bookmarks for the copied files ─────────────────────
             var seen = existingNames
-            var fresh: [(name: String, data: Data, folder: String, libPath: String)] = []
+            var fresh: [(name: String, data: Data, folder: String, libPath: String, hash: String?)] = []
 
             for (destURL, relativePath) in copied {
                 await MainActor.run { self.processed += 1 }
@@ -179,7 +172,8 @@ final class FolderImporter: ObservableObject {
                 guard seen.insert(name).inserted else { continue }
                 guard let data = try? destURL.bookmarkData() else { continue }
                 let folder = destURL.deletingLastPathComponent().lastPathComponent
-                fresh.append((name, data, folder, relativePath))
+                let hash = FileItem.fingerprint(of: destURL)
+                fresh.append((name, data, folder, relativePath, hash))
             }
 
             // ── 4️⃣  Commit inserts on main actor ──────────────────────────────
@@ -190,6 +184,7 @@ final class FolderImporter: ObservableObject {
                                  filename: rec.name,
                                  folderName: rec.folder,
                                  libraryPath: rec.libPath,
+                                 contentHash: rec.hash,
                                  importedAt: Date())
                     )
                 }

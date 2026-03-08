@@ -1,5 +1,6 @@
 import Foundation
-import SwiftData         // ⬅️ new
+import SwiftData
+import CryptoKit
 
 @Model                   // ➊ marks a SwiftData model
 final class FileItem : Equatable {
@@ -25,6 +26,12 @@ final class FileItem : Equatable {
     /// relative path from the library root (nil for non-library files)
     var libraryPath: String? = nil
 
+    /// lightweight content fingerprint for detecting moved/renamed files
+    var contentHash: String? = nil
+
+    /// number of times this tab has been opened
+    var playCount: Int = 0
+
     /// Resolve the bookmark and *activate* its security scope
     var url: URL? {
         var stale = false
@@ -49,6 +56,7 @@ final class FileItem : Equatable {
          tags: [String] = [],
          folderName: String = "",
          libraryPath: String? = nil,
+         contentHash: String? = nil,
          importedAt: Date = .now) {
 
         self.id         = id
@@ -58,8 +66,22 @@ final class FileItem : Equatable {
         self.tags       = tags
         self.folderName   = folderName
         self.libraryPath  = libraryPath
+        self.contentHash  = contentHash
         self.importedAt   = importedAt
         self.lastOpenedAt = importedAt        // ← default to import date
         self.scrollSpeed = scrollSpeed
+    }
+
+    /// SHA-256 of the first 8 KB + file size. Fast and stable across moves/renames.
+    static func fingerprint(of url: URL) -> String? {
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { try? handle.close() }
+        let head = handle.readData(ofLength: 8192)
+        guard !head.isEmpty else { return nil }
+        let size = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+        var hasher = SHA256()
+        hasher.update(data: head)
+        withUnsafeBytes(of: size) { hasher.update(bufferPointer: $0) }
+        return hasher.finalize().compactMap { String(format: "%02x", $0) }.joined()
     }
 }

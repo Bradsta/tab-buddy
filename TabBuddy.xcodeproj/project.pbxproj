@@ -3,10 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA000001300000000000AA01 /* LibraryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001300000000000AA00 /* LibraryManager.swift */; };
 		B1626C3A29F631E500304E9E /* TabBuddyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1626C3929F631E500304E9E /* TabBuddyApp.swift */; };
 		B1626C3C29F631E500304E9E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1626C3B29F631E500304E9E /* ContentView.swift */; };
 		B1626C3E29F631E600304E9E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B1626C3D29F631E600304E9E /* Assets.xcassets */; };
@@ -29,7 +30,6 @@
 		E9D7A1CC2E1A02400012F2B5 /* FileRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1CB2E1A023D0012F2B5 /* FileRowView.swift */; };
 		E9D7A1CE2E1A0AFB0012F2B5 /* TagEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1CD2E1A0AF80012F2B5 /* TagEditorView.swift */; };
 		E9D7A1D02E1B1FBE0012F2B5 /* FileImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1CF2E1B1FBA0012F2B5 /* FileImporter.swift */; };
-		AA000001300000000000AA01 /* LibraryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001300000000000AA00 /* LibraryManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,7 +49,21 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		E9E295FE2F5D49050073D6A4 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		AA000001300000000000AA00 /* LibraryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryManager.swift; sourceTree = "<group>"; };
 		B11693A92C05991D005C37EA /* TabBuddy.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TabBuddy.entitlements; sourceTree = "<group>"; };
 		B1626C3629F631E500304E9E /* TabBuddy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TabBuddy.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B1626C3929F631E500304E9E /* TabBuddyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBuddyApp.swift; sourceTree = "<group>"; };
@@ -76,8 +90,11 @@
 		E9D7A1CB2E1A023D0012F2B5 /* FileRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileRowView.swift; sourceTree = "<group>"; };
 		E9D7A1CD2E1A0AF80012F2B5 /* TagEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagEditorView.swift; sourceTree = "<group>"; };
 		E9D7A1CF2E1B1FBA0012F2B5 /* FileImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileImporter.swift; sourceTree = "<group>"; };
-		AA000001300000000000AA00 /* LibraryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		E9E295F42F5D49050073D6A4 /* TabBuddyShare */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = TabBuddyShare; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		B1626C3329F631E500304E9E /* Frameworks */ = {
@@ -110,6 +127,7 @@
 				B1626C3829F631E500304E9E /* TabBuddy */,
 				B1626C4929F631E600304E9E /* TabBuddyTests */,
 				B1626C5329F631E600304E9E /* TabBuddyUITests */,
+				E9E295F42F5D49050073D6A4 /* TabBuddyShare */,
 				B1626C3729F631E500304E9E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -187,6 +205,7 @@
 				B1626C3229F631E500304E9E /* Sources */,
 				B1626C3329F631E500304E9E /* Frameworks */,
 				B1626C3429F631E500304E9E /* Resources */,
+				E9E295FE2F5D49050073D6A4 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
@@ -240,7 +259,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1430;
+				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
 					B1626C3529F631E500304E9E = {

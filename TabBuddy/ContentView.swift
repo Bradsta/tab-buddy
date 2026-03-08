@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import UniformTypeIdentifiers
 
 enum AppPage: Hashable {
     case viewer
@@ -52,7 +51,6 @@ struct ContentView: View {
         .onAppear {
             TagIndexer.rebuild(in: context)
             backfillFolderNames()
-            LibraryManager.shared.processPendingImports(context: context)
         }
     }
 

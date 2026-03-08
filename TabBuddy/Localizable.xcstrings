@@ -7,6 +7,16 @@
     "%lld" : {
 
     },
+    "%lld of %lld files" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$lld files"
+          }
+        }
+      }
+    },
     "+%lld" : {
 
     },
@@ -28,6 +38,9 @@
     "Cancel" : {
 
     },
+    "Change Library (%@)" : {
+
+    },
     "Clear Loop" : {
 
     },
@@ -35,6 +48,12 @@
 
     },
     "Common Tags" : {
+
+    },
+    "Copy files to your library?" : {
+
+    },
+    "Copy to Library (%@)" : {
 
     },
     "Delete" : {
@@ -76,6 +95,9 @@
     "Existing Tags" : {
 
     },
+    "Export Backup" : {
+
+    },
     "failed_load_permissions" : {
       "comment" : "Displayed when failed to load selected file due to permissions.",
       "extractionState" : "manual",
@@ -97,6 +119,9 @@
     "Import Folder" : {
 
     },
+    "Import in Place" : {
+
+    },
     "Imported" : {
 
     },
@@ -110,7 +135,13 @@
         }
       }
     },
+    "Library" : {
+
+    },
     "Loading PDF..." : {
+
+    },
+    "Most Played" : {
 
     },
     "Name" : {
@@ -131,6 +162,9 @@
         }
       }
     },
+    "OK" : {
+
+    },
     "Recent" : {
 
     },
@@ -138,6 +172,9 @@
 
     },
     "Remove all imported files?" : {
+
+    },
+    "Remove Library" : {
 
     },
     "Remove Tag" : {
@@ -153,6 +190,21 @@
 
     },
     "Rename…" : {
+
+    },
+    "Rescan Library" : {
+
+    },
+    "Rescanning Library…" : {
+
+    },
+    "Restore Backup" : {
+
+    },
+    "Restore Complete" : {
+
+    },
+    "Restored metadata for %lld files." : {
 
     },
     "Resume Last Loop" : {
@@ -192,6 +244,9 @@
 
     },
     "Select All" : {
+
+    },
+    "Set Library Folder" : {
 
     },
     "Set Loop End" : {
