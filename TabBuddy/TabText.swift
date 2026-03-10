@@ -13,12 +13,31 @@ struct TabText: UIViewRepresentable {
     var content: String
     @Binding var textViewProxy: UITextView?
 
+    /// Playback highlight overlay (managed externally by PlaybackCoordinator)
+    var highlightOverlay: PlaybackHighlightOverlay?
+
+    /// Callback when user taps at a character index (for seek-to-measure)
+    var onTapAtCharacter: ((Int) -> Void)?
+
     func makeUIView(context: Context) -> UITextView {
         let textView = UITextView()
         textView.isEditable = false
         textView.isScrollEnabled = true
         textView.text = content
         textView.font = UIFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
+
+        // Add highlight overlay as subview (frame managed by overlay itself)
+        if let overlay = highlightOverlay {
+            overlay.frame = textView.bounds
+            textView.addSubview(overlay)
+        }
+
+        // Add tap gesture for seek-to-measure
+        if onTapAtCharacter != nil {
+            let tap = UITapGestureRecognizer(target: context.coordinator,
+                                             action: #selector(Coordinator.handleTap(_:)))
+            textView.addGestureRecognizer(tap)
+        }
 
         DispatchQueue.main.async {
             self.textViewProxy = textView
@@ -29,7 +48,7 @@ struct TabText: UIViewRepresentable {
 
     func updateUIView(_ uiView: UITextView, context: Context) {
         uiView.font = UIFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
-        
+
         if uiView.text != content {
             uiView.text = content
 
@@ -37,6 +56,32 @@ struct TabText: UIViewRepresentable {
             DispatchQueue.main.async {
                 self.adjustFontSizeToFit(textView: uiView)
             }
+        }
+
+        // Overlay manages its own frame positioning in syncFrameAndRedraw()
+
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onTapAtCharacter: onTapAtCharacter)
+    }
+
+    final class Coordinator: NSObject {
+        var onTapAtCharacter: ((Int) -> Void)?
+
+        init(onTapAtCharacter: ((Int) -> Void)?) {
+            self.onTapAtCharacter = onTapAtCharacter
+        }
+
+        @objc func handleTap(_ gesture: UITapGestureRecognizer) {
+            guard let textView = gesture.view as? UITextView else { return }
+            let point = gesture.location(in: textView)
+            let charIndex = textView.layoutManager.characterIndex(
+                for: point,
+                in: textView.textContainer,
+                fractionOfDistanceBetweenInsertionPoints: nil
+            )
+            onTapAtCharacter?(charIndex)
         }
     }
 

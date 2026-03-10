@@ -3,6 +3,9 @@ import SwiftData
 
 enum AppPage: Hashable {
     case viewer
+    case liveTranscribe
+    case tabMaker
+    case tabMakerDocument(UUID)
 }
 
 enum ImportKind { case file, folder }
@@ -44,7 +47,12 @@ struct ContentView: View {
                     TabViewerView(file: $currentFile, path: $path)
                         .id(viewerIdentity)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-
+                case .liveTranscribe:
+                    LiveTranscriptionView()
+                case .tabMaker:
+                    MakerCompositionListView(path: $path)
+                case .tabMakerDocument(let tabID):
+                    TabMakerDocumentDestination(tabID: tabID)
                 }
             }
         }
@@ -64,6 +72,21 @@ struct ContentView: View {
             item.folderName = url.deletingLastPathComponent().lastPathComponent
         }
         try? context.save()
+    }
+}
+
+/// Resolves a ComposedTab by UUID from SwiftData and presents TabMakerView.
+private struct TabMakerDocumentDestination: View {
+    let tabID: UUID
+    @Query private var allTabs: [ComposedTab]
+
+    var body: some View {
+        if let tab = allTabs.first(where: { $0.id == tabID }) {
+            TabMakerView(composedTab: tab)
+        } else {
+            Text("Composition not found")
+                .foregroundColor(.secondary)
+        }
     }
 }
 

@@ -14,6 +14,6 @@ struct TabBuddyApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: [FileItem.self, TagStat.self])
+        .modelContainer(for: [FileItem.self, TagStat.self, ComposedTab.self])
     }
 }

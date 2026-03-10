@@ -163,18 +163,32 @@ final class FolderImporter: ObservableObject {
 
             // ── 3️⃣  Create bookmarks for the copied files ─────────────────────
             var seen = existingNames
-            var fresh: [(name: String, data: Data, folder: String, libPath: String, hash: String?)] = []
 
-            for (destURL, relativePath) in copied {
-                await MainActor.run { self.processed += 1 }
+            let fresh: [(name: String, data: Data, folder: String, libPath: String, hash: String?)] =
+                (try? await withThrowingTaskGroup(of: (String, Data, String, String, String?)?.self) { group in
+                    var next = copied.startIndex
+                    func queue() {
+                        guard next < copied.endIndex else { return }
+                        let (destURL, relativePath) = copied[next]; next = copied.index(after: next)
+                        group.addTask {
+                            guard let data = try? destURL.bookmarkData() else { return nil }
+                            let folder = destURL.deletingLastPathComponent().lastPathComponent
+                            let hash = FileItem.fingerprint(of: destURL)
+                            return (destURL.lastPathComponent, data, folder, relativePath, hash)
+                        }
+                    }
+                    for _ in 0..<4 { queue() }
 
-                let name = destURL.lastPathComponent
-                guard seen.insert(name).inserted else { continue }
-                guard let data = try? destURL.bookmarkData() else { continue }
-                let folder = destURL.deletingLastPathComponent().lastPathComponent
-                let hash = FileItem.fingerprint(of: destURL)
-                fresh.append((name, data, folder, relativePath, hash))
-            }
+                    var buffer: [(String, Data, String, String, String?)] = []
+                    for try await result in group {
+                        await MainActor.run { self.processed += 1 }
+                        if let rec = result, seen.insert(rec.0).inserted {
+                            buffer.append(rec)
+                        }
+                        queue()
+                    }
+                    return buffer
+                }) ?? []
 
             // ── 4️⃣  Commit inserts on main actor ──────────────────────────────
             await MainActor.run {

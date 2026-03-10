@@ -22,7 +22,7 @@ struct TabViewerView: View {
     @State private var scrollViewProxy: UIScrollView?
     @State private var textViewProxy: UITextView?
     @State private var textContent: String = "Loading…"
-    
+
     @State private var displayLink: CADisplayLink?
     @StateObject private var coordinator = ScrollCoordinator(
         scrollViewProxy: nil, textViewProxy: nil,
@@ -32,7 +32,7 @@ struct TabViewerView: View {
     var monospacedFont: Font {
         Font(UIFont.monospacedSystemFont(ofSize: fontSize, weight: .regular))
     }
-    
+
     // loop markers
     @State private var loopStartY: CGFloat? = nil
     @State private var loopEndY: CGFloat? = nil
@@ -42,6 +42,14 @@ struct TabViewerView: View {
     @State private var newName    = ""
     @State private var showTags   = false
     @State private var hasAccess = false
+
+    // MARK: - Playback state
+    @StateObject private var playbackCoordinator = PlaybackCoordinator()
+    @StateObject private var metronome = MetronomeEngine()
+    @StateObject private var notePlayer = NotePlaybackEngine()
+    @State private var measureMap: MeasureMap?
+    @State private var highlightOverlay = PlaybackHighlightOverlay()
+    @State private var userBPM: Double = 120
 
     @MainActor
     private func loadText() {
@@ -57,7 +65,13 @@ struct TabViewerView: View {
             do {
                 let contents = try String(contentsOf: url)
                 DispatchQueue.main.async {
-                    textContent = contents
+                    // Normalize line endings (\r\n → \n) so UITextView and parser agree
+                    textContent = contents.replacingOccurrences(of: "\r\n", with: "\n")
+                                         .replacingOccurrences(of: "\r", with: "\n")
+                    // Parse immediately after loading (don't rely solely on .onChange)
+                    if file?.url?.pathExtension.lowercased() != "pdf" {
+                        parseTextTab()
+                    }
                 }
             } catch {
                 DispatchQueue.main.async {
@@ -85,6 +99,9 @@ struct TabViewerView: View {
         GeometryReader { geo in
             VStack(spacing: 0) {
                 header
+                if measureMap != nil {
+                    playbackBar
+                }
                 Divider()
                 viewerBody
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -95,6 +112,11 @@ struct TabViewerView: View {
             // restore saved scroll speed for this file
             if let saved = file?.scrollSpeed {
                 scrollSpeed = CGFloat(saved)
+            }
+            // restore saved BPM
+            if let saved = file?.userBPM {
+                userBPM = saved
+                playbackCoordinator.bpm = saved
             }
             if !hasAccess {
                 hasAccess = file?.url?.startAccessingSecurityScopedResource() ?? false
@@ -108,6 +130,8 @@ struct TabViewerView: View {
                     startAutoScroll()
                 }
             }
+            // Set up playback coordinator callbacks
+            setupPlaybackCallbacks()
         }
         .onDisappear {
             if hasAccess {
@@ -115,10 +139,15 @@ struct TabViewerView: View {
                 hasAccess = false
             }
             stopAutoScroll()
-            // persist scrollSpeed and loop markers on exit
+            playbackCoordinator.stop()
+            metronome.stop()
+            notePlayer.stop()
+            lastScrolledSystem = -1
+            // persist scrollSpeed, loop markers, and BPM on exit
             file?.scrollSpeed = Double(scrollSpeed)
             file?.loopStartY = loopStartY.map { Double($0) }
             file?.loopEndY = loopEndY.map { Double($0) }
+            file?.userBPM = userBPM
             try? context.save()
             // clear loop on coordinator for safety
             coordinator.loopStartY = nil
@@ -134,6 +163,17 @@ struct TabViewerView: View {
         }
         .onChange(of: textViewProxy) { proxy in
             coordinator.textViewProxy = proxy
+        }
+        .onChange(of: textContent) { _ in
+            // Parse tab structure when text content loads
+            if file?.url?.pathExtension.lowercased() != "pdf" {
+                parseTextTab()
+            }
+        }
+        .onChange(of: playbackCoordinator.isPlaying) { isPlaying in
+            if !isPlaying {
+                highlightOverlay.isHighlightVisible = false
+            }
         }
         .onChange(of: scrollViewProxy) { proxy in
             coordinator.scrollViewProxy = proxy
@@ -338,7 +378,11 @@ struct TabViewerView: View {
             } else {
                 TabText(fontSize: $fontSize,
                         content: textContent,
-                        textViewProxy: $textViewProxy)
+                        textViewProxy: $textViewProxy,
+                        highlightOverlay: highlightOverlay,
+                        onTapAtCharacter: { charIndex in
+                            seekToCharacter(charIndex)
+                        })
                     .gesture(
                         MagnificationGesture()
                             .onChanged { value in
@@ -401,4 +445,307 @@ struct TabViewerView: View {
                 print("Rename failed:", error)
             }
         }
+
+    // MARK: - Playback Bar
+
+    private var playbackBar: some View {
+        HStack(spacing: 12) {
+            // Play/Pause
+            Button {
+                if playbackCoordinator.isPlaying {
+                    playbackCoordinator.pause()
+                    metronome.stop()
+                    notePlayer.stop()
+                    // Resume constant-speed auto-scroll if speed > 0
+                    if scrollSpeed > 0 { startAutoScroll() }
+                } else {
+                    // Stop constant-speed auto-scroll when playback starts
+                    stopAutoScroll()
+                    // Force full text layout so highlight Y positions and
+                    // contentSize are accurate for the entire document.
+                    // UITextView uses lazy layout and may not have computed
+                    // positions for text that hasn't been scrolled to yet.
+                    if let tv = textViewProxy {
+                        tv.layoutManager.ensureLayout(for: tv.textContainer)
+                    }
+                    metronome.start()
+                    notePlayer.start()
+                    playbackCoordinator.play()
+                }
+            } label: {
+                Image(systemName: playbackCoordinator.isPlaying ? "pause.fill" : "play.fill")
+                    .font(.title3)
+            }
+            .buttonStyle(.borderless)
+
+            // Stop
+            Button {
+                playbackCoordinator.stop()
+                metronome.stop()
+                notePlayer.stop()
+                highlightOverlay.isHighlightVisible = false
+                lastScrolledSystem = -1
+            } label: {
+                Image(systemName: "stop.fill")
+                    .font(.title3)
+            }
+            .buttonStyle(.borderless)
+
+            Divider().frame(height: 20)
+
+            // BPM control
+            HStack(spacing: 4) {
+                Text("BPM")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text("\(Int(userBPM))")
+                    .font(.caption)
+                    .monospacedDigit()
+                    .frame(minWidth: 30)
+                Button {
+                    userBPM = max(userBPM - 5, 30)
+                    playbackCoordinator.bpm = userBPM
+                } label: {
+                    Image(systemName: "minus.circle")
+                }
+                Slider(value: $userBPM, in: 30...300, step: 1)
+                    .frame(width: 100)
+                    .onChange(of: userBPM) { newVal in
+                        playbackCoordinator.bpm = newVal
+                    }
+                Button {
+                    userBPM = min(userBPM + 5, 300)
+                    playbackCoordinator.bpm = userBPM
+                } label: {
+                    Image(systemName: "plus.circle")
+                }
+            }
+
+            Divider().frame(height: 20)
+
+            // Metronome toggle
+            Button {
+                metronome.isEnabled.toggle()
+            } label: {
+                Image(systemName: metronome.isEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                    .foregroundStyle(metronome.isEnabled ? .primary : .secondary)
+            }
+            .buttonStyle(.borderless)
+
+            // Note playback toggle
+            Button {
+                notePlayer.isEnabled.toggle()
+            } label: {
+                Image(systemName: notePlayer.isEnabled ? "music.note" : "music.note.list")
+                    .foregroundStyle(notePlayer.isEnabled ? .blue : .secondary)
+            }
+            .buttonStyle(.borderless)
+
+            // Measure counter
+            if let map = measureMap {
+                Text("\(playbackCoordinator.currentMeasureIndex + 1)/\(map.measureCount)")
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 4)
+    }
+
+    // MARK: - Playback Integration
+
+    private func setupPlaybackCallbacks() {
+        // Parse tab for text files
+        if file?.url?.pathExtension.lowercased() != "pdf" {
+            parseTextTab()
+        }
+
+        // Try to find paired MIDI for auto-BPM
+        if let fileURL = file?.url {
+            if let midiURL = MIDITempoExtractor.findPairedMIDI(for: fileURL),
+               let tempoData = MIDITempoExtractor.extract(from: midiURL) {
+                if file?.userBPM == nil {
+                    userBPM = tempoData.initialBPM
+                    playbackCoordinator.bpm = tempoData.initialBPM
+                }
+                if measureMap?.timeSignature == nil,
+                   let ts = tempoData.timeSignature {
+                    measureMap?.timeSignature = ts
+                }
+            }
+        }
+
+        // Beat callback → metronome click
+        playbackCoordinator.onBeat = { [weak metronome] beatInMeasure, beatsPerMeasure in
+            metronome?.playClick(beatInMeasure: beatInMeasure, beatsPerMeasure: beatsPerMeasure)
+        }
+
+        // Note callback → note playback
+        // Merge all simultaneously-triggered notes into one chord to avoid
+        // .interrupts killing all but the last note in a batch
+        playbackCoordinator.onNoteReached = { [weak notePlayer] notes in
+            guard let player = notePlayer, player.isEnabled else { return }
+            if notes.count == 1 {
+                player.playNotes(notes[0].frets)
+            } else {
+                // Merge frets from all notes — latest position wins on conflict
+                var merged: [Int?] = Array(repeating: nil, count: 6)
+                for note in notes.sorted(by: { $0.positionInMeasure < $1.positionInMeasure }) {
+                    for (i, fret) in note.frets.enumerated() {
+                        if let f = fret { merged[i] = f }
+                    }
+                }
+                player.playNotes(merged)
+            }
+        }
+
+        // Frame update → highlight position
+        playbackCoordinator.onFrameUpdate = { [weak highlightOverlay] measureIdx, fraction in
+            guard let overlay = highlightOverlay,
+                  let map = measureMap,
+                  let textView = textViewProxy else { return }
+
+            let allMeasures = map.allMeasures
+            guard measureIdx < allMeasures.count else { return }
+
+            let measure = allMeasures[measureIdx]
+
+            // Find which system this measure is in
+            var measuresInPriorSystems = 0
+            var currentSystem: MeasureSystem?
+            for sys in map.systems {
+                if measureIdx < measuresInPriorSystems + sys.measures.count {
+                    currentSystem = sys
+                    break
+                }
+                measuresInPriorSystems += sys.measures.count
+            }
+
+            guard let system = currentSystem else { return }
+
+            let font = UIFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
+            let charWidth = PlaybackHighlightOverlay.monoCharWidth(for: font)
+
+            let rect = PlaybackHighlightOverlay.calculateRect(
+                measure: measure,
+                beatFraction: fraction,
+                system: system,
+                textView: textView,
+                charWidth: charWidth
+            )
+
+            overlay.highlightRect = rect
+            overlay.isHighlightVisible = true
+        }
+
+        // System changed → scroll to keep visible
+        playbackCoordinator.onSystemChanged = { _ in
+            scrollToCurrentSystem()
+        }
+    }
+
+    private func parseTextTab() {
+        guard !textContent.isEmpty, textContent != "Loading…" else { return }
+        let parsed = TabParser.parse(textContent)
+        measureMap = parsed
+        playbackCoordinator.measureMap = parsed
+
+        // Use parsed BPM if available and user hasn't set one
+        if file?.userBPM == nil, let parsedBPM = parsed.bpm {
+            userBPM = parsedBPM
+            playbackCoordinator.bpm = parsedBPM
+        }
+    }
+
+    /// Track the last system we scrolled to, to avoid redundant scroll commands
+    @State private var lastScrolledSystem: Int = -1
+
+    private func scrollToCurrentSystem() {
+        guard let map = measureMap,
+              let textView = textViewProxy else { return }
+
+        // Find the system containing the current measure
+        var measuresInPriorSystems = 0
+        for (sysIdx, sys) in map.systems.enumerated() {
+            if playbackCoordinator.currentMeasureIndex < measuresInPriorSystems + sys.measures.count {
+                // Skip if we already scrolled to this system
+                guard sysIdx != lastScrolledSystem else { return }
+                lastScrolledSystem = sysIdx
+
+                if let lineRange = sys.lineRange {
+                    // Use layoutManager for precise Y position instead of estimated lineHeight.
+                    // The simple lineRange.lowerBound * lineHeight calculation drifts due to
+                    // line wrapping, paragraph spacing, and other layout differences.
+                    let lines = textContent.components(separatedBy: "\n")
+                    var charIndex = 0
+                    for i in 0..<min(lineRange.lowerBound, lines.count) {
+                        charIndex += lines[i].count + 1 // +1 for newline
+                    }
+
+                    let safeCharIndex = min(charIndex, max(0, textView.text.count - 1))
+                    let nsRange = NSRange(location: safeCharIndex, length: 1)
+                    let glyphRange = textView.layoutManager.glyphRange(
+                        forCharacterRange: nsRange, actualCharacterRange: nil
+                    )
+                    let lineRect = textView.layoutManager.boundingRect(
+                        forGlyphRange: glyphRange, in: textView.textContainer
+                    )
+
+                    let systemY = textView.textContainerInset.top + lineRect.origin.y
+                    let maxY = max(0, textView.contentSize.height - textView.bounds.height)
+                    let targetY = min(maxY, max(0, systemY - textView.bounds.height / 3))
+
+                    // Only scroll if the target is meaningfully different from current position
+                    let currentY = textView.contentOffset.y
+                    guard abs(targetY - currentY) > 5 else { return }
+
+                    textView.setContentOffset(CGPoint(x: 0, y: targetY), animated: true)
+                }
+                return
+            }
+            measuresInPriorSystems += sys.measures.count
+        }
+    }
+
+    private func seekToCharacter(_ charIndex: Int) {
+        guard let map = measureMap else { return }
+        notePlayer.stopNotes()
+        lastScrolledSystem = -1
+        // Find which measure contains this character index
+        // Convert character index to approximate column position
+        let lines = textContent.components(separatedBy: "\n")
+        var charCount = 0
+        var targetLine = 0
+        var targetCol = 0
+        for (i, line) in lines.enumerated() {
+            if charCount + line.count >= charIndex {
+                targetLine = i
+                targetCol = charIndex - charCount
+                break
+            }
+            charCount += line.count + 1 // +1 for newline
+        }
+
+        // Find the measure at this line/column
+        for (sysIdx, system) in map.systems.enumerated() {
+            guard let lineRange = system.lineRange,
+                  lineRange.contains(targetLine) else { continue }
+            var globalIdx = 0
+            for s in map.systems.prefix(sysIdx) {
+                globalIdx += s.measures.count
+            }
+            for (mIdx, measure) in system.measures.enumerated() {
+                if let colRange = measure.columnRange, colRange.contains(targetCol) {
+                    playbackCoordinator.seekToMeasure(globalIdx + mIdx)
+                    return
+                }
+            }
+            // Default to first measure in this system
+            playbackCoordinator.seekToMeasure(globalIdx)
+            return
+        }
+    }
     }

@@ -32,20 +32,27 @@ final class FileItem : Equatable {
     /// number of times this tab has been opened
     var playCount: Int = 0
 
-    /// Resolve the bookmark and *activate* its security scope
+    /// user-specified BPM for playback (nil = use auto-detected or default)
+    var userBPM: Double? = nil
+
+    /// Resolve the bookmark and *activate* its security scope.
+    /// Caller is responsible for calling `stopAccessingSecurityScopedResource()` when done.
     var url: URL? {
         var stale = false
-        let opts: URL.BookmarkResolutionOptions = []
-
         guard let u = try? URL(
                 resolvingBookmarkData: bookmark,
-                options: opts,
+                options: [],
                 bookmarkDataIsStale: &stale)
         else { return nil }
 
-        // Start the scope (no-op on iOS but required on macOS)
         if !u.startAccessingSecurityScopedResource() { return nil }
         return u
+    }
+
+    /// Check if the bookmark can still be resolved, without starting a security scope.
+    var isBookmarkValid: Bool {
+        var stale = false
+        return (try? URL(resolvingBookmarkData: bookmark, options: [], bookmarkDataIsStale: &stale)) != nil
     }
 
     init(id: UUID = .init(),
@@ -82,6 +89,14 @@ final class FileItem : Equatable {
         var hasher = SHA256()
         hasher.update(data: head)
         withUnsafeBytes(of: size) { hasher.update(bufferPointer: $0) }
-        return hasher.finalize().compactMap { String(format: "%02x", $0) }.joined()
+        let digest = hasher.finalize()
+        let hexChars = Array("0123456789abcdef".unicodeScalars)
+        var hex = String()
+        hex.reserveCapacity(SHA256.byteCount * 2)
+        for byte in digest {
+            hex.unicodeScalars.append(hexChars[Int(byte >> 4)])
+            hex.unicodeScalars.append(hexChars[Int(byte & 0x0F)])
+        }
+        return hex
     }
 }

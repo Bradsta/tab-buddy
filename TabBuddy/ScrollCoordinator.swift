@@ -29,6 +29,17 @@ class ScrollCoordinator: NSObject, ObservableObject {
         self.scrollSpeed = scrollSpeed
     }
 
+    /// Scroll to a specific Y offset (used by PlaybackCoordinator).
+    func scrollToY(_ y: CGFloat, animated: Bool = true) {
+        if let sv = scrollViewProxy {
+            let clampedY = min(y, sv.contentSize.height - sv.bounds.height)
+            sv.setContentOffset(.init(x: sv.contentOffset.x, y: max(0, clampedY)), animated: animated)
+        } else if let tv = textViewProxy {
+            let clampedY = min(y, tv.contentSize.height - tv.bounds.height)
+            tv.setContentOffset(.init(x: tv.contentOffset.x, y: max(0, clampedY)), animated: animated)
+        }
+    }
+
     @objc func handleScrollStep(_ link: CADisplayLink) {
         guard let file = currentFile else { return }
         let dt = link.targetTimestamp - link.timestamp

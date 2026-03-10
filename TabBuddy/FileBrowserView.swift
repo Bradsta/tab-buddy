@@ -7,7 +7,6 @@ import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
 
-struct RowKey: Identifiable { let id: Int }
 enum ImportMode { case files, folder }
 
 struct JSONBackupDocument: FileDocument {
@@ -157,55 +156,6 @@ private struct TagHeader: View {
     
 }
 
-// File list ------------------------------------------------------------------
-private struct BrowserList: View {
-    let rows: [FileItem]
-    let delete: (FileItem) -> Void
-    let open:   (FileItem) -> Void
-    @Binding var searchText: String
-    @Binding var selectedFiles: Set<UUID>
-    @Binding var multiSelectMode: Bool
-
-    var body: some View {
-        List {
-            ForEach(rows) { file in
-                HStack(spacing: 8) {
-                    // show selection indicator in multi-select mode
-                    if multiSelectMode {
-                        Image(systemName: selectedFiles.contains(file.id) ? "checkmark.circle.fill" : "circle")
-                    }
-                    // file row content, disable taps when in multi-select mode
-                    FileRowView(file: file,
-                                removeFile: { delete(file) },
-                                openFile:   { if !multiSelectMode { open(file) } })
-                        .allowsHitTesting(!multiSelectMode)
-                }
-                .contentShape(Rectangle())
-                .background(multiSelectMode && selectedFiles.contains(file.id)
-                            ? Color.accentColor.opacity(0.2)
-                            : Color.clear)
-                .onTapGesture {
-                    if multiSelectMode {
-                        if selectedFiles.contains(file.id) {
-                            selectedFiles.remove(file.id)
-                        } else {
-                            selectedFiles.insert(file.id)
-                        }
-                    } else {
-                        open(file)
-                    }
-                }
-            }
-        }
-        .searchable(text: $searchText,
-                    placement: .navigationBarDrawer(displayMode: .always),
-                    prompt: "Search tags or names")
-        .transaction { $0.animation = nil }
-        .listStyle(.plain)
-    }
-}
-
-
 struct FileBrowserView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.undoManager) private var undoManager
@@ -244,7 +194,7 @@ struct FileBrowserView: View {
     @State private var showRestoreResult = false
     @State private var restoreCount = 0
     @State private var activeTagFilter: String? = nil   // nil → no filter
-    private enum SortMode: String { case name, recent, imported, mostPlayed }
+    private enum SortMode { case name, recent, imported, mostPlayed }
     @State private var sortMode: SortMode = .name
     @State private var filterFavorite = false       // false → all files
     private enum BrowseMode { case flat, folders }
@@ -363,8 +313,7 @@ struct FileBrowserView: View {
 
     
     private func open(_ file: FileItem) {
-        // file.url already starts the security scope; the viewer manages its own scope lifecycle
-        guard file.url != nil else { return }
+        guard file.isBookmarkValid else { return }
 
         file.lastOpenedAt = Date()
         file.playCount += 1
@@ -529,6 +478,20 @@ struct FileBrowserView: View {
     private var ellipsisMenu: some View {
         Menu {
             Button {
+                path.append(.tabMaker)
+            } label: {
+                Label("Compose Tab", systemImage: "music.note.list")
+            }
+
+            Button {
+                path.append(.liveTranscribe)
+            } label: {
+                Label("Live Transcribe", systemImage: "mic.and.signal.meter")
+            }
+
+            Divider()
+
+            Button {
                 withAnimation {
                     editMode?.wrappedValue = .active
                 }
@@ -609,7 +572,7 @@ struct FileBrowserView: View {
             ))
             .overlay { rescanOverlay }
             .overlay { importOverlay }
-            .overlay { massTagOverlay }
+            .overlay { massTagOverlay(visible: visible) }
     }
 
     @ViewBuilder
@@ -681,12 +644,12 @@ struct FileBrowserView: View {
     }
 
     @ViewBuilder
-    private var massTagOverlay: some View {
+    private func massTagOverlay(visible: [FileItem]) -> some View {
         if showMassTagModal {
             ZStack {
                 Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
                 MassTagView(
-                    files: visibleFiles.filter { selectedFiles.contains($0.id) }
+                    files: visible.filter { selectedFiles.contains($0.id) }
                 ) {
                     showMassTagModal = false
                 }

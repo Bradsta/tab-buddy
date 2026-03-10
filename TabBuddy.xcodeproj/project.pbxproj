@@ -18,6 +18,16 @@
 		B1626C6829F6339E00304E9E /* TabPDFView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1626C6729F6339E00304E9E /* TabPDFView.swift */; };
 		B16E442F2DBF39D50089F9E6 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B16E442E2DBF39D50089F9E6 /* Localizable.xcstrings */; };
 		B1B0DD742C03F71100F52473 /* TabText.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B0DD732C03F71100F52473 /* TabText.swift */; };
+		C10000012F5E000100AB1002 /* MeasureMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000012F5E000100AB1001 /* MeasureMap.swift */; };
+		C10000022F5E000100AB1002 /* TabParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000022F5E000100AB1001 /* TabParser.swift */; };
+		C10000032F5E000100AB1002 /* PlaybackCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000032F5E000100AB1001 /* PlaybackCoordinator.swift */; };
+		C10000042F5E000100AB1002 /* MetronomeEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000042F5E000100AB1001 /* MetronomeEngine.swift */; };
+		C10000052F5E000100AB1002 /* MIDITempoExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000052F5E000100AB1001 /* MIDITempoExtractor.swift */; };
+		C10000082F5E000100AB1002 /* NotePlaybackEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000082F5E000100AB1001 /* NotePlaybackEngine.swift */; };
+		C10000092F5E000100AB1002 /* PitchDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000092F5E000100AB1001 /* PitchDetector.swift */; };
+		C100000A2F5E000100AB1002 /* LiveTranscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C100000A2F5E000100AB1001 /* LiveTranscriptionView.swift */; };
+		C10000062F5E000100AB1002 /* PlaybackHighlightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000062F5E000100AB1001 /* PlaybackHighlightView.swift */; };
+		C10000072F5E000100AB1002 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C10000072F5E000100AB1001 /* AudioToolbox.framework */; };
 		E92091A52E1B3D350043BC03 /* TagChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92091A42E1B3D330043BC03 /* TagChip.swift */; };
 		E92091A72E1B3F680043BC03 /* TagStat.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92091A62E1B3F680043BC03 /* TagStat.swift */; };
 		E92091A92E1B3FAB0043BC03 /* TagIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92091A82E1B3FAB0043BC03 /* TagIndexer.swift */; };
@@ -30,6 +40,19 @@
 		E9D7A1CC2E1A02400012F2B5 /* FileRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1CB2E1A023D0012F2B5 /* FileRowView.swift */; };
 		E9D7A1CE2E1A0AFB0012F2B5 /* TagEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1CD2E1A0AF80012F2B5 /* TagEditorView.swift */; };
 		E9D7A1D02E1B1FBE0012F2B5 /* FileImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1CF2E1B1FBA0012F2B5 /* FileImporter.swift */; };
+		D10000012F6E000100AB0001 /* ComposedNote.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000012F6E000100AB0000 /* ComposedNote.swift */; };
+		D10000022F6E000100AB0001 /* ComposedTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000022F6E000100AB0000 /* ComposedTab.swift */; };
+		D10000032F6E000100AB0001 /* StaffPitchMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000032F6E000100AB0000 /* StaffPitchMapper.swift */; };
+		D10000042F6E000100AB0001 /* FretSuggestionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000042F6E000100AB0000 /* FretSuggestionEngine.swift */; };
+		D10000052F6E000100AB0001 /* MeasureMapBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000052F6E000100AB0000 /* MeasureMapBuilder.swift */; };
+		D10000062F6E000100AB0001 /* TabMakerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000062F6E000100AB0000 /* TabMakerViewModel.swift */; };
+		D10000072F6E000100AB0001 /* StaffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000072F6E000100AB0000 /* StaffView.swift */; };
+		D10000082F6E000100AB0001 /* TabStaffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000082F6E000100AB0000 /* TabStaffView.swift */; };
+		D10000092F6E000100AB0001 /* TabMakerDocumentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000092F6E000100AB0000 /* TabMakerDocumentView.swift */; };
+		D100000A2F6E000100AB0001 /* TabMakerToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = D100000A2F6E000100AB0000 /* TabMakerToolbar.swift */; };
+		D100000B2F6E000100AB0001 /* NoteInputOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = D100000B2F6E000100AB0000 /* NoteInputOverlay.swift */; };
+		D100000C2F6E000100AB0001 /* TabMakerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D100000C2F6E000100AB0000 /* TabMakerView.swift */; };
+		D100000D2F6E000100AB0001 /* MakerCompositionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D100000D2F6E000100AB0000 /* MakerCompositionListView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -78,6 +101,29 @@
 		B1626C6729F6339E00304E9E /* TabPDFView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabPDFView.swift; sourceTree = "<group>"; };
 		B16E442E2DBF39D50089F9E6 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		B1B0DD732C03F71100F52473 /* TabText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabText.swift; sourceTree = "<group>"; };
+		C10000012F5E000100AB1001 /* MeasureMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeasureMap.swift; sourceTree = "<group>"; };
+		C10000022F5E000100AB1001 /* TabParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabParser.swift; sourceTree = "<group>"; };
+		C10000032F5E000100AB1001 /* PlaybackCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackCoordinator.swift; sourceTree = "<group>"; };
+		C10000042F5E000100AB1001 /* MetronomeEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetronomeEngine.swift; sourceTree = "<group>"; };
+		C10000052F5E000100AB1001 /* MIDITempoExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MIDITempoExtractor.swift; sourceTree = "<group>"; };
+		C10000082F5E000100AB1001 /* NotePlaybackEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotePlaybackEngine.swift; sourceTree = "<group>"; };
+		C10000092F5E000100AB1001 /* PitchDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchDetector.swift; sourceTree = "<group>"; };
+		C100000A2F5E000100AB1001 /* LiveTranscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTranscriptionView.swift; sourceTree = "<group>"; };
+		C10000062F5E000100AB1001 /* PlaybackHighlightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackHighlightView.swift; sourceTree = "<group>"; };
+		C10000072F5E000100AB1001 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		D10000012F6E000100AB0000 /* ComposedNote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposedNote.swift; sourceTree = "<group>"; };
+		D10000022F6E000100AB0000 /* ComposedTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposedTab.swift; sourceTree = "<group>"; };
+		D10000032F6E000100AB0000 /* StaffPitchMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffPitchMapper.swift; sourceTree = "<group>"; };
+		D10000042F6E000100AB0000 /* FretSuggestionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FretSuggestionEngine.swift; sourceTree = "<group>"; };
+		D10000052F6E000100AB0000 /* MeasureMapBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeasureMapBuilder.swift; sourceTree = "<group>"; };
+		D10000062F6E000100AB0000 /* TabMakerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabMakerViewModel.swift; sourceTree = "<group>"; };
+		D10000072F6E000100AB0000 /* StaffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffView.swift; sourceTree = "<group>"; };
+		D10000082F6E000100AB0000 /* TabStaffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabStaffView.swift; sourceTree = "<group>"; };
+		D10000092F6E000100AB0000 /* TabMakerDocumentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabMakerDocumentView.swift; sourceTree = "<group>"; };
+		D100000A2F6E000100AB0000 /* TabMakerToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabMakerToolbar.swift; sourceTree = "<group>"; };
+		D100000B2F6E000100AB0000 /* NoteInputOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteInputOverlay.swift; sourceTree = "<group>"; };
+		D100000C2F6E000100AB0000 /* TabMakerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabMakerView.swift; sourceTree = "<group>"; };
+		D100000D2F6E000100AB0000 /* MakerCompositionListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MakerCompositionListView.swift; sourceTree = "<group>"; };
 		E92091A42E1B3D330043BC03 /* TagChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagChip.swift; sourceTree = "<group>"; };
 		E92091A62E1B3F680043BC03 /* TagStat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagStat.swift; sourceTree = "<group>"; };
 		E92091A82E1B3FAB0043BC03 /* TagIndexer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagIndexer.swift; sourceTree = "<group>"; };
@@ -101,6 +147,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C10000072F5E000100AB1002 /* AudioToolbox.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -129,6 +176,7 @@
 				B1626C5329F631E600304E9E /* TabBuddyUITests */,
 				E9E295F42F5D49050073D6A4 /* TabBuddyShare */,
 				B1626C3729F631E500304E9E /* Products */,
+				C10000072F5E000100AB1001 /* AudioToolbox.framework */,
 			);
 			sourceTree = "<group>";
 		};
@@ -142,9 +190,39 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+			D100000E2F6E000100AB0000 /* Maker */ = {
+			isa = PBXGroup;
+			children = (
+				D10000012F6E000100AB0000 /* ComposedNote.swift */,
+				D10000022F6E000100AB0000 /* ComposedTab.swift */,
+				D10000032F6E000100AB0000 /* StaffPitchMapper.swift */,
+				D10000042F6E000100AB0000 /* FretSuggestionEngine.swift */,
+				D10000052F6E000100AB0000 /* MeasureMapBuilder.swift */,
+				D10000062F6E000100AB0000 /* TabMakerViewModel.swift */,
+				D10000072F6E000100AB0000 /* StaffView.swift */,
+				D10000082F6E000100AB0000 /* TabStaffView.swift */,
+				D10000092F6E000100AB0000 /* TabMakerDocumentView.swift */,
+				D100000A2F6E000100AB0000 /* TabMakerToolbar.swift */,
+				D100000B2F6E000100AB0000 /* NoteInputOverlay.swift */,
+				D100000C2F6E000100AB0000 /* TabMakerView.swift */,
+				D100000D2F6E000100AB0000 /* MakerCompositionListView.swift */,
+			);
+			path = Maker;
+			sourceTree = "<group>";
+		};
 		B1626C3829F631E500304E9E /* TabBuddy */ = {
 			isa = PBXGroup;
 			children = (
+				D100000E2F6E000100AB0000 /* Maker */,
+				C10000012F5E000100AB1001 /* MeasureMap.swift */,
+				C10000022F5E000100AB1001 /* TabParser.swift */,
+				C10000032F5E000100AB1001 /* PlaybackCoordinator.swift */,
+				C10000042F5E000100AB1001 /* MetronomeEngine.swift */,
+				C10000082F5E000100AB1001 /* NotePlaybackEngine.swift */,
+				C10000092F5E000100AB1001 /* PitchDetector.swift */,
+				C100000A2F5E000100AB1001 /* LiveTranscriptionView.swift */,
+				C10000052F5E000100AB1001 /* MIDITempoExtractor.swift */,
+				C10000062F5E000100AB1001 /* PlaybackHighlightView.swift */,
 				E979731E2E244B7F00AC1A4D /* MassTagView.swift */,
 				E979731C2E1B6C1400AC1A4D /* ScrollCoordinator.swift */,
 				E92091A82E1B3FAB0043BC03 /* TagIndexer.swift */,
@@ -327,6 +405,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C10000012F5E000100AB1002 /* MeasureMap.swift in Sources */,
+				C10000022F5E000100AB1002 /* TabParser.swift in Sources */,
+				C10000032F5E000100AB1002 /* PlaybackCoordinator.swift in Sources */,
+				C10000042F5E000100AB1002 /* MetronomeEngine.swift in Sources */,
+				C10000082F5E000100AB1002 /* NotePlaybackEngine.swift in Sources */,
+				C10000092F5E000100AB1002 /* PitchDetector.swift in Sources */,
+				C100000A2F5E000100AB1002 /* LiveTranscriptionView.swift in Sources */,
+				C10000052F5E000100AB1002 /* MIDITempoExtractor.swift in Sources */,
+				C10000062F5E000100AB1002 /* PlaybackHighlightView.swift in Sources */,
 				B1626C6829F6339E00304E9E /* TabPDFView.swift in Sources */,
 				E9AB56732E1B28B000AFD8E2 /* FileItem.swift in Sources */,
 				E92091A92E1B3FAB0043BC03 /* TagIndexer.swift in Sources */,
@@ -344,6 +431,19 @@
 				E92091A72E1B3F680043BC03 /* TagStat.swift in Sources */,
 				B1626C3A29F631E500304E9E /* TabBuddyApp.swift in Sources */,
 				E9D7A1CA2E19F5860012F2B5 /* TabViewerView.swift in Sources */,
+				D10000012F6E000100AB0001 /* ComposedNote.swift in Sources */,
+				D10000022F6E000100AB0001 /* ComposedTab.swift in Sources */,
+				D10000032F6E000100AB0001 /* StaffPitchMapper.swift in Sources */,
+				D10000042F6E000100AB0001 /* FretSuggestionEngine.swift in Sources */,
+				D10000052F6E000100AB0001 /* MeasureMapBuilder.swift in Sources */,
+				D10000062F6E000100AB0001 /* TabMakerViewModel.swift in Sources */,
+				D10000072F6E000100AB0001 /* StaffView.swift in Sources */,
+				D10000082F6E000100AB0001 /* TabStaffView.swift in Sources */,
+				D10000092F6E000100AB0001 /* TabMakerDocumentView.swift in Sources */,
+				D100000A2F6E000100AB0001 /* TabMakerToolbar.swift in Sources */,
+				D100000B2F6E000100AB0001 /* NoteInputOverlay.swift in Sources */,
+				D100000C2F6E000100AB0001 /* TabMakerView.swift in Sources */,
+				D100000D2F6E000100AB0001 /* MakerCompositionListView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -511,6 +611,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Tab Buddy";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Tab Buddy uses the microphone to detect notes you play on your guitar for live transcription.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -543,6 +644,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Tab Buddy";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Tab Buddy uses the microphone to detect notes you play on your guitar for live transcription.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

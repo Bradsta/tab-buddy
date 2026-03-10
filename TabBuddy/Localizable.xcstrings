@@ -1,10 +1,25 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "" : {
+
+    },
     "(%@)" : {
 
     },
+    "#" : {
+
+    },
     "%lld" : {
+
+    },
+    "%lld BPM" : {
+
+    },
+    "%lld measures" : {
+
+    },
+    "%lld notes" : {
 
     },
     "%lld of %lld files" : {
@@ -17,10 +32,23 @@
         }
       }
     },
+    "%lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld"
+          }
+        }
+      }
+    },
     "+%lld" : {
 
     },
     "⟳ Loop" : {
+
+    },
+    "𝄞" : {
 
     },
     "Add" : {
@@ -35,10 +63,16 @@
     "Apply to %lld files" : {
 
     },
+    "BPM" : {
+
+    },
     "Cancel" : {
 
     },
     "Change Library (%@)" : {
+
+    },
+    "Clear" : {
 
     },
     "Clear Loop" : {
@@ -48,6 +82,15 @@
 
     },
     "Common Tags" : {
+
+    },
+    "Compose Tab" : {
+
+    },
+    "Composition not found" : {
+
+    },
+    "Compositions" : {
 
     },
     "Copy files to your library?" : {
@@ -138,7 +181,19 @@
     "Library" : {
 
     },
+    "Listen" : {
+
+    },
+    "Live Transcribe" : {
+
+    },
+    "Live Transcription" : {
+
+    },
     "Loading PDF..." : {
+
+    },
+    "Microphone Access Required" : {
 
     },
     "Most Played" : {
@@ -147,7 +202,16 @@
     "Name" : {
 
     },
+    "New" : {
+
+    },
+    "New Composition" : {
+
+    },
     "new tag" : {
+
+    },
+    "No Compositions" : {
 
     },
     "no_file_selected" : {
@@ -163,6 +227,9 @@
       }
     },
     "OK" : {
+
+    },
+    "Open Settings" : {
 
     },
     "Recent" : {
@@ -258,6 +325,12 @@
     "Sort" : {
 
     },
+    "Stop" : {
+
+    },
+    "Tab Buddy needs microphone access to detect the notes you play. Enable it in Settings." : {
+
+    },
     "Tag Actions" : {
 
     },
@@ -274,6 +347,12 @@
 
     },
     "Tags: %@" : {
+
+    },
+    "Tap + to create your first tab" : {
+
+    },
+    "Title" : {
 
     },
     "Undo" : {

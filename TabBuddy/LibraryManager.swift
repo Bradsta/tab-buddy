@@ -7,7 +7,7 @@ final class LibraryManager: ObservableObject {
 
     private static let bookmarkKey = "libraryDirectoryBookmark"
     @Published var libraryName: String?
-    @Published var isConfigured: Bool = false
+    var isConfigured: Bool { libraryName != nil }
     @Published var isRescanning: Bool = false
     @Published var rescanTotal: Int = 0
     @Published var rescanProcessed: Int = 0
@@ -99,12 +99,12 @@ final class LibraryManager: ObservableObject {
             try? fm.createDirectory(at: destDir, withIntermediateDirectories: true)
 
             // Copy (skip if already exists)
-            if !fm.fileExists(atPath: dest.path(percentEncoded: false)) {
-                do {
-                    try fm.copyItem(at: source, to: dest)
-                } catch {
-                    continue
-                }
+            do {
+                try fm.copyItem(at: source, to: dest)
+            } catch CocoaError.fileWriteFileExists {
+                // already present — treat as success
+            } catch {
+                continue
             }
 
             results.append((dest, relativePath))
@@ -159,13 +159,15 @@ final class LibraryManager: ObservableObject {
             await MainActor.run { self.rescanTotal = discoveredFiles.count }
 
             // 2. Fast pass on main actor: match by path and name (no I/O)
-            let unmatchedIndices: [Int] = await MainActor.run {
+            let (unmatchedIndices, fastMatchedIDs, hashIndex): ([Int], Set<UUID>, [String: FileItem]) = await MainActor.run {
                 let existing = (try? context.fetch(FetchDescriptor<FileItem>())) ?? []
                 var byLibPath: [String: FileItem] = [:]
                 var byName: [String: FileItem] = [:]
+                var byHash: [String: FileItem] = [:]
                 for item in existing {
                     if let lp = item.libraryPath { byLibPath[lp] = item }
                     if byName[item.filename] == nil { byName[item.filename] = item }
+                    if let ch = item.contentHash { byHash[ch] = item }
                 }
 
                 var matched = Set<UUID>()
@@ -177,17 +179,11 @@ final class LibraryManager: ObservableObject {
 
                     if let m = byLibPath[relativePath], !matched.contains(m.id) {
                         matched.insert(m.id)
-                        if let freshBookmark = try? fileURL.bookmarkData() {
-                            m.bookmark = freshBookmark
-                        }
                         m.filename = filename
                         m.libraryPath = relativePath
                         m.folderName = folderName
                     } else if let m = byName[filename], !matched.contains(m.id) {
                         matched.insert(m.id)
-                        if let freshBookmark = try? fileURL.bookmarkData() {
-                            m.bookmark = freshBookmark
-                        }
                         m.libraryPath = relativePath
                         m.folderName = folderName
                     } else {
@@ -196,7 +192,7 @@ final class LibraryManager: ObservableObject {
                 }
 
                 self.rescanProcessed = discoveredFiles.count - needsHash.count
-                return needsHash
+                return (needsHash, matched, byHash)
             }
 
             // 3. Slow pass: only fingerprint unmatched files (moved/renamed/new)
@@ -234,18 +230,8 @@ final class LibraryManager: ObservableObject {
             await MainActor.run {
                 self.rescanProcessed = discoveredFiles.count
 
-                let existing = (try? context.fetch(FetchDescriptor<FileItem>())) ?? []
-                var byHash: [String: FileItem] = [:]
-                for item in existing {
-                    if let ch = item.contentHash { byHash[ch] = item }
-                }
-
-                // Collect IDs already matched in the fast pass
-                var matched = Set<UUID>()
-                for item in existing where item.libraryPath != nil {
-                    // Items updated in fast pass have a libraryPath that exists in discovered
-                    matched.insert(item.id)
-                }
+                var matched = fastMatchedIDs
+                let byHash = hashIndex
 
                 for (idx, hash) in hashResults {
                     let (fileURL, relativePath) = discoveredFiles[idx]
@@ -287,13 +273,7 @@ final class LibraryManager: ObservableObject {
     // MARK: - Private
 
     private func refreshState() {
-        if let url = resolveLibraryURL() {
-            libraryName = url.lastPathComponent
-            isConfigured = true
-        } else {
-            libraryName = nil
-            isConfigured = false
-        }
+        libraryName = resolveLibraryURL()?.lastPathComponent
     }
 }
 
@@ -311,6 +291,7 @@ struct FileItemBackup: Codable {
     var loopEndY: Double?
     var libraryPath: String?
     var playCount: Int
+    var userBPM: Double?
 }
 
 struct LibraryBackup: Codable {
@@ -336,7 +317,8 @@ enum BackupManager {
                 loopStartY: item.loopStartY,
                 loopEndY: item.loopEndY,
                 libraryPath: item.libraryPath,
-                playCount: item.playCount
+                playCount: item.playCount,
+                userBPM: item.userBPM
             )
         }
 
@@ -374,6 +356,7 @@ enum BackupManager {
             match.loopStartY = entry.loopStartY
             match.loopEndY = entry.loopEndY
             match.playCount = entry.playCount
+            match.userBPM = entry.userBPM
             if entry.lastOpenedAt > match.lastOpenedAt {
                 match.lastOpenedAt = entry.lastOpenedAt
             }
