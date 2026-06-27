@@ -10,6 +10,10 @@ class ScrollCoordinator: NSObject, ObservableObject {
     var scrollViewProxy: UIScrollView?
     var textViewProxy: UITextView?
     var currentFile: FileItem?
+    /// Whether the current document is a PDF. Cached so the per-frame scroll
+    /// step never re-resolves the file's bookmark (which opens a security-scoped
+    /// resource on every access and would leak one ~30×/sec during auto-scroll).
+    var isPDF: Bool = false
     /// How many points to scroll each frame
     var scrollSpeed: CGFloat
     /// Accumulates fractional scroll amounts to ensure movement at low speeds
@@ -41,14 +45,14 @@ class ScrollCoordinator: NSObject, ObservableObject {
     }
 
     @objc func handleScrollStep(_ link: CADisplayLink) {
-        guard let file = currentFile else { return }
+        guard currentFile != nil else { return }
         let dt = link.targetTimestamp - link.timestamp
         scrollResidual += scrollSpeed * CGFloat(dt)
         let stepPoints = floor(scrollResidual)
         scrollResidual -= stepPoints
         guard stepPoints > 0 else { return }
         let step = stepPoints
-        if file.url?.pathExtension.lowercased() == "pdf" {
+        if isPDF {
             guard let sv = scrollViewProxy else { return }
             var y = min(sv.contentOffset.y + step,
                         sv.contentSize.height - sv.bounds.height)

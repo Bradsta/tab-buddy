@@ -7,9 +7,17 @@ import SwiftUI
 import UniformTypeIdentifiers
 import QuartzCore
 
+/// Which representation the viewer renders.
+enum ViewerRenderMode: String { case original, canonical }
+
 struct TabViewerView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.undoManager) private var undoManager
+
+    /// Global preference for which representation to show (per-user, sticky).
+    @AppStorage("viewer.renderMode") private var renderMode: ViewerRenderMode = .original
+    /// Cached canonical ASCII rendering (decoded from the stored MusicXML).
+    @State private var canonicalText: String? = nil
 
     @Binding var file: FileItem?
     @Binding var path: [AppPage]
@@ -132,6 +140,17 @@ struct TabViewerView: View {
             }
             // Set up playback coordinator callbacks
             setupPlaybackCallbacks()
+
+            // Convert-on-open for PDFs (text tabs convert in parseTextTab, reusing
+            // their parse). Runs off the main actor; idempotent and best-effort.
+            if let file, file.url?.pathExtension.lowercased() == "pdf" {
+                CanonicalConverter.shared.convertOnOpen(file, context: context)
+            }
+
+            if renderMode == .canonical { loadCanonicalText() }
+        }
+        .onChange(of: renderMode) { mode in
+            if mode == .canonical { loadCanonicalText() }
         }
         .onDisappear {
             if hasAccess {
@@ -199,6 +218,7 @@ struct TabViewerView: View {
         coordinator.scrollViewProxy = scrollViewProxy
         coordinator.textViewProxy = textViewProxy
         coordinator.currentFile = file
+        coordinator.isPDF = file?.filename.lowercased().hasSuffix(".pdf") ?? false
         coordinator.scrollSpeed = scrollSpeed
         syncLoopToCoordinator()
 
@@ -322,7 +342,15 @@ struct TabViewerView: View {
             Menu {
                 Button("Rename…") { newName = file!.filename; showRename = true }
                 Button("Edit Tags…") { showTags = true }
-                Button("Close") { path.removeLast() }
+
+                if file?.hasCanonical == true {
+                    Divider()
+
+                    Picker("View", selection: $renderMode) {
+                        Label("Original", systemImage: "doc.text").tag(ViewerRenderMode.original)
+                        Label("TabBuddy", systemImage: "wand.and.stars").tag(ViewerRenderMode.canonical)
+                    }
+                }
 
                 Divider()
 
@@ -370,7 +398,16 @@ struct TabViewerView: View {
         // --------------------------------------------------------------------
         @ViewBuilder
         private var viewerBody: some View {
-            if file?.url?.pathExtension.lowercased() == "pdf" {
+            if renderMode == .canonical, file?.hasCanonical == true, let text = canonicalText {
+                // Standardized TabBuddy rendering: our canonical, regenerated as
+                // monospaced tab. Read-only (no playback-overlay mapping yet).
+                TabText(fontSize: $fontSize,
+                        content: text,
+                        textViewProxy: $textViewProxy,
+                        highlightOverlay: nil,
+                        onTapAtCharacter: nil)
+                    .padding(.horizontal, 4)
+            } else if file?.url?.pathExtension.lowercased() == "pdf" {
                 if let url = file?.url {
                     TabPDFView(url: url, scrollViewProxy: $scrollViewProxy)
                         .padding()
@@ -647,6 +684,17 @@ struct TabViewerView: View {
         }
     }
 
+    /// Load + cache the canonical's ASCII rendering from the stored MusicXML.
+    private func loadCanonicalText() {
+        guard let file, let fname = file.canonicalFilename,
+              let data = CanonicalStore.read(filename: fname),
+              let canonical = MusicXMLCodec.decode(data) else {
+            canonicalText = nil
+            return
+        }
+        canonicalText = CanonicalAdapters.asciiTab(from: canonical)
+    }
+
     private func parseTextTab() {
         guard !textContent.isEmpty, textContent != "Loading…" else { return }
         let parsed = TabParser.parse(textContent)
@@ -657,6 +705,13 @@ struct TabViewerView: View {
         if file?.userBPM == nil, let parsedBPM = parsed.bpm {
             userBPM = parsedBPM
             playbackCoordinator.bpm = parsedBPM
+        }
+
+        // Convert-on-open (cheap): reuse the parse we just did to persist a
+        // current canonical for this file if it's missing or stale.
+        if let file {
+            CanonicalConverter.shared.convertOnOpen(file, context: context,
+                                                    prebuilt: (parsed, .txtDirect))
         }
     }
 

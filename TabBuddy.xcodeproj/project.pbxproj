@@ -13,6 +13,8 @@
 		B1626C3E29F631E600304E9E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B1626C3D29F631E600304E9E /* Assets.xcassets */; };
 		B1626C4129F631E600304E9E /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B1626C4029F631E600304E9E /* Preview Assets.xcassets */; };
 		B1626C4B29F631E600304E9E /* TabBuddyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1626C4A29F631E600304E9E /* TabBuddyTests.swift */; };
+		D10000202F6E000100AB0001 /* CanonicalBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000202F6E000100AB0000 /* CanonicalBridgeTests.swift */; };
+		D10000212F6E000100AB0001 /* CanonicalMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000212F6E000100AB0000 /* CanonicalMigrationTests.swift */; };
 		B1626C5529F631E600304E9E /* TabBuddyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1626C5429F631E600304E9E /* TabBuddyUITests.swift */; };
 		B1626C5729F631E600304E9E /* TabBuddyUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1626C5629F631E600304E9E /* TabBuddyUITestsLaunchTests.swift */; };
 		B1626C6829F6339E00304E9E /* TabPDFView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1626C6729F6339E00304E9E /* TabPDFView.swift */; };
@@ -23,24 +25,19 @@
 		C10000032F5E000100AB1002 /* PlaybackCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000032F5E000100AB1001 /* PlaybackCoordinator.swift */; };
 		C10000042F5E000100AB1002 /* MetronomeEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000042F5E000100AB1001 /* MetronomeEngine.swift */; };
 		C10000052F5E000100AB1002 /* MIDITempoExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000052F5E000100AB1001 /* MIDITempoExtractor.swift */; };
+		C10000062F5E000100AB1002 /* PlaybackHighlightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000062F5E000100AB1001 /* PlaybackHighlightView.swift */; };
+		C10000072F5E000100AB1002 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C10000072F5E000100AB1001 /* AudioToolbox.framework */; };
 		C10000082F5E000100AB1002 /* NotePlaybackEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000082F5E000100AB1001 /* NotePlaybackEngine.swift */; };
 		C10000092F5E000100AB1002 /* PitchDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000092F5E000100AB1001 /* PitchDetector.swift */; };
 		C100000A2F5E000100AB1002 /* LiveTranscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C100000A2F5E000100AB1001 /* LiveTranscriptionView.swift */; };
-		C10000062F5E000100AB1002 /* PlaybackHighlightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000062F5E000100AB1001 /* PlaybackHighlightView.swift */; };
-		C10000072F5E000100AB1002 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C10000072F5E000100AB1001 /* AudioToolbox.framework */; };
-		E92091A52E1B3D350043BC03 /* TagChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92091A42E1B3D330043BC03 /* TagChip.swift */; };
-		E92091A72E1B3F680043BC03 /* TagStat.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92091A62E1B3F680043BC03 /* TagStat.swift */; };
-		E92091A92E1B3FAB0043BC03 /* TagIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92091A82E1B3FAB0043BC03 /* TagIndexer.swift */; };
-		E979731D2E1B6C1400AC1A4D /* ScrollCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E979731C2E1B6C1400AC1A4D /* ScrollCoordinator.swift */; };
-		E979731F2E244B8400AC1A4D /* MassTagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E979731E2E244B7F00AC1A4D /* MassTagView.swift */; };
-		E9AB56732E1B28B000AFD8E2 /* FileItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9AB56722E1B28AD00AFD8E2 /* FileItem.swift */; };
-		E9D7A1C62E19F3130012F2B5 /* FileMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1C52E19F3090012F2B5 /* FileMetadata.swift */; };
-		E9D7A1C82E19F41E0012F2B5 /* FileBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1C72E19F4170012F2B5 /* FileBrowserView.swift */; };
-		E9D7A1CA2E19F5860012F2B5 /* TabViewerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1C92E19F5830012F2B5 /* TabViewerView.swift */; };
-		E9D7A1CC2E1A02400012F2B5 /* FileRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1CB2E1A023D0012F2B5 /* FileRowView.swift */; };
-		E9D7A1CE2E1A0AFB0012F2B5 /* TagEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1CD2E1A0AF80012F2B5 /* TagEditorView.swift */; };
-		E9D7A1D02E1B1FBE0012F2B5 /* FileImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1CF2E1B1FBA0012F2B5 /* FileImporter.swift */; };
 		D10000012F6E000100AB0001 /* ComposedNote.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000012F6E000100AB0000 /* ComposedNote.swift */; };
+		D10000102F6E000100AB0001 /* CanonicalTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000102F6E000100AB0000 /* CanonicalTab.swift */; };
+		D10000112F6E000100AB0001 /* MusicXMLCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000112F6E000100AB0000 /* MusicXMLCodec.swift */; };
+		D10000122F6E000100AB0001 /* CanonicalAdapters.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000122F6E000100AB0000 /* CanonicalAdapters.swift */; };
+		D10000132F6E000100AB0001 /* CanonicalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000132F6E000100AB0000 /* CanonicalStore.swift */; };
+		D10000142F6E000100AB0001 /* CanonicalConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000142F6E000100AB0000 /* CanonicalConverter.swift */; };
+		D10000152F6E000100AB0001 /* LibraryMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000152F6E000100AB0000 /* LibraryMigration.swift */; };
+		D10000162F6E000100AB0001 /* FileCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000162F6E000100AB0000 /* FileCardView.swift */; };
 		D10000022F6E000100AB0001 /* ComposedTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000022F6E000100AB0000 /* ComposedTab.swift */; };
 		D10000032F6E000100AB0001 /* StaffPitchMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000032F6E000100AB0000 /* StaffPitchMapper.swift */; };
 		D10000042F6E000100AB0001 /* FretSuggestionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000042F6E000100AB0000 /* FretSuggestionEngine.swift */; };
@@ -53,6 +50,17 @@
 		D100000B2F6E000100AB0001 /* NoteInputOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = D100000B2F6E000100AB0000 /* NoteInputOverlay.swift */; };
 		D100000C2F6E000100AB0001 /* TabMakerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D100000C2F6E000100AB0000 /* TabMakerView.swift */; };
 		D100000D2F6E000100AB0001 /* MakerCompositionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D100000D2F6E000100AB0000 /* MakerCompositionListView.swift */; };
+		E92091A52E1B3D350043BC03 /* TagChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92091A42E1B3D330043BC03 /* TagChip.swift */; };
+		E92091A72E1B3F680043BC03 /* TagStat.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92091A62E1B3F680043BC03 /* TagStat.swift */; };
+		E92091A92E1B3FAB0043BC03 /* TagIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E92091A82E1B3FAB0043BC03 /* TagIndexer.swift */; };
+		E979731D2E1B6C1400AC1A4D /* ScrollCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E979731C2E1B6C1400AC1A4D /* ScrollCoordinator.swift */; };
+		E979731F2E244B8400AC1A4D /* MassTagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E979731E2E244B7F00AC1A4D /* MassTagView.swift */; };
+		E9AB56732E1B28B000AFD8E2 /* FileItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9AB56722E1B28AD00AFD8E2 /* FileItem.swift */; };
+		E9D7A1C62E19F3130012F2B5 /* FileMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1C52E19F3090012F2B5 /* FileMetadata.swift */; };
+		E9D7A1C82E19F41E0012F2B5 /* FileBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1C72E19F4170012F2B5 /* FileBrowserView.swift */; };
+		E9D7A1CA2E19F5860012F2B5 /* TabViewerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1C92E19F5830012F2B5 /* TabViewerView.swift */; };
+		E9D7A1CE2E1A0AFB0012F2B5 /* TagEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1CD2E1A0AF80012F2B5 /* TagEditorView.swift */; };
+		E9D7A1D02E1B1FBE0012F2B5 /* FileImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7A1CF2E1B1FBA0012F2B5 /* FileImporter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -95,6 +103,8 @@
 		B1626C4029F631E600304E9E /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		B1626C4629F631E600304E9E /* TabBuddyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TabBuddyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B1626C4A29F631E600304E9E /* TabBuddyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBuddyTests.swift; sourceTree = "<group>"; };
+		D10000202F6E000100AB0000 /* CanonicalBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalBridgeTests.swift; sourceTree = "<group>"; };
+		D10000212F6E000100AB0000 /* CanonicalMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalMigrationTests.swift; sourceTree = "<group>"; };
 		B1626C5029F631E600304E9E /* TabBuddyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TabBuddyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B1626C5429F631E600304E9E /* TabBuddyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBuddyUITests.swift; sourceTree = "<group>"; };
 		B1626C5629F631E600304E9E /* TabBuddyUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBuddyUITestsLaunchTests.swift; sourceTree = "<group>"; };
@@ -106,13 +116,19 @@
 		C10000032F5E000100AB1001 /* PlaybackCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackCoordinator.swift; sourceTree = "<group>"; };
 		C10000042F5E000100AB1001 /* MetronomeEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetronomeEngine.swift; sourceTree = "<group>"; };
 		C10000052F5E000100AB1001 /* MIDITempoExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MIDITempoExtractor.swift; sourceTree = "<group>"; };
+		C10000062F5E000100AB1001 /* PlaybackHighlightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackHighlightView.swift; sourceTree = "<group>"; };
+		C10000072F5E000100AB1001 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		C10000082F5E000100AB1001 /* NotePlaybackEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotePlaybackEngine.swift; sourceTree = "<group>"; };
 		C10000092F5E000100AB1001 /* PitchDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchDetector.swift; sourceTree = "<group>"; };
 		C100000A2F5E000100AB1001 /* LiveTranscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTranscriptionView.swift; sourceTree = "<group>"; };
-		C10000062F5E000100AB1001 /* PlaybackHighlightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackHighlightView.swift; sourceTree = "<group>"; };
-		C10000072F5E000100AB1001 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		D10000012F6E000100AB0000 /* ComposedNote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposedNote.swift; sourceTree = "<group>"; };
 		D10000022F6E000100AB0000 /* ComposedTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposedTab.swift; sourceTree = "<group>"; };
+		D10000102F6E000100AB0000 /* CanonicalTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalTab.swift; sourceTree = "<group>"; };
+		D10000112F6E000100AB0000 /* MusicXMLCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicXMLCodec.swift; sourceTree = "<group>"; };
+		D10000122F6E000100AB0000 /* CanonicalAdapters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalAdapters.swift; sourceTree = "<group>"; };
+		D10000132F6E000100AB0000 /* CanonicalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalStore.swift; sourceTree = "<group>"; };
+		D10000142F6E000100AB0000 /* CanonicalConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalConverter.swift; sourceTree = "<group>"; };
+		D10000152F6E000100AB0000 /* LibraryMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryMigration.swift; sourceTree = "<group>"; };
 		D10000032F6E000100AB0000 /* StaffPitchMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffPitchMapper.swift; sourceTree = "<group>"; };
 		D10000042F6E000100AB0000 /* FretSuggestionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FretSuggestionEngine.swift; sourceTree = "<group>"; };
 		D10000052F6E000100AB0000 /* MeasureMapBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeasureMapBuilder.swift; sourceTree = "<group>"; };
@@ -133,7 +149,7 @@
 		E9D7A1C52E19F3090012F2B5 /* FileMetadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileMetadata.swift; sourceTree = "<group>"; };
 		E9D7A1C72E19F4170012F2B5 /* FileBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileBrowserView.swift; sourceTree = "<group>"; };
 		E9D7A1C92E19F5830012F2B5 /* TabViewerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabViewerView.swift; sourceTree = "<group>"; };
-		E9D7A1CB2E1A023D0012F2B5 /* FileRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileRowView.swift; sourceTree = "<group>"; };
+		D10000162F6E000100AB0000 /* FileCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCardView.swift; sourceTree = "<group>"; };
 		E9D7A1CD2E1A0AF80012F2B5 /* TagEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagEditorView.swift; sourceTree = "<group>"; };
 		E9D7A1CF2E1B1FBA0012F2B5 /* FileImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileImporter.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -190,30 +206,11 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-			D100000E2F6E000100AB0000 /* Maker */ = {
-			isa = PBXGroup;
-			children = (
-				D10000012F6E000100AB0000 /* ComposedNote.swift */,
-				D10000022F6E000100AB0000 /* ComposedTab.swift */,
-				D10000032F6E000100AB0000 /* StaffPitchMapper.swift */,
-				D10000042F6E000100AB0000 /* FretSuggestionEngine.swift */,
-				D10000052F6E000100AB0000 /* MeasureMapBuilder.swift */,
-				D10000062F6E000100AB0000 /* TabMakerViewModel.swift */,
-				D10000072F6E000100AB0000 /* StaffView.swift */,
-				D10000082F6E000100AB0000 /* TabStaffView.swift */,
-				D10000092F6E000100AB0000 /* TabMakerDocumentView.swift */,
-				D100000A2F6E000100AB0000 /* TabMakerToolbar.swift */,
-				D100000B2F6E000100AB0000 /* NoteInputOverlay.swift */,
-				D100000C2F6E000100AB0000 /* TabMakerView.swift */,
-				D100000D2F6E000100AB0000 /* MakerCompositionListView.swift */,
-			);
-			path = Maker;
-			sourceTree = "<group>";
-		};
 		B1626C3829F631E500304E9E /* TabBuddy */ = {
 			isa = PBXGroup;
 			children = (
 				D100000E2F6E000100AB0000 /* Maker */,
+				D100001F2F6E000100AB0000 /* Canonical */,
 				C10000012F5E000100AB1001 /* MeasureMap.swift */,
 				C10000022F5E000100AB1001 /* TabParser.swift */,
 				C10000032F5E000100AB1001 /* PlaybackCoordinator.swift */,
@@ -232,7 +229,7 @@
 				E9D7A1CF2E1B1FBA0012F2B5 /* FileImporter.swift */,
 				AA000001300000000000AA00 /* LibraryManager.swift */,
 				E9D7A1CD2E1A0AF80012F2B5 /* TagEditorView.swift */,
-				E9D7A1CB2E1A023D0012F2B5 /* FileRowView.swift */,
+				D10000162F6E000100AB0000 /* FileCardView.swift */,
 				E9D7A1C92E19F5830012F2B5 /* TabViewerView.swift */,
 				E9D7A1C72E19F4170012F2B5 /* FileBrowserView.swift */,
 				E9D7A1C52E19F3090012F2B5 /* FileMetadata.swift */,
@@ -260,6 +257,8 @@
 			isa = PBXGroup;
 			children = (
 				B1626C4A29F631E600304E9E /* TabBuddyTests.swift */,
+				D10000202F6E000100AB0000 /* CanonicalBridgeTests.swift */,
+				D10000212F6E000100AB0000 /* CanonicalMigrationTests.swift */,
 			);
 			path = TabBuddyTests;
 			sourceTree = "<group>";
@@ -271,6 +270,39 @@
 				B1626C5629F631E600304E9E /* TabBuddyUITestsLaunchTests.swift */,
 			);
 			path = TabBuddyUITests;
+			sourceTree = "<group>";
+		};
+		D100000E2F6E000100AB0000 /* Maker */ = {
+			isa = PBXGroup;
+			children = (
+				D10000012F6E000100AB0000 /* ComposedNote.swift */,
+				D10000022F6E000100AB0000 /* ComposedTab.swift */,
+				D10000032F6E000100AB0000 /* StaffPitchMapper.swift */,
+				D10000042F6E000100AB0000 /* FretSuggestionEngine.swift */,
+				D10000052F6E000100AB0000 /* MeasureMapBuilder.swift */,
+				D10000062F6E000100AB0000 /* TabMakerViewModel.swift */,
+				D10000072F6E000100AB0000 /* StaffView.swift */,
+				D10000082F6E000100AB0000 /* TabStaffView.swift */,
+				D10000092F6E000100AB0000 /* TabMakerDocumentView.swift */,
+				D100000A2F6E000100AB0000 /* TabMakerToolbar.swift */,
+				D100000B2F6E000100AB0000 /* NoteInputOverlay.swift */,
+				D100000C2F6E000100AB0000 /* TabMakerView.swift */,
+				D100000D2F6E000100AB0000 /* MakerCompositionListView.swift */,
+			);
+			path = Maker;
+			sourceTree = "<group>";
+		};
+		D100001F2F6E000100AB0000 /* Canonical */ = {
+			isa = PBXGroup;
+			children = (
+				D10000102F6E000100AB0000 /* CanonicalTab.swift */,
+				D10000112F6E000100AB0000 /* MusicXMLCodec.swift */,
+				D10000122F6E000100AB0000 /* CanonicalAdapters.swift */,
+				D10000132F6E000100AB0000 /* CanonicalStore.swift */,
+				D10000142F6E000100AB0000 /* CanonicalConverter.swift */,
+				D10000152F6E000100AB0000 /* LibraryMigration.swift */,
+			);
+			path = Canonical;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -425,7 +457,6 @@
 				E979731F2E244B8400AC1A4D /* MassTagView.swift in Sources */,
 				E9D7A1C82E19F41E0012F2B5 /* FileBrowserView.swift in Sources */,
 				E979731D2E1B6C1400AC1A4D /* ScrollCoordinator.swift in Sources */,
-				E9D7A1CC2E1A02400012F2B5 /* FileRowView.swift in Sources */,
 				E92091A52E1B3D350043BC03 /* TagChip.swift in Sources */,
 				B1626C3C29F631E500304E9E /* ContentView.swift in Sources */,
 				E92091A72E1B3F680043BC03 /* TagStat.swift in Sources */,
@@ -444,6 +475,13 @@
 				D100000B2F6E000100AB0001 /* NoteInputOverlay.swift in Sources */,
 				D100000C2F6E000100AB0001 /* TabMakerView.swift in Sources */,
 				D100000D2F6E000100AB0001 /* MakerCompositionListView.swift in Sources */,
+				D10000102F6E000100AB0001 /* CanonicalTab.swift in Sources */,
+				D10000112F6E000100AB0001 /* MusicXMLCodec.swift in Sources */,
+				D10000122F6E000100AB0001 /* CanonicalAdapters.swift in Sources */,
+				D10000132F6E000100AB0001 /* CanonicalStore.swift in Sources */,
+				D10000142F6E000100AB0001 /* CanonicalConverter.swift in Sources */,
+				D10000152F6E000100AB0001 /* LibraryMigration.swift in Sources */,
+				D10000162F6E000100AB0001 /* FileCardView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -452,6 +490,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				B1626C4B29F631E600304E9E /* TabBuddyTests.swift in Sources */,
+				D10000202F6E000100AB0001 /* CanonicalBridgeTests.swift in Sources */,
+				D10000212F6E000100AB0001 /* CanonicalMigrationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -607,7 +647,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_ASSET_PATHS = "\"TabBuddy/Preview Content\"";
-				DEVELOPMENT_TEAM = ENSZYY2HUU;
+				DEVELOPMENT_TEAM = SCM7P62X3K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Tab Buddy";
@@ -640,7 +680,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_ASSET_PATHS = "\"TabBuddy/Preview Content\"";
-				DEVELOPMENT_TEAM = ENSZYY2HUU;
+				DEVELOPMENT_TEAM = SCM7P62X3K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Tab Buddy";

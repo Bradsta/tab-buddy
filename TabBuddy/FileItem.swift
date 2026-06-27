@@ -35,6 +35,51 @@ final class FileItem : Equatable {
     /// user-specified BPM for playback (nil = use auto-detected or default)
     var userBPM: Double? = nil
 
+    // MARK: Canonical (Phase 2)
+
+    /// Filename of the generated canonical MusicXML in `CanonicalStore`
+    /// (nil = not yet converted). Additive-optional: existing stores migrate
+    /// in place without touching any metadata above.
+    var canonicalFilename: String? = nil
+
+    /// JSON-encoded `Provenance` for the canonical (nil = none).
+    var provenanceData: Data? = nil
+
+    /// Converter version that produced the current canonical (0 = none).
+    /// Lets us find entries needing re-derivation as the converter improves.
+    var canonicalVersion: Int = 0
+
+    /// Title derived from the file's contents at conversion (nil = use filename).
+    /// Denormalized from the canonical for fast card display.
+    var derivedTitle: String? = nil
+
+    /// Tuning name derived from the canonical (nil = unknown → treat as Standard).
+    /// Denormalized for fast card display / tuning filters.
+    var tuning: String? = nil
+
+    /// Display title for the library card: derived title if present, else the
+    /// filename with its extension stripped.
+    var displayTitle: String {
+        if let t = derivedTitle, !t.isEmpty { return t }
+        return (filename as NSString).deletingPathExtension
+    }
+
+    /// Whether the tuning is a non-standard tuning (drives the indigo pill).
+    var isAltTuning: Bool {
+        guard let t = tuning else { return false }
+        return t.caseInsensitiveCompare("Standard") != .orderedSame
+    }
+
+    /// True if a canonical has been generated for this file.
+    var hasCanonical: Bool { canonicalFilename != nil }
+
+    /// Decoded provenance for the canonical, if any. Not persisted directly —
+    /// backed by `provenanceData`.
+    var provenance: Provenance? {
+        get { provenanceData.flatMap { try? JSONDecoder().decode(Provenance.self, from: $0) } }
+        set { provenanceData = newValue.flatMap { try? JSONEncoder().encode($0) } }
+    }
+
     /// Resolve the bookmark and *activate* its security scope.
     /// Caller is responsible for calling `stopAccessingSecurityScopedResource()` when done.
     var url: URL? {

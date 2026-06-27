@@ -31,17 +31,20 @@ final class FolderImporter: ObservableObject {
             var gathered: [URL] = []
 
             for root in urls {
-                if root.hasDirectoryPath {
-                    if root.startAccessingSecurityScopedResource() {
-                        openedDirs.append(root)
-                        if let enumr = FileManager.default.enumerator(
-                            at: root,
-                            includingPropertiesForKeys: [.isRegularFileKey],
-                            options: [.skipsHiddenFiles, .skipsPackageDescendants]
-                        ) {
-                            for case let f as URL in enumr where await Self.accepts(f) {
-                                gathered.append(f)
-                            }
+                // Open security scope first; on macOS this is required even to
+                // read `.isDirectoryKey` on a picker-provided URL.
+                if root.startAccessingSecurityScopedResource() {
+                    openedDirs.append(root)
+                }
+
+                if Self.isDirectory(root) {
+                    if let enumr = FileManager.default.enumerator(
+                        at: root,
+                        includingPropertiesForKeys: [.isRegularFileKey],
+                        options: [.skipsHiddenFiles, .skipsPackageDescendants]
+                    ) {
+                        for case let f as URL in enumr where await Self.accepts(f) {
+                            gathered.append(f)
                         }
                     }
                 } else if await Self.accepts(root) {
@@ -84,6 +87,7 @@ final class FolderImporter: ObservableObject {
                 }) ?? []
 
             // ── 3️⃣  Commit inserts on main actor ────────────────────────────
+            print("[FolderImporter] candidates=\(candidates.count) fresh=\(fresh.count)")
             await MainActor.run {
                 for rec in fresh {
                     context.insert(
@@ -96,7 +100,12 @@ final class FolderImporter: ObservableObject {
                                  importedAt: Date())
                     )
                 }
-                try? context.save()
+                do {
+                    try context.save()
+                    print("[FolderImporter] saved \(fresh.count) items")
+                } catch {
+                    print("[FolderImporter] context.save() failed: \(error)")
+                }
                 TagIndexer.rebuild(in: context)
             }
 
@@ -127,25 +136,24 @@ final class FolderImporter: ObservableObject {
             var folderRoot: URL? = nil
 
             for root in urls {
-                if root.hasDirectoryPath {
-                    if root.startAccessingSecurityScopedResource() {
-                        openedDirs.append(root)
-                        folderRoot = root
-                        if let enumr = FileManager.default.enumerator(
-                            at: root,
-                            includingPropertiesForKeys: [.isRegularFileKey],
-                            options: [.skipsHiddenFiles, .skipsPackageDescendants]
-                        ) {
-                            for case let f as URL in enumr where await Self.accepts(f) {
-                                gathered.append(f)
-                            }
+                // Open security scope first; on macOS this is required even to
+                // read `.isDirectoryKey` on a picker-provided URL.
+                if root.startAccessingSecurityScopedResource() {
+                    openedDirs.append(root)
+                }
+
+                if Self.isDirectory(root) {
+                    folderRoot = root
+                    if let enumr = FileManager.default.enumerator(
+                        at: root,
+                        includingPropertiesForKeys: [.isRegularFileKey],
+                        options: [.skipsHiddenFiles, .skipsPackageDescendants]
+                    ) {
+                        for case let f as URL in enumr where await Self.accepts(f) {
+                            gathered.append(f)
                         }
                     }
                 } else if await Self.accepts(root) {
-                    // For individual files, start access to read them
-                    if root.startAccessingSecurityScopedResource() {
-                        openedDirs.append(root)
-                    }
                     gathered.append(root)
                 }
             }
@@ -228,5 +236,15 @@ final class FolderImporter: ObservableObject {
     
     private static func accepts(_ url: URL) -> Bool {
         ["pdf", "txt"].contains(url.pathExtension.lowercased())
+    }
+
+    /// Whether `url` points at a directory. Asks the filesystem rather than
+    /// relying on `url.hasDirectoryPath`, which depends on a trailing slash the
+    /// macOS document picker omits.
+    private nonisolated static func isDirectory(_ url: URL) -> Bool {
+        if let isDir = try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory {
+            return isDir
+        }
+        return url.hasDirectoryPath
     }
 }

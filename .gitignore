@@ -91,3 +91,6 @@ iOSInjectionProject/
 
 # Mac OS
 *.DS_Store
+
+# Claude Code local config & worktrees
+.claude/
