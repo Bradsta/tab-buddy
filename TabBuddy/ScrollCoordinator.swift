@@ -23,6 +23,10 @@ class ScrollCoordinator: NSObject, ObservableObject {
     var loopStartY: CGFloat? = nil
     var loopEndY: CGFloat? = nil
 
+    /// When true, auto-scroll wraps back to the top once it reaches the bottom
+    /// (the "loop" control in the Original file view).
+    var loopToTop: Bool = false
+
     init(scrollViewProxy: UIScrollView?,
          textViewProxy: UITextView?,
          currentFile: FileItem?,
@@ -54,18 +58,26 @@ class ScrollCoordinator: NSObject, ObservableObject {
         let step = stepPoints
         if isPDF {
             guard let sv = scrollViewProxy else { return }
-            var y = min(sv.contentOffset.y + step,
-                        sv.contentSize.height - sv.bounds.height)
-            if let start = loopStartY, let end = loopEndY, y >= end {
+            let maxY = sv.contentSize.height - sv.bounds.height
+            var y = sv.contentOffset.y + step
+            if loopToTop, y >= maxY {
+                y = 0
+            } else if let start = loopStartY, let end = loopEndY, y >= end {
                 y = start
+            } else {
+                y = min(y, maxY)
             }
             sv.setContentOffset(.init(x: sv.contentOffset.x, y: y), animated: false)
         } else {
             guard let tv = textViewProxy else { return }
-            var y = min(tv.contentOffset.y + step,
-                        tv.contentSize.height - tv.bounds.height)
-            if let start = loopStartY, let end = loopEndY, y >= end {
+            let maxY = tv.contentSize.height - tv.bounds.height
+            var y = tv.contentOffset.y + step
+            if loopToTop, y >= maxY {
+                y = 0
+            } else if let start = loopStartY, let end = loopEndY, y >= end {
                 y = start
+            } else {
+                y = min(y, maxY)
             }
             tv.setContentOffset(.init(x: tv.contentOffset.x, y: y), animated: false)
         }

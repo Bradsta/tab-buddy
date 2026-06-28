@@ -190,22 +190,50 @@ struct Provenance: Codable, Equatable {
     var rhythmSource: RhythmSource
     /// True if the source appeared cut off (e.g. a clipped PDF page).
     var clipped: Bool
+    /// True if the tab is unmetered free-time (even spacing, no real rhythm).
+    var isFreeTime: Bool
 
     init(sourceType: SourceType = .unknown,
          confidence: Double = 0,
          converterVersion: Int = CanonicalConverterVersion.current,
          rhythmSource: RhythmSource = .unknown,
-         clipped: Bool = false) {
+         clipped: Bool = false,
+         isFreeTime: Bool = false) {
         self.sourceType = sourceType
         self.confidence = confidence
         self.converterVersion = converterVersion
         self.rhythmSource = rhythmSource
         self.clipped = clipped
+        self.isFreeTime = isFreeTime
+    }
+
+    // Custom decode so canonicals written before a field existed don't throw
+    // (the call sites decode with a swallowing `try?`, which would otherwise
+    // silently reset the entire provenance). Every key is optional-with-default.
+    enum CodingKeys: String, CodingKey {
+        case sourceType, confidence, converterVersion, rhythmSource, clipped, isFreeTime
+    }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        sourceType       = try c.decodeIfPresent(SourceType.self, forKey: .sourceType) ?? .unknown
+        confidence       = try c.decodeIfPresent(Double.self, forKey: .confidence) ?? 0
+        converterVersion = try c.decodeIfPresent(Int.self, forKey: .converterVersion) ?? CanonicalConverterVersion.current
+        rhythmSource     = try c.decodeIfPresent(RhythmSource.self, forKey: .rhythmSource) ?? .unknown
+        clipped          = try c.decodeIfPresent(Bool.self, forKey: .clipped) ?? false
+        isFreeTime       = try c.decodeIfPresent(Bool.self, forKey: .isFreeTime) ?? false
     }
 }
 
 /// Single source of truth for the current converter version. Bump whenever the
 /// conversion logic changes in a way that should trigger re-derivation.
 enum CanonicalConverterVersion {
-    static let current = 1
+    // v2: foreword (title/artist/comments) + capo→pitch + authored-rhythm flag +
+    //     free-time even spacing.
+    // v3: full verbatim foreword (keeps directive lines, section-label cutoff),
+    //     "Rhythm:/metrum" time sigs, numeric-beat-ruler durations, searchable
+    //     foreword denormalized onto FileItem.
+    // v4: stricter title heuristic (reject URLs/credits/timestamps/garbage glyphs,
+    //     precise directive match), PDF→filename + filename-superset title,
+    //     phantom-measure filter, tuplet-bracket lines no longer parsed as measures.
+    static let current = 4
 }

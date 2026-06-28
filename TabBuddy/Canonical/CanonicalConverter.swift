@@ -45,12 +45,19 @@ final class CanonicalConverter: ObservableObject {
         let version: Int
         let title: String?
         let tuning: String?
+        let foreword: String?
         let succeeded: Bool
 
         static func failure(_ id: UUID) -> Outcome {
             Outcome(id: id, canonicalFilename: nil, provenanceData: nil,
-                    version: 0, title: nil, tuning: nil, succeeded: false)
+                    version: 0, title: nil, tuning: nil, foreword: nil, succeeded: false)
         }
+    }
+
+    /// Combined searchable foreword text from a canonical (composer + comments).
+    private nonisolated static func forewordText(_ canonical: CanonicalTab) -> String? {
+        let parts = [canonical.artist, canonical.comments].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: "\n")
     }
 
     // MARK: - Public API
@@ -156,6 +163,7 @@ final class CanonicalConverter: ObservableObject {
         item.canonicalVersion = canonical.provenance.converterVersion
         item.derivedTitle = canonical.title
         item.tuning = canonical.tuningName
+        item.foreword = Self.forewordText(canonical)
         try? context.save()
     }
 
@@ -190,6 +198,7 @@ final class CanonicalConverter: ObservableObject {
         item.canonicalVersion = outcome.version
         item.derivedTitle = outcome.title
         item.tuning = outcome.tuning
+        item.foreword = outcome.foreword
     }
 
     // MARK: - Off-main work
@@ -221,6 +230,7 @@ final class CanonicalConverter: ObservableObject {
                        version: canonical.provenance.converterVersion,
                        title: canonical.title,
                        tuning: canonical.tuningName,
+                       foreword: forewordText(canonical),
                        succeeded: true)
     }
 

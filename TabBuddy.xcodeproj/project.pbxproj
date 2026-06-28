@@ -15,6 +15,8 @@
 		B1626C4B29F631E600304E9E /* TabBuddyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1626C4A29F631E600304E9E /* TabBuddyTests.swift */; };
 		D10000202F6E000100AB0001 /* CanonicalBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000202F6E000100AB0000 /* CanonicalBridgeTests.swift */; };
 		D10000212F6E000100AB0001 /* CanonicalMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000212F6E000100AB0000 /* CanonicalMigrationTests.swift */; };
+		D10000222F6E000100AB0001 /* ForewordCapoRhythmFreeTimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000222F6E000100AB0000 /* ForewordCapoRhythmFreeTimeTests.swift */; };
+		D10000412F6E000100AB0000 /* TabRenderModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000402F6E000100AB0000 /* TabRenderModelTests.swift */; };
 		B1626C5529F631E600304E9E /* TabBuddyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1626C5429F631E600304E9E /* TabBuddyUITests.swift */; };
 		B1626C5729F631E600304E9E /* TabBuddyUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1626C5629F631E600304E9E /* TabBuddyUITestsLaunchTests.swift */; };
 		B1626C6829F6339E00304E9E /* TabPDFView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1626C6729F6339E00304E9E /* TabPDFView.swift */; };
@@ -45,6 +47,12 @@
 		D10000062F6E000100AB0001 /* TabMakerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000062F6E000100AB0000 /* TabMakerViewModel.swift */; };
 		D10000072F6E000100AB0001 /* StaffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000072F6E000100AB0000 /* StaffView.swift */; };
 		D10000082F6E000100AB0001 /* TabStaffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000082F6E000100AB0000 /* TabStaffView.swift */; };
+		D10000322F6E000100AB0000 /* TabRenderModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000312F6E000100AB0000 /* TabRenderModel.swift */; };
+		D10000342F6E000100AB0000 /* DrawnTabSystemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000332F6E000100AB0000 /* DrawnTabSystemView.swift */; };
+		D10000362F6E000100AB0000 /* TabPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000352F6E000100AB0000 /* TabPlayerView.swift */; };
+		D10000512F6E000100AB0000 /* TabTransportBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000502F6E000100AB0000 /* TabTransportBar.swift */; };
+		D10000532F6E000100AB0000 /* ScrollTransportBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000522F6E000100AB0000 /* ScrollTransportBar.swift */; };
+		D10000552F6E000100AB0000 /* SwipeBackEnabler.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000542F6E000100AB0000 /* SwipeBackEnabler.swift */; };
 		D10000092F6E000100AB0001 /* TabMakerDocumentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000092F6E000100AB0000 /* TabMakerDocumentView.swift */; };
 		D100000A2F6E000100AB0001 /* TabMakerToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = D100000A2F6E000100AB0000 /* TabMakerToolbar.swift */; };
 		D100000B2F6E000100AB0001 /* NoteInputOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = D100000B2F6E000100AB0000 /* NoteInputOverlay.swift */; };
@@ -105,6 +113,8 @@
 		B1626C4A29F631E600304E9E /* TabBuddyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBuddyTests.swift; sourceTree = "<group>"; };
 		D10000202F6E000100AB0000 /* CanonicalBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalBridgeTests.swift; sourceTree = "<group>"; };
 		D10000212F6E000100AB0000 /* CanonicalMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalMigrationTests.swift; sourceTree = "<group>"; };
+		D10000222F6E000100AB0000 /* ForewordCapoRhythmFreeTimeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForewordCapoRhythmFreeTimeTests.swift; sourceTree = "<group>"; };
+		D10000402F6E000100AB0000 /* TabRenderModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabRenderModelTests.swift; sourceTree = "<group>"; };
 		B1626C5029F631E600304E9E /* TabBuddyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TabBuddyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B1626C5429F631E600304E9E /* TabBuddyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBuddyUITests.swift; sourceTree = "<group>"; };
 		B1626C5629F631E600304E9E /* TabBuddyUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBuddyUITestsLaunchTests.swift; sourceTree = "<group>"; };
@@ -135,6 +145,12 @@
 		D10000062F6E000100AB0000 /* TabMakerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabMakerViewModel.swift; sourceTree = "<group>"; };
 		D10000072F6E000100AB0000 /* StaffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffView.swift; sourceTree = "<group>"; };
 		D10000082F6E000100AB0000 /* TabStaffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabStaffView.swift; sourceTree = "<group>"; };
+		D10000312F6E000100AB0000 /* TabRenderModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabRenderModel.swift; sourceTree = "<group>"; };
+		D10000332F6E000100AB0000 /* DrawnTabSystemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawnTabSystemView.swift; sourceTree = "<group>"; };
+		D10000352F6E000100AB0000 /* TabPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabPlayerView.swift; sourceTree = "<group>"; };
+		D10000502F6E000100AB0000 /* TabTransportBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabTransportBar.swift; sourceTree = "<group>"; };
+		D10000522F6E000100AB0000 /* ScrollTransportBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollTransportBar.swift; sourceTree = "<group>"; };
+		D10000542F6E000100AB0000 /* SwipeBackEnabler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeBackEnabler.swift; sourceTree = "<group>"; };
 		D10000092F6E000100AB0000 /* TabMakerDocumentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabMakerDocumentView.swift; sourceTree = "<group>"; };
 		D100000A2F6E000100AB0000 /* TabMakerToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabMakerToolbar.swift; sourceTree = "<group>"; };
 		D100000B2F6E000100AB0000 /* NoteInputOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteInputOverlay.swift; sourceTree = "<group>"; };
@@ -211,6 +227,7 @@
 			children = (
 				D100000E2F6E000100AB0000 /* Maker */,
 				D100001F2F6E000100AB0000 /* Canonical */,
+				D10000302F6E000100AB0000 /* Player */,
 				C10000012F5E000100AB1001 /* MeasureMap.swift */,
 				C10000022F5E000100AB1001 /* TabParser.swift */,
 				C10000032F5E000100AB1001 /* PlaybackCoordinator.swift */,
@@ -233,6 +250,7 @@
 				E9D7A1C92E19F5830012F2B5 /* TabViewerView.swift */,
 				E9D7A1C72E19F4170012F2B5 /* FileBrowserView.swift */,
 				E9D7A1C52E19F3090012F2B5 /* FileMetadata.swift */,
+				D10000542F6E000100AB0000 /* SwipeBackEnabler.swift */,
 				B11693A92C05991D005C37EA /* TabBuddy.entitlements */,
 				B1626C3929F631E500304E9E /* TabBuddyApp.swift */,
 				B1626C3B29F631E500304E9E /* ContentView.swift */,
@@ -259,6 +277,8 @@
 				B1626C4A29F631E600304E9E /* TabBuddyTests.swift */,
 				D10000202F6E000100AB0000 /* CanonicalBridgeTests.swift */,
 				D10000212F6E000100AB0000 /* CanonicalMigrationTests.swift */,
+				D10000222F6E000100AB0000 /* ForewordCapoRhythmFreeTimeTests.swift */,
+				D10000402F6E000100AB0000 /* TabRenderModelTests.swift */,
 			);
 			path = TabBuddyTests;
 			sourceTree = "<group>";
@@ -303,6 +323,18 @@
 				D10000152F6E000100AB0000 /* LibraryMigration.swift */,
 			);
 			path = Canonical;
+			sourceTree = "<group>";
+		};
+		D10000302F6E000100AB0000 /* Player */ = {
+			isa = PBXGroup;
+			children = (
+				D10000312F6E000100AB0000 /* TabRenderModel.swift */,
+				D10000332F6E000100AB0000 /* DrawnTabSystemView.swift */,
+				D10000352F6E000100AB0000 /* TabPlayerView.swift */,
+				D10000502F6E000100AB0000 /* TabTransportBar.swift */,
+				D10000522F6E000100AB0000 /* ScrollTransportBar.swift */,
+			);
+			path = Player;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -470,6 +502,12 @@
 				D10000062F6E000100AB0001 /* TabMakerViewModel.swift in Sources */,
 				D10000072F6E000100AB0001 /* StaffView.swift in Sources */,
 				D10000082F6E000100AB0001 /* TabStaffView.swift in Sources */,
+				D10000322F6E000100AB0000 /* TabRenderModel.swift in Sources */,
+				D10000342F6E000100AB0000 /* DrawnTabSystemView.swift in Sources */,
+				D10000362F6E000100AB0000 /* TabPlayerView.swift in Sources */,
+				D10000512F6E000100AB0000 /* TabTransportBar.swift in Sources */,
+				D10000532F6E000100AB0000 /* ScrollTransportBar.swift in Sources */,
+				D10000552F6E000100AB0000 /* SwipeBackEnabler.swift in Sources */,
 				D10000092F6E000100AB0001 /* TabMakerDocumentView.swift in Sources */,
 				D100000A2F6E000100AB0001 /* TabMakerToolbar.swift in Sources */,
 				D100000B2F6E000100AB0001 /* NoteInputOverlay.swift in Sources */,
@@ -492,6 +530,8 @@
 				B1626C4B29F631E600304E9E /* TabBuddyTests.swift in Sources */,
 				D10000202F6E000100AB0001 /* CanonicalBridgeTests.swift in Sources */,
 				D10000212F6E000100AB0001 /* CanonicalMigrationTests.swift in Sources */,
+				D10000222F6E000100AB0001 /* ForewordCapoRhythmFreeTimeTests.swift in Sources */,
+				D10000412F6E000100AB0000 /* TabRenderModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

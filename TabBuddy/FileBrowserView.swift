@@ -230,7 +230,9 @@ struct FileBrowserView: View {
             list = list.filter { file in
                 file.filename.localizedCaseInsensitiveContains(needle) ||
                 file.tags.contains { $0.localizedCaseInsensitiveContains(needle) } ||
-                file.folderName.localizedCaseInsensitiveContains(needle)
+                file.folderName.localizedCaseInsensitiveContains(needle) ||
+                (file.derivedTitle?.localizedCaseInsensitiveContains(needle) ?? false) ||
+                (file.foreword?.localizedCaseInsensitiveContains(needle) ?? false)
             }
         }
 
@@ -329,8 +331,9 @@ struct FileBrowserView: View {
     private func open(_ file: FileItem) {
         guard file.isBookmarkValid else { return }
 
+        // Recency updates on open; playCount is incremented by the viewer only
+        // after the tab has stayed open a few seconds (see TabViewerView).
         file.lastOpenedAt = Date()
-        file.playCount += 1
         try? context.save()
         onFileOpen(file)
     }

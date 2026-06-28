@@ -6,6 +6,150 @@ it lives, and what's next. Newest first.
 
 ---
 
+## 2026-06-27 — Native drawn Tab Player (Guitar sheet music app density2)
+
+Replaced the monospaced `UITextView` + overlay rendering for text tabs with a
+structured, **drawn** tab player built from the `MeasureMap`, per the
+`density2` design handoff. PDFs keep their PDFKit fallback; the generator is
+unchanged (no converter-version bump).
+
+New files under `TabBuddy/Player/`:
+- **`TabRenderModel.swift`** — pure value model + builder: `MeasureMap` →
+  systems → measures → note columns (frets high-E-first, `RhythmDuration`),
+  plus playhead-fraction and active-column geometry. Unit-tested
+  (`TabRenderModelTests`, 4 cases).
+- **`DrawnTabSystemView.swift`** — SwiftUI `Canvas` drawing one system:
+  measure-number gutter + section/loop-A-B flags, rhythm-letter row, optional
+  5-line standard staff (clef + noteheads/stems/flags by melody pitch), the
+  6-string tab staff with barlines and knockout fret numbers, the accent
+  playhead (with focus-mode glow), the inverted active-note pill, and the A/B
+  loop band. Light + dark `TabPalette`s. Tap-to-seek via `SpatialTapGesture`.
+- **`TabPlayerView.swift`** — host: a `ScrollViewReader` stack of systems with
+  **follow / line-by-line auto-scroll**, the full transport (skip, big
+  play/pause, `m. x / N` + time/loop readout, measure scrubber, tempo pill,
+  metronome, count-in, **A/B loop**, auto-scroll cycle, display, focus), a
+  **Display** popover (notation Tab-only/Tab+staff, rhythm letters, size A±,
+  auto-scroll mode, tuning/capo), a **tempo / speed-trainer** popover (BPM
+  slider + 50/75/90/100% presets + "ramp +5% each loop"), and a dark
+  **focus mode** (`fullScreenCover`). View prefs persist via `@AppStorage`.
+
+Plumbing:
+- `PlaybackCoordinator` gained an `onLoopCompleted` callback (drives the speed
+  trainer's per-pass tempo ramp).
+- `FileItem` gained `loopStartMeasure` / `loopEndMeasure` (additive-optional;
+  measure-based A/B loop persistence for the drawn player).
+- `TabViewerView` now routes non-PDF parseable tabs to `TabPlayerView`
+  (its own transport replaces the legacy playback bar), adds a Tuning · Capo ·
+  Key · TimeSig subtitle, and hides the redundant scroll-speed slider.
+
+Verified: app + tests build clean, 38 tests green, launches on simulator
+(SwiftData migration for the new loop fields is clean).
+
+## 2026-06-27 — Generator refinement v4 (titles / phantom measures / tuplets / playback)
+
+Converter version bumped 3→4 (re-derives on open).
+
+- **Title heuristic, much stricter** (`isLikelyTitle`): rejects URLs, credit lines
+  ("Tabbed from…"), timestamps, over-long sentences, and PDF music-font garbage
+  ("Υ ∀∀"). Directive check is now **anchored** so a title containing "Time"/"Key"
+  ("Ocarina of Time - Song of Storms") is no longer mistaken for a directive.
+- **Title resolution** (adapter): **PDFs always use the filename** (their text
+  layer is unreliable); when the **filename already contains** the in-file title
+  it wins (e.g. "Zelda Wind Waker - Outset Island" ⊇ "Outset Island"); otherwise
+  the fuller in-file title wins ("World of Warcraft: Taverns of Azeroth").
+- **Over-segmentation / phantom measures**: drop measures that are empty AND <4
+  columns (edge artifacts from "-|"/"|-" decorations). Corpus empty-measure rate
+  8.7% → 3.3%, tiny 6.5% → 0.9% (~15.5k phantoms removed). Confirmed the "runaway"
+  files (Satie 405, Bach 839) are **legitimate** — they concatenate 6 transcriber
+  versions, not a bug.
+- **Tuplet brackets** ("|--3--|  |--3--|") drawn above the staff are no longer
+  parsed as their own tiny measures (`isTupletBracketLine`). Windmill Hut: 10
+  systems/29 measures → 9/25.
+- **playback** audibly improved as a side effect — the parser now feeds real
+  per-note durations (rhythm letters + beat rulers) and time signatures into the
+  `MeasureMap` the `PlaybackCoordinator` plays, instead of uniform synthesized
+  beats.
+
+Tests: +6 in `ForewordCapoRhythmFreeTimeTests.swift` (34 total green).
+
+---
+
+## 2026-06-27 — Generator refinement v3 (full foreword / beat ruler / search / play-gate)
+
+Converter version bumped 2→3 (re-derives on open).
+
+- **Full verbatim foreword** — `comments` now preserves the *whole* human header
+  (subtitle, "Tabbed and Arranged by:", "Playing Instructions:", and directive
+  lines like Tempo/Capo/Tuning/Rhythm), only dropping musical lines/separators.
+  Section labels ("Intro:", "[Verse]") now end the foreword (no leak). "Rhythm:/
+  Rhytm:/metrum" time signatures recognized. (Display deferred per user — capture
+  only for now.)
+- **Numeric beat-ruler durations** — `"1 2 3"` rulers (classtab/Satie style) now
+  drive per-note durations via proportional column spacing scaled to the measure
+  beat count, snapped to standard note values. `isNumericRulerLine` +
+  `proportionalRhythm` path in `extractNotes`.
+- **Searchable forewords** — `FileItem.foreword` (composer + comments)
+  denormalized by `CanonicalConverter`; library search now matches `derivedTitle`
+  + `foreword` in addition to filename/tags/folder.
+- **play-count dwell gate** — `playCount` no longer increments on quick opens;
+  `TabViewerView` counts a play only after the tab stays open ~3s (cancelled on
+  early dismiss). `FileBrowserView.open()` now only updates `lastOpenedAt`.
+
+**Corpus impact (whole library, v2 → v3):** rhythm-authored 16.3% → **52.4%**;
+metered files 11.5% → **20.8%**; notes-with-duration 15.9% → **27.8%**; time
+signatures 73.3% → **73.4%** (incl. "Rhythm:" forms). Title still 98.5%.
+
+Files: `TabBuddy/TabParser.swift`, `TabBuddy/Canonical/CanonicalTab.swift`,
+`TabBuddy/Canonical/CanonicalConverter.swift`, `TabBuddy/FileItem.swift`,
+`TabBuddy/FileBrowserView.swift`, `TabBuddy/TabViewerView.swift`.
+Tests: +3 in `ForewordCapoRhythmFreeTimeTests.swift` (28 total green).
+
+**Still deferred:** over-segmentation (Satie → 405 measures vs ~78; hurts beat-
+ruler coverage on long pieces); section/loop model; foreword *display* (next
+chunk — the Tab Player); articulations.
+
+---
+
+## 2026-06-27 — Generator refinement v2 (foreword / capo / rhythm / free-time)
+
+Data-driven against the real iCloud library (4096 `.txt`). Bumped
+`CanonicalConverterVersion` 1→2 so existing canonicals re-derive on open.
+
+- **Foreword capture** (`TabParser.parseMetadata`): in-file title, composer
+  ("Composed by:" / "by …"), and prose comments, bounded to the header block
+  above the first tab system; excludes section headers, rhythm/ruler lines,
+  separators. New `TabMetadata`/`MeasureMap` fields; flowed to
+  `CanonicalTab.title/artist/comments`.
+- **Capo** → `capoOffsets` + applied to **sounding pitch** (`canonicalNotes`
+  adds `string + capo + fret`); physical fret fingering preserved.
+- **Authored rhythm**: `Provenance.rhythmSource = .authored` when a real rhythm
+  line drove ≥50% of notes (was hardcoded `.synthesized`); `asciiTab` renders a
+  duration row (W/H/Q/E/S via `RhythmDuration.nearest/notation`) — byte-identical
+  early-return when not authored (protects the diff surface).
+- **Free-time**: detect unmetered tabs (no time sig / rhythm / internal bars);
+  even-spaced positions + uniform 1.0 durations; `Provenance.isFreeTime` flag.
+- **"Timing:" time signatures** now detected (classtab uses "Timing:" widely).
+- **Data-integrity fix**: new `Provenance.isFreeTime` added via a custom
+  `init(from:)` using `decodeIfPresent` — the call sites decode with a swallowing
+  `try?`, so a required key would have silently wiped provenance on every
+  existing canonical. (Caught by the design workflow + test #14.)
+
+**Corpus impact (whole library, before → after):** Latin-1 read failures
+306 → **0**; title captured **98.7%**; time signatures 66.8% → **73.3%**;
+rhythm-authored **666 files**; free-time correctly isolated to **52 files**.
+On the two example files: Comet now captures title/Koji Kondo/Capo 2/6/4 +
+renders durations; accf is correctly free-time.
+
+Files: `TabBuddy/MeasureMap.swift`, `TabBuddy/TabParser.swift`,
+`TabBuddy/Canonical/CanonicalTab.swift`, `TabBuddy/Canonical/CanonicalAdapters.swift`.
+Tests: `TabBuddyTests/ForewordCapoRhythmFreeTimeTests.swift` (13 new; 25 total green).
+
+**Deferred:** numeric beat-ruler (`1 2 3`) duration inference (~356 classtab
+files, currently 0 durations — biggest remaining capture gap); section/loop
+model; over-segmentation (39 files at 400–839 measures); articulations.
+
+---
+
 ## 2026-06-27 — Card Library redesign (Screen 1) + swappable viewer
 
 ### Card Library (design handoff "Screen 1")

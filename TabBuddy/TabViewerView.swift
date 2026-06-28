@@ -10,14 +10,25 @@ import QuartzCore
 /// Which representation the viewer renders.
 enum ViewerRenderMode: String { case original, canonical }
 
+/// For text tabs: the drawn native player vs. the raw original monospaced text.
+enum TextViewMode: String { case player, original }
+
 struct TabViewerView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.undoManager) private var undoManager
 
     /// Global preference for which representation to show (per-user, sticky).
     @AppStorage("viewer.renderMode") private var renderMode: ViewerRenderMode = .original
+    /// Text-tab display, remembered per song. Defaults to the raw original text;
+    /// the user can switch a given song to the drawn Tab Player and it sticks.
+    private var textMode: TextViewMode {
+        TextViewMode(rawValue: file?.preferredTextMode ?? "") ?? .original
+    }
     /// Cached canonical ASCII rendering (decoded from the stored MusicXML).
     @State private var canonicalText: String? = nil
+    /// Counts a "play" only after the tab has stayed open a few seconds.
+    @State private var playCountTask: Task<Void, Never>?
+    private static let playDwellSeconds: UInt64 = 3
 
     @Binding var file: FileItem?
     @Binding var path: [AppPage]
@@ -58,6 +69,9 @@ struct TabViewerView: View {
     @State private var measureMap: MeasureMap?
     @State private var highlightOverlay = PlaybackHighlightOverlay()
     @State private var userBPM: Double = 120
+
+    // Loop-to-top for the Original file view's auto-scroll transport.
+    @State private var loopToTopText = false
 
     @MainActor
     private func loadText() {
@@ -107,15 +121,23 @@ struct TabViewerView: View {
         GeometryReader { geo in
             VStack(spacing: 0) {
                 header
-                if measureMap != nil {
-                    playbackBar
-                }
                 Divider()
                 viewerBody
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                // The drawn Tab Player carries its own transport; every other
+                // (scrollable) render — raw text and PDF — gets the shared
+                // scroll transport along its bottom.
+                if showScrollTransport {
+                    Divider()
+                    originalTransport
+                }
             }
             .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
         }
+        // Hide the empty system nav bar (reclaims top space) but keep the
+        // interactive swipe-back — `navigationBarBackButtonHidden` is what
+        // disables that edge gesture, so we deliberately don't set it.
+        .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             // restore saved scroll speed for this file
             if let saved = file?.scrollSpeed {
@@ -148,11 +170,21 @@ struct TabViewerView: View {
             }
 
             if renderMode == .canonical { loadCanonicalText() }
+
+            // Count a play only if the tab stays open past the dwell threshold.
+            playCountTask?.cancel()
+            playCountTask = Task { @MainActor in
+                try? await Task.sleep(nanoseconds: Self.playDwellSeconds * 1_000_000_000)
+                guard !Task.isCancelled, let file else { return }
+                file.playCount += 1
+                try? context.save()
+            }
         }
         .onChange(of: renderMode) { mode in
             if mode == .canonical { loadCanonicalText() }
         }
         .onDisappear {
+            playCountTask?.cancel()
             if hasAccess {
                 file?.url?.stopAccessingSecurityScopedResource()
                 hasAccess = false
@@ -220,6 +252,7 @@ struct TabViewerView: View {
         coordinator.currentFile = file
         coordinator.isPDF = file?.filename.lowercased().hasSuffix(".pdf") ?? false
         coordinator.scrollSpeed = scrollSpeed
+        coordinator.loopToTop = loopToTopText
         syncLoopToCoordinator()
 
         let link = CADisplayLink(target: coordinator, selector: #selector(ScrollCoordinator.handleScrollStep(_:)))
@@ -256,7 +289,14 @@ struct TabViewerView: View {
     
     private var header: some View {
         HStack(alignment: .center, spacing: 12) {
-            Spacer(minLength: 8)
+            // back to library
+            Button {
+                if !path.isEmpty { path.removeLast() }
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.title3.weight(.semibold))
+            }
+            .buttonStyle(.borderless)
 
             // ★ favourite toggle
             Button {
@@ -277,11 +317,19 @@ struct TabViewerView: View {
             }
             .buttonStyle(.borderless)
 
-            // filename (tap to rename)
-            Text(file!.filename)
-                .font(.headline)
-                .lineLimit(1)
-                .truncationMode(.middle)
+            // title + subtitle (Tuning · Capo · Key · TimeSig)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(file!.displayTitle)
+                    .font(.headline)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                if usingDrawnPlayer, !subtitleText.isEmpty {
+                    Text(subtitleText)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
 
             // tag chips (show first 2 + overflow count)
             if let tags = file?.tags, !tags.isEmpty {
@@ -313,78 +361,28 @@ struct TabViewerView: View {
 
             Spacer(minLength: 8)
 
-            // scroll-speed slider with fine-tune buttons
-            HStack(spacing: 6) {
-                Image(systemName: "arrow.up.and.down")
-                    .foregroundStyle(.secondary)
-                Text("\(Int(scrollSpeed))")
-                    .font(.caption)
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
-                Button {
-                    scrollSpeed = max(scrollSpeed - 1, 4)
-                } label: {
-                    Image(systemName: "minus.circle")
-                }
-                Slider(value: $scrollSpeed,
-                       in: 0...40,
-                       step: 1)
-                    .frame(width: 150)
-                Button {
-                    scrollSpeed = min(scrollSpeed + 1, 40)
-                } label: {
-                    Image(systemName: "plus.circle")
-                }
-            }
-            Spacer(minLength: 8)
+            // (Scroll speed now lives in each view's bottom transport.)
 
             // overflow menu
             Menu {
                 Button("Rename…") { newName = file!.filename; showRename = true }
                 Button("Edit Tags…") { showTags = true }
 
-                if file?.hasCanonical == true {
+                // View toggle: drawn player vs. raw original text (text tabs);
+                // PDF vs. TabBuddy ASCII (PDFs).
+                if playerAvailable {
                     Divider()
-
+                    Picker("View", selection: Binding(
+                        get: { textMode },
+                        set: { file?.preferredTextMode = $0.rawValue; try? context.save() })) {
+                        Label("Tab Player", systemImage: "wand.and.stars").tag(TextViewMode.player)
+                        Label("Original", systemImage: "doc.text").tag(TextViewMode.original)
+                    }
+                } else if isPDF, file?.hasCanonical == true {
+                    Divider()
                     Picker("View", selection: $renderMode) {
                         Label("Original", systemImage: "doc.text").tag(ViewerRenderMode.original)
                         Label("TabBuddy", systemImage: "wand.and.stars").tag(ViewerRenderMode.canonical)
-                    }
-                }
-
-                Divider()
-
-                Button("Set Loop Start") {
-                    loopStartY = currentScrollY
-                }
-
-                Button("Set Loop End") {
-                    guard loopStartY != nil else { return }
-                    loopEndY = currentScrollY
-                    // swap if end < start
-                    if let s = loopStartY, let e = loopEndY, e < s {
-                        loopStartY = e
-                        loopEndY = s
-                    }
-                    syncLoopToCoordinator()
-                }
-                .disabled(loopStartY == nil)
-
-                if loopStartY != nil || loopEndY != nil {
-                    Button("Clear Loop", role: .destructive) {
-                        loopStartY = nil
-                        loopEndY = nil
-                        syncLoopToCoordinator()
-                    }
-                }
-
-                if let f = file,
-                   f.loopStartY != nil && f.loopEndY != nil,
-                   loopStartY == nil && loopEndY == nil {
-                    Button("Resume Last Loop") {
-                        loopStartY = f.loopStartY.map { CGFloat($0) }
-                        loopEndY = f.loopEndY.map { CGFloat($0) }
-                        syncLoopToCoordinator()
                     }
                 }
             } label: {
@@ -396,18 +394,118 @@ struct TabViewerView: View {
         }
 
         // --------------------------------------------------------------------
+        /// Whether the file is a PDF (governs the PDFKit fallback).
+        private var isPDF: Bool {
+            file?.url?.pathExtension.lowercased() == "pdf"
+        }
+
+        /// True when this tab *can* show the drawn player (non-PDF, parsed into
+        /// at least one system). Governs whether the View toggle is offered.
+        private var playerAvailable: Bool {
+            !isPDF && (measureMap?.systems.isEmpty == false)
+        }
+
+        /// The drawn Tab Player is used for a player-capable tab unless the user
+        /// switched that tab to the raw "Original" text. PDFs keep their PDFKit
+        /// render (per the standing preference) until native display matures.
+        private var usingDrawnPlayer: Bool {
+            playerAvailable && textMode == .player
+        }
+
+        /// Header subtitle: Tuning · Capo · Key · TimeSig, omitting unknowns.
+        private var subtitleText: String {
+            guard let map = measureMap else { return "" }
+            var parts: [String] = []
+            parts.append(map.tuning ?? "Standard")
+            if let capo = map.capoSemitones, capo > 0 { parts.append("Capo \(capo)") }
+            if let key = map.key, !key.isEmpty { parts.append(key) }
+            if let ts = map.timeSignature { parts.append("\(ts.beats)/\(ts.noteValue)") }
+            return parts.joined(separator: " · ")
+        }
+
+        /// The scroll transport backs every scrollable original render — the raw
+        /// text view *and* the PDF view — i.e. anything that isn't the drawn
+        /// player (which carries its own playback transport).
+        private var showScrollTransport: Bool {
+            !usingDrawnPlayer
+        }
+
+        /// Reading-oriented transport for the file views (text + PDF):
+        /// back-to-top, an inline auto-scroll speed slider, and loop-to-top.
+        /// No play/scrubber — those only make sense for the drawn player.
+        private var originalTransport: some View {
+            ScrollTransportBar(
+                scrollSpeed: $scrollSpeed,
+                loopToTop: Binding(
+                    get: { loopToTopText },
+                    set: { on in
+                        loopToTopText = on
+                        coordinator.loopToTop = on
+                        // Looping is meaningless with no scroll motion — give it a
+                        // gentle default speed when turned on from a standstill.
+                        if on && scrollSpeed == 0 { scrollSpeed = 8 }
+                    }),
+                onBackToTop: { scrollToTop() },
+                showDisplayButton: !isPDF,
+                displayContent: { originalDisplayPopover }
+            )
+        }
+
+        /// Display popover for the raw-text view: just text size.
+        private var originalDisplayPopover: some View {
+            Form {
+                Section("Text") {
+                    HStack {
+                        Text("Size")
+                        Spacer()
+                        Button { fontSize = max(6, fontSize - 1) } label: { Image(systemName: "textformat.size.smaller") }
+                        Text("\(Int(fontSize))").font(.caption).monospacedDigit().foregroundStyle(.secondary)
+                        Button { fontSize = min(28, fontSize + 1) } label: { Image(systemName: "textformat.size.larger") }
+                    }.buttonStyle(.borderless)
+                }
+            }
+            .frame(minWidth: 280, minHeight: 140)
+        }
+
+        private func scrollToTop() {
+            // The auto-scroll CADisplayLink rewrites contentOffset every frame, so
+            // it would immediately cancel an animated jump. Pause it, jump, then
+            // resume once the jump has settled.
+            let wasAutoScrolling = isAutoScrolling
+            stopAutoScroll()
+
+            if let tv = textViewProxy {
+                tv.setContentOffset(CGPoint(x: tv.contentOffset.x, y: -tv.adjustedContentInset.top), animated: true)
+            }
+            if let sv = scrollViewProxy {
+                sv.setContentOffset(CGPoint(x: sv.contentOffset.x, y: -sv.adjustedContentInset.top), animated: true)
+            }
+
+            if wasAutoScrolling && scrollSpeed > 0 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { startAutoScroll() }
+            }
+        }
+
         @ViewBuilder
         private var viewerBody: some View {
-            if renderMode == .canonical, file?.hasCanonical == true, let text = canonicalText {
-                // Standardized TabBuddy rendering: our canonical, regenerated as
-                // monospaced tab. Read-only (no playback-overlay mapping yet).
+            if usingDrawnPlayer, let map = measureMap {
+                // The redesigned native Tab Player, drawn from the MeasureMap.
+                TabPlayerView(map: map,
+                              file: file,
+                              subtitle: subtitleText,
+                              coordinator: playbackCoordinator,
+                              metronome: metronome,
+                              notePlayer: notePlayer,
+                              userBPM: $userBPM)
+            } else if isPDF, renderMode == .canonical, file?.hasCanonical == true, let text = canonicalText {
+                // PDF → standardized TabBuddy ASCII rendering (read-only).
                 TabText(fontSize: $fontSize,
                         content: text,
                         textViewProxy: $textViewProxy,
                         highlightOverlay: nil,
                         onTapAtCharacter: nil)
                     .padding(.horizontal, 4)
-            } else if file?.url?.pathExtension.lowercased() == "pdf" {
+            } else if isPDF {
                 if let url = file?.url {
                     TabPDFView(url: url, scrollViewProxy: $scrollViewProxy)
                         .padding()
@@ -482,115 +580,6 @@ struct TabViewerView: View {
                 print("Rename failed:", error)
             }
         }
-
-    // MARK: - Playback Bar
-
-    private var playbackBar: some View {
-        HStack(spacing: 12) {
-            // Play/Pause
-            Button {
-                if playbackCoordinator.isPlaying {
-                    playbackCoordinator.pause()
-                    metronome.stop()
-                    notePlayer.stop()
-                    // Resume constant-speed auto-scroll if speed > 0
-                    if scrollSpeed > 0 { startAutoScroll() }
-                } else {
-                    // Stop constant-speed auto-scroll when playback starts
-                    stopAutoScroll()
-                    // Force full text layout so highlight Y positions and
-                    // contentSize are accurate for the entire document.
-                    // UITextView uses lazy layout and may not have computed
-                    // positions for text that hasn't been scrolled to yet.
-                    if let tv = textViewProxy {
-                        tv.layoutManager.ensureLayout(for: tv.textContainer)
-                    }
-                    metronome.start()
-                    notePlayer.start()
-                    playbackCoordinator.play()
-                }
-            } label: {
-                Image(systemName: playbackCoordinator.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.title3)
-            }
-            .buttonStyle(.borderless)
-
-            // Stop
-            Button {
-                playbackCoordinator.stop()
-                metronome.stop()
-                notePlayer.stop()
-                highlightOverlay.isHighlightVisible = false
-                lastScrolledSystem = -1
-            } label: {
-                Image(systemName: "stop.fill")
-                    .font(.title3)
-            }
-            .buttonStyle(.borderless)
-
-            Divider().frame(height: 20)
-
-            // BPM control
-            HStack(spacing: 4) {
-                Text("BPM")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text("\(Int(userBPM))")
-                    .font(.caption)
-                    .monospacedDigit()
-                    .frame(minWidth: 30)
-                Button {
-                    userBPM = max(userBPM - 5, 30)
-                    playbackCoordinator.bpm = userBPM
-                } label: {
-                    Image(systemName: "minus.circle")
-                }
-                Slider(value: $userBPM, in: 30...300, step: 1)
-                    .frame(width: 100)
-                    .onChange(of: userBPM) { newVal in
-                        playbackCoordinator.bpm = newVal
-                    }
-                Button {
-                    userBPM = min(userBPM + 5, 300)
-                    playbackCoordinator.bpm = userBPM
-                } label: {
-                    Image(systemName: "plus.circle")
-                }
-            }
-
-            Divider().frame(height: 20)
-
-            // Metronome toggle
-            Button {
-                metronome.isEnabled.toggle()
-            } label: {
-                Image(systemName: metronome.isEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
-                    .foregroundStyle(metronome.isEnabled ? .primary : .secondary)
-            }
-            .buttonStyle(.borderless)
-
-            // Note playback toggle
-            Button {
-                notePlayer.isEnabled.toggle()
-            } label: {
-                Image(systemName: notePlayer.isEnabled ? "music.note" : "music.note.list")
-                    .foregroundStyle(notePlayer.isEnabled ? .blue : .secondary)
-            }
-            .buttonStyle(.borderless)
-
-            // Measure counter
-            if let map = measureMap {
-                Text("\(playbackCoordinator.currentMeasureIndex + 1)/\(map.measureCount)")
-                    .font(.caption)
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 4)
-    }
 
     // MARK: - Playback Integration
 

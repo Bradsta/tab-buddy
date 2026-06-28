@@ -28,20 +28,33 @@ enum CanonicalAdapters {
         let tuning = tuningMIDI(forName: map.tuning) ?? GuitarTuning.standard.midiNotes
         let beats = map.timeSignature?.beats ?? 4
         let noteValue = map.timeSignature?.noteValue ?? 4
+        let capo = map.capoSemitones ?? 0
 
         var measures: [CanonicalMeasure] = []
         var notesTotal = 0
+        var notesWithDuration = 0
 
         for measure in map.allMeasures {
+            let events = measure.notes ?? []
+            let onsetCount = max(1, events.count)
             var canonNotes: [CanonicalNote] = []
-            for event in measure.notes ?? [] {
-                let stack = canonicalNotes(from: event, tuningMIDI: tuning, beats: beats)
+            for (i, event) in events.enumerated() {
+                var ev = event
+                let hadDuration = ev.durationInBeats != nil
+                if map.isFreeTime {
+                    // Even spacing within the measure; durations genuinely synthesized.
+                    ev.positionInMeasure = Double(i) / Double(onsetCount)
+                    ev.durationInBeats = 1.0
+                }
+                let stack = canonicalNotes(from: ev, tuningMIDI: tuning, beats: beats, capo: capo)
+                if hadDuration && !map.isFreeTime { notesWithDuration += stack.count }
                 canonNotes.append(contentsOf: stack)
             }
             notesTotal += canonNotes.count
+            let mBeats = map.isFreeTime ? onsetCount : measure.beatCount
             measures.append(CanonicalMeasure(number: measure.measureNumber,
                                              notes: canonNotes,
-                                             beatCount: measure.beatCount))
+                                             beatCount: mBeats))
         }
 
         // Confidence: coverage of measures that actually carried notes.
@@ -49,16 +62,43 @@ enum CanonicalAdapters {
         let coverage = measures.isEmpty ? 0 : Double(withNotes) / Double(measures.count)
         let confidence = notesTotal == 0 ? 0.1 : min(1.0, 0.4 + 0.6 * coverage)
 
+        // Rhythm is "authored" only when a real rhythm line drove ≥50% of notes.
+        let rhythmSource: Provenance.RhythmSource =
+            (map.rhythmAuthored && notesTotal > 0 &&
+             Double(notesWithDuration) / Double(notesTotal) >= 0.5) ? .authored : .synthesized
+
         let provenance = Provenance(sourceType: sourceType,
                                     confidence: confidence,
                                     converterVersion: CanonicalConverterVersion.current,
-                                    rhythmSource: .synthesized,
-                                    clipped: false)
+                                    rhythmSource: rhythmSource,
+                                    clipped: false,
+                                    isFreeTime: map.isFreeTime)
 
-        return CanonicalTab(title: title,
-                            artist: artist,
+        // Title resolution (`title` arg = filename fallback):
+        //  • PDF text extraction is unreliable (music-font glyphs, fragments) →
+        //    always use the filename.
+        //  • If the filename already contains the in-file title, the filename is
+        //    the more specific form (e.g. "Zelda Wind Waker - Outset Island" ⊇
+        //    "Outset Island") → keep the filename.
+        //  • Otherwise the in-file title is fuller/different → use it.
+        let resolvedTitle: String = {
+            guard sourceType != .pdfText,
+                  let inFile = map.title?.trimmingCharacters(in: .whitespaces), !inFile.isEmpty
+            else { return title }
+            func norm(_ s: String) -> String {
+                s.lowercased().filter { $0.isLetter || $0.isNumber || $0 == " " }
+            }
+            return norm(title).contains(norm(inFile)) ? title : inFile
+        }()
+        let resolvedArtist = map.artist ?? artist
+        let capoOffsets = capo == 0 ? [] : Array(repeating: capo, count: tuning.count)
+
+        return CanonicalTab(title: resolvedTitle,
+                            artist: resolvedArtist,
+                            comments: map.comments,
                             tuningMIDI: tuning,
                             tuningName: map.tuning ?? GuitarTuning.standard.name,
+                            capoOffsets: capoOffsets,
                             beatsPerMeasure: beats,
                             noteValue: noteValue,
                             bpm: map.bpm,
@@ -68,14 +108,17 @@ enum CanonicalAdapters {
 
     /// Expand one `NoteEvent` (which may sound several strings) into a chord
     /// stack of `CanonicalNote`s — first non-nil string is the chord head.
+    /// `capo` shifts the *sounding* pitch (string + capo + fret); the physical
+    /// `string`/`fret` fingering the ASCII encodes is preserved as-is.
     private static func canonicalNotes(from event: NoteEvent,
                                        tuningMIDI: [Int],
-                                       beats: Int) -> [CanonicalNote] {
+                                       beats: Int,
+                                       capo: Int) -> [CanonicalNote] {
         var out: [CanonicalNote] = []
         let duration = event.durationInBeats ?? 1.0
         for (s, fret) in event.frets.enumerated() {
             guard let fret, s < tuningMIDI.count else { continue }
-            let midi = tuningMIDI[s] + fret
+            let midi = tuningMIDI[s] + capo + fret
             let pos = StaffPitchMapper.staffPosition(midiPitch: midi)
             out.append(CanonicalNote(positionInMeasure: event.positionInMeasure,
                                      durationInBeats: duration,
@@ -204,10 +247,15 @@ enum CanonicalAdapters {
         // Header
         lines.append(tab.title)
         if let artist = tab.artist { lines.append(artist) }
-        lines.append("Tuning: \(tab.tuningName)  (\(labels.joined()))"
-                     + (tab.bpm.map { "  Tempo: \(Int($0))" } ?? ""))
+        var tuningLine = "Tuning: \(tab.tuningName)  (\(labels.joined()))"
+        if let capo = tab.capoOffsets.first, capo > 0 { tuningLine += "  Capo \(capo)" }
+        if let bpm = tab.bpm { tuningLine += "  Tempo: \(Int(bpm))" }
+        lines.append(tuningLine)
+        if tab.provenance.isFreeTime { lines.append("(free time — unmetered, even spacing)") }
         lines.append("")
 
+        // Show the rhythm row only when durations are authored (real rhythm line).
+        let showRhythm = tab.provenance.rhythmSource == .authored
         let measures = tab.measures
         var index = 0
         while index < measures.count {
@@ -215,7 +263,8 @@ enum CanonicalAdapters {
             lines.append(contentsOf: renderSystem(slice,
                                                   stringCount: stringCount,
                                                   labels: labels,
-                                                  measureWidth: measureWidth))
+                                                  measureWidth: measureWidth,
+                                                  showRhythm: showRhythm))
             lines.append("")
             index += measuresPerSystem
         }
@@ -226,15 +275,20 @@ enum CanonicalAdapters {
     private static func renderSystem(_ measures: [CanonicalMeasure],
                                      stringCount: Int,
                                      labels: [String],
-                                     measureWidth: Int) -> [String] {
+                                     measureWidth: Int,
+                                     showRhythm: Bool) -> [String] {
         // One row buffer per string, high-E-first (index 0 on top).
         var rows = (0..<stringCount).map { s -> [Character] in
             Array("\(labels[s])|")
         }
+        // Rhythm row, aligned to the same prefix width as the string rows.
+        let prefixWidth = (labels.first?.count ?? 1) + 1
+        var rhythmRow = Array(String(repeating: " ", count: prefixWidth))
 
         for measure in measures {
             // Start each measure with a dash field, then a trailing barline.
             var fields = rows.indices.map { _ in Array(repeating: Character("-"), count: measureWidth) }
+            var rhythmField = Array(repeating: Character(" "), count: measureWidth)
 
             for note in measure.notes {
                 guard let s = note.string, let f = note.fret, s < stringCount else { continue }
@@ -244,15 +298,27 @@ enum CanonicalAdapters {
                 for (k, ch) in digits.enumerated() where col + k < measureWidth {
                     fields[s][col + k] = ch
                 }
+                // One rhythm letter per onset (chord head), same column as the fret.
+                if showRhythm, !note.isChordedWithPrevious {
+                    let letter = Array(RhythmDuration.nearest(toBeats: note.durationInBeats).notation)
+                    for (k, ch) in letter.enumerated() where col + k < measureWidth {
+                        rhythmField[col + k] = ch
+                    }
+                }
             }
 
+            if showRhythm {
+                rhythmRow.append(contentsOf: rhythmField)
+                rhythmRow.append(" ")
+            }
             for s in rows.indices {
                 rows[s].append(contentsOf: fields[s])
                 rows[s].append("|")
             }
         }
 
-        return rows.map { String($0) }
+        let stringLines = rows.map { String($0) }
+        return showRhythm ? [String(rhythmRow)] + stringLines : stringLines
     }
 
     // MARK: - Helpers

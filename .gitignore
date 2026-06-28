@@ -94,3 +94,9 @@ iOSInjectionProject/
 
 # Claude Code local config & worktrees
 .claude/
+
+# Local diagnostic / parser-survey scratch harness
+.diag/
+
+# Design handoff bundles (reference only, not source)
+Guitar sheet music app density*.zip

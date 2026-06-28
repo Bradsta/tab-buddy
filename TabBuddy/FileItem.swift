@@ -19,9 +19,20 @@ final class FileItem : Equatable {
     /// name of the parent folder the file was imported from
     var folderName: String = ""
 
-    /// persisted loop marker positions (scroll Y offsets)
+    /// persisted loop marker positions (scroll Y offsets) — used by the legacy
+    /// scroll-based viewer / PDF auto-scroll loop.
     var loopStartY: Double? = nil
     var loopEndY: Double? = nil
+
+    /// persisted A/B loop boundaries as measure indices (0-based, inclusive),
+    /// used by the drawn Tab Player. Additive-optional; nil = no loop saved.
+    var loopStartMeasure: Int? = nil
+    var loopEndMeasure: Int? = nil
+
+    /// Per-file preferred viewer for text tabs ("player" or "original").
+    /// nil = default ("original"). Additive-optional; remembers the last view
+    /// the user chose for this song.
+    var preferredTextMode: String? = nil
 
     /// relative path from the library root (nil for non-library files)
     var libraryPath: String? = nil
@@ -56,6 +67,10 @@ final class FileItem : Equatable {
     /// Tuning name derived from the canonical (nil = unknown → treat as Standard).
     /// Denormalized for fast card display / tuning filters.
     var tuning: String? = nil
+
+    /// Foreword text (composer + comments) from the canonical, denormalized so
+    /// the library search can match against the human header.
+    var foreword: String? = nil
 
     /// Display title for the library card: derived title if present, else the
     /// filename with its extension stripped.

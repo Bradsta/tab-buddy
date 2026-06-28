@@ -53,6 +53,10 @@ final class PlaybackCoordinator: NSObject, ObservableObject {
     /// Callback when playback reaches note positions within a measure
     var onNoteReached: (([NoteEvent]) -> Void)?
 
+    /// Callback fired once each time an A/B loop wraps back to its start
+    /// (drives the speed trainer's per-pass tempo ramp).
+    var onLoopCompleted: (() -> Void)?
+
     // MARK: - Internal state
 
     private var displayLink: CADisplayLink?
@@ -149,6 +153,7 @@ final class PlaybackCoordinator: NSObject, ObservableObject {
                 if let loopEnd = loopEndMeasure, let loopStart = loopStartMeasure,
                    measureIdx >= loopEnd {
                     seekToMeasure(loopStart)
+                    onLoopCompleted?()
                     return
                 }
                 // End of piece
@@ -161,6 +166,7 @@ final class PlaybackCoordinator: NSObject, ObservableObject {
         if let loopEnd = loopEndMeasure, let loopStart = loopStartMeasure,
            measureIdx > loopEnd {
             seekToMeasure(loopStart)
+            onLoopCompleted?()
             return
         }
 
