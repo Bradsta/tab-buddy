@@ -86,6 +86,14 @@ struct TabTransportBar<Display: View>: View {
 
             HStack(spacing: 14) {
                 tempoControl
+                control(icon: notePlayer.isEnabled ? "speaker.wave.2.fill" : "speaker.slash",
+                        label: "Sound", active: notePlayer.isEnabled) {
+                    notePlayer.isEnabled.toggle()
+                    // If turned on mid-playback, make sure the engine is running.
+                    if notePlayer.isEnabled && (coordinator.isPlaying || isCountingIn) {
+                        notePlayer.start()
+                    }
+                }
                 control(icon: "metronome", label: "Metronome", active: metronome.isEnabled) {
                     metronome.isEnabled.toggle()
                 }
@@ -140,7 +148,7 @@ struct TabTransportBar<Display: View>: View {
         Button { showTempo = true } label: {
             VStack(spacing: 3) {
                 HStack(spacing: 5) {
-                    Text("\u{2669}").font(.callout)
+                    Image(systemName: "music.note").font(.callout)
                     Text("\(Int(coordinator.bpm))").font(.callout).fontWeight(.semibold).monospacedDigit()
                 }
                 .padding(.horizontal, 12).frame(height: 40)

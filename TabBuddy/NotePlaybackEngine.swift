@@ -24,6 +24,10 @@ final class NotePlaybackEngine: ObservableObject {
 
     private let engine = AVAudioEngine()
     private let playerNode = AVAudioPlayerNode()
+    /// A small room reverb gives the dry plucked-string synth some natural space
+    /// and a soft tail (which keeps ringing after a note is interrupted), which
+    /// is most of the perceived quality jump over the bare Karplus-Strong sound.
+    private let reverb = AVAudioUnitReverb()
 
     private let sampleRate: Double = 44100
     private let format: AVAudioFormat
@@ -59,7 +63,13 @@ final class NotePlaybackEngine: ObservableObject {
 
     private func setupEngine() {
         engine.attach(playerNode)
-        engine.connect(playerNode, to: engine.mainMixerNode, format: format)
+        engine.attach(reverb)
+        reverb.loadFactoryPreset(.smallRoom)
+        reverb.wetDryMix = 22  // mostly dry, a touch of room
+        // playerNode → reverb → mixer. The reverb tail survives `.interrupts`
+        // (which only replaces the dry player buffer), giving a natural release.
+        engine.connect(playerNode, to: reverb, format: format)
+        engine.connect(reverb, to: engine.mainMixerNode, format: format)
     }
 
     /// Pre-compute Karplus-Strong buffers for all playable guitar notes.
@@ -198,6 +208,12 @@ final class NotePlaybackEngine: ObservableObject {
     // MARK: - Karplus-Strong Synthesis
 
     /// Synthesize a single note as a Karplus-Strong plucked string.
+    ///
+    /// Improvements over the bare algorithm for a more guitar-like, less buzzy
+    /// tone: the excitation is a *shaped* pluck (low-passed noise with a
+    /// pluck-position comb) rather than raw white noise; the loop decay is
+    /// lightly pitch-dependent; and the output gets a short attack ramp plus a
+    /// tail fade so notes start and end without clicks.
     private func synthesizeNote(frequency: Double, frameCount: Int) -> AVAudioPCMBuffer? {
         guard let buffer = AVAudioPCMBuffer(pcmFormat: format,
                                             frameCapacity: AVAudioFrameCount(frameCount)) else {
@@ -206,31 +222,53 @@ final class NotePlaybackEngine: ObservableObject {
         buffer.frameLength = AVAudioFrameCount(frameCount)
         guard let data = buffer.floatChannelData?[0] else { return nil }
 
-        let delayLength = max(2, Int(sampleRate / frequency))
+        let delayLength = max(2, Int((sampleRate / frequency).rounded()))
+
+        // –– Shaped pluck excitation ––
         var delayLine = [Float](repeating: 0, count: delayLength)
-
-        // Fill delay line with noise (the "pluck" excitation)
+        for i in 0..<delayLength { delayLine[i] = Float.random(in: -1...1) }
+        // Low-pass the noise burst → softer, warmer attack (less white-noise buzz).
+        // Brighter for higher notes so they keep some sparkle.
+        let brightness = Float(min(0.85, 0.35 + frequency / 1500.0))
+        var lp: Float = 0
         for i in 0..<delayLength {
-            delayLine[i] = Float.random(in: -0.5...0.5)
+            lp += brightness * (delayLine[i] - lp)
+            delayLine[i] = lp
         }
+        // Pluck-position comb: subtract a delayed copy (~1/5 along the string) to
+        // notch out a harmonic, the classic "plucked" colouration.
+        let pluckPos = max(1, delayLength / 5)
+        for i in stride(from: delayLength - 1, through: pluckPos, by: -1) {
+            delayLine[i] -= delayLine[i - pluckPos]
+        }
+        // Normalise to a consistent level.
+        var peak: Float = 0.0001
+        for v in delayLine { peak = max(peak, abs(v)) }
+        let norm = 0.6 / peak
+        for i in 0..<delayLength { delayLine[i] *= norm }
 
-        // Decay factor — controls how quickly the string sound fades.
-        // Higher = longer sustain. 0.998 gives ~2s of audible ring.
-        let decay: Float = 0.998
+        // –– Loop decay: slightly longer sustain on low strings ––
+        let decay: Float = frequency < 200 ? 0.9990 : 0.9986
+
+        // Envelope lengths (samples).
+        let attack = min(frameCount, Int(sampleRate * 0.004))   // ~4ms attack ramp
+        let fade = min(frameCount, Int(sampleRate * 0.06))      // ~60ms tail fade
 
         var readIndex = 0
         for i in 0..<frameCount {
             let current = delayLine[readIndex]
             let nextIndex = (readIndex + 1) % delayLength
-
-            // Low-pass filter: average of current and next sample
             let filtered = (current + delayLine[nextIndex]) * 0.5 * decay
-
-            // Write filtered value back into delay line
             delayLine[readIndex] = filtered
 
-            // Output the current sample
-            data[i] = current
+            var sample = current
+            if i < attack {
+                sample *= Float(i) / Float(attack)               // soft onset
+            }
+            if i > frameCount - fade {
+                sample *= Float(frameCount - i) / Float(fade)     // tail fade-out
+            }
+            data[i] = sample
 
             readIndex = nextIndex
         }

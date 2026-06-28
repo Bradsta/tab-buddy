@@ -62,7 +62,30 @@ struct TabParser {
         map.capoSemitones = metadata.capoSemitones
         map.rhythmAuthored = sawRhythmLine
         map.isFreeTime = isFreeTime
+        // Afterword: prose following the last tab system (closing notes/credits).
+        if let lastEnd = systems.last?.lineRange?.upperBound {
+            map.afterword = extractAfterword(lines: lines, from: lastEnd)
+        }
         return map
+    }
+
+    /// Collect prose lines that follow the final tab system, skipping blank lines
+    /// and any stray tab fragments. Returns nil when there's nothing meaningful.
+    private static func extractAfterword(lines: [String], from start: Int) -> String? {
+        guard start < lines.count else { return nil }
+        var out: [String] = []
+        for i in start..<lines.count {
+            let trimmed = lines[i].trimmingCharacters(in: .whitespaces)
+            if trimmed.isEmpty {
+                if !out.isEmpty { out.append("") }
+                continue
+            }
+            if isTabLine(trimmed) { continue }
+            out.append(trimmed)
+        }
+        while out.last == "" { out.removeLast() }
+        let joined = out.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+        return joined.isEmpty ? nil : joined
     }
 
     // MARK: - Metadata Parsing

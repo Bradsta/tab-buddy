@@ -100,6 +100,9 @@ struct TabPlayerView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 8) {
+                    if let fw = forewordText {
+                        proseBlock("Foreword", fw)
+                    }
                     ForEach(model.systems) { sys in
                         DrawnTabSystemView(
                             system: sys,
@@ -117,6 +120,9 @@ struct TabPlayerView: View {
                             onSeek: { handleTap(measure: $0) }
                         )
                         .id(sys.index)
+                    }
+                    if let aw = afterwordText {
+                        proseBlock("Afterword", aw)
                     }
                 }
                 .padding(.horizontal, 24)
@@ -167,6 +173,38 @@ struct TabPlayerView: View {
             return sys.index
         }
         return 0
+    }
+
+    // MARK: - Foreword / afterword
+
+    private var forewordText: String? {
+        nonEmpty(map.comments)
+    }
+    private var afterwordText: String? {
+        nonEmpty(map.afterword)
+    }
+    private func nonEmpty(_ s: String?) -> String? {
+        guard let t = s?.trimmingCharacters(in: .whitespacesAndNewlines), !t.isEmpty else { return nil }
+        return t
+    }
+
+    private func proseBlock(_ title: String, _ text: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption2).fontWeight(.bold).textCase(.uppercase)
+                .foregroundStyle(.secondary)
+            Text(text)
+                .font(.callout)
+                .foregroundStyle(.primary.opacity(0.85))
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(Color(uiColor: .secondarySystemBackground).opacity(0.5),
+                    in: RoundedRectangle(cornerRadius: 12))
+        .padding(.vertical, 4)
     }
 
     private var currentSystemIndex: Int {

@@ -30,8 +30,11 @@ struct MeasureMap {
     var title: String? = nil
     /// Composer / arranger ("Composed by: …", "by …").
     var artist: String? = nil
-    /// Remaining header prose (performer, transcriber, notes).
+    /// Remaining header prose (performer, transcriber, notes). The "foreword".
     var comments: String? = nil
+    /// Prose that follows the final tab system (closing notes / credits). The
+    /// "afterword". Display-only; not part of the canonical.
+    var afterword: String? = nil
     /// Capo position in semitones (nil/0 = no capo). Applied to sounding pitch.
     var capoSemitones: Int? = nil
 
