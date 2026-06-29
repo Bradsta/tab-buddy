@@ -25,6 +25,24 @@ struct MeasureMap {
     /// Ordered list of visual systems (rows of tab lines)
     var systems: [MeasureSystem]
 
+    // MARK: Foreword (captured from header text)
+    /// In-file title (first meaningful header line), nil if none found.
+    var title: String? = nil
+    /// Composer / arranger ("Composed by: …", "by …").
+    var artist: String? = nil
+    /// Remaining header prose (performer, transcriber, notes). The "foreword".
+    var comments: String? = nil
+    /// Prose that follows the final tab system (closing notes / credits). The
+    /// "afterword". Display-only; not part of the canonical.
+    var afterword: String? = nil
+    /// Capo position in semitones (nil/0 = no capo). Applied to sounding pitch.
+    var capoSemitones: Int? = nil
+
+    /// True when a rhythm/duration line drove the note durations (vs synthesized).
+    var rhythmAuthored: Bool = false
+    /// True when the tab is unmetered free-time (no time sig, no rhythm, no bars).
+    var isFreeTime: Bool = false
+
     /// Flattened list of all measures across all systems, in order.
     var allMeasures: [Measure] {
         systems.flatMap(\.measures)
@@ -117,6 +135,27 @@ enum RhythmDuration: Double, CaseIterable {
     case dottedHalf    = 3.0
     case whole         = 4.0
 
+    /// Single-letter rhythm notation for this duration (inverse of `from`).
+    var notation: String {
+        switch self {
+        case .thirtySecond:    return "T"
+        case .sixteenth:       return "S"
+        case .dottedSixteenth: return "S."
+        case .eighth:          return "E"
+        case .dottedEighth:    return "E."
+        case .quarter:         return "Q"
+        case .dottedQuarter:   return "Q."
+        case .half:            return "H"
+        case .dottedHalf:      return "H."
+        case .whole:           return "W"
+        }
+    }
+
+    /// The standard duration nearest to an arbitrary beat value.
+    static func nearest(toBeats beats: Double) -> RhythmDuration {
+        allCases.min(by: { abs($0.rawValue - beats) < abs($1.rawValue - beats) }) ?? .quarter
+    }
+
     /// Parse from rhythm notation character (E, Q, H, S, W, T).
     /// Returns nil for unrecognized characters.
     static func from(notation: String) -> RhythmDuration? {
@@ -144,4 +183,8 @@ struct TabMetadata {
     var bpm: Double?
     var key: String?
     var tuning: String?
+    var title: String? = nil
+    var artist: String? = nil
+    var comments: String? = nil
+    var capoSemitones: Int? = nil
 }

@@ -22,6 +22,10 @@ struct TabText: UIViewRepresentable {
     func makeUIView(context: Context) -> UITextView {
         let textView = UITextView()
         textView.isEditable = false
+        // Disable text selection / the copy-highlight loupe — this is a tab
+        // reader, not an editor. Tap-to-seek uses its own gesture recognizer,
+        // so it keeps working with selection off.
+        textView.isSelectable = false
         textView.isScrollEnabled = true
         textView.text = content
         textView.font = UIFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)

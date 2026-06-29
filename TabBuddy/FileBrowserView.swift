@@ -7,7 +7,23 @@ import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
 
-enum ImportMode { case files, folder }
+/// All file-picking destinations, presented through a single `.fileImporter`.
+/// SwiftUI only reliably presents one sheet-style modifier (fileImporter /
+/// fileExporter) per view, so the picker is funneled through one importer
+/// keyed on this enum rather than several stacked importers.
+enum ImportTarget: Equatable {
+    case files, folder, library, backup
+
+    var contentTypes: [UTType] {
+        switch self {
+        case .files: return [.pdf, .plainText]
+        case .folder, .library: return [.folder]
+        case .backup: return [.json]
+        }
+    }
+
+    var allowsMultiple: Bool { self == .files }
+}
 
 struct JSONBackupDocument: FileDocument {
     static var readableContentTypes: [UTType] { [.json] }
@@ -172,14 +188,13 @@ struct FileBrowserView: View {
     @Binding var path: [AppPage]
     let onFileOpen: (FileItem) -> Void
 
-    // Picker / importer state
-    @State private var importMode: ImportMode = .files
-    @State private var showPicker = false
+    // Picker / importer state — a single importer keyed on the active target
+    @State private var activeImport: ImportTarget?
     @StateObject private var folderImporter = FolderImporter()
 
     // Library state
     @StateObject private var libraryManager = LibraryManager.shared
-    @State private var showLibraryPicker = false
+    @StateObject private var canonicalConverter = CanonicalConverter.shared
     @State private var showCopyToLibraryPrompt = false
     @State private var pendingImportURLs: [URL] = []
 
@@ -189,17 +204,16 @@ struct FileBrowserView: View {
     @State private var showClearConfirmation = false
     @State private var showDeleteSelectedConfirmation = false
     @State private var showBackupExporter = false
-    @State private var showBackupImporter = false
     @State private var backupData = Data()
     @State private var showRestoreResult = false
     @State private var restoreCount = 0
-    @State private var activeTagFilter: String? = nil   // nil → no filter
-    private enum SortMode { case name, recent, imported, mostPlayed }
-    @State private var sortMode: SortMode = .name
-    @State private var filterFavorite = false       // false → all files
-    private enum BrowseMode { case flat, folders }
-    @State private var browseMode: BrowseMode = .flat
-    @State private var folderPath: [String] = []    // breadcrumb for folder navigation
+    @AppStorage("browser.activeTagFilter") private var activeTagFilter: String?   // nil → no filter
+    private enum SortMode: String { case name, recent, imported, mostPlayed }
+    @AppStorage("browser.sortMode") private var sortMode: SortMode = .name
+    @AppStorage("browser.filterFavorite") private var filterFavorite = false       // false → all files
+    private enum BrowseMode: String { case flat, folders }
+    @AppStorage("browser.browseMode") private var browseMode: BrowseMode = .flat
+    @State private var folderPath: [String] = []    // breadcrumb for folder navigation (not persisted)
     
     /// Current folder prefix built from breadcrumb, e.g. "Jazz/Standards/"
     private var currentFolderPrefix: String {
@@ -216,7 +230,9 @@ struct FileBrowserView: View {
             list = list.filter { file in
                 file.filename.localizedCaseInsensitiveContains(needle) ||
                 file.tags.contains { $0.localizedCaseInsensitiveContains(needle) } ||
-                file.folderName.localizedCaseInsensitiveContains(needle)
+                file.folderName.localizedCaseInsensitiveContains(needle) ||
+                (file.derivedTitle?.localizedCaseInsensitiveContains(needle) ?? false) ||
+                (file.foreword?.localizedCaseInsensitiveContains(needle) ?? false)
             }
         }
 
@@ -315,8 +331,9 @@ struct FileBrowserView: View {
     private func open(_ file: FileItem) {
         guard file.isBookmarkValid else { return }
 
+        // Recency updates on open; playCount is incremented by the viewer only
+        // after the tab has stayed open a few seconds (see TabViewerView).
         file.lastOpenedAt = Date()
-        file.playCount += 1
         try? context.save()
         onFileOpen(file)
     }
@@ -353,38 +370,133 @@ struct FileBrowserView: View {
         }
     }
 
+    // MARK: - Card library content
+
+    private var gridColumns: [GridItem] {
+        [GridItem(.adaptive(minimum: 206), spacing: 11, alignment: .top)]
+    }
+
+    /// Tabs opened in the last 7 days, most-recent first (for the rail).
+    private var jumpBackInFiles: [FileItem] {
+        let cutoff = Date().addingTimeInterval(-7 * 24 * 3600)
+        return items
+            .filter { $0.lastOpenedAt > $0.importedAt && $0.lastOpenedAt >= cutoff }
+            .sorted { $0.lastOpenedAt > $1.lastOpenedAt }
+            .prefix(10)
+            .map { $0 }
+    }
+
+    /// Show the rail only at the unfiltered root, outside edit mode.
+    private var showJumpBackIn: Bool {
+        browseMode == .flat
+            && folderPath.isEmpty
+            && activeTagFilter == nil
+            && !filterFavorite
+            && searchText.trimmingCharacters(in: .whitespaces).isEmpty
+            && editMode?.wrappedValue != .active
+            && !jumpBackInFiles.isEmpty
+    }
+
+    private var isSelecting: Bool { editMode?.wrappedValue == .active }
+
     @ViewBuilder
     private func fileList(visible: [FileItem]) -> some View {
-        List(selection: $selectedFiles) {
-            if browseMode == .folders {
-                ForEach(visibleSubfolders, id: \.self) { folder in
-                    Button {
-                        withAnimation { folderPath.append(folder) }
-                    } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: "folder.fill")
-                                .foregroundColor(.accentColor)
-                            Text(folder)
-                                .font(.headline)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.vertical, 4)
-                    }
-                    .buttonStyle(.plain)
-                }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                if showJumpBackIn { jumpBackInSection }
+                allTabsSection(visible: visible)
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 28)
+        }
+        .background(Color(.systemGroupedBackground))
+    }
 
-            ForEach(visible) { file in
-                FileRowView(file: file,
-                            removeFile: { delete(file) },
-                            openFile:   { open(file) })
-                    .tag(file.id)
+    private var jumpBackInSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Jump back in").font(.system(size: 20, weight: .bold))
+                Text("Last 7 days").font(.system(size: 13)).foregroundStyle(.secondary)
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(alignment: .top, spacing: 11) {
+                    ForEach(jumpBackInFiles) { file in
+                        FileCardView(file: file, isRail: true, showEyebrow: true,
+                                     onOpen: { open(file) }, onDelete: { delete(file) })
+                            .frame(width: 216)
+                    }
+                }
+                .padding(.bottom, 2)
             }
         }
-        .listStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func allTabsSection(visible: [FileItem]) -> some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(browseMode == .folders ? (folderPath.last ?? "Library") : "All tabs")
+                    .font(.system(size: 20, weight: .bold))
+                Spacer()
+                Text("\(visible.count) tab\(visible.count == 1 ? "" : "s")")
+                    .font(.system(size: 13)).foregroundStyle(.secondary)
+            }
+
+            if visible.isEmpty && visibleSubfolders.isEmpty {
+                Text("No tabs here yet")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 40)
+            } else {
+                LazyVGrid(columns: gridColumns, alignment: .leading, spacing: 11) {
+                    if browseMode == .folders {
+                        ForEach(visibleSubfolders, id: \.self) { folder in
+                            folderCard(folder)
+                        }
+                    }
+                    ForEach(visible) { file in
+                        FileCardView(file: file,
+                                     isRail: false,
+                                     showEyebrow: browseMode == .flat,
+                                     isSelecting: isSelecting,
+                                     isSelected: selectedFiles.contains(file.id),
+                                     onOpen: { open(file) },
+                                     onDelete: { delete(file) },
+                                     onToggleSelect: { toggleSelect(file) })
+                    }
+                }
+            }
+        }
+    }
+
+    private func folderCard(_ folder: String) -> some View {
+        Button {
+            withAnimation { folderPath.append(folder) }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "folder.fill").foregroundStyle(Color.accentColor)
+                Text(folder).font(.system(size: 15, weight: .semibold)).lineLimit(1)
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.secondary)
+            }
+            .padding(.init(top: 11, leading: 13, bottom: 11, trailing: 13))
+            .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
+            .background(Color(.secondarySystemGroupedBackground))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color(.separator), lineWidth: 0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func toggleSelect(_ file: FileItem) {
+        if selectedFiles.contains(file.id) {
+            selectedFiles.remove(file.id)
+        } else {
+            selectedFiles.insert(file.id)
+        }
     }
 
     @ToolbarContentBuilder
@@ -465,32 +577,26 @@ struct FileBrowserView: View {
     private var importMenu: some View {
         Menu {
             Button {
-                importMode = .files
-                showPicker = true
+                path.append(.tabMaker)
+            } label: { Label("Compose Tab", systemImage: "music.note.list") }
+
+            Button {
+                path.append(.liveTranscribe)
+            } label: { Label("Live Transcribe", systemImage: "mic.and.signal.meter") }
+
+            Divider()
+
+            Button {
+                activeImport = .files
             } label: { Label("Import Files", systemImage: "doc.on.doc") }
             Button {
-                importMode = .folder
-                showPicker = true
+                activeImport = .folder
             } label: { Label("Import Folder", systemImage: "folder") }
         } label: { Label("Add", systemImage: "plus") }
     }
 
     private var ellipsisMenu: some View {
         Menu {
-            Button {
-                path.append(.tabMaker)
-            } label: {
-                Label("Compose Tab", systemImage: "music.note.list")
-            }
-
-            Button {
-                path.append(.liveTranscribe)
-            } label: {
-                Label("Live Transcribe", systemImage: "mic.and.signal.meter")
-            }
-
-            Divider()
-
             Button {
                 withAnimation {
                     editMode?.wrappedValue = .active
@@ -501,7 +607,7 @@ struct FileBrowserView: View {
 
             Divider()
 
-            Button { showLibraryPicker = true } label: {
+            Button { activeImport = .library } label: {
                 if let name = libraryManager.libraryName {
                     Label("Change Library (\(name))", systemImage: "folder.badge.gearshape")
                 } else {
@@ -525,6 +631,15 @@ struct FileBrowserView: View {
             Divider()
 
             Button {
+                canonicalConverter.convertLibrary(context: context)
+            } label: {
+                Label("Generate Tab Data", systemImage: "wand.and.stars")
+            }
+            .disabled(canonicalConverter.isConverting)
+
+            Divider()
+
+            Button {
                 if let data = BackupManager.exportJSON(context: context) {
                     backupData = data
                     showBackupExporter = true
@@ -532,7 +647,7 @@ struct FileBrowserView: View {
             } label: {
                 Label("Export Backup", systemImage: "square.and.arrow.up")
             }
-            Button { showBackupImporter = true } label: {
+            Button { activeImport = .backup } label: {
                 Label("Restore Backup", systemImage: "square.and.arrow.down")
             }
 
@@ -554,11 +669,8 @@ struct FileBrowserView: View {
                 showDeleteSelectedConfirmation: $showDeleteSelectedConfirmation,
                 showCopyToLibraryPrompt: $showCopyToLibraryPrompt,
                 showBackupExporter: $showBackupExporter,
-                showBackupImporter: $showBackupImporter,
                 showRestoreResult: $showRestoreResult,
-                showPicker: $showPicker,
-                showLibraryPicker: $showLibraryPicker,
-                importMode: importMode,
+                activeImport: $activeImport,
                 backupData: backupData,
                 restoreCount: $restoreCount,
                 pendingImportURLs: $pendingImportURLs,
@@ -572,7 +684,15 @@ struct FileBrowserView: View {
             ))
             .overlay { rescanOverlay }
             .overlay { importOverlay }
+            .overlay { conversionOverlay }
             .overlay { massTagOverlay(visible: visible) }
+            .onChange(of: folderImporter.isRunning) { running in
+                // After an import finishes, backfill canonical tab data for any
+                // newly added files (idempotent — skips already-converted ones).
+                if !running {
+                    canonicalConverter.convertLibrary(context: context)
+                }
+            }
     }
 
     @ViewBuilder
@@ -644,6 +764,29 @@ struct FileBrowserView: View {
     }
 
     @ViewBuilder
+    private var conversionOverlay: some View {
+        if canonicalConverter.isConverting {
+            ZStack {
+                Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
+                VStack(spacing: 16) {
+                    Text("Generating Tab Data…").font(.headline)
+                    if canonicalConverter.total > 0 {
+                        Text("\(canonicalConverter.processed) of \(canonicalConverter.total) files")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                        ProgressView(value: Double(canonicalConverter.processed),
+                                     total: Double(max(canonicalConverter.total, 1)))
+                            .progressViewStyle(.linear).frame(width: 240)
+                    } else {
+                        ProgressView()
+                    }
+                }
+                .padding()
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+            }
+        }
+    }
+
+    @ViewBuilder
     private func massTagOverlay(visible: [FileItem]) -> some View {
         if showMassTagModal {
             ZStack {
@@ -668,11 +811,8 @@ private struct BrowserDialogs: ViewModifier {
     @Binding var showDeleteSelectedConfirmation: Bool
     @Binding var showCopyToLibraryPrompt: Bool
     @Binding var showBackupExporter: Bool
-    @Binding var showBackupImporter: Bool
     @Binding var showRestoreResult: Bool
-    @Binding var showPicker: Bool
-    @Binding var showLibraryPicker: Bool
-    let importMode: ImportMode
+    @Binding var activeImport: ImportTarget?
     let backupData: Data
     @Binding var restoreCount: Int
     @Binding var pendingImportURLs: [URL]
@@ -684,8 +824,19 @@ private struct BrowserDialogs: ViewModifier {
     let folderImporter: FolderImporter
     let libraryManager: LibraryManager
 
+    // Bridges the optional `activeImport` to the Bool the importer expects.
+    private var isImporting: Binding<Bool> {
+        Binding(get: { activeImport != nil },
+                set: { if !$0 { activeImport = nil } })
+    }
+
     func body(content: Content) -> some View {
-        content
+        // Snapshot the target for this render so the completion handler and the
+        // content-type parameters agree even after SwiftUI resets the binding
+        // (dismissal fires `isImporting`'s setter, which clears `activeImport`).
+        let currentImport = activeImport
+        return content
+            // Alert-style presentations stack safely on a single view.
             .confirmationDialog("Remove all imported files?",
                                 isPresented: $showClearConfirmation,
                                 titleVisibility: .visible) {
@@ -707,54 +858,6 @@ private struct BrowserDialogs: ViewModifier {
                 }
                 Button("Cancel", role: .cancel) { }
             }
-            .fileImporter(isPresented: $showPicker,
-                          allowedContentTypes: importMode == .files ? [.pdf, .plainText] : [.folder],
-                          allowsMultipleSelection: importMode == .files) { result in
-                if case .success(let urls) = result {
-                    if libraryManager.isConfigured {
-                        pendingImportURLs = urls
-                        showCopyToLibraryPrompt = true
-                    } else {
-                        folderImporter.start(urls: urls, context: context)
-                    }
-                }
-            }
-            .fileImporter(isPresented: $showLibraryPicker,
-                          allowedContentTypes: [.folder],
-                          allowsMultipleSelection: false) { result in
-                if case .success(let urls) = result, let url = urls.first {
-                    libraryManager.setLibraryFolder(url: url)
-                }
-            }
-            .modifier(BrowserDialogs2(
-                showCopyToLibraryPrompt: $showCopyToLibraryPrompt,
-                showBackupExporter: $showBackupExporter,
-                showBackupImporter: $showBackupImporter,
-                showRestoreResult: $showRestoreResult,
-                backupData: backupData,
-                restoreCount: $restoreCount,
-                pendingImportURLs: $pendingImportURLs,
-                context: context,
-                folderImporter: folderImporter,
-                libraryManager: libraryManager
-            ))
-    }
-}
-
-private struct BrowserDialogs2: ViewModifier {
-    @Binding var showCopyToLibraryPrompt: Bool
-    @Binding var showBackupExporter: Bool
-    @Binding var showBackupImporter: Bool
-    @Binding var showRestoreResult: Bool
-    let backupData: Data
-    @Binding var restoreCount: Int
-    @Binding var pendingImportURLs: [URL]
-    let context: ModelContext
-    let folderImporter: FolderImporter
-    let libraryManager: LibraryManager
-
-    func body(content: Content) -> some View {
-        content
             .confirmationDialog("Copy files to your library?",
                                 isPresented: $showCopyToLibraryPrompt,
                                 titleVisibility: .visible) {
@@ -768,26 +871,54 @@ private struct BrowserDialogs2: ViewModifier {
                 }
                 Button("Cancel", role: .cancel) { pendingImportURLs = [] }
             }
-            .fileExporter(isPresented: $showBackupExporter,
-                          document: JSONBackupDocument(data: backupData),
-                          contentType: .json,
-                          defaultFilename: "TabBuddy-Backup") { _ in }
-            .fileImporter(isPresented: $showBackupImporter,
-                          allowedContentTypes: [.json],
-                          allowsMultipleSelection: false) { result in
-                if case .success(let urls) = result, let url = urls.first {
-                    guard url.startAccessingSecurityScopedResource() else { return }
-                    defer { url.stopAccessingSecurityScopedResource() }
-                    if let data = try? Data(contentsOf: url) {
-                        restoreCount = BackupManager.importJSON(data: data, context: context)
-                        showRestoreResult = true
-                    }
-                }
-            }
             .alert("Restore Complete", isPresented: $showRestoreResult) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text("Restored metadata for \(restoreCount) files.")
             }
+            // Sheet-style presentations collide if stacked on one view, so each
+            // gets its own host view.
+            .background(
+                Color.clear.fileImporter(
+                    isPresented: isImporting,
+                    allowedContentTypes: currentImport?.contentTypes ?? [],
+                    allowsMultipleSelection: currentImport?.allowsMultiple ?? false
+                ) { result in
+                    handleImport(result, target: currentImport)
+                }
+            )
+            .background(
+                Color.clear.fileExporter(
+                    isPresented: $showBackupExporter,
+                    document: JSONBackupDocument(data: backupData),
+                    contentType: .json,
+                    defaultFilename: "TabBuddy-Backup") { _ in }
+            )
+    }
+
+    private func handleImport(_ result: Result<[URL], Error>, target: ImportTarget?) {
+        activeImport = nil
+        guard case .success(let urls) = result else { return }
+        switch target {
+        case .files, .folder:
+            if libraryManager.isConfigured {
+                pendingImportURLs = urls
+                showCopyToLibraryPrompt = true
+            } else {
+                folderImporter.start(urls: urls, context: context)
+            }
+        case .library:
+            if let url = urls.first { libraryManager.setLibraryFolder(url: url) }
+        case .backup:
+            guard let url = urls.first,
+                  url.startAccessingSecurityScopedResource() else { return }
+            defer { url.stopAccessingSecurityScopedResource() }
+            if let data = try? Data(contentsOf: url) {
+                restoreCount = BackupManager.importJSON(data: data, context: context)
+                showRestoreResult = true
+            }
+        case .none:
+            break
+        }
     }
 }

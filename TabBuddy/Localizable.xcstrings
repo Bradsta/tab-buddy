@@ -4,14 +4,24 @@
     "" : {
 
     },
-    "(%@)" : {
+    "#" : {
 
     },
-    "#" : {
+    "#%@" : {
 
     },
     "%lld" : {
 
+    },
+    "%lld / %lld BPM" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld / %2$lld BPM"
+          }
+        }
+      }
     },
     "%lld BPM" : {
 
@@ -32,6 +42,16 @@
         }
       }
     },
+    "%lld tab%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld tab%2$@"
+          }
+        }
+      }
+    },
     "%lld/%lld" : {
       "localizations" : {
         "en" : {
@@ -42,13 +62,28 @@
         }
       }
     },
+    "%lld%%" : {
+
+    },
     "+%lld" : {
+
+    },
+    "+5% → 100% over successive passes" : {
+
+    },
+    "♩" : {
 
     },
     "⟳ Loop" : {
 
     },
     "𝄞" : {
+
+    },
+    "1 bar" : {
+
+    },
+    "2 bars" : {
 
     },
     "Add" : {
@@ -63,10 +98,16 @@
     "Apply to %lld files" : {
 
     },
+    "Auto-scroll" : {
+
+    },
     "BPM" : {
 
     },
     "Cancel" : {
+
+    },
+    "Capo" : {
 
     },
     "Change Library (%@)" : {
@@ -99,10 +140,10 @@
     "Copy to Library (%@)" : {
 
     },
-    "Delete" : {
+    "Count-in" : {
 
     },
-    "Delete “%@”?" : {
+    "Delete" : {
 
     },
     "Delete %lld selected files?" : {
@@ -135,6 +176,9 @@
     "Edit Tags…" : {
 
     },
+    "Enable a loop to use the speed trainer." : {
+
+    },
     "Existing Tags" : {
 
     },
@@ -153,7 +197,22 @@
         }
       }
     },
+    "Favorite" : {
+
+    },
     "File name" : {
+
+    },
+    "Focus · tap to exit" : {
+
+    },
+    "Follow playback" : {
+
+    },
+    "Generate Tab Data" : {
+
+    },
+    "Generating Tab Data…" : {
 
     },
     "Import Files" : {
@@ -178,7 +237,16 @@
         }
       }
     },
+    "Jump back in" : {
+
+    },
+    "Last 7 days" : {
+
+    },
     "Library" : {
+
+    },
+    "Line by line" : {
 
     },
     "Listen" : {
@@ -192,6 +260,16 @@
     },
     "Loading PDF..." : {
 
+    },
+    "m. %lld / %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "m. %1$lld / %2$lld"
+          }
+        }
+      }
     },
     "Microphone Access Required" : {
 
@@ -214,6 +292,9 @@
     "No Compositions" : {
 
     },
+    "No tabs here yet" : {
+
+    },
     "no_file_selected" : {
       "comment" : "Displayed when no file is selected.",
       "extractionState" : "manual",
@@ -226,10 +307,28 @@
         }
       }
     },
+    "Notation" : {
+
+    },
+    "Off" : {
+
+    },
     "OK" : {
 
     },
+    "Open" : {
+
+    },
     "Open Settings" : {
+
+    },
+    "Original" : {
+
+    },
+    "PDF" : {
+
+    },
+    "Ramp up each loop" : {
 
     },
     "Recent" : {
@@ -277,6 +376,9 @@
     "Resume Last Loop" : {
 
     },
+    "Rhythm letters" : {
+
+    },
     "Save" : {
 
     },
@@ -322,13 +424,25 @@
     "Set Loop Start" : {
 
     },
+    "Size" : {
+
+    },
     "Sort" : {
 
     },
     "Stop" : {
 
     },
+    "Tab + staff" : {
+
+    },
     "Tab Buddy needs microphone access to detect the notes you play. Enable it in Settings." : {
+
+    },
+    "Tab only" : {
+
+    },
+    "TabBuddy" : {
 
     },
     "Tag Actions" : {
@@ -340,25 +454,34 @@
     "Tag Selected (%lld)" : {
 
     },
-    "Tags" : {
-
-    },
     "Tags to Add" : {
-
-    },
-    "Tags: %@" : {
 
     },
     "Tap + to create your first tab" : {
 
     },
+    "Tempo" : {
+
+    },
     "Title" : {
+
+    },
+    "Tuning" : {
+
+    },
+    "Tuning & capo" : {
 
     },
     "Undo" : {
 
     },
+    "Unfavorite" : {
+
+    },
     "Unfavorite File" : {
+
+    },
+    "View" : {
 
     }
   },

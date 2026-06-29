@@ -19,9 +19,20 @@ final class FileItem : Equatable {
     /// name of the parent folder the file was imported from
     var folderName: String = ""
 
-    /// persisted loop marker positions (scroll Y offsets)
+    /// persisted loop marker positions (scroll Y offsets) — used by the legacy
+    /// scroll-based viewer / PDF auto-scroll loop.
     var loopStartY: Double? = nil
     var loopEndY: Double? = nil
+
+    /// persisted A/B loop boundaries as measure indices (0-based, inclusive),
+    /// used by the drawn Tab Player. Additive-optional; nil = no loop saved.
+    var loopStartMeasure: Int? = nil
+    var loopEndMeasure: Int? = nil
+
+    /// Per-file preferred viewer for text tabs ("player" or "original").
+    /// nil = default ("original"). Additive-optional; remembers the last view
+    /// the user chose for this song.
+    var preferredTextMode: String? = nil
 
     /// relative path from the library root (nil for non-library files)
     var libraryPath: String? = nil
@@ -34,6 +45,55 @@ final class FileItem : Equatable {
 
     /// user-specified BPM for playback (nil = use auto-detected or default)
     var userBPM: Double? = nil
+
+    // MARK: Canonical (Phase 2)
+
+    /// Filename of the generated canonical MusicXML in `CanonicalStore`
+    /// (nil = not yet converted). Additive-optional: existing stores migrate
+    /// in place without touching any metadata above.
+    var canonicalFilename: String? = nil
+
+    /// JSON-encoded `Provenance` for the canonical (nil = none).
+    var provenanceData: Data? = nil
+
+    /// Converter version that produced the current canonical (0 = none).
+    /// Lets us find entries needing re-derivation as the converter improves.
+    var canonicalVersion: Int = 0
+
+    /// Title derived from the file's contents at conversion (nil = use filename).
+    /// Denormalized from the canonical for fast card display.
+    var derivedTitle: String? = nil
+
+    /// Tuning name derived from the canonical (nil = unknown → treat as Standard).
+    /// Denormalized for fast card display / tuning filters.
+    var tuning: String? = nil
+
+    /// Foreword text (composer + comments) from the canonical, denormalized so
+    /// the library search can match against the human header.
+    var foreword: String? = nil
+
+    /// Display title for the library card: derived title if present, else the
+    /// filename with its extension stripped.
+    var displayTitle: String {
+        if let t = derivedTitle, !t.isEmpty { return t }
+        return (filename as NSString).deletingPathExtension
+    }
+
+    /// Whether the tuning is a non-standard tuning (drives the indigo pill).
+    var isAltTuning: Bool {
+        guard let t = tuning else { return false }
+        return t.caseInsensitiveCompare("Standard") != .orderedSame
+    }
+
+    /// True if a canonical has been generated for this file.
+    var hasCanonical: Bool { canonicalFilename != nil }
+
+    /// Decoded provenance for the canonical, if any. Not persisted directly —
+    /// backed by `provenanceData`.
+    var provenance: Provenance? {
+        get { provenanceData.flatMap { try? JSONDecoder().decode(Provenance.self, from: $0) } }
+        set { provenanceData = newValue.flatMap { try? JSONEncoder().encode($0) } }
+    }
 
     /// Resolve the bookmark and *activate* its security scope.
     /// Caller is responsible for calling `stopAccessingSecurityScopedResource()` when done.

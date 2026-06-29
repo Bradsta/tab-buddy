@@ -10,6 +10,10 @@ class ScrollCoordinator: NSObject, ObservableObject {
     var scrollViewProxy: UIScrollView?
     var textViewProxy: UITextView?
     var currentFile: FileItem?
+    /// Whether the current document is a PDF. Cached so the per-frame scroll
+    /// step never re-resolves the file's bookmark (which opens a security-scoped
+    /// resource on every access and would leak one ~30×/sec during auto-scroll).
+    var isPDF: Bool = false
     /// How many points to scroll each frame
     var scrollSpeed: CGFloat
     /// Accumulates fractional scroll amounts to ensure movement at low speeds
@@ -18,6 +22,10 @@ class ScrollCoordinator: NSObject, ObservableObject {
     /// Loop marker positions (scroll Y offsets)
     var loopStartY: CGFloat? = nil
     var loopEndY: CGFloat? = nil
+
+    /// When true, auto-scroll wraps back to the top once it reaches the bottom
+    /// (the "loop" control in the Original file view).
+    var loopToTop: Bool = false
 
     init(scrollViewProxy: UIScrollView?,
          textViewProxy: UITextView?,
@@ -41,27 +49,35 @@ class ScrollCoordinator: NSObject, ObservableObject {
     }
 
     @objc func handleScrollStep(_ link: CADisplayLink) {
-        guard let file = currentFile else { return }
+        guard currentFile != nil else { return }
         let dt = link.targetTimestamp - link.timestamp
         scrollResidual += scrollSpeed * CGFloat(dt)
         let stepPoints = floor(scrollResidual)
         scrollResidual -= stepPoints
         guard stepPoints > 0 else { return }
         let step = stepPoints
-        if file.url?.pathExtension.lowercased() == "pdf" {
+        if isPDF {
             guard let sv = scrollViewProxy else { return }
-            var y = min(sv.contentOffset.y + step,
-                        sv.contentSize.height - sv.bounds.height)
-            if let start = loopStartY, let end = loopEndY, y >= end {
+            let maxY = sv.contentSize.height - sv.bounds.height
+            var y = sv.contentOffset.y + step
+            if loopToTop, y >= maxY {
+                y = 0
+            } else if let start = loopStartY, let end = loopEndY, y >= end {
                 y = start
+            } else {
+                y = min(y, maxY)
             }
             sv.setContentOffset(.init(x: sv.contentOffset.x, y: y), animated: false)
         } else {
             guard let tv = textViewProxy else { return }
-            var y = min(tv.contentOffset.y + step,
-                        tv.contentSize.height - tv.bounds.height)
-            if let start = loopStartY, let end = loopEndY, y >= end {
+            let maxY = tv.contentSize.height - tv.bounds.height
+            var y = tv.contentOffset.y + step
+            if loopToTop, y >= maxY {
+                y = 0
+            } else if let start = loopStartY, let end = loopEndY, y >= end {
                 y = start
+            } else {
+                y = min(y, maxY)
             }
             tv.setContentOffset(.init(x: tv.contentOffset.x, y: y), animated: false)
         }

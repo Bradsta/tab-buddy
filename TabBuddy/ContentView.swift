@@ -57,6 +57,7 @@ struct ContentView: View {
             }
         }
         .onAppear {
+            LibraryMigration.runIfNeeded(context: context)
             TagIndexer.rebuild(in: context)
             backfillFolderNames()
         }

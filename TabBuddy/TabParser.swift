@@ -21,11 +21,13 @@ struct TabParser {
         let normalized = text.replacingOccurrences(of: "\r\n", with: "\n")
                              .replacingOccurrences(of: "\r", with: "\n")
         let lines = normalized.components(separatedBy: "\n")
-        let metadata = parseMetadata(lines: lines)
         let systemGroups = detectSystems(lines: lines)
+        let firstTabLine = systemGroups.first?.tabLineIndices.first ?? lines.count
+        let metadata = parseMetadata(lines: lines, firstTabContentLine: firstTabLine)
 
         var globalMeasureNumber = 1
         var systems: [MeasureSystem] = []
+        var sawRhythmLine = false
 
         for group in systemGroups {
             let (system, nextMeasure) = parseSystem(
@@ -37,22 +39,61 @@ struct TabParser {
             if !system.measures.isEmpty {
                 systems.append(system)
                 globalMeasureNumber = nextMeasure
+                if group.rhythmLineIndex != nil || group.numericRulerIndex != nil { sawRhythmLine = true }
             }
         }
 
-        return MeasureMap(
+        // Free-time: no time signature, no rhythm line, and no system produced
+        // more than one measure (i.e. no internal bar lines anywhere).
+        let anyInternalBars = systems.contains { $0.measures.count > 1 }
+        let isFreeTime = metadata.timeSignature == nil && !sawRhythmLine
+                         && !anyInternalBars && !systems.isEmpty
+
+        var map = MeasureMap(
             bpm: metadata.bpm,
             timeSignature: metadata.timeSignature,
             key: metadata.key,
             tuning: metadata.tuning,
             systems: systems
         )
+        map.title = metadata.title
+        map.artist = metadata.artist
+        map.comments = metadata.comments
+        map.capoSemitones = metadata.capoSemitones
+        map.rhythmAuthored = sawRhythmLine
+        map.isFreeTime = isFreeTime
+        // Afterword: prose following the last tab system (closing notes/credits).
+        if let lastEnd = systems.last?.lineRange?.upperBound {
+            map.afterword = extractAfterword(lines: lines, from: lastEnd)
+        }
+        return map
+    }
+
+    /// Collect prose lines that follow the final tab system, skipping blank lines
+    /// and any stray tab fragments. Returns nil when there's nothing meaningful.
+    private static func extractAfterword(lines: [String], from start: Int) -> String? {
+        guard start < lines.count else { return nil }
+        var out: [String] = []
+        for i in start..<lines.count {
+            let trimmed = lines[i].trimmingCharacters(in: .whitespaces)
+            if trimmed.isEmpty {
+                if !out.isEmpty { out.append("") }
+                continue
+            }
+            if isTabLine(trimmed) { continue }
+            out.append(trimmed)
+        }
+        while out.last == "" { out.removeLast() }
+        let joined = out.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+        return joined.isEmpty ? nil : joined
     }
 
     // MARK: - Metadata Parsing
 
-    /// Extract tempo, time signature, key, and tuning from header lines.
-    private static func parseMetadata(lines: [String]) -> TabMetadata {
+    /// Extract tempo, time signature, key, tuning, and foreword (title / artist /
+    /// comments / capo) from header lines. `firstTabContentLine` bounds the
+    /// foreword scan to lines above the first tab system.
+    private static func parseMetadata(lines: [String], firstTabContentLine: Int) -> TabMetadata {
         var meta = TabMetadata()
 
         // Only scan the first ~30 lines (headers appear before tab content)
@@ -118,7 +159,137 @@ struct TabParser {
             }
         }
 
+        // ---- Foreword: title / artist / comments / capo ----
+        // The foreword is everything above the first tab system OR the first
+        // section label ("Intro:", "[Verse 1]") — whichever comes first.
+        func isSectionLabel(_ line: String) -> Bool {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            guard !t.isEmpty else { return false }
+            if t.hasPrefix("[") && t.contains("]") { return true }
+            guard t.count <= 24 else { return false }
+            let bare = t.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: ": -.)("))
+            let words = ["intro", "verse", "chorus", "bridge", "solo", "outro",
+                         "interlude", "pre-chorus", "prechorus", "refrain", "coda",
+                         "ending", "instrumental", "breakdown", "tag", "riff", "hook"]
+            for w in words where bare == w || bare.hasPrefix(w + " ") { return true }
+            return false
+        }
+        var forewordEnd = max(0, min(firstTabContentLine, lines.count, 30))
+        for i in 0..<forewordEnd where isSectionLabel(lines[i]) { forewordEnd = i; break }
+        let foreword = Array(lines[0..<forewordEnd])
+
+        func isDirectiveLine(_ line: String) -> Bool {
+            let lower = line.lowercased()
+            if line.contains("=") { return true }
+            if extractTimeSignature(lower) != nil { return true }
+            if extractBPM(line) != nil { return true }
+            // A metadata keyword LEADING the line, followed by a separator — so a
+            // title like "Ocarina of Time - Song of Storms" isn't flagged by a
+            // mid-line word.
+            if lower.range(of: #"^\s*(?:tempo|tuning|capo|bpm|key|time|timing|rhythm|rhytm|metre|meter)\b\s*[:=\-]"#,
+                           options: .regularExpression) != nil { return true }
+            if lower.range(of: #"^\s*capo\s*\d"#, options: .regularExpression) != nil { return true }
+            return false
+        }
+        // Prose = a real foreword text line: not tab, not a [Section] header, not a
+        // rhythm/beat-ruler line, not a separator (****), not a numeric ruler (1 2 3).
+        func isProse(_ line: String) -> Bool {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            guard !t.isEmpty, !isTabLine(line) else { return false }
+            if t.hasPrefix("[") && t.contains("]") { return false }
+            if isRhythmNotationLine(line) || isBeatRulerLine(line) { return false }
+            if t.allSatisfy({ !$0.isLetter && !$0.isNumber }) { return false }
+            let nonSpace = t.filter { !$0.isWhitespace }
+            let digitish = nonSpace.filter { $0.isNumber || "+.&".contains($0) }
+            if !nonSpace.isEmpty, Double(digitish.count) / Double(nonSpace.count) > 0.7 { return false }
+            return true
+        }
+
+        // Capo: first "capo N" (1–12). Matches "Capo 2", "Capo: 2", "~Capo 2~".
+        for line in foreword {
+            if let r = line.range(of: #"(?i)capo\s*:?\s*([0-9]{1,2})"#, options: .regularExpression) {
+                let digits = String(line[r]).filter { $0.isNumber }
+                if let n = Int(digits), (1...12).contains(n) { meta.capoSemitones = n; break }
+            }
+        }
+
+        // A title candidate is prose that isn't a directive, URL, credit line,
+        // timestamp, or overly long sentence. When none qualifies (e.g. a PDF
+        // whose text layer is just instructions/links), title stays nil and the
+        // caller falls back to the filename.
+        func isLikelyTitle(_ line: String) -> Bool {
+            guard isProse(line), !isDirectiveLine(line) else { return false }
+            let t = line.trimmingCharacters(in: .whitespaces)
+            let lower = t.lowercased()
+            if t.count > 64 { return false }
+            if lower.contains("http") || lower.contains("www.") || lower.contains("://") { return false }
+            if t.range(of: #"\d{1,2}:\d{2}"#, options: .regularExpression) != nil { return false }  // timestamp
+            let rejectPrefixes = ["tabbed", "transcribed", "arranged", "composed", "written by",
+                                  "performed", "here's", "here is", "thanks", "this is",
+                                  "note:", "notes:", "all rights", "copyright"]
+            for p in rejectPrefixes where lower.hasPrefix(p) { return false }
+            // Reject symbol soup (PDF music-font glyphs like "Υ ∀∀"): a title is
+            // mostly real letters.
+            let visible = t.filter { !$0.isWhitespace }
+            let letters = t.filter { $0.isLetter }
+            guard letters.count >= 3, !visible.isEmpty,
+                  Double(letters.count) / Double(visible.count) >= 0.6 else { return false }
+            return true
+        }
+
+        // Title: first plausible title line.
+        var titleIdx: Int? = nil
+        for (i, line) in foreword.enumerated() where isLikelyTitle(line) {
+            titleIdx = i
+            meta.title = line.trimmingCharacters(in: .whitespaces)
+            break
+        }
+
+        // Artist: first "Composed by: …" / "by …" line (NOT the title line).
+        var artistIdx: Int? = nil
+        for (i, line) in foreword.enumerated() {
+            if i == titleIdx { continue }
+            if let name = firstCaptureGroup(
+                #"^\s*(?:composed by|written by|music by|arranged by|by|artist|composer)\s*:?\s+(.+)$"#,
+                in: line), !name.isEmpty {
+                meta.artist = name
+                artistIdx = i
+                break
+            }
+        }
+
+        // Comments: preserve the whole human foreword verbatim — every text line
+        // except the title and the (separately captured) composer line. Directive
+        // lines (Tempo/Capo/Tuning/Rhythm) are KEPT; only musical lines, numeric
+        // rulers, and separators are dropped.
+        func isForewordText(_ line: String) -> Bool {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            guard !t.isEmpty, !isTabLine(line) else { return false }
+            if isRhythmNotationLine(line) || isBeatRulerLine(line) { return false }
+            if t.allSatisfy({ !$0.isLetter && !$0.isNumber }) { return false }   // separator
+            let nonSpace = t.filter { !$0.isWhitespace }
+            let digitish = nonSpace.filter { $0.isNumber || "+.&|/".contains($0) }
+            if !nonSpace.isEmpty, Double(digitish.count) / Double(nonSpace.count) > 0.75 { return false }
+            return true
+        }
+        var commentLines: [String] = []
+        for (i, line) in foreword.enumerated() {
+            if i == titleIdx || i == artistIdx { continue }
+            guard isForewordText(line) else { continue }
+            commentLines.append(line.trimmingCharacters(in: .whitespaces))
+        }
+        if !commentLines.isEmpty { meta.comments = commentLines.joined(separator: "\n") }
+
         return meta
+    }
+
+    /// First capture group of `pattern` (case-insensitive) in `text`, trimmed.
+    private static func firstCaptureGroup(_ pattern: String, in text: String, group: Int = 1) -> String? {
+        guard let re = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else { return nil }
+        let range = NSRange(text.startIndex..., in: text)
+        guard let m = re.firstMatch(in: text, range: range), m.numberOfRanges > group,
+              let r = Range(m.range(at: group), in: text) else { return nil }
+        return String(text[r]).trimmingCharacters(in: .whitespaces)
     }
 
     /// Extract time signature from a line. Returns (beats, noteValue) or nil.
@@ -142,7 +313,10 @@ struct TabParser {
         let trimmedBefore = before.trimmingCharacters(in: .whitespaces)
 
         // Accept if:
-        let hasTimePrefix = before.contains("time")       // "time: 3/4"
+        // "time: 3/4", "Timing: 3/4", "Rhythm: 6/8", "Rhytm: 6/8 metrum", "Metre: 4/4"
+        let hasTimePrefix = before.contains("time") || before.contains("timing")
+            || before.contains("rhythm") || before.contains("rhytm")
+            || before.contains("metr") || line.lowercased().contains("metrum")
         let hasParenPrefix = trimmedBefore.hasSuffix("(")  // "(4/4)"
         let atLineStart = trimmedBefore.isEmpty            // "4/4" at start
         let afterTempoNotation = trimmedBefore.range(of: #"[qehsw♩♪]\s*=\s*\d+\s*$"#, options: .regularExpression) != nil  // "Q=60  4/4"
@@ -248,6 +422,7 @@ struct TabParser {
         var tabLineIndices: [Int]       // just the tab string lines
         var beatRulerIndex: Int?        // index of beat ruler line if present
         var rhythmLineIndex: Int?       // index of rhythm notation line if present
+        var numericRulerIndex: Int?     // index of numeric beat ruler ("1 2 3")
         var measureNumberLineIndex: Int? // index of line with leading measure number
     }
 
@@ -297,6 +472,11 @@ struct TabParser {
     private static func isTabLine(_ line: String) -> Bool {
         let trimmed = line.trimmingCharacters(in: .whitespaces)
         guard trimmed.count >= 3 else { return false }
+
+        // Tuplet brackets ("|--3--|  |--3--|  |---3--|") are rhythmic groupings
+        // drawn ABOVE the staff, not tab content — reject so they aren't parsed
+        // as their own (tiny) measures.
+        if isTupletBracketLine(trimmed) { return false }
 
         // 1. Labeled with | or || separator: "e|", "E||", "B|", "d#|", "A#|"
         if trimmed.range(of: #"^[eEBbGgDdAaCcFf][#b]?\s*\|"#, options: .regularExpression) != nil {
@@ -354,6 +534,25 @@ struct TabParser {
         return false
     }
 
+    /// A tuplet-bracket instruction line: several short `|--N--|` groups (N a
+    /// tuplet count 2–9) separated by gaps, drawn above the staff. e.g.
+    /// "|--3--|  |--3--|  |---3--|". Not real tab content.
+    private static func isTupletBracketLine(_ trimmed: String) -> Bool {
+        guard trimmed.contains("|") else { return false }
+        let groups = trimmed.components(separatedBy: "  ")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        guard groups.count >= 2 else { return false }
+        for g in groups {
+            let digits = g.filter { $0.isNumber }
+            guard g.count <= 10, digits.count == 1,
+                  let n = Int(digits), (2...9).contains(n),
+                  g.allSatisfy({ $0 == "|" || $0 == "-" || $0 == " " || $0.isNumber })
+            else { return false }
+        }
+        return true
+    }
+
     /// Build a SystemGroup from detected tab lines and their context.
     private static func buildSystemGroup(
         tabLineIndices: [Int],
@@ -374,10 +573,26 @@ struct TabParser {
                 group.measureNumberLineIndex = idx
             } else if isRhythmNotationLine(line) {
                 group.rhythmLineIndex = idx
+            } else if isNumericRulerLine(line) {
+                group.numericRulerIndex = idx
             }
         }
 
         return group
+    }
+
+    /// Check if a line is a numeric beat ruler (e.g. "1   2   3" or "1 + 2 + 3 +").
+    /// These label beat columns; column position is then proportional to time.
+    private static func isNumericRulerLine(_ line: String) -> Bool {
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        guard trimmed.count >= 3, !isTabLine(line) else { return false }
+        let tokens = trimmed.split(separator: " ").map(String.init)
+        guard !tokens.isEmpty else { return false }
+        // Beat tokens: single digit 1–9, or a subdivision marker (+ & e a).
+        let beatTokens = tokens.filter { $0.count == 1 && ($0.first!.isNumber || "+&ea".contains($0.first!)) }
+        let digitBeats = tokens.filter { $0.count == 1 && ($0.first?.isWholeNumber ?? false) }
+        return digitBeats.count >= 2
+            && Double(beatTokens.count) / Double(tokens.count) > 0.6
     }
 
     /// Check if a line is a beat ruler (e.g. "1  |  .  .  |  .  .")
@@ -476,7 +691,8 @@ struct TabParser {
                 columnRange: range,
                 measureColumnRange: range,
                 rhythmEvents: rhythmEvents,
-                beatsInMeasure: beats
+                beatsInMeasure: beats,
+                proportionalRhythm: group.numericRulerIndex != nil
             )
 
             measures.append(Measure(
@@ -522,7 +738,8 @@ struct TabParser {
                 columnRange: range,
                 measureColumnRange: range,
                 rhythmEvents: rhythmEvents,
-                beatsInMeasure: defaultBeats
+                beatsInMeasure: defaultBeats,
+                proportionalRhythm: group.numericRulerIndex != nil
             )
 
             // Estimate beat count from content rather than fixed default
@@ -582,15 +799,22 @@ struct TabParser {
             }
         }
 
+        // Drop phantom measures: empty AND too narrow to be a real bar. These are
+        // edge artifacts (e.g. a trailing "|-" decoration yields a 1-column empty
+        // "measure"). A genuine full-rest measure is normal width, so it survives.
+        let cleaned = measures.filter { m in
+            !(m.notes?.isEmpty ?? true) || (m.columnRange?.count ?? 0) >= 4
+        }
+
         // Use tab-only line range (not context lines above) for accurate highlight positioning
         let lineRange = firstTabIdx..<(lastTabIdx + 1)
         let system = MeasureSystem(
             rect: .zero, // Will be computed during rendering
             lineRange: lineRange,
-            measures: measures
+            measures: cleaned
         )
 
-        let nextMeasure = currentMeasureStart + measures.count
+        let nextMeasure = currentMeasureStart + cleaned.count
         return (system, nextMeasure)
     }
 
@@ -786,7 +1010,8 @@ struct TabParser {
         columnRange: Range<Int>,
         measureColumnRange: Range<Int>,
         rhythmEvents: [(column: Int, duration: RhythmDuration)]?,
-        beatsInMeasure: Int
+        beatsInMeasure: Int,
+        proportionalRhythm: Bool = false
     ) -> [NoteEvent] {
         // Map string order: find which string each tab line represents
         // Standard order top to bottom: e, B, G, D, A, E
@@ -859,6 +1084,23 @@ struct TabParser {
                 frets: frets,
                 column: col
             ))
+        }
+
+        // Numeric beat ruler present but no duration letters → infer each note's
+        // duration from proportional column spacing scaled to the measure's beat
+        // count, snapped to the nearest standard note value.
+        if proportionalRhythm, (rhythmEvents?.isEmpty ?? true), measureWidth > 0 {
+            for i in events.indices {
+                guard let thisCol = events[i].column else { continue }
+                let nextCol = (i + 1 < events.count)
+                    ? (events[i + 1].column ?? measureColumnRange.upperBound)
+                    : measureColumnRange.upperBound
+                let frac = max(0, Double(nextCol - thisCol)) / measureWidth
+                let rawBeats = frac * Double(max(beatsInMeasure, 1))
+                if rawBeats > 0 {
+                    events[i].durationInBeats = RhythmDuration.nearest(toBeats: rawBeats).rawValue
+                }
+            }
         }
 
         return events
