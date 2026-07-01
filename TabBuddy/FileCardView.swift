@@ -167,7 +167,7 @@ struct FileCardView: View, Equatable {
         }
         Button { showTags = true } label: { Label("Edit Tags", systemImage: "tag") }
         Button {
-            newName = file.filename
+            newName = file.displayTitle
             showRename = true
         } label: { Label("Rename", systemImage: "pencil") }
         Divider()
@@ -218,15 +218,17 @@ struct FileCardView: View, Equatable {
     private var renameSheet: some View {
         NavigationStack {
             Form {
-                TextField("File name", text: $newName)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
+                Section {
+                    TextField("Song name", text: $newName)
+                        .autocorrectionDisabled()
+                } footer: {
+                    Text("Sets the display name in your library. The original file (\(file.filename)) is untouched.")
+                }
             }
             .navigationTitle("Rename")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done", action: commitRename)
-                        .disabled(newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { showRename = false }
@@ -236,21 +238,13 @@ struct FileCardView: View, Equatable {
         .presentationDetents([.medium])
     }
 
+    /// Sets a non-destructive display title (never moves/renames the file).
+    /// An empty value clears the custom title, reverting to the filename.
     @MainActor
     private func commitRename() {
         let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, let oldURL = file.url else { return }
-        let newURL = oldURL.deletingLastPathComponent().appendingPathComponent(trimmed)
-        do {
-            _ = oldURL.startAccessingSecurityScopedResource()
-            defer { oldURL.stopAccessingSecurityScopedResource() }
-            try FileManager.default.moveItem(at: oldURL, to: newURL)
-            file.bookmark = try newURL.bookmarkData()
-            file.filename = trimmed
-            try context.save()
-            showRename = false
-        } catch {
-            print("Rename failed:", error)
-        }
+        file.customTitle = trimmed.isEmpty ? nil : trimmed
+        try? context.save()
+        showRename = false
     }
 }

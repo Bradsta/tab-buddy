@@ -365,7 +365,7 @@ struct TabViewerView: View {
 
             // overflow menu
             Menu {
-                Button("Rename…") { newName = file!.filename; showRename = true }
+                Button("Rename…") { newName = file!.displayTitle; showRename = true }
                 Button("Edit Tags…") { showTags = true }
 
                 // View toggle: drawn player vs. raw original text (text tabs);
@@ -539,15 +539,19 @@ struct TabViewerView: View {
         private var renameSheet: some View {
             NavigationStack {
                 Form {
-                    TextField("File name", text: $newName)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
+                    Section {
+                        TextField("Song name", text: $newName)
+                            .autocorrectionDisabled()
+                    } footer: {
+                        if let f = file {
+                            Text("Sets the display name in your library. The original file (\(f.filename)) is untouched.")
+                        }
+                    }
                 }
                 .navigationTitle("Rename")
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Done", action: commitRename)
-                            .disabled(newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel") { showRename = false }
@@ -557,28 +561,13 @@ struct TabViewerView: View {
             .presentationDetents([.medium])
         }
 
+        /// Sets a non-destructive display title; empty clears it (revert to filename).
         @MainActor
         private func commitRename() {
             let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty,
-                  let oldURL = file?.url else { return }
-
-            let newURL = oldURL.deletingLastPathComponent()
-                               .appendingPathComponent(trimmed)
-
-            do {
-                _ = oldURL.startAccessingSecurityScopedResource()
-                defer { oldURL.stopAccessingSecurityScopedResource() }
-
-                try FileManager.default.moveItem(at: oldURL, to: newURL)
-
-                file?.bookmark = try newURL.bookmarkData()
-                file?.filename = trimmed
-                try context.save()
-                showRename = false
-            } catch {
-                print("Rename failed:", error)
-            }
+            file?.customTitle = trimmed.isEmpty ? nil : trimmed
+            try? context.save()
+            showRename = false
         }
 
     // MARK: - Playback Integration

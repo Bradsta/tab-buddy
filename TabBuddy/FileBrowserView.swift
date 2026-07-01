@@ -231,7 +231,7 @@ struct FileBrowserView: View {
                 file.filename.localizedCaseInsensitiveContains(needle) ||
                 file.tags.contains { $0.localizedCaseInsensitiveContains(needle) } ||
                 file.folderName.localizedCaseInsensitiveContains(needle) ||
-                (file.derivedTitle?.localizedCaseInsensitiveContains(needle) ?? false) ||
+                (file.customTitle?.localizedCaseInsensitiveContains(needle) ?? false) ||
                 (file.foreword?.localizedCaseInsensitiveContains(needle) ?? false)
             }
         }

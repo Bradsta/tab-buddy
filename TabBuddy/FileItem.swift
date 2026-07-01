@@ -72,10 +72,15 @@ final class FileItem : Equatable {
     /// the library search can match against the human header.
     var foreword: String? = nil
 
-    /// Display title for the library card: derived title if present, else the
-    /// filename with its extension stripped.
+    /// User-assigned display name for this tab, set via Rename in the library.
+    /// Non-destructive: it never touches the underlying file. Additive-optional.
+    var customTitle: String? = nil
+
+    /// Display title for the library card: the user's custom title if set, else
+    /// the filename with its extension stripped. (Auto-extracted `derivedTitle`
+    /// is intentionally not used — extraction was too unreliable; users rename.)
     var displayTitle: String {
-        if let t = derivedTitle, !t.isEmpty { return t }
+        if let t = customTitle?.trimmingCharacters(in: .whitespacesAndNewlines), !t.isEmpty { return t }
         return (filename as NSString).deletingPathExtension
     }
 
