@@ -34,6 +34,7 @@ final class CanonicalConverter: ObservableObject {
     private struct Job {
         let id: UUID
         let bookmark: Data
+        let libraryPath: String?
         let title: String
     }
 
@@ -74,7 +75,7 @@ final class CanonicalConverter: ObservableObject {
         guard !pending.isEmpty else { return }
 
         // Snapshot on the main actor; index for commit.
-        let jobs = pending.map { Job(id: $0.id, bookmark: $0.bookmark, title: Self.titleFromFilename($0.filename)) }
+        let jobs = pending.map { Job(id: $0.id, bookmark: $0.bookmark, libraryPath: $0.libraryPath, title: Self.titleFromFilename($0.filename)) }
         var byID: [UUID: FileItem] = [:]
         for item in pending { byID[item.id] = item }
 
@@ -138,7 +139,7 @@ final class CanonicalConverter: ObservableObject {
             return
         }
 
-        let job = Job(id: item.id, bookmark: item.bookmark, title: Self.titleFromFilename(item.filename))
+        let job = Job(id: item.id, bookmark: item.bookmark, libraryPath: item.libraryPath, title: Self.titleFromFilename(item.filename))
         Task.detached(priority: .utility) { [weak self] in
             let outcome = Self.process(job)
             await MainActor.run {
@@ -171,7 +172,7 @@ final class CanonicalConverter: ObservableObject {
     /// sets). Returns whether a canonical was produced.
     @discardableResult
     func convert(_ item: FileItem, context: ModelContext) -> Bool {
-        let job = Job(id: item.id, bookmark: item.bookmark, title: Self.titleFromFilename(item.filename))
+        let job = Job(id: item.id, bookmark: item.bookmark, libraryPath: item.libraryPath, title: Self.titleFromFilename(item.filename))
         let outcome = Self.process(job)
         applyOutcome(outcome, to: item)
         try? context.save()
@@ -206,7 +207,7 @@ final class CanonicalConverter: ObservableObject {
     /// Read, parse, encode, and write the canonical for one job. Pure value I/O —
     /// safe to run off the main actor.
     private nonisolated static func process(_ job: Job) -> Outcome {
-        guard let (text, source) = extractText(bookmark: job.bookmark),
+        guard let (text, source) = extractText(bookmark: job.bookmark, libraryPath: job.libraryPath),
               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return .failure(job.id)
         }
@@ -234,13 +235,25 @@ final class CanonicalConverter: ObservableObject {
                        succeeded: true)
     }
 
-    /// Resolve a bookmark and extract tab text from the original file.
-    private nonisolated static func extractText(bookmark: Data) -> (String, Provenance.SourceType)? {
-        var stale = false
-        guard let url = try? URL(resolvingBookmarkData: bookmark, options: [],
-                                 bookmarkDataIsStale: &stale) else { return nil }
-        guard url.startAccessingSecurityScopedResource() else { return nil }
-        defer { url.stopAccessingSecurityScopedResource() }
+    /// Resolve the file (library-relative path first, else bookmark) and
+    /// extract tab text from it.
+    private nonisolated static func extractText(bookmark: Data, libraryPath: String?) -> (String, Provenance.SourceType)? {
+        let url: URL
+        var startedScope = false
+        if let lp = libraryPath, let root = LibraryManager.activeRoot {
+            // The library root's security scope is held open by LibraryManager.
+            url = root.appendingPathComponent(lp)
+        } else {
+            var stale = false
+            guard let u = try? URL(resolvingBookmarkData: bookmark, options: [],
+                                   bookmarkDataIsStale: &stale) else { return nil }
+            guard u.startAccessingSecurityScopedResource() else { return nil }
+            url = u
+            startedScope = true
+        }
+        defer {
+            if startedScope { url.stopAccessingSecurityScopedResource() }
+        }
 
         switch url.pathExtension.lowercased() {
         case "txt":

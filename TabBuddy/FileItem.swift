@@ -5,13 +5,15 @@ import CryptoKit
 @Model                   // ➊ marks a SwiftData model
 final class FileItem : Equatable {
     // MARK: Stored properties
-    @Attribute(.unique)  var id: UUID
-    var bookmark: Data
-    var filename: String
-    var isFavorite: Bool
-    var tags: [String]
-    var importedAt   : Date          // creation time
-    var lastOpenedAt : Date          // always at least the import time
+    // CloudKit-compatible: no unique constraints, every property has a default.
+    // (`id` uniqueness is by convention — items are only created via init.)
+    var id: UUID = UUID()
+    var bookmark: Data = Data()
+    var filename: String = ""
+    var isFavorite: Bool = false
+    var tags: [String] = []
+    var importedAt   : Date = Date.now   // creation time
+    var lastOpenedAt : Date = Date.now   // always at least the import time
 
     /// persisted scroll speed (points per second) last used for this file
     var scrollSpeed: Double = 0
@@ -100,9 +102,19 @@ final class FileItem : Equatable {
         set { provenanceData = newValue.flatMap { try? JSONEncoder().encode($0) } }
     }
 
-    /// Resolve the bookmark and *activate* its security scope.
-    /// Caller is responsible for calling `stopAccessingSecurityScopedResource()` when done.
+    /// Resolve this item's file URL.
+    ///
+    /// Library items resolve as `library root + libraryPath` — the root's
+    /// security scope is held open by `LibraryManager`, so no per-file scope
+    /// (or bookmark) is needed. Ad-hoc imports fall back to their per-file
+    /// bookmark, whose scope is activated here; callers balance with
+    /// `stopAccessingSecurityScopedResource()` (a harmless no-op on
+    /// library-derived URLs).
     var url: URL? {
+        if let lp = libraryPath, let root = LibraryManager.activeRoot {
+            return root.appendingPathComponent(lp)
+        }
+
         var stale = false
         guard let u = try? URL(
                 resolvingBookmarkData: bookmark,
@@ -114,8 +126,10 @@ final class FileItem : Equatable {
         return u
     }
 
-    /// Check if the bookmark can still be resolved, without starting a security scope.
+    /// Check if the file is reachable (library-relative path or resolvable
+    /// bookmark), without starting a security scope.
     var isBookmarkValid: Bool {
+        if libraryPath != nil, LibraryManager.activeRoot != nil { return true }
         var stale = false
         return (try? URL(resolvingBookmarkData: bookmark, options: [], bookmarkDataIsStale: &stale)) != nil
     }

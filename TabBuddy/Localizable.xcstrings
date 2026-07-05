@@ -71,9 +71,6 @@
     "+5% → 100% over successive passes" : {
 
     },
-    "♩" : {
-
-    },
     "⟳ Loop" : {
 
     },
@@ -101,6 +98,9 @@
     "Auto-scroll" : {
 
     },
+    "Auto-scroll speed" : {
+
+    },
     "BPM" : {
 
     },
@@ -114,9 +114,6 @@
 
     },
     "Clear" : {
-
-    },
-    "Clear Loop" : {
 
     },
     "Close" : {
@@ -198,12 +195,6 @@
       }
     },
     "Favorite" : {
-
-    },
-    "File name" : {
-
-    },
-    "Focus · tap to exit" : {
 
     },
     "Follow playback" : {
@@ -373,9 +364,6 @@
     "Restored metadata for %lld files." : {
 
     },
-    "Resume Last Loop" : {
-
-    },
     "Rhythm letters" : {
 
     },
@@ -418,13 +406,13 @@
     "Set Library Folder" : {
 
     },
-    "Set Loop End" : {
-
-    },
-    "Set Loop Start" : {
+    "Sets the display name in your library. The original file (%@) is untouched." : {
 
     },
     "Size" : {
+
+    },
+    "Song name" : {
 
     },
     "Sort" : {
@@ -440,6 +428,9 @@
 
     },
     "Tab only" : {
+
+    },
+    "Tab Player" : {
 
     },
     "TabBuddy" : {
@@ -461,6 +452,9 @@
 
     },
     "Tempo" : {
+
+    },
+    "Text" : {
 
     },
     "Title" : {

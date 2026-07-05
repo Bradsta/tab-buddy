@@ -335,6 +335,21 @@ struct FileBrowserView: View {
         // after the tab has stayed open a few seconds (see TabViewerView).
         file.lastOpenedAt = Date()
         try? context.save()
+
+        // Backfill the content fingerprint lazily — scanning no longer hashes
+        // (it would force-download every iCloud file); the file is about to be
+        // read for display anyway. Used to re-link moved/renamed files.
+        if file.contentHash == nil, let url = file.url {
+            Task.detached(priority: .utility) {
+                let hash = FileItem.fingerprint(of: url)
+                url.stopAccessingSecurityScopedResource()
+                await MainActor.run {
+                    file.contentHash = hash
+                    try? context.save()
+                }
+            }
+        }
+
         onFileOpen(file)
     }
     
@@ -686,13 +701,11 @@ struct FileBrowserView: View {
             .overlay { importOverlay }
             .overlay { conversionOverlay }
             .overlay { massTagOverlay(visible: visible) }
-            .onChange(of: folderImporter.isRunning) { running in
-                // After an import finishes, backfill canonical tab data for any
-                // newly added files (idempotent — skips already-converted ones).
-                if !running {
-                    canonicalConverter.convertLibrary(context: context)
-                }
-            }
+            // Note: no automatic whole-library canonical conversion after
+            // import — reading and parsing thousands of (possibly undownloaded
+            // iCloud) files made first-run setup take forever. Canonicals are
+            // generated on open (convertOnOpen) or via the explicit
+            // "Generate Tab Data" menu action.
     }
 
     @ViewBuilder
@@ -908,7 +921,12 @@ private struct BrowserDialogs: ViewModifier {
                 folderImporter.start(urls: urls, context: context)
             }
         case .library:
-            if let url = urls.first { libraryManager.setLibraryFolder(url: url) }
+            if let url = urls.first {
+                libraryManager.setLibraryFolder(url: url)
+                // Populate immediately — the scan is metadata-only (no file
+                // reads), so even large iCloud libraries appear quickly.
+                libraryManager.rescan(context: context)
+            }
         case .backup:
             guard let url = urls.first,
                   url.startAccessingSecurityScopedResource() else { return }

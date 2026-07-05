@@ -6,6 +6,13 @@ final class LibraryManager: ObservableObject {
     static let shared = LibraryManager()
 
     private static let bookmarkKey = "libraryDirectoryBookmark"
+
+    /// Resolved library root with its security scope held open for the app's
+    /// lifetime. Set on the main actor in `refreshState()`; read from any
+    /// thread (`FileItem.url`, converter workers) to resolve library-relative
+    /// paths without per-file bookmarks.
+    nonisolated(unsafe) private(set) static var activeRoot: URL?
+
     @Published var libraryName: String?
     var isConfigured: Bool { libraryName != nil }
     @Published var isRescanning: Bool = false
@@ -158,7 +165,12 @@ final class LibraryManager: ObservableObject {
 
             await MainActor.run { self.rescanTotal = discoveredFiles.count }
 
-            // 2. Fast pass on main actor: match by path and name (no I/O)
+            // 2. Fast pass on main actor: match by path and name (no I/O).
+            // New files are inserted immediately with just their relative path —
+            // no per-file bookmark, no content read (which would force iCloud to
+            // download every dataless file). The content fingerprint is only
+            // needed to re-link *moved/renamed* files, so the hash pass runs
+            // only when some existing library item's file has vanished.
             let (unmatchedIndices, fastMatchedIDs, hashIndex): ([Int], Set<UUID>, [String: FileItem]) = await MainActor.run {
                 let existing = (try? context.fetch(FetchDescriptor<FileItem>())) ?? []
                 var byLibPath: [String: FileItem] = [:]
@@ -171,7 +183,7 @@ final class LibraryManager: ObservableObject {
                 }
 
                 var matched = Set<UUID>()
-                var needsHash: [Int] = []
+                var unmatched: [Int] = []
 
                 for (i, (fileURL, relativePath)) in discoveredFiles.enumerated() {
                     let filename = fileURL.lastPathComponent
@@ -187,12 +199,31 @@ final class LibraryManager: ObservableObject {
                         m.libraryPath = relativePath
                         m.folderName = folderName
                     } else {
-                        needsHash.append(i)
+                        unmatched.append(i)
                     }
                 }
 
-                self.rescanProcessed = discoveredFiles.count - needsHash.count
-                return (needsHash, matched, byHash)
+                // Vanished = library items whose file is gone from disk. Only
+                // then is hashing worthwhile (to re-link moves/renames).
+                let anyVanished = existing.contains {
+                    $0.libraryPath != nil && !matched.contains($0.id)
+                }
+
+                if !anyVanished {
+                    for i in unmatched {
+                        let (fileURL, relativePath) = discoveredFiles[i]
+                        context.insert(FileItem(
+                            bookmark: Data(),   // resolved via libraryPath at open
+                            filename: fileURL.lastPathComponent,
+                            folderName: fileURL.deletingLastPathComponent().lastPathComponent,
+                            libraryPath: relativePath
+                        ))
+                    }
+                    unmatched = []
+                }
+
+                self.rescanProcessed = discoveredFiles.count - unmatched.count
+                return (unmatched, matched, byHash)
             }
 
             // 3. Slow pass: only fingerprint unmatched files (moved/renamed/new)
@@ -240,18 +271,14 @@ final class LibraryManager: ObservableObject {
 
                     if let h = hash, let m = byHash[h], !matched.contains(m.id) {
                         matched.insert(m.id)
-                        if let freshBookmark = try? fileURL.bookmarkData() {
-                            m.bookmark = freshBookmark
-                        }
                         m.filename = filename
-                        m.libraryPath = relativePath
+                        m.libraryPath = relativePath   // resolves at open; no per-file bookmark
                         m.folderName = folderName
                         m.contentHash = h
                     } else {
                         // Truly new file
-                        guard let bookmarkData = try? fileURL.bookmarkData() else { continue }
                         let newItem = FileItem(
-                            bookmark: bookmarkData,
+                            bookmark: Data(),          // resolved via libraryPath at open
                             filename: filename,
                             folderName: folderName,
                             libraryPath: relativePath,
@@ -273,7 +300,16 @@ final class LibraryManager: ObservableObject {
     // MARK: - Private
 
     private func refreshState() {
-        libraryName = resolveLibraryURL()?.lastPathComponent
+        let resolved = resolveLibraryURL()
+        if resolved?.path != Self.activeRoot?.path {
+            Self.activeRoot?.stopAccessingSecurityScopedResource()
+            if let resolved, resolved.startAccessingSecurityScopedResource() {
+                Self.activeRoot = resolved
+            } else {
+                Self.activeRoot = nil
+            }
+        }
+        libraryName = resolved?.lastPathComponent
     }
 }
 
