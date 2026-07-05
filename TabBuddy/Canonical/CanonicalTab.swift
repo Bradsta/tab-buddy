@@ -235,5 +235,10 @@ enum CanonicalConverterVersion {
     // v4: stricter title heuristic (reject URLs/credits/timestamps/garbage glyphs,
     //     precise directive match), PDF→filename + filename-superset title,
     //     phantom-measure filter, tuplet-bracket lines no longer parsed as measures.
-    static let current = 4
+    // v5: corpus-validated tab-line detection — bar dialects (+, letter-l, [ ],
+    //     |D| / |E labels, || o/*/:/space prefixes, |o| gutters, E*|| stars,
+    //     German H string, |r rest gutter), unlabeled bar-less systems,
+    //     =-sustain and digit-dense lines, tuplet/beat-ruler and fingering-row
+    //     rejection, separator-line filtering, prose-annotation digit masking.
+    static let current = 5
 }

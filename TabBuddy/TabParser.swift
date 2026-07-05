@@ -20,7 +20,7 @@ struct TabParser {
         //  inserting blanks between every line for \r\n files)
         let normalized = text.replacingOccurrences(of: "\r\n", with: "\n")
                              .replacingOccurrences(of: "\r", with: "\n")
-        let lines = normalized.components(separatedBy: "\n")
+        let lines = normalized.components(separatedBy: "\n").map(normalizeDialect)
         let systemGroups = detectSystems(lines: lines)
         let firstTabLine = systemGroups.first?.tabLineIndices.first ?? lines.count
         let metadata = parseMetadata(lines: lines, firstTabContentLine: firstTabLine)
@@ -432,6 +432,35 @@ struct TabParser {
         var currentTabLines: [Int] = []
         var contextAbove: [Int] = []
 
+        // A decoration line has no fret digits and no bar lines — e.g. a
+        // "------------" divider that the dash-dominance rules accept as tab.
+        func isDecoration(_ idx: Int) -> Bool {
+            let l = lines[idx]
+            return !l.contains("|") && !l.contains(where: { $0.isNumber })
+        }
+
+        func flush() {
+            guard !currentTabLines.isEmpty else { return }
+            defer { currentTabLines = []; contextAbove = [] }
+
+            // Trim divider lines glued to the edges of an oversized group
+            // (a real guitar system has at most 6 strings).
+            while currentTabLines.count > 6, let f = currentTabLines.first, isDecoration(f) {
+                currentTabLines.removeFirst()
+            }
+            while currentTabLines.count > 6, let l = currentTabLines.last, isDecoration(l) {
+                currentTabLines.removeLast()
+            }
+            // A lone decoration line is a separator, not a one-string system.
+            if currentTabLines.count == 1 && isDecoration(currentTabLines[0]) { return }
+
+            groups.append(buildSystemGroup(
+                tabLineIndices: currentTabLines,
+                contextAbove: contextAbove,
+                lines: lines
+            ))
+        }
+
         for (i, line) in lines.enumerated() {
             if isTabLine(line) {
                 if currentTabLines.isEmpty {
@@ -441,29 +470,88 @@ struct TabParser {
                 }
                 currentTabLines.append(i)
             } else if !currentTabLines.isEmpty {
-                // End of a tab system — flush
-                let group = buildSystemGroup(
-                    tabLineIndices: currentTabLines,
-                    contextAbove: contextAbove,
-                    lines: lines
-                )
-                groups.append(group)
-                currentTabLines = []
-                contextAbove = []
+                flush()
+            }
+        }
+        flush()
+
+        return groups
+    }
+
+    /// Character set that makes up genuine tab-line content (frets, sustains,
+    /// techniques, bars). Used to gauge whether a line is dominated by tab
+    /// glyphs vs. prose.
+    private static let tabGlyphSet = Set("-—–=0123456789|+:hpbrstvxXoO/\\~()<>.,*^&_'`\"[]!")
+
+    /// Normalize alternate bar-line dialects to the standard '|' so all
+    /// downstream logic deals with a single bar character. Every substitution
+    /// is 1:1, so column positions are preserved.
+    ///
+    /// Handled dialects:
+    ///   • '+' as bar line:  "E+--7----+--7----+"      → "E|--7----|--7----|"
+    ///   • 'l' as bar line:  "el---l-5--l" (letter L)  → "e|---|-5--|"
+    ///   • wrapped label:    "|D|---0---|"             → " D|---0---|"
+    private static func normalizeDialect(_ line: String) -> String {
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        guard trimmed.count >= 4, !trimmed.contains("|") || trimmed.hasPrefix("|") else { return line }
+
+        func isDashy(_ s: String) -> Bool {
+            let nonSpace = s.filter { $0 != " " && $0 != "\t" }
+            guard nonSpace.count >= 4 else { return false }
+            let dashEq = nonSpace.filter { $0 == "-" || $0 == "=" }.count
+            let glyphs = nonSpace.filter { tabGlyphSet.contains($0) || $0 == "l" }.count
+            return dashEq >= 4
+                && Double(glyphs) / Double(nonSpace.count) >= 0.85
+        }
+
+        // "|D|---0---|" or "|E ----|" — string label wrapped in / prefixed by a
+        // bar. Blank the leading bar so the line reads as a normal labeled line.
+        if trimmed.range(of: #"^\|[A-Ga-g][#b]?[| ]"#, options: .regularExpression) != nil,
+           isDashy(String(trimmed.dropFirst(3))) || trimmed.dropFirst(3).contains("/") {
+            if let barIdx = line.firstIndex(of: "|") {
+                var chars = Array(line)
+                chars[line.distance(from: line.startIndex, to: barIdx)] = " "
+                return String(chars)
             }
         }
 
-        // Flush final group
-        if !currentTabLines.isEmpty {
-            let group = buildSystemGroup(
-                tabLineIndices: currentTabLines,
-                contextAbove: contextAbove,
-                lines: lines
-            )
-            groups.append(group)
+        // "| |----|" / "|o|----|" — repeat-marker gutter column before the
+        // content; fuse into a standard double bar. (Not when the content is a
+        // tuplet ruler wrapped in outer bars: " | |--3--| |--3--| … |".)
+        if trimmed.range(of: #"^\|[o ]\|[-=0-9]"#, options: .regularExpression) != nil,
+           !isTupletRulerLine(String(trimmed.dropFirst(2))) {
+            if let barIdx = line.firstIndex(of: "|") {
+                var chars = Array(line)
+                chars[line.distance(from: line.startIndex, to: barIdx) + 1] = "|"
+                return String(chars)
+            }
         }
 
-        return groups
+        guard !trimmed.contains("|") else { return line }
+
+        // "[-4--5^7^5----]" — bracket-delimited string lines; brackets act as
+        // bar lines.
+        if trimmed.first == "[",
+           trimmed.filter({ $0 == "[" || $0 == "]" }).count >= 2,
+           isDashy(trimmed) {
+            return String(line.map { $0 == "[" || $0 == "]" ? "|" : $0 })
+        }
+
+        // "E+--7----+" — '+' used as bar lines after a string label.
+        if trimmed.range(of: #"^[A-Ga-g][#b]?\+"#, options: .regularExpression) != nil,
+           trimmed.filter({ $0 == "+" }).count >= 2,
+           isDashy(trimmed) {
+            return String(line.map { $0 == "+" ? "|" : $0 })
+        }
+
+        // "el---l-5--l" — lowercase letter L used as bar lines.
+        if trimmed.range(of: #"^[A-Ga-g][#b]?l[-=0-9l]"#, options: .regularExpression) != nil,
+           trimmed.filter({ $0 == "l" }).count >= 3,
+           isDashy(trimmed) {
+            return String(line.map { $0 == "l" ? "|" : $0 })
+        }
+
+        return line
     }
 
     /// Check if a line is a tab string line.
@@ -478,13 +566,32 @@ struct TabParser {
         // as their own (tiny) measures.
         if isTupletBracketLine(trimmed) { return false }
 
-        // 1. Labeled with | or || separator: "e|", "E||", "B|", "d#|", "A#|"
-        if trimmed.range(of: #"^[eEBbGgDdAaCcFf][#b]?\s*\|"#, options: .regularExpression) != nil {
-            return true
+        // Same for ruler lines mixing a measure number, tuplet cells, and beat
+        // dots: "5  |--3--| |--3--|   |   .   |", "0  ,  |----6----| |-3-|"
+        if isTupletRulerLine(trimmed) { return false }
+
+        // Left-hand fingering annotations ("1  2  4   1-----1  3", digits 0–4
+        // in gappy tokens, no bars) sit above/below the staff — not tab.
+        if !trimmed.contains("|") {
+            let tokens = trimmed.split(whereSeparator: { $0 == " " || $0 == "\t" })
+            if tokens.count >= 3, tokens.allSatisfy({
+                $0.range(of: #"^[0-4](-+[0-4])?$"#, options: .regularExpression) != nil
+            }) {
+                return false
+            }
+        }
+
+        // 1. Labeled with | or || separator: "e|", "E||", "B|", "d#|", "A#|",
+        //    "E*||" (star = repeat marker).
+        //    Content after the bar must actually be dashy — this rejects
+        //    annotation rows like "H    | |   H |  arp." (harmonic markers).
+        if trimmed.range(of: #"^[eEBbGgDdAaCcFfHh][#b*]?\s*\|"#, options: .regularExpression) != nil {
+            let dashEq = trimmed.filter { $0 == "-" || $0 == "=" }.count
+            return dashEq >= 3
         }
 
         // 2. Labeled with : separator: "e:", "G:"
-        if trimmed.range(of: #"^[eEBbGgDdAaCcFf][#b]?\s*:"#, options: .regularExpression) != nil {
+        if trimmed.range(of: #"^[eEBbGgDdAaCcFfHh][#b]?\s*:"#, options: .regularExpression) != nil {
             // Verify it's tab content (dashes, numbers, special chars after separator)
             if let colonIdx = trimmed.firstIndex(of: ":") {
                 let after = trimmed[trimmed.index(after: colonIdx)...]
@@ -493,29 +600,48 @@ struct TabParser {
             }
         }
 
-        // 3. Unlabeled: starts with || or ||o (repeat markers)
+        // 3. Unlabeled: starts with || plus optional repeat marker (o, *) or a
+        //    space before the content: "||---", "||o--", "||*----0-2-", "|| ---"
         if trimmed.hasPrefix("||") {
-            let afterBars = trimmed.dropFirst(2)
-            // Must have tab-like content (dashes, numbers, bars)
-            if afterBars.hasPrefix("o") || afterBars.hasPrefix("-") || afterBars.first?.isNumber == true {
+            let afterBars = trimmed.dropFirst(2).drop(while: { "o*:| ".contains($0) })
+            if afterBars.hasPrefix("-") || afterBars.first?.isNumber == true {
                 return true
+            }
+        }
+
+        // 3b. Continuation starting with ':' (repeat-end alignment):
+        //     ":----------------|----0-2-|"
+        if trimmed.first == ":" {
+            let after = trimmed.dropFirst()
+            if after.hasPrefix("-") || after.first?.isNumber == true {
+                let dashCount = trimmed.filter { $0 == "-" || $0 == "=" }.count
+                if dashCount > trimmed.count / 3 { return true }
             }
         }
 
         // 4. Unlabeled continuation: starts with |- or |-- (tab content, no label)
         if trimmed.hasPrefix("|") && !trimmed.hasPrefix("||") {
-            let afterBar = trimmed.dropFirst(1)
+            // Skip repeat/rest/sustain decorations right after the bar:
+            // "|*---", "|====3-1", "|r--3---"
+            let afterBar = trimmed.dropFirst(1).drop(while: { "*o=r".contains($0) })
             if afterBar.hasPrefix("-") || afterBar.first?.isNumber == true {
-                // Verify it's tab content, not a table or ruler
-                let dashCount = trimmed.filter({ $0 == "-" }).count
-                return dashCount > trimmed.count / 3
+                // Verify it's tab content, not a table or ruler ('=' sustains
+                // count as dashes)
+                let dashCount = trimmed.filter({ $0 == "-" || $0 == "=" }).count
+                if dashCount > trimmed.count / 3 { return true }
+                // Digit-dense lines ("|-15-14-12-14-...") fail the dash ratio;
+                // accept when overwhelmingly tab glyphs.
+                let nonSpace = trimmed.filter { $0 != " " && $0 != "\t" }
+                let glyphs = nonSpace.filter { tabGlyphSet.contains($0) }.count
+                return dashCount >= 4 && !nonSpace.isEmpty
+                    && Double(glyphs) / Double(nonSpace.count) >= 0.9
             }
         }
 
         // 5. Fully unlabeled: starts with dashes/numbers and contains | separators
         //    e.g. "--0--------2--L--3-------|--3---..."
         if (trimmed.first == "-" || trimmed.first?.isNumber == true) && trimmed.contains("|") {
-            let dashCount = trimmed.filter({ $0 == "-" }).count
+            let dashCount = trimmed.filter({ $0 == "-" || $0 == "=" }).count
             let barCount = trimmed.filter({ $0 == "|" }).count
             // Must look like tab: many dashes, some bars, short non-dash content
             return dashCount > trimmed.count / 3 && barCount >= 1
@@ -523,11 +649,45 @@ struct TabParser {
 
         // 6. Label followed directly by dash content (no separator)
         //    e.g. "e-6--6--8---", "E-----------", "E 4-------2---|",
-        //         "E*--7---|", "d#-0---" (sharp labels)
-        if trimmed.range(of: #"^[eEBbGgDdAaCcFf][#b*]?\s*[-0-9]"#, options: .regularExpression) != nil {
-            let dashCount = trimmed.filter({ $0 == "-" }).count
+        //         "E*--7---|", "d#-0---" (sharp labels), "A /---/-/-" (strums)
+        if trimmed.range(of: #"^[eEBbGgDdAaCcFfHh][#b*]?\s*[-0-9/]"#, options: .regularExpression) != nil {
+            let dashCount = trimmed.filter({ $0 == "-" || $0 == "=" }).count
             if dashCount > trimmed.count / 3 {
                 return true
+            }
+            // Dense fret runs ("E----333-333-333-...") won't clear the dash
+            // ratio; accept when the content is overwhelmingly tab glyphs.
+            let nonSpace = trimmed.filter { $0 != " " && $0 != "\t" }
+            let glyphs = nonSpace.dropFirst().filter { tabGlyphSet.contains($0) }.count
+            if dashCount >= 4, nonSpace.count > 1,
+               Double(glyphs) / Double(nonSpace.count - 1) >= 0.9 {
+                return true
+            }
+        }
+
+        // 7. Fully unlabeled, bar-less dash line (classtab style):
+        //    "-0-----0-2-0---", "=======2---2---2==", "---5-4---5-4----5-"
+        //    Dominated by dashes/sustains with only tab glyphs otherwise.
+        if let first = trimmed.first, "-=0123456789".contains(first) {
+            // A leading digit run must be a fret glued to dash context ("5--7"),
+            // not a measure/chord marker ("01 C7----", "12  |")
+            if first.isNumber {
+                let afterDigits = trimmed.drop(while: { $0.isNumber })
+                guard afterDigits.first == "-" || afterDigits.first == "=" else { return false }
+            }
+            let nonSpace = trimmed.filter { $0 != " " && $0 != "\t" }
+            let dashEq = nonSpace.filter { $0 == "-" || $0 == "=" }.count
+            if dashEq >= 4, !nonSpace.isEmpty {
+                let glyphs = nonSpace.filter { tabGlyphSet.contains($0) }.count
+                let glyphRatio = Double(glyphs) / Double(nonSpace.count)
+                // Dash-dominant ("-0-----0-2-0---") or digit-dense but purely
+                // tab glyphs ("17-17-17-16-16-...")
+                if dashEq >= 6, Double(dashEq) / Double(nonSpace.count) >= 0.4, glyphRatio >= 0.85 {
+                    return true
+                }
+                if glyphRatio >= 0.9, nonSpace.contains(where: { $0.isNumber }) {
+                    return true
+                }
             }
         }
 
@@ -551,6 +711,49 @@ struct TabParser {
             else { return false }
         }
         return true
+    }
+
+    /// A ruler line above the staff mixing an optional leading measure number,
+    /// tuplet cells ("|--3--|", "|----6----|"), beat-dot cells ("|   .   ."),
+    /// and stray punctuation. Not tab content — its bars would otherwise shred
+    /// the system into tiny bogus measures.
+    private static func isTupletRulerLine(_ trimmed: String) -> Bool {
+        // Bar-less variant: gap-separated "---3---   ---3---" cells (a real
+        // bar-less tab line is one continuous dash run, not gapped cells).
+        if !trimmed.contains("|") {
+            var s = Substring(trimmed)
+            if let r = s.range(of: #"^\d{1,3}\s+"#, options: .regularExpression) {
+                s = s[r.upperBound...]
+            }
+            let tokens = s.split(whereSeparator: { $0 == " " || $0 == "\t" })
+            return tokens.count >= 2 && tokens.allSatisfy {
+                $0.range(of: #"^-+\d-+$"#, options: .regularExpression) != nil
+            }
+        }
+        var s = Substring(trimmed)
+        // Optional leading measure number ("5  |...", "23 |...")
+        if let r = s.range(of: #"^\d{1,3}\s+"#, options: .regularExpression) {
+            s = s[r.upperBound...]
+        }
+        let tokens = s.split(whereSeparator: { $0 == " " || $0 == "\t" })
+        guard !tokens.isEmpty else { return false }
+        var tupletCells = 0
+        var otherCells = 0
+        for tok in tokens {
+            // bars / beat dots / commas standing alone
+            if tok.allSatisfy({ "|.,".contains($0) }) { otherCells += 1; continue }
+            // "|--3--|", "|----6----|" — single digit boxed in dashes
+            if tok.range(of: #"^\|-+\d-+\|$"#, options: .regularExpression) != nil {
+                tupletCells += 1
+                continue
+            }
+            return false
+        }
+        // A tuplet cell with company (more cells, or dot/bar context), or a
+        // lone boxed digit as the line's ONLY token ("   |--3--|" above a
+        // system) — either way a ruler, not tab content.
+        return tupletCells >= 2 || (tupletCells >= 1 && otherCells >= 1)
+            || (tupletCells == 1 && tokens.count == 1)
     }
 
     /// Build a SystemGroup from detected tab lines and their context.
@@ -709,9 +912,9 @@ struct TabParser {
             let tabContent = lines[firstTabIdx]
             // Determine where tab content starts by detecting label format
             let trimmedContent = tabContent.trimmingCharacters(in: .whitespaces)
-            let isColonLabel = trimmedContent.range(of: #"^[eEBbGgDdAaCcFf][#b]?\s*:"#, options: .regularExpression) != nil
+            let isColonLabel = trimmedContent.range(of: #"^[eEBbGgDdAaCcFfHh][#b]?\s*:"#, options: .regularExpression) != nil
             let isLabelDash = !isColonLabel &&
-                trimmedContent.range(of: #"^[eEBbGgDdAaCcFf][#b*]?\s*[-0-9]"#, options: .regularExpression) != nil
+                trimmedContent.range(of: #"^[eEBbGgDdAaCcFfHh][#b*]?\s*[-0-9]"#, options: .regularExpression) != nil
 
             let contentStart: Int
             if isColonLabel {
@@ -720,7 +923,7 @@ struct TabParser {
                     .map { tabContent.distance(from: tabContent.startIndex, to: $0) + 1 } ?? 0
             } else if isLabelDash {
                 // Skip label character(s) + optional #/b/* + optional spaces
-                if let match = tabContent.range(of: #"^(\s*[eEBbGgDdAaCcFf][#b*]?\s*)"#, options: .regularExpression) {
+                if let match = tabContent.range(of: #"^(\s*[eEBbGgDdAaCcFfHh][#b*]?\s*)"#, options: .regularExpression) {
                     contentStart = tabContent.distance(from: tabContent.startIndex, to: match.upperBound)
                 } else {
                     contentStart = 1 // skip at least the label character
@@ -829,13 +1032,13 @@ struct TabParser {
         // Detect colon-separated label (e.g., "e:--0--3--|") — must check BEFORE |
         // because these lines may also contain | as internal bar lines or trailing decoration
         let trimmed = line.trimmingCharacters(in: .whitespaces)
-        let isColonLabel = trimmed.range(of: #"^[eEBbGgDdAaCcFf][#b]?\s*:"#, options: .regularExpression) != nil
+        let isColonLabel = trimmed.range(of: #"^[eEBbGgDdAaCcFfHh][#b]?\s*:"#, options: .regularExpression) != nil
 
         // Detect label-dash format: "E-6--6---|", "E 4---|", "d#-0---|"
         // Label directly followed by dash content, no | or : separator immediately after label
         let isLabelDash = !isColonLabel &&
-            trimmed.range(of: #"^[eEBbGgDdAaCcFf][#b*]?\s*[-0-9]"#, options: .regularExpression) != nil &&
-            trimmed.range(of: #"^[eEBbGgDdAaCcFf][#b]?\s*\|"#, options: .regularExpression) == nil
+            trimmed.range(of: #"^[eEBbGgDdAaCcFfHh][#b*]?\s*[-0-9]"#, options: .regularExpression) != nil &&
+            trimmed.range(of: #"^[eEBbGgDdAaCcFfHh][#b]?\s*\|"#, options: .regularExpression) == nil
 
         if isColonLabel {
             // Colon is the label separator; content starts after :
@@ -859,7 +1062,7 @@ struct TabParser {
             // Label-dash: content starts right after the label character(s)
             // Find where the label ends (letter + optional #/b/* + optional spaces)
             var contentStart = 0
-            if let match = line.range(of: #"^(\s*[eEBbGgDdAaCcFf][#b*]?\s*)"#, options: .regularExpression) {
+            if let match = line.range(of: #"^(\s*[eEBbGgDdAaCcFfHh][#b*]?\s*)"#, options: .regularExpression) {
                 contentStart = line.distance(from: line.startIndex, to: match.upperBound)
             }
 
@@ -901,7 +1104,7 @@ struct TabParser {
                 let firstNonSpace = chars.firstIndex(where: { $0 != " " && $0 != "\t" }) ?? 0
                 let firstContentChar = chars[firstNonSpace]
                 if firstContentChar == "-" || firstContentChar.isNumber ||
-                   "hpbr/\\~()xXsS.".contains(firstContentChar) {
+                   "hpbr/\\~()xXsS.:=".contains(firstContentChar) {
                     positions.append(max(0, firstNonSpace - 1))
                 }
             }
@@ -1017,13 +1220,39 @@ struct TabParser {
         // Standard order top to bottom: e, B, G, D, A, E
         let stringOrder = resolveStringOrder(tabLineIndices: tabLineIndices, lines: lines)
 
+        // Mask prose annotations embedded in tab lines ("---play this 3 times--"):
+        // runs of ≥2 letters plus any digits glued to them ("12th") are words,
+        // not frets. Single letters stay (technique markers: h, p, b, t, x…).
+        func proseMask(_ chars: [Character]) -> [Bool] {
+            var mask = [Bool](repeating: false, count: chars.count)
+            var i = 0
+            while i < chars.count {
+                guard chars[i].isLetter else { i += 1; continue }
+                var j = i
+                while j < chars.count, chars[j].isLetter || chars[j] == "'" { j += 1 }
+                if j - i >= 2 {
+                    var lo = i, hi = j
+                    while lo > 0, chars[lo - 1].isNumber { lo -= 1 }
+                    while hi < chars.count, chars[hi].isNumber { hi += 1 }
+                    for k in lo..<hi { mask[k] = true }
+                }
+                i = j
+            }
+            return mask
+        }
+        var masks: [Int: [Bool]] = [:]
+        for lineIdx in tabLineIndices {
+            masks[lineIdx] = proseMask(Array(lines[lineIdx]))
+        }
+
         // Find all note columns (columns that have a fret number on any string)
         var noteColumns = Set<Int>()
         for lineIdx in tabLineIndices {
             let chars = Array(lines[lineIdx])
+            let mask = masks[lineIdx] ?? []
             var col = columnRange.lowerBound
             while col < min(columnRange.upperBound, chars.count) {
-                if chars[col].isNumber {
+                if chars[col].isNumber, !(col < mask.count && mask[col]) {
                     // Could be multi-digit fret (10, 12, etc.)
                     let startCol = col
                     while col + 1 < min(columnRange.upperBound, chars.count) && chars[col + 1].isNumber {
@@ -1052,7 +1281,9 @@ struct TabParser {
             var frets: [Int?] = Array(repeating: nil, count: 6)
             for (stringIdx, lineIdx) in stringOrder {
                 let chars = Array(lines[lineIdx])
-                if col < chars.count && chars[col].isNumber {
+                let mask = masks[lineIdx] ?? []
+                if col < chars.count && chars[col].isNumber,
+                   !(col < mask.count && mask[col]) {
                     // Read multi-digit fret
                     var fretStr = String(chars[col])
                     var nextCol = col + 1
@@ -1121,7 +1352,10 @@ struct TabParser {
         var labels: [(char: Character, lineIdx: Int)] = []
         for lineIdx in tabLineIndices {
             let line = lines[lineIdx].trimmingCharacters(in: .whitespaces)
-            guard let firstChar = line.first else { continue }
+            guard var firstChar = line.first else { continue }
+            // German notation: H is the B string
+            if firstChar == "H" { firstChar = "B" }
+            if firstChar == "h" { firstChar = "b" }
             labels.append((firstChar, lineIdx))
         }
 
