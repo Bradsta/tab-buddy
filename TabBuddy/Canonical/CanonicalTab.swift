@@ -283,5 +283,10 @@ enum CanonicalConverterVersion {
     //      <harmony>, rendered in the Tab Player; key signature -> canonical
     //      keyFifths + viewer subtitle; printed time signature extracted and
     //      used for duration math. Chord lines above text tabs parse too.
-    static let current = 12
+    // v13: real chord construction — near-simultaneous noteheads cluster into
+    //      onsets (stem-side x offsets), named chords render as standard
+    //      guitar shape voicings (E/A-form barres), joint per-string
+    //      assignment for other stacks, global octave centering for playable
+    //      low-position tabs.
+    static let current = 13
 }

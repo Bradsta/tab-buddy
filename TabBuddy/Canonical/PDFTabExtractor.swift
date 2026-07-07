@@ -541,17 +541,22 @@ enum PDFTabExtractor {
     /// no notation staves with notes are found.
     static func asciiFromNotation(from doc: PDFDocument) -> String? {
         let tuning = GuitarTuning.standard.midiNotes
-        var out: [String] = []
-        var produced = false
+
+        // Pass 1: extract everything so the octave shift is a global decision.
+        struct StaffData {
+            let pitches: [(midi: Int, x: Double, cy: Double)]
+            let chords: [(name: String, x: Double)]
+            let bars: [Double]
+            let spacing: Double
+        }
+        var header: [String] = []
+        var staffData: [StaffData] = []
         var emittedNotationHeader = false
         var beatsPerMeasure = 4
 
         for p in 0..<doc.pageCount {
             guard let page = doc.page(at: p) else { continue }
-            if p == 0 {
-                let header = headerLines(page)
-                if !header.isEmpty { out.append(contentsOf: header); out.append("") }
-            }
+            if p == 0 { header = headerLines(page) }
             guard let raster = Raster(page) else { continue }
             let staves = staffGroups(from: raster.lineRows(requireContinuous: true), size: 5)
                 .map { NotationStaff(lines: $0) }
@@ -563,42 +568,89 @@ enum PDFTabExtractor {
                 let pitches = melody(for: staff, glyphs: gs, raster: raster)
                 guard !pitches.isEmpty else { continue }
 
-                // Key + time signature from the first notated staff.
                 if !emittedNotationHeader {
                     emittedNotationHeader = true
-                    let header = notationHeader(staff: staff, glyphs: gs,
-                                                firstNoteX: pitches[0].x)
-                    if !header.isEmpty {
-                        out.insert(contentsOf: header + [""], at: 0)
-                        for line in header where line.hasPrefix("Time: ") {
-                            beatsPerMeasure = Int(line.dropFirst(6).prefix(while: \.isNumber)) ?? 4
-                        }
+                    let extra = notationHeader(staff: staff, glyphs: gs,
+                                               firstNoteX: pitches[0].x)
+                    header.append(contentsOf: extra)
+                    for line in extra where line.hasPrefix("Time: ") {
+                        beatsPerMeasure = Int(line.dropFirst(6).prefix(while: \.isNumber)) ?? 4
                     }
                 }
-
-                var notes: [Note] = []
-                for (midi, x, _) in pitches {
-                    // Fold into guitar range, then map to the lowest fret.
-                    var m = midi
-                    while m < tuning.min() ?? 40 { m += 12 }
-                    while m > (tuning.max() ?? 64) + FretSuggestionEngine.maxFret { m -= 12 }
-                    if let pos = FretSuggestionEngine.suggest(midiPitch: m, tuningMIDI: tuning) {
-                        notes.append(Note(string: pos.string, fret: pos.fret, x: x))
-                    }
-                }
-                guard !notes.isEmpty else { continue }
-                produced = true
-                // Bar candidates spanning the staff, minus note stems (a stem
-                // always has a notehead glyph right next to it; a bar doesn't).
                 let noteXs = pitches.map(\.x)
                 let bars = raster.barXs(topPDF: staff.top, bottomPDF: staff.bottom)
                     .filter { bx in !noteXs.contains { abs($0 + staff.spacing * 0.5 - bx) < staff.spacing * 1.2 } }
-                out.append(contentsOf: asciiSystem(notes, spacing: staff.spacing * 1.25,
-                                                   barXs: bars,
-                                                   beatsPerMeasure: beatsPerMeasure,
-                                                   chords: chordSymbols(for: staff, glyphs: gs)))
-                out.append("")
+                staffData.append(StaffData(pitches: pitches,
+                                           chords: chordSymbols(for: staff, glyphs: gs),
+                                           bars: bars,
+                                           spacing: staff.spacing))
             }
+        }
+        guard !staffData.isEmpty else { return nil }
+
+        // Global octave shift: center the piece's median pitch near D4 so the
+        // tab sits in low positions instead of fret 12+. Whole octaves only,
+        // so intervals and contour are untouched.
+        let allMidis = staffData.flatMap { $0.pitches.map(\.midi) }.sorted()
+        let median = Double(allMidis[allMidis.count / 2])
+        let octaveShift = max(-24, min(24, Int(((62 - median) / 12.0).rounded()) * 12))
+
+        var out: [String] = header
+        if !out.isEmpty { out.append("") }
+
+        var produced = false
+        for sd in staffData {
+            // Cluster near-simultaneous noteheads into chord onsets: chord
+            // members sit on alternating sides of a shared stem, ~a notehead
+            // width apart in x.
+            let clusterTol = sd.spacing * 1.7
+            var onsets: [(x: Double, midis: [Int])] = []
+            for p in sd.pitches.sorted(by: { $0.x < $1.x }) {
+                if var last = onsets.last, p.x - last.x < clusterTol {
+                    last.midis.append(p.midi)
+                    onsets[onsets.count - 1] = last
+                } else {
+                    onsets.append((p.x, [p.midi]))
+                }
+            }
+
+            var notes: [Note] = []
+            for onset in onsets {
+                let shifted = onset.midis.map { $0 + octaveShift }
+                // Known-chord shape when a stack coincides with a chord symbol.
+                if shifted.count >= 3,
+                   let sym = sd.chords.last(where: { $0.x <= onset.x + sd.spacing }),
+                   let voicing = ChordShapes.voicing(for: sym.name) {
+                    for (string, fret) in voicing.enumerated() {
+                        if let fret { notes.append(Note(string: string, fret: fret, x: onset.x)) }
+                    }
+                    continue
+                }
+                // Joint assignment: each pitch on its own string, high to low.
+                var used = Set<Int>()
+                for m in shifted.sorted(by: >) {
+                    var best: (string: Int, fret: Int)? = nil
+                    outer: for candidate in [m, m + 12, m - 12, m + 24] {
+                        for st in 0..<6 where !used.contains(st) {
+                            let fret = candidate - tuning[st]
+                            guard fret >= 0, fret <= 15 else { continue }
+                            if best == nil || fret < best!.fret { best = (st, fret) }
+                        }
+                        if best != nil { break outer }
+                    }
+                    if let b = best {
+                        used.insert(b.string)
+                        notes.append(Note(string: b.string, fret: b.fret, x: onset.x))
+                    }
+                }
+            }
+            guard !notes.isEmpty else { continue }
+            produced = true
+            out.append(contentsOf: asciiSystem(notes, spacing: sd.spacing * 1.25,
+                                               barXs: sd.bars,
+                                               beatsPerMeasure: beatsPerMeasure,
+                                               chords: sd.chords))
+            out.append("")
         }
         return produced ? out.joined(separator: "\n") : nil
     }
@@ -774,6 +826,65 @@ enum PDFTabExtractor {
             result.append((midi, g.x, snapped))
         }
         return result
+    }
+
+    // MARK: - Chord shapes
+
+    /// Standard movable guitar voicings for named chords. Used when a
+    /// lead-sheet chord stack coincides with a chord symbol — a guitarist
+    /// plays the shape, not the piano voicing.
+    enum ChordShapes {
+        /// Absolute frets high-E-first (nil = muted), or nil when the chord
+        /// name isn't recognized.
+        static func voicing(for name: String) -> [Int?]? {
+            var rest = name
+            // root
+            guard let first = rest.first, ("A"..."G").contains(String(first)) else { return nil }
+            let steps: [Character: Int] = ["C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11]
+            var pc = steps[first]!
+            rest.removeFirst()
+            if rest.first == "#" { pc = (pc + 1) % 12; rest.removeFirst() }
+            else if rest.first == "b" { pc = (pc + 11) % 12; rest.removeFirst() }
+            // slash bass: shape from the main chord
+            if let slash = rest.firstIndex(of: "/") { rest = String(rest[..<slash]) }
+            let q = rest.lowercased()
+
+            enum Quality { case maj, min, dom7, min7, maj7, sus4 }
+            let quality: Quality
+            if q.contains("maj") { quality = q.contains(where: \.isNumber) ? .maj7 : .maj }
+            else if q.contains("sus") { quality = .sus4 }
+            else if q.contains("dim") || q.contains("°") || q.contains("ø") || q.contains("m7b5") { quality = .min7 }
+            else if q.hasPrefix("m") { quality = q.contains(where: \.isNumber) ? .min7 : .min }
+            else if q.contains(where: \.isNumber) || q.contains("alt") { quality = .dom7 }
+            else { quality = .maj }
+
+            // Root fret on the 6th (E) or 5th (A) string; prefer the lower.
+            let fE = (pc - 4 + 12) % 12
+            let fA = (pc - 9 + 12) % 12
+            let useE = fE <= fA
+
+            // Shapes low→high relative to the barre fret.
+            let eForm: [Quality: [Int?]] = [
+                .maj:  [0, 2, 2, 1, 0, 0],
+                .min:  [0, 2, 2, 0, 0, 0],
+                .dom7: [0, 2, 0, 1, 0, 0],
+                .min7: [0, 2, 0, 0, 0, 0],
+                .maj7: [0, 2, 1, 1, 0, 0],
+                .sus4: [0, 2, 2, 2, 0, 0],
+            ]
+            let aForm: [Quality: [Int?]] = [
+                .maj:  [nil, 0, 2, 2, 2, 0],
+                .min:  [nil, 0, 2, 2, 1, 0],
+                .dom7: [nil, 0, 2, 0, 2, 0],
+                .min7: [nil, 0, 2, 0, 1, 0],
+                .maj7: [nil, 0, 2, 1, 2, 0],
+                .sus4: [nil, 0, 2, 2, 3, 0],
+            ]
+            let base = useE ? fE : fA
+            guard let shape = (useE ? eForm : aForm)[quality] else { return nil }
+            // low→high with barre offset → high-E-first
+            return shape.map { $0.map { $0 + base } }.reversed()
+        }
     }
 
     // MARK: - Header metadata
