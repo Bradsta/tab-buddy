@@ -33,6 +33,9 @@ struct TabTransportBar<Display: View>: View {
     /// Host applies the loop to the coordinator, persists it, and resets any
     /// rendering state (e.g. the drawn scroll lock) after the bar mutates it.
     var onLoopChanged: () -> Void = {}
+
+    /// Host persists the user-declared song tempo and updates originalBPM.
+    var onSetReferenceBPM: (Double) -> Void = { _ in }
     /// Host hook on a seek/skip (e.g. stop notes, reset text scroll tracking).
     var onSeek: () -> Void = {}
     /// Host hook just before playback starts (e.g. force text layout).
@@ -44,6 +47,8 @@ struct TabTransportBar<Display: View>: View {
     @AppStorage("player.countInBars") private var countInBars = 0
 
     @State private var showTempo = false
+    @State private var refBPMText = ""
+    @FocusState private var refBPMFocused: Bool
     @State private var showDisplay = false
     @State private var rampEnabled = false
     @State private var trainerPass = 0
@@ -274,7 +279,31 @@ struct TabTransportBar<Display: View>: View {
         Form {
             Section {
                 HStack {
-                    Text("Tempo").fontWeight(.semibold)
+                    Text("Song tempo").fontWeight(.semibold)
+                    Spacer()
+                    Button {
+                        applyReferenceBPM(originalBPM - 5)
+                    } label: { Image(systemName: "minus.circle").font(.title3) }
+                        .buttonStyle(.borderless)
+                    TextField("BPM", text: $refBPMText)
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.center)
+                        .frame(width: 60)
+                        .textFieldStyle(.roundedBorder)
+                        .focused($refBPMFocused)
+                        .monospacedDigit()
+                    Button {
+                        applyReferenceBPM(originalBPM + 5)
+                    } label: { Image(systemName: "plus.circle").font(.title3) }
+                        .buttonStyle(.borderless)
+                    Text("BPM").foregroundStyle(.secondary)
+                }
+            } footer: {
+                Text("The song's real tempo — set it here when the tab doesn't list one. Practice speed is relative to it.")
+            }
+            Section {
+                HStack {
+                    Text("Practice speed").fontWeight(.semibold)
                     Spacer()
                     Text("\(Int(coordinator.bpm)) / \(Int(originalBPM)) BPM")
                         .foregroundStyle(.secondary).monospacedDigit()
@@ -307,6 +336,31 @@ struct TabTransportBar<Display: View>: View {
                 if !loopEnabled { Text("Enable a loop to use the speed trainer.") }
             }
         }
-        .frame(minWidth: 320, minHeight: 320)
+        .frame(minWidth: 320, minHeight: 380)
+        .onAppear { refBPMText = "\(Int(originalBPM))" }
+        .onChange(of: originalBPM) { refBPMText = "\(Int($0))" }
+        .onChange(of: refBPMFocused) { focused in
+            if !focused { commitRefBPMText() }
+        }
+        .onSubmit { commitRefBPMText() }
+    }
+
+    /// Parse the typed song tempo and apply it (called on focus loss/submit).
+    private func commitRefBPMText() {
+        guard let typed = Double(refBPMText.trimmingCharacters(in: .whitespaces)),
+              typed != originalBPM else {
+            refBPMText = "\(Int(originalBPM))"
+            return
+        }
+        applyReferenceBPM(typed)
+    }
+
+    /// Declare the song's true tempo: play at it (100%) and let the host persist it.
+    private func applyReferenceBPM(_ value: Double) {
+        let clamped = max(20, min(400, value.rounded()))
+        refBPMText = "\(Int(clamped))"
+        coordinator.bpm = clamped
+        userBPM = clamped
+        onSetReferenceBPM(clamped)
     }
 }

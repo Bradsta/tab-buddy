@@ -328,6 +328,7 @@ struct FileItemBackup: Codable {
     var libraryPath: String?
     var playCount: Int
     var userBPM: Double?
+    var referenceBPM: Double?
 }
 
 struct LibraryBackup: Codable {
@@ -354,7 +355,8 @@ enum BackupManager {
                 loopEndY: item.loopEndY,
                 libraryPath: item.libraryPath,
                 playCount: item.playCount,
-                userBPM: item.userBPM
+                userBPM: item.userBPM,
+                referenceBPM: item.referenceBPM
             )
         }
 
@@ -393,6 +395,7 @@ enum BackupManager {
             match.loopEndY = entry.loopEndY
             match.playCount = entry.playCount
             match.userBPM = entry.userBPM
+            match.referenceBPM = entry.referenceBPM
             if entry.lastOpenedAt > match.lastOpenedAt {
                 match.lastOpenedAt = entry.lastOpenedAt
             }

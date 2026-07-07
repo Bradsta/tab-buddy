@@ -69,6 +69,13 @@ struct TabPlayerView: View {
                 loopStart: $loopStart,
                 loopEnd: $loopEnd,
                 onLoopChanged: { applyLoop(); persistLoop() },
+                onSetReferenceBPM: { newRef in
+                    originalBPM = newRef
+                    if let f = file {
+                        f.referenceBPM = newRef
+                        try? context.save()
+                    }
+                },
                 onSeek: { lastAutoScrollTarget = -1; notePlayer.stopNotes() },
                 displayContent: { displayPopover }
             )
@@ -84,7 +91,7 @@ struct TabPlayerView: View {
 
     private func configure() {
         model = TabRenderModelBuilder.build(from: map)
-        originalBPM = map.bpm ?? userBPM
+        originalBPM = file?.referenceBPM ?? map.bpm ?? userBPM
         if originalBPM <= 0 { originalBPM = 120 }
         if let s = file?.loopStartMeasure, let e = file?.loopEndMeasure {
             loopStart = s; loopEnd = e; loopEnabled = true

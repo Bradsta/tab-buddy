@@ -48,6 +48,10 @@ final class FileItem : Equatable {
     /// user-specified BPM for playback (nil = use auto-detected or default)
     var userBPM: Double? = nil
 
+    /// user-declared true tempo of the song (nil = trust the tab/parse).
+    /// Playback practice speed is a percentage of this.
+    var referenceBPM: Double? = nil
+
     // MARK: Canonical (Phase 2)
 
     /// Filename of the generated canonical MusicXML in `CanonicalStore`
