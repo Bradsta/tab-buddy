@@ -225,7 +225,7 @@ final class CanonicalConverter: ObservableObject {
         let hasNotes = map.allMeasures.contains { !($0.notes ?? []).isEmpty }
         let instrument: Instrument
         switch source {
-        case .pdfSpatial:
+        case .pdfSpatial, .ocr:
             instrument = .guitar
         case .notation:
             // A lead sheet is never a guitar tab even though we synthesize one.
@@ -237,9 +237,17 @@ final class CanonicalConverter: ObservableObject {
             instrument = hasNotes ? .guitar : (Instrument.detect(inText: text) ?? .piano)
         }
 
-        let canonical = CanonicalAdapters.canonicalTab(from: map,
+        var canonical = CanonicalAdapters.canonicalTab(from: map,
                                                        title: job.title,
                                                        sourceType: source)
+        if source == .ocr {
+            // OCR confidence = measure coverage scaled by how much of the
+            // page's digit ink was actually classified.
+            let stats = PDFTabExtractor.lastOCRStats
+            if stats.candidates > 0 {
+                canonical.provenance.confidence *= Double(stats.classified) / Double(stats.candidates)
+            }
+        }
         let data = MusicXMLCodec.encode(canonical)
         let filename = CanonicalStore.filename(for: job.id)
         do {
@@ -299,8 +307,11 @@ final class CanonicalConverter: ObservableObject {
             // (Guitar Pro / engraving exports) have scrambled text, so
             // reconstruct the TAB spatially from glyph positions instead.
             if looksLikeAsciiTab(s) { return (s, .pdfText) }
+            PDFTabExtractor.resetOCRStats()
             if let spatial = PDFTabExtractor.asciiTab(from: doc) {
-                return (spatial, .pdfSpatial)
+                // No text layer → the OCR fallback ran; record it honestly.
+                let ocr = PDFTabExtractor.lastOCRStats.candidates > 0
+                return (spatial, ocr ? .ocr : .pdfSpatial)
             }
             // Notation-only score (lead sheet): approximate the melody as tab.
             if let melody = PDFTabExtractor.asciiFromNotation(from: doc) {

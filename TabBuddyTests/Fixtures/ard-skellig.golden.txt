@@ -1,0 +1,86 @@
+m1: A0 D2 G2 [B0+G2]
+m2: B1
+m3: A0 D2 G2 [B0+G2]
+m4: B1
+m5: E3 D0 G0 G2
+m6: B0 B0 G2
+m7: A0 D2 G2 B0
+m8: B1 e0 B0 G2
+m9: [G2+A0] D2 G2 B0
+m10: B1
+m11: A0 D2 G2 B0
+m12: B1
+m13: A3 D2 B1 B3
+m14: e0
+m15: [e0+B5+G4+D5+E0]
+m16: D2 G0
+m17: [G2+A0] [D2+A3] [G2+D2] B0
+m18: B1 G2
+m19: [B0+G0+D0+E3] G2 G0 G2
+m20: B0 G2 B0
+m21: [B1+G2+E1] B1 B0 G2
+m22: [B0+E3] D0 G0
+m23: [D2+A0] D0 D2 G0
+m24: D2 D2 G0
+m25: [G2+A0] [D2+A3] [G2+D2] B0
+m26: B1 G2
+m27: [B0+G0+D0+E3] G2 G0 G2
+m28: B0 D0 G2 B0
+m29: [B1+G2+E1] B1 B0 G2
+m30: [B0+G0+D2+E3] G0
+m31: [D2+A0] G0
+m32: G2 e0 e3
+m33: [e5+A0] D2 G2 [e5+B0]
+m34: [e0+B1] G2 [e0+D2] A0
+m35: [e3+E3] A2 D0 [e5+G0]
+m36: [e0+B0] G2 [e0+G0] D0
+m37: [e0+E1] A0 [B3+D3] [B1+G2]
+m38: [B0+G0+D0+E3] A2 [G0+D0]
+m39: [D2+A0] D0 D2 G0
+m40: D2 A0 e0 e3
+m41: [e5+A0] D2 G2 [e5+B0]
+m42: [e0+B1] G2 [e0+D2] A0
+m43: [e3+E3] A2 D0 [e5+G0]
+m44: [e0+B0] G2 [e0+G0] D0
+m45: [e0+E1] A0 [B3+D3] [B1+G2]
+m46: [B0+E3] A2 [G0+D0]
+m47: [G0+D2+A0] D2 G0
+m48: [G2+D2]
+m49: A0 D2 G2 B0
+m50: B1 D2 B0 G2
+m51: A0 D2 G2 B0
+m52: B1 e0 B0 G2
+m53: E1 D3 G2 B0
+m54: B1 D2 B0 G2
+m55: E1 D3 G2 B0
+m56: B1 D2 B0 G2
+m57: E3 D0 G0 G2
+m58: B0 B3 G2 G0
+m59: E3 D0 G0 G2
+m60: B0 B3 [B1+G0+D0+A2+E3] B0
+m61: [B1+A0] [B0+D2] [B1+G2] B0
+m62: B1 e0 B0 D2
+m63: [B1+A0] [B0+D2] [B1+G2] B0
+m64: B1 e0 e3
+m65: [e5+A0] D2 G2 [e5+B0]
+m66: [e0+B1] G2 [e0+D2] A0
+m67: [e3+E3] A2 D0 [e5+G0]
+m68: [e0+B0] G2 [e0+G0] D0
+m69: [e0+E1] A0 [B3+D3] [B1+G2]
+m70: [B0+G0+D0+E3] G0 G2
+m71: [D2+A0] D0 D2 G0
+m72: D2 A0 e0 e3
+m73: [e5+A0] D2 G2 [e5+B0]
+m74: [e0+B1] G2 [e0+D2] A0
+m75: [e3+E3] A2 D0 [e5+G0]
+m76: [e0+B0] G2 [e0+G0] D0
+m77: [e0+E1] A0 [B3+D3] [B1+G2]
+m78: [B0+E3] A2 [G0+D0]
+m79: [G0+D2+A0] D2 G0
+m80: [G2+D2]
+m81: A0 D2 G2 [B0+G2]
+m82: B1 D2 B0 G2
+m83: A0 D2 G2 [B0+G2]
+m84: B1 e0 B0 G2
+m85: D8 [G2+D2+A0]
+m86: 

@@ -28,6 +28,7 @@
 import Foundation
 import PDFKit
 import CoreGraphics
+import Vision
 
 enum PDFTabExtractor {
 
@@ -45,6 +46,8 @@ enum PDFTabExtractor {
         let cy: Double
         let w: Double
         let h: Double
+        /// From the OCR fallback (looser boxes → stricter merge rules).
+        var ocr: Bool = false
     }
 
     private struct Note {
@@ -76,7 +79,9 @@ enum PDFTabExtractor {
             // staves — if 5-line staves dominate, this page is notation-only.
             let fiveLine = staffGroups(from: rows, size: 5).count
             guard fiveLine < staves.count * 3 else { continue }
-            let ds = digitGlyphs(on: page)
+            var ds = digitGlyphs(on: page)
+            // Image-only scan (no text layer): OCR the fret digits instead.
+            if ds.isEmpty { ds = ocrDigitGlyphs(on: page, staves: staves) }
 
             for staff in staves {
                 let ns = notes(for: staff, digits: ds)
@@ -84,7 +89,21 @@ enum PDFTabExtractor {
                 producedNotes = true
                 // Real bar lines: vertical strokes spanning the staff. (TAB
                 // staves have no stems inside, so candidates are reliable.)
-                let bars = raster.barXs(topPDF: staff.top, bottomPDF: staff.bottom)
+                var bars = raster.barXs(topPDF: staff.top, bottomPDF: staff.bottom)
+                // Repeat/double barlines are stroke PAIRS — collapse them so
+                // they don't mint sliver measures; drop bars left of the
+                // first note (frame line, clef/time-signature gap).
+                bars = bars.reduce(into: [Double]()) { acc, x in
+                    if let last = acc.last, x - last < staff.spacing * 1.2 { return }
+                    acc.append(x)
+                }
+                if let firstX = ns.first?.x {
+                    bars.removeAll { $0 < firstX - staff.spacing * 0.8 }
+                }
+                if ProcessInfo.processInfo.environment["OCR_DEBUG"] != nil {
+                    print("STAFF top=\(Int(staff.top)) firstNote=\(Int(ns.first?.x ?? -1)) bars=\(bars.map { Int($0) })")
+                    for n in ns.prefix(4) { print("  NOTE x=\(Int(n.x)) s=\(n.string) f=\(n.fret)") }
+                }
                 out.append(contentsOf: asciiSystem(ns, spacing: staff.spacing, barXs: bars))
                 out.append("")
             }
@@ -313,6 +332,503 @@ enum PDFTabExtractor {
         return out
     }
 
+    /// OCR stats from the most recent asciiTab run (image-only pages):
+    /// candidates = digit-sized ink blobs found in staves, classified = blobs
+    /// a digit could be read from. Drives honest provenance confidence.
+    private(set) static var lastOCRStats: (candidates: Int, classified: Int) = (0, 0)
+
+    /// OCR fallback for image-only pages (scans with TAB staves but no text
+    /// layer), built for 1:1 fidelity on engraved scores:
+    ///
+    ///   1. Segment each staff band into connected ink components. In these
+    ///      engravings every fret digit is an isolated blob (staff lines are
+    ///      knocked out around digits; slurs/arcs are separate components),
+    ///      so segmentation yields exact digit positions.
+    ///   2. Filter blobs by digit geometry (size vs staff spacing, ink
+    ///      density) — kills arcs, barlines, oversized time-sig numerals.
+    ///   3. Classify blobs by compositing them onto a spaced sheet and
+    ///      recognizing it with Vision in one pass (solo retry for gaps).
+    ///   4. Skip digits flanked by paren blobs — ties, already sounding.
+    private static func ocrDigitGlyphs(on page: PDFPage, staves: [TabStaff]) -> [Glyph] {
+        let box = page.bounds(for: .mediaBox)
+        let scale: CGFloat = 4
+        let w = Int(box.width * scale), h = Int(box.height * scale)
+        guard w > 0, h > 0, w * h < 60_000_000,
+              let ctx = CGContext(data: nil, width: w, height: h,
+                                  bitsPerComponent: 8, bytesPerRow: w,
+                                  space: CGColorSpaceCreateDeviceGray(),
+                                  bitmapInfo: CGImageAlphaInfo.none.rawValue) else { return [] }
+        ctx.setFillColor(gray: 1, alpha: 1)
+        ctx.fill(CGRect(x: 0, y: 0, width: w, height: h))
+        ctx.scaleBy(x: scale, y: scale)
+        ctx.translateBy(x: -box.origin.x, y: -box.origin.y)
+        page.draw(with: .mediaBox, to: ctx)
+        guard let data = ctx.data else { return [] }
+        let pix = data.bindMemory(to: UInt8.self, capacity: w * h)
+
+        struct Blob {
+            var minX: Int, maxX: Int, minY: Int, maxY: Int   // image rows/cols
+            var count: Int
+            var bw: Int { maxX - minX + 1 }
+            var bh: Int { maxY - minY + 1 }
+            var density: Double { Double(count) / Double(bw * bh) }
+        }
+
+        /// Connected components (8-neighbor) of dark pixels within a row band.
+        func components(rowLo: Int, rowHi: Int) -> [Blob] {
+            let lo = max(0, rowLo), hi = min(h - 1, rowHi)
+            guard lo < hi else { return [] }
+            var visited = [Bool](repeating: false, count: (hi - lo + 1) * w)
+            var blobs: [Blob] = []
+            var stack: [Int] = []
+            for y in lo...hi {
+                for x in 0..<w {
+                    let vi = (y - lo) * w + x
+                    guard !visited[vi], pix[y * w + x] < 160 else { continue }
+                    var blob = Blob(minX: x, maxX: x, minY: y, maxY: y, count: 0)
+                    stack.removeAll(keepingCapacity: true)
+                    stack.append(vi)
+                    visited[vi] = true
+                    while let cur = stack.popLast() {
+                        let cy = cur / w + lo, cx = cur % w
+                        blob.count += 1
+                        blob.minX = min(blob.minX, cx); blob.maxX = max(blob.maxX, cx)
+                        blob.minY = min(blob.minY, cy); blob.maxY = max(blob.maxY, cy)
+                        for dy in -1...1 {
+                            for dx in -1...1 where dy != 0 || dx != 0 {
+                                let ny = cy + dy, nx = cx + dx
+                                guard ny >= lo, ny <= hi, nx >= 0, nx < w else { continue }
+                                let nvi = (ny - lo) * w + nx
+                                guard !visited[nvi], pix[ny * w + nx] < 160 else { continue }
+                                visited[nvi] = true
+                                stack.append(nvi)
+                            }
+                        }
+                    }
+                    blobs.append(blob)
+                }
+            }
+            return blobs
+        }
+
+        // Structural erasure: long horizontal strokes (slur/tie arcs, residual
+        // staff line segments) and long vertical strokes (barlines, stems,
+        // frame lines) get blanked so digits touching them still segment as
+        // isolated components. Digits are at most ~1.45 spacings in either
+        // dimension, so these thresholds never bite into digit ink.
+        if let minSpacing = staves.map(\.spacing).min() {
+            let spx = minSpacing * Double(scale)
+            let hRun = Int(spx * 1.6)
+            let vRun = Int(spx * 2.2)
+            // Vertical first: barlines must still be continuous full-height
+            // runs here (horizontal erasure would slice them into digit-sized
+            // stubs at every staff-line crossing).
+            for x in 0..<w {
+                var y = 0
+                while y < h {
+                    if pix[y * w + x] < 160 {
+                        var end = y
+                        while end + 1 < h && pix[(end + 1) * w + x] < 160 { end += 1 }
+                        if end - y + 1 >= vRun {
+                            for yy in y...end { pix[yy * w + x] = 255 }
+                        }
+                        y = end + 1
+                    } else {
+                        y += 1
+                    }
+                }
+            }
+            for y in 0..<h {
+                var x = 0
+                while x < w {
+                    if pix[y * w + x] < 160 {
+                        var end = x
+                        while end + 1 < w && pix[y * w + end + 1] < 160 { end += 1 }
+                        if end - x + 1 >= hRun {
+                            for xx in x...end { pix[y * w + xx] = 255 }
+                        }
+                        x = end + 1
+                    } else {
+                        x += 1
+                    }
+                }
+            }
+        }
+
+        var totalCandidates = 0
+        var totalClassified = 0
+        var out: [Glyph] = []
+
+        // ---- Phase A: per-staff segmentation + dense-sheet classification.
+        struct StaffData {
+            let staff: TabStaff
+            let sp: Double
+            var digits: [Blob]
+            var parens: [Blob]
+            var labels: [Character?]
+            var reads: [String?]
+            var tiedByRead: [Bool]
+        }
+        var staffData: [StaffData] = []
+
+        for staff in staves {
+            let sp = staff.spacing * Double(scale)     // spacing in pixels
+            let bandTop = Int((Double(box.maxY) - (staff.top + staff.spacing * 1.0)) * Double(scale))
+            let bandBottom = Int((Double(box.maxY) - (staff.bottom - staff.spacing * 1.0)) * Double(scale))
+            let all = components(rowLo: bandTop, rowHi: bandBottom)
+
+            var digits: [Blob] = []
+            var parens: [Blob] = []
+            for b in all {
+                let bh = Double(b.bh), bw = Double(b.bw)
+                let aspect = bw / max(1, bh)
+                // Parens first: tall, thin, sparse curves — must never reach
+                // the digit classifier (a ')' template-matches '0').
+                // Thin tall blobs: paren, '1', or strum-wave fragment.
+                //  • wave fragment: some row has TWO disjoint ink runs
+                //    (the squiggle crosses twice) → junk, skip.
+                //  • paren: ink is stroke-thin on every row.
+                //  • '1': its base serif makes at least one wide ink row.
+                if bh > sp * 0.5 && bh < sp * 1.9 && bw <= sp * 0.4 && b.density <= 0.72 {
+                    var maxRowInk = 0
+                    var multiRunRows = 0
+                    for y in b.minY...b.maxY {
+                        var c = 0
+                        var runs = 0
+                        var inRun = false
+                        var gap = 0
+                        for x in b.minX...b.maxX {
+                            if pix[y * w + x] < 160 {
+                                c += 1
+                                if !inRun && (runs == 0 || gap >= 2) { runs += 1 }
+                                inRun = true
+                                gap = 0
+                            } else {
+                                inRun = false
+                                gap += 1
+                            }
+                        }
+                        maxRowInk = max(maxRowInk, c)
+                        if runs >= 2 { multiRunRows += 1 }
+                    }
+                    // A wave crosses doubly on most rows; a digit's rare
+                    // anti-aliasing break doesn't.
+                    if multiRunRows >= max(3, b.bh / 3) { continue }
+                    // Stroke-thin on EVERY row = curve, never a digit (even
+                    // '1' has a wide serif row): paren if tall, else junk.
+                    if Double(maxRowInk) <= sp * 0.16 {
+                        if bh > sp * 0.68 { parens.append(b) }
+                        continue
+                    }
+                }
+                // Squarish compact blobs are arrowheads, not digits. Solid
+                // (dense) up to nearly a full spacing wide; hollow wide
+                // glyphs like '0' stay.
+                if aspect > 0.78 && aspect < 1.25 && bw < sp * 0.8 { continue }
+                if aspect > 0.78 && aspect < 1.25 && bw < sp * 0.95 && b.density > 0.42 { continue }
+                if bh > sp * 0.62 && bh < sp * 1.45 && bw > sp * 0.18 && bw < sp * 1.7
+                    && b.density > 0.28 && b.count > Int(sp * sp * 0.06) {
+                    digits.append(b)
+                }
+            }
+            totalCandidates += digits.count
+
+            var labels = [Character?](repeating: nil, count: digits.count)
+            var reads = [String?](repeating: nil, count: digits.count)
+            var tiedByRead = [Bool](repeating: false, count: digits.count)
+
+            func mapChar(_ ch: Character) -> Character? {
+                ch.isNumber ? ch : (ch == "O" || ch == "o" ? "0" : (ch == "l" || ch == "I" ? "1" : nil))
+            }
+
+            // Dense text-like sheet: Vision reads packed rows reliably where
+            // it skips isolated glyphs entirely.
+            if !digits.isEmpty {
+                let sorted = digits.enumerated().sorted { $0.element.minX < $1.element.minX }
+                let avgW = max(6, digits.map(\.bw).reduce(0, +) / digits.count)
+                let avgH = max(10, digits.map(\.bh).reduce(0, +) / digits.count)
+                let gap = max(3, Int(Double(avgW) * 0.55))
+                let rowH = avgH * 3
+                let maxRowW = 1900
+                var layout: [(idx: Int, x: Int, row: Int)] = []
+                var cursorX = gap * 2
+                var rowIdx = 0
+                for (i, b) in sorted {
+                    if cursorX + b.bw + gap * 2 > maxRowW { rowIdx += 1; cursorX = gap * 2 }
+                    layout.append((i, cursorX, rowIdx))
+                    cursorX += b.bw + gap
+                }
+                let sheetW = maxRowW, sheetH = (rowIdx + 1) * rowH
+                var sheet = [UInt8](repeating: 255, count: sheetW * sheetH)
+                for item in layout {
+                    let b = digits[item.idx]
+                    let baseline = item.row * rowH + rowH - avgH / 2
+                    let oy = baseline - b.maxY
+                    let ox = item.x - b.minX
+                    for y in b.minY...b.maxY {
+                        for x in b.minX...b.maxX where pix[y * w + x] < 160 {
+                            let sy = y + oy, sx = x + ox
+                            if sy >= 0, sy < sheetH, sx >= 0, sx < sheetW {
+                                sheet[sy * sheetW + sx] = pix[y * w + x]
+                            }
+                        }
+                    }
+                }
+                sheet.withUnsafeMutableBytes { raw in
+                    guard let sctx = CGContext(data: raw.baseAddress, width: sheetW, height: sheetH,
+                                               bitsPerComponent: 8, bytesPerRow: sheetW,
+                                               space: CGColorSpaceCreateDeviceGray(),
+                                               bitmapInfo: CGImageAlphaInfo.none.rawValue),
+                          let sheetImage = sctx.makeImage() else { return }
+                    let request = VNRecognizeTextRequest()
+                    request.recognitionLevel = .accurate
+                    request.usesLanguageCorrection = false
+                    guard (try? VNImageRequestHandler(cgImage: sheetImage).perform([request])) != nil,
+                          let observations = request.results else { return }
+                    for obs in observations {
+                        guard let cand = obs.topCandidates(1).first else { continue }
+                        let bb = obs.boundingBox
+                        let rowOfObs = Int((1 - bb.midY) * Double(sheetH)) / rowH
+                        let x0 = bb.minX * Double(sheetW)
+                        let x1 = bb.maxX * Double(sheetW)
+                        let hit = layout.filter {
+                            $0.row == rowOfObs
+                                && Double($0.x + digits[$0.idx].bw / 2) > x0 - Double(gap)
+                                && Double($0.x + digits[$0.idx].bw / 2) < x1 + Double(gap)
+                        }.sorted { $0.x < $1.x }
+                        // Per-char paren context: only characters inside a
+                        // MATCHED "( )" pair are tied — an unclosed stray
+                        // paren must not poison the rest of the word.
+                        let rawChars = cand.string.filter { $0 != " " }.map { $0 }
+                        var tiedIdx = Set<Int>()
+                        var openStack: [Int] = []
+                        for (k, ch) in rawChars.enumerated() {
+                            if ch == "(" { openStack.append(k) }
+                            else if ch == ")", let open = openStack.popLast() {
+                                for j in (open + 1)..<k { tiedIdx.insert(j) }
+                            }
+                        }
+                        let chars = rawChars.enumerated().map { (ch: $0.element, tied: tiedIdx.contains($0.offset)) }
+                        if chars.count == hit.count {
+                            for (k, slot) in hit.enumerated() where labels[slot.idx] == nil {
+                                labels[slot.idx] = mapChar(chars[k].ch) ?? "?"
+                                reads[slot.idx] = String(chars[k].ch)
+                                if chars[k].tied { tiedByRead[slot.idx] = true }
+                            }
+                        } else {
+                            let wordW = max(1.0, x1 - x0)
+                            for (k, item) in chars.enumerated() {
+                                let cx = x0 + (Double(k) + 0.5) * wordW / Double(chars.count)
+                                if let slot = hit.min(by: {
+                                    abs(Double($0.x + digits[$0.idx].bw / 2) - cx)
+                                        < abs(Double($1.x + digits[$1.idx].bw / 2) - cx)
+                                }), labels[slot.idx] == nil {
+                                    labels[slot.idx] = mapChar(item.ch) ?? "?"
+                                    reads[slot.idx] = String(item.ch)
+                                    if item.tied { tiedByRead[slot.idx] = true }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            staffData.append(StaffData(staff: staff, sp: sp, digits: digits,
+                                       parens: parens, labels: labels, reads: reads,
+                                       tiedByRead: tiedByRead))
+        }
+
+        // ---- Phase B: document-level template matching. The engraving
+        // repeats identical glyphs, so every confidently-labeled blob on the
+        // page trains the classifier for every other staff.
+        let tW = 36, tH = 36
+        func bitmap(_ b: Blob) -> [Float]? {
+            guard b.bw <= tW, b.bh <= tH else { return nil }
+            var outB = [Float](repeating: 0, count: tW * tH)
+            let ox = (tW - b.bw) / 2 - b.minX
+            let oy = (tH - b.bh) / 2 - b.minY
+            for y in b.minY...b.maxY {
+                for x in b.minX...b.maxX where pix[y * w + x] < 160 {
+                    outB[(y + oy) * tW + (x + ox)] = 1
+                }
+            }
+            return outB
+        }
+        var sums: [Character: [Float]] = [:]
+        var counts: [Character: Int] = [:]
+        for sd in staffData {
+            for (i, b) in sd.digits.enumerated() {
+                guard let l = sd.labels[i], l != "?", l.isNumber, let bm = bitmap(b) else { continue }
+                if sums[l] == nil { sums[l] = [Float](repeating: 0, count: tW * tH) }
+                for k in 0..<(tW * tH) { sums[l]![k] += bm[k] }
+                counts[l, default: 0] += 1
+            }
+        }
+        var templates: [Character: [Float]] = [:]
+        for (ch, sum) in sums {
+            let n = Float(counts[ch] ?? 1)
+            templates[ch] = sum.map { $0 / n }
+        }
+        func score(of bm: [Float], vs t: [Float], bNorm: Float) -> Float {
+            var dot: Float = 0
+            var tNorm: Float = 0
+            for k in 0..<(tW * tH) { dot += bm[k] * t[k]; tNorm += t[k] * t[k] }
+            return dot / (bNorm * sqrt(max(1e-6, tNorm)))
+        }
+        func classify(_ b: Blob) -> (ch: Character, score: Float)? {
+            guard let bm = bitmap(b), !templates.isEmpty else { return nil }
+            let bNorm = sqrt(bm.reduce(0) { $0 + $1 * $1 })
+            guard bNorm > 0 else { return nil }
+            var best: (Character, Float)? = nil
+            var second: Float = 0
+            for (ch, t) in templates {
+                var dot: Float = 0
+                var tNorm: Float = 0
+                for k in 0..<(tW * tH) { dot += bm[k] * t[k]; tNorm += t[k] * t[k] }
+                let score = dot / (bNorm * sqrt(max(1e-6, tNorm)))
+                if best == nil || score > best!.1 {
+                    second = best?.1 ?? 0
+                    best = (ch, score)
+                } else if score > second {
+                    second = score
+                }
+            }
+            guard let b2 = best, b2.1 >= 0.85 || (b2.1 >= 0.78 && b2.1 - second >= 0.04) else { return nil }
+            return b2
+        }
+        for si in staffData.indices {
+            for (i, b) in staffData[si].digits.enumerated() {
+                if let t = classify(b) {
+                    if staffData[si].labels[i] == nil || staffData[si].labels[i] == "?" {
+                        staffData[si].labels[i] = t.ch
+                    } else if let l = staffData[si].labels[i], l != t.ch, l.isNumber,
+                              let bm = bitmap(b), let lt = templates[l] {
+                        // Override only when the bitmap clearly prefers the
+                        // template class over the Vision-read class.
+                        let bNorm = sqrt(bm.reduce(0) { $0 + $1 * $1 })
+                        if bNorm > 0, t.score - score(of: bm, vs: lt, bNorm: bNorm) >= 0.08 {
+                            staffData[si].labels[i] = t.ch
+                        }
+                    }
+                }
+            }
+        }
+
+        // Solo Vision as last resort (classes with no template anywhere).
+        for si in staffData.indices {
+            let sp = staffData[si].sp
+            for (i, b) in staffData[si].digits.enumerated()
+            where staffData[si].labels[i] == nil || staffData[si].labels[i] == "?" {
+                let px = Int(sp * 0.6)
+                let cx = max(0, b.minX - px), cw = min(w - 1, b.maxX + px) - cx + 1
+                let cy = max(0, b.minY - px), chh = min(h - 1, b.maxY + px) - cy + 1
+                guard let crop = ctx.makeImage()?.cropping(to: CGRect(x: cx, y: cy, width: cw, height: chh)) else { continue }
+                let up = 3
+                guard let bigCtx = CGContext(data: nil, width: cw * up, height: chh * up,
+                                             bitsPerComponent: 8, bytesPerRow: cw * up,
+                                             space: CGColorSpaceCreateDeviceGray(),
+                                             bitmapInfo: CGImageAlphaInfo.none.rawValue) else { continue }
+                bigCtx.interpolationQuality = .high
+                bigCtx.draw(crop, in: CGRect(x: 0, y: 0, width: cw * up, height: chh * up))
+                guard let big = bigCtx.makeImage() else { continue }
+                let request = VNRecognizeTextRequest()
+                request.recognitionLevel = .accurate
+                request.usesLanguageCorrection = false
+                try? VNImageRequestHandler(cgImage: big).perform([request])
+                if let str = request.results?.first?.topCandidates(1).first?.string {
+                    staffData[si].reads[i] = str
+                    if str.contains("("), str.contains(")") { staffData[si].tiedByRead[i] = true }
+                    if let ch = str.first(where: { $0.isNumber }) {
+                        staffData[si].labels[i] = ch
+                    }
+                }
+            }
+        }
+
+        // ---- Phase C: clef exclusion, tie skip, emission.
+        for sd in staffData {
+            let sp = sd.sp
+            let digits = sd.digits
+            let parens = sd.parens
+            let labels = sd.labels
+            let reads = sd.reads
+
+            if ProcessInfo.processInfo.environment["OCR_DEBUG"] != nil {
+                for pb in parens {
+                    let px = Double(box.origin.x) + Double(pb.minX) / Double(scale)
+                    let py = Double(box.maxY) - (Double(pb.minY + pb.maxY) / 2) / Double(scale)
+                    print("PAREN x=\(Int(px)) y=\(Int(py)) w=\(pb.bw) h=\(pb.bh) d=\(String(format: "%.2f", pb.density))")
+                }
+            }
+            let clefLetters: Set<String> = ["T", "A", "B", "TA", "AB", "TAB"]
+            let clefBlobs = digits.enumerated().filter {
+                (reads[$0.offset].map { clefLetters.contains($0.uppercased()) } ?? false)
+                    && Double($0.element.minX) < Double(w) * 0.12
+            }
+            if ProcessInfo.processInfo.environment["OCR_DEBUG"] != nil {
+                for (i, b) in digits.enumerated() where Double(b.minX) < Double(w) * 0.15 {
+                    print("LEFT top=\(Int(sd.staff.top)) xpx=\(b.minX) w=\(b.bw) h=\(b.bh) label=\(labels[i].map(String.init) ?? "nil") read=\(reads[i] ?? "-")")
+                }
+            }
+            // Two stacked letters is proof; a single letter counts only when
+            // it hugs the far-left margin (T often reads as 'I', B gets
+            // shape-filtered — one clean 'A' may be all that survives).
+            let soloClef = clefBlobs.contains {
+                Double($0.element.minX) < Double(w) * 0.09
+                    && Double($0.element.bw) >= sp * 0.6   // letter-wide, not an arrow/digit
+            }
+            let clefMaxX = (clefBlobs.count >= 2 || soloClef)
+                ? clefBlobs.map { Double($0.element.maxX) }.max() : nil
+            let contentStartX = clefMaxX.map { $0 + sp * 2.4 } ?? -1
+
+            func isTied(_ b: Blob) -> Bool {
+                let flankGap = sp * 0.75
+                let hasLeft = parens.contains { $0.maxX < b.minX && Double(b.minX - $0.maxX) < flankGap
+                    && abs(Double($0.minY + $0.maxY) / 2 - Double(b.minY + b.maxY) / 2) < sp * 0.7 }
+                let hasRight = parens.contains { $0.minX > b.maxX && Double($0.minX - b.maxX) < flankGap
+                    && abs(Double($0.minY + $0.maxY) / 2 - Double(b.minY + b.maxY) / 2) < sp * 0.7 }
+                // One paren suffices: its twin routinely merges into the tie
+                // arc or strum arrow and goes undetected.
+                return hasLeft || hasRight
+            }
+
+            for (i, b) in digits.enumerated() {
+                if ProcessInfo.processInfo.environment["OCR_DEBUG"] != nil {
+                    let px = Double(box.origin.x) + Double(b.minX) / Double(scale)
+                    let py = Double(box.maxY) - (Double(b.minY + b.maxY) / 2) / Double(scale)
+                    let status = labels[i] == nil ? "nil" : String(labels[i]!)
+                    let dropped = Double(b.minX) < contentStartX ? " CLEF" : (isTied(b) ? " TIED" : "")
+                    print("BLOB x=\(Int(px)) y=\(Int(py)) w=\(b.bw) h=\(b.bh) label=\(status)\(dropped)")
+                }
+                guard let label = labels[i], label != "?" else { continue }
+                totalClassified += 1
+                guard Double(b.minX) >= contentStartX else { continue }
+                guard !isTied(b), !sd.tiedByRead[i] else { continue }
+                // Engraved digits are ≤ ~0.6 spacing wide; a wider blob that
+                // read as a single character is structure debris (arrowhead).
+                if Double(b.bw) > sp * 0.62 {
+                    if ProcessInfo.processInfo.environment["OCR_DEBUG"] != nil {
+                        let px = Double(box.origin.x) + Double(b.minX) / Double(scale)
+                        let py = Double(box.maxY) - (Double(b.minY + b.maxY) / 2) / Double(scale)
+                        print("WIDE-DROP x=\(Int(px)) y=\(Int(py)) w=\(b.bw) h=\(b.bh) label=\(label)")
+                    }
+                    continue
+                }
+                let gx = Double(box.origin.x) + Double(b.minX) / Double(scale)
+                let gw = Double(b.bw) / Double(scale)
+                let gh = Double(b.bh) / Double(scale)
+                let gcy = Double(box.maxY) - (Double(b.minY + b.maxY) / 2) / Double(scale)
+                out.append(Glyph(ch: label, x: gx, cy: gcy, w: gw, h: gh, ocr: true))
+            }
+        }
+
+        lastOCRStats = (lastOCRStats.candidates + totalCandidates,
+                        lastOCRStats.classified + totalClassified)
+        return out
+    }
+
+    /// Reset per-document OCR stats (call before a document conversion).
+    static func resetOCRStats() { lastOCRStats = (0, 0) }
+
     // MARK: - Note assembly
 
     private static func notes(for staff: TabStaff, digits: [Glyph]) -> [Note] {
@@ -339,14 +855,22 @@ enum PDFTabExtractor {
             while i < gs.count {
                 var run = [gs[i]]
                 var lastEnd = gs[i].x + gs[i].w
+                var maxGap = 0.0
                 var j = i + 1
                 while j < gs.count, gs[j].x - lastEnd < spacing * 0.35 {
+                    maxGap = max(maxGap, gs[j].x - lastEnd)
                     run.append(gs[j])
                     lastEnd = gs[j].x + gs[j].w
                     j += 1
                 }
                 let text = String(run.map(\.ch))
-                if let fret = Int(text), fret <= 24 {
+                let ocrRun = run.contains { $0.ocr }
+                // OCR slot positions are approximate, so only merge into the
+                // plausible two-digit range (10-19) when the slots touch;
+                // "2 0" pull-off pairs must not become fret 20.
+                let mergeOK = run.count == 1 || !ocrRun
+                    || ((10...19).contains(Int(text) ?? -1) && maxGap < spacing * 0.3)
+                if let fret = Int(text), fret <= 24, mergeOK {
                     out.append(Note(string: s, fret: fret, x: run[0].x))
                 } else {
                     // Dense engraving glued separate notes ("3"+"3" → 33):
@@ -360,7 +884,16 @@ enum PDFTabExtractor {
                 i = j
             }
         }
-        return out.sorted { $0.x < $1.x }
+        // Overlapping OCR passes can register one digit twice at slightly
+        // different x. Real adjacent notes sit a full column apart, so a
+        // same-string same-fret pair closer than ~0.7 spacing is one note.
+        var deduped: [Note] = []
+        for n in out.sorted(by: { $0.x < $1.x }) {
+            if let last = deduped.last(where: { $0.string == n.string }),
+               last.fret == n.fret, n.x - last.x < spacing * 0.7 { continue }
+            deduped.append(n)
+        }
+        return deduped
     }
 
     // MARK: - ASCII synthesis
@@ -447,9 +980,13 @@ enum PDFTabExtractor {
             }
         }
 
+        // If a detected end-frame bar already closed the system, don't
+        // append a second close — that mints a one-column sliver measure.
+        let endsWithBar = rows.allSatisfy { $0.hasSuffix("|") }
         let stringRows = (0..<6).map { s in
             labels[s] + "|-" + rows[s]
-                + String(repeating: "-", count: max(0, maxLen - lengths[s])) + "-|"
+                + String(repeating: "-", count: max(0, maxLen - lengths[s]))
+                + (endsWithBar ? "" : "-|")
         }
 
         // Chord-symbol line above the system (parser attaches by column).
@@ -483,6 +1020,28 @@ enum PDFTabExtractor {
 
     /// Per-staff bar-line diagnostics: (page, staffTop, barXs after stem
     /// filtering, note count).
+    /// Placed TAB notes with page positions (same pipeline as asciiTab,
+    /// including the OCR fallback) — for overlay verification renders.
+    static func debugTabNotes(from doc: PDFDocument) -> [(page: Int, string: Int, fret: Int, x: Double, y: Double)] {
+        var out: [(Int, Int, Int, Double, Double)] = []
+        for p in 0..<doc.pageCount {
+            guard let page = doc.page(at: p), let raster = Raster(page) else { continue }
+            let rows = raster.lineRows(requireContinuous: false)
+            let staves = tabStaves(from: rows)
+            guard !staves.isEmpty else { continue }
+            let fiveLine = staffGroups(from: rows, size: 5).count
+            guard fiveLine < staves.count * 3 else { continue }
+            var ds = digitGlyphs(on: page)
+            if ds.isEmpty { ds = ocrDigitGlyphs(on: page, staves: staves) }
+            for staff in staves {
+                for n in notes(for: staff, digits: ds) {
+                    out.append((p, n.string, n.fret, n.x, staff.lines[n.string]))
+                }
+            }
+        }
+        return out
+    }
+
     static func debugStaffBars(from doc: PDFDocument) -> [(page: Int, top: Double, bars: [Double], notes: Int)] {
         var out: [(Int, Double, [Double], Int)] = []
         for p in 0..<doc.pageCount {

@@ -288,5 +288,17 @@ enum CanonicalConverterVersion {
     //      guitar shape voicings (E/A-form barres), joint per-string
     //      assignment for other stacks, global octave centering for playable
     //      low-position tabs.
-    static let current = 13
+    // v14: OCR fallback for image-only TAB scans (no text layer): Vision
+    //      digit recognition on the page raster feeds the same staff-snapping
+    //      pipeline.
+    // v15: OCR reworked to per-staff band + per-string-line strips (digits
+    //      dominate each crop; slur arcs isolated away), parenthesized tie
+    //      notes skipped, glyph/note dedupe across passes. Ard Skellig:
+    //      131 -> 267 notes; Dragon Age: 144 -> 546.
+    // v16: OCR rebuilt as blob segmentation + dense-sheet Vision + document
+    //      templates + shape rules (arrows, parens, wave fragments, clef
+    //      zone) — hand-verified 1:1 on Ard Skellig (86 measures, 401
+    //      notes), locked by golden unit tests; barline pair collapse fixes
+    //      measure counts.
+    static let current = 16
 }
