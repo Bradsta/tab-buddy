@@ -61,11 +61,12 @@ class ScrollCoordinator: NSObject, ObservableObject {
             let maxY = sv.contentSize.height - sv.bounds.height
             var y = sv.contentOffset.y + step
             if loopToTop, y >= maxY {
-                y = 0
+                y = loopWrapY(bottom: maxY, viewport: sv.bounds.height, now: link.timestamp)
             } else if let start = loopStartY, let end = loopEndY, y >= end {
                 y = start
             } else {
                 y = min(y, maxY)
+                loopDwellUntil = nil
             }
             sv.setContentOffset(.init(x: sv.contentOffset.x, y: y), animated: false)
         } else {
@@ -73,13 +74,32 @@ class ScrollCoordinator: NSObject, ObservableObject {
             let maxY = tv.contentSize.height - tv.bounds.height
             var y = tv.contentOffset.y + step
             if loopToTop, y >= maxY {
-                y = 0
+                y = loopWrapY(bottom: maxY, viewport: tv.bounds.height, now: link.timestamp)
             } else if let start = loopStartY, let end = loopEndY, y >= end {
                 y = start
             } else {
                 y = min(y, maxY)
+                loopDwellUntil = nil
             }
             tv.setContentOffset(.init(x: tv.contentOffset.x, y: y), animated: false)
         }
+    }
+
+    /// Loop-to-top runway: the moment the bottom arrives, the final screen of
+    /// tab has only just scrolled into view — so hold there for as long as one
+    /// viewport takes to scroll past (speed-adaptive) before wrapping. Without
+    /// this the last measures are unplayable.
+    private var loopDwellUntil: CFTimeInterval?
+
+    private func loopWrapY(bottom maxY: CGFloat, viewport: CGFloat, now: CFTimeInterval) -> CGFloat {
+        if let until = loopDwellUntil {
+            if now >= until {
+                loopDwellUntil = nil
+                return 0
+            }
+            return max(0, maxY)
+        }
+        loopDwellUntil = now + Double(viewport / max(1, scrollSpeed))
+        return max(0, maxY)
     }
 }

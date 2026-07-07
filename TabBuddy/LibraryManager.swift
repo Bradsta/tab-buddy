@@ -288,6 +288,16 @@ final class LibraryManager: ObservableObject {
                     }
                 }
 
+                // 5. Prune: library-managed items whose file no longer
+                // exists in the folder (and didn't re-link by content hash)
+                // are gone for real — remove them from the library view.
+                // Items imported from outside the library (no libraryPath)
+                // are untouched.
+                let existingItems = (try? context.fetch(FetchDescriptor<FileItem>())) ?? []
+                for item in existingItems where item.libraryPath != nil && !matched.contains(item.id) {
+                    context.delete(item)
+                }
+
                 try? context.save()
                 TagIndexer.rebuild(in: context)
 
