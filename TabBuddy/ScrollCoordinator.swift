@@ -58,48 +58,32 @@ class ScrollCoordinator: NSObject, ObservableObject {
         let step = stepPoints
         if isPDF {
             guard let sv = scrollViewProxy else { return }
-            let maxY = sv.contentSize.height - sv.bounds.height
-            var y = sv.contentOffset.y + step
-            if loopToTop, y >= maxY {
-                y = loopWrapY(bottom: maxY, viewport: sv.bounds.height, now: link.timestamp)
-            } else if let start = loopStartY, let end = loopEndY, y >= end {
-                y = start
-            } else {
-                y = min(y, maxY)
-                loopDwellUntil = nil
-            }
-            sv.setContentOffset(.init(x: sv.contentOffset.x, y: y), animated: false)
+            sv.setContentOffset(.init(x: sv.contentOffset.x,
+                                      y: nextY(for: sv, step: step)), animated: false)
         } else {
             guard let tv = textViewProxy else { return }
-            let maxY = tv.contentSize.height - tv.bounds.height
-            var y = tv.contentOffset.y + step
-            if loopToTop, y >= maxY {
-                y = loopWrapY(bottom: maxY, viewport: tv.bounds.height, now: link.timestamp)
-            } else if let start = loopStartY, let end = loopEndY, y >= end {
-                y = start
-            } else {
-                y = min(y, maxY)
-                loopDwellUntil = nil
-            }
-            tv.setContentOffset(.init(x: tv.contentOffset.x, y: y), animated: false)
+            tv.setContentOffset(.init(x: tv.contentOffset.x,
+                                      y: nextY(for: tv, step: step)), animated: false)
         }
     }
 
-    /// Loop-to-top runway: the moment the bottom arrives, the final screen of
-    /// tab has only just scrolled into view — so hold there for as long as one
-    /// viewport takes to scroll past (speed-adaptive) before wrapping. Without
-    /// this the last measures are unplayable.
-    private var loopDwellUntil: CFTimeInterval?
+    /// Next scroll offset. Loop-to-top gets a RUNWAY: instead of wrapping the
+    /// moment the last line reaches the bottom edge (which leaves it zero
+    /// play time), the content keeps scrolling up past the end — credits
+    /// style — and wraps only once the final line has cleared the top of the
+    /// screen. Motion never pauses, and the ending stays playable.
+    private func nextY(for scrollView: UIScrollView, step: CGFloat) -> CGFloat {
+        let inset = scrollView.adjustedContentInset
+        let contentBottom = scrollView.contentSize.height - scrollView.bounds.height + inset.bottom
+        let y = scrollView.contentOffset.y + step
 
-    private func loopWrapY(bottom maxY: CGFloat, viewport: CGFloat, now: CFTimeInterval) -> CGFloat {
-        if let until = loopDwellUntil {
-            if now >= until {
-                loopDwellUntil = nil
-                return 0
-            }
-            return max(0, maxY)
+        if loopToTop {
+            let runwayEnd = contentBottom + (scrollView.bounds.height - inset.top - inset.bottom) * 0.95
+            return y >= runwayEnd ? -inset.top : y
         }
-        loopDwellUntil = now + Double(viewport / max(1, scrollSpeed))
-        return max(0, maxY)
+        if let start = loopStartY, let end = loopEndY, y >= end {
+            return start
+        }
+        return min(y, max(-inset.top, contentBottom))
     }
 }
