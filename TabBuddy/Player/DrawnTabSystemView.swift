@@ -78,20 +78,29 @@ struct TabMetrics {
     var scale: CGFloat
     var showRhythm: Bool
     var showStaff: Bool
+    /// Whether the system carries chord symbols — they get their own band
+    /// above the measure numbers so the two never collide.
+    var hasChords: Bool = false
 
     var gutter: CGFloat { 60 }
-    var rowHeight: CGFloat { 26 * scale }
-    var fretFont: CGFloat { 13 * scale }
+    // Compact, text-tab-like density: a string row is just tall enough for
+    // the fret digits, and the header/rhythm bands hug their content.
+    var rowHeight: CGFloat { 17 * scale }
+    var fretFont: CGFloat { 12 * scale }
     var rhythmFont: CGFloat { 10 }
     var numberFont: CGFloat { 11 }
-    var labelFont: CGFloat { 12 * scale }
+    var labelFont: CGFloat { 11 * scale }
 
-    var headerH: CGFloat { 22 }
-    var rhythmH: CGFloat { showRhythm ? 16 : 0 }
-    var staffSpacing: CGFloat { 12 }
-    var staffBlockH: CGFloat { showStaff ? (staffSpacing * 5 + 44 + 8) : 0 }
+    var headerH: CGFloat { hasChords ? 32 : 18 }
+    /// Baseline for the chord band (top of the header).
+    var chordY: CGFloat { 9 }
+    /// Baseline for measure numbers (bottom of the header).
+    var numberY: CGFloat { headerH - 9 }
+    var rhythmH: CGFloat { showRhythm ? 13 : 0 }
+    var staffSpacing: CGFloat { 9 }
+    var staffBlockH: CGFloat { showStaff ? (staffSpacing * 5 + 34 + 6) : 0 }
     var tabH: CGFloat { rowHeight * 6 }
-    var bottomGap: CGFloat { 30 * scale }
+    var bottomGap: CGFloat { 14 * scale }
 
     var staffTopY: CGFloat { headerH + rhythmH + staffBlockH }
     var total: CGFloat { headerH + rhythmH + staffBlockH + tabH + bottomGap }
@@ -126,13 +135,30 @@ struct DrawnTabSystemView: View {
     let onSeek: (Int) -> Void
 
     private var metrics: TabMetrics {
-        TabMetrics(scale: scale, showRhythm: showRhythm, showStaff: showStaff)
+        TabMetrics(scale: scale, showRhythm: showRhythm, showStaff: showStaff,
+                   hasChords: system.measures.contains { !$0.chords.isEmpty })
     }
 
     var body: some View {
         let m = metrics
-        Canvas { ctx, size in
-            draw(ctx: &ctx, size: size, m: m)
+        // Static content and the moving playhead live in separate child views:
+        // the static Canvas's inputs don't include beatFraction, so SwiftUI
+        // skips its (expensive) body on every playhead step and only the thin
+        // playhead layer redraws. This is what keeps chord-dense systems from
+        // starving the main thread during playback.
+        ZStack(alignment: .topLeading) {
+            StaticSystemLayer(system: system, model: model, palette: palette,
+                              scale: scale, showRhythm: showRhythm,
+                              showStaff: showStaff,
+                              loopStart: loopStart, loopEnd: loopEnd)
+            if isCurrentSystem, isPlaying {
+                PlayheadLayer(system: system, model: model, palette: palette,
+                              scale: scale, showRhythm: showRhythm,
+                              showStaff: showStaff,
+                              hasChords: m.hasChords,
+                              currentMeasure: currentMeasure,
+                              beatFraction: beatFraction)
+            }
         }
         .frame(height: m.total)
         .contentShape(Rectangle())
@@ -153,7 +179,55 @@ struct DrawnTabSystemView: View {
     /// Full-bleed page color for focus mode (matches `TabPalette.focus.page`).
     static let focusBackground = Color(red: 0x0E/255, green: 0x0F/255, blue: 0x12/255)
 
-    // MARK: Drawing
+    // MARK: Text helper
+
+    private func resolveText(_ s: String, size: CGFloat, weight: Font.Weight,
+                             design: Font.Design, color: Color) -> Text {
+        Text(s).font(.system(size: size, weight: weight, design: design)).foregroundColor(color)
+    }
+
+    // MARK: Seek
+
+    private func seek(at point: CGPoint, width: CGFloat, m: TabMetrics) {
+        guard system.measureCount > 0 else { return }
+        let staffLeft = m.gutter
+        let denom = CGFloat(max(model.referenceMeasuresPerSystem, system.measureCount, 1))
+        let measureWidth = max(1, width - m.gutter) / denom
+        guard point.x >= staffLeft else {
+            if let first = system.measures.first { onSeek(first.globalIndex) }
+            return
+        }
+        let local = min(system.measureCount - 1, Int((point.x - staffLeft) / measureWidth))
+        onSeek(system.measures[local].globalIndex)
+    }
+}
+
+// MARK: - Static content layer
+
+/// Everything except the playhead. Its inputs exclude beatFraction, so SwiftUI
+/// skips re-rendering it on playhead steps.
+private struct StaticSystemLayer: View {
+    let system: TabSystemLayout
+    let model: TabRenderModel
+    let palette: TabPalette
+    let scale: CGFloat
+    let showRhythm: Bool
+    let showStaff: Bool
+    let loopStart: Int?
+    let loopEnd: Int?
+
+    private var metrics: TabMetrics {
+        TabMetrics(scale: scale, showRhythm: showRhythm, showStaff: showStaff,
+                   hasChords: system.measures.contains { !$0.chords.isEmpty })
+    }
+
+    var body: some View {
+        let m = metrics
+        Canvas { ctx, size in
+            draw(ctx: &ctx, size: size, m: m)
+        }
+        .frame(height: m.total)
+    }
 
     private func draw(ctx: inout GraphicsContext, size: CGSize, m: TabMetrics) {
         let staffLeft = m.gutter
@@ -170,7 +244,6 @@ struct DrawnTabSystemView: View {
         if showRhythm { drawRhythmRow(&ctx, m: m, staffLeft: staffLeft, measureWidth: measureWidth) }
         if showStaff { drawStandardStaff(&ctx, m: m, staffLeft: staffLeft, staffWidth: staffWidth, measureWidth: measureWidth) }
         drawTabStaff(&ctx, m: m, staffLeft: staffLeft, staffWidth: staffWidth, measureWidth: measureWidth)
-        drawPlayhead(&ctx, m: m, staffLeft: staffLeft, staffWidth: staffWidth)
     }
 
     /// Note onset x within the system (small inset so onsets clear the barline).
@@ -200,7 +273,7 @@ struct DrawnTabSystemView: View {
                                staffLeft: CGFloat, measureWidth: CGFloat) {
         for (local, measure) in system.measures.enumerated() {
             let x = staffLeft + CGFloat(local) * measureWidth + 7
-            let y: CGFloat = m.headerH * 0.5
+            let y: CGFloat = m.numberY
             let num = resolveText("\(measure.number)", size: m.numberFont, weight: .regular,
                                   design: .default, color: palette.measureNumber)
             ctx.draw(num, at: CGPoint(x: x, y: y), anchor: .leading)
@@ -211,13 +284,14 @@ struct DrawnTabSystemView: View {
                 ctx.draw(tag, at: CGPoint(x: x + 18, y: y), anchor: .leading)
             }
 
-            // Chord symbols at their in-measure positions (lead-sheet harmony).
+            // Chord symbols get their own band above the numbers, so long
+            // names never collide with them.
             for chord in measure.chords {
                 let cx = staffLeft + CGFloat(local) * measureWidth
-                    + CGFloat(chord.position) * measureWidth + 7
+                    + CGFloat(chord.position) * measureWidth + 2
                 let name = resolveText(chord.name, size: 11, weight: .semibold,
                                        design: .default, color: palette.section)
-                ctx.draw(name, at: CGPoint(x: max(cx, x + 14), y: y), anchor: .leading)
+                ctx.draw(name, at: CGPoint(x: cx, y: m.chordY), anchor: .leading)
             }
             // A / B loop flags
             if loopStart == measure.globalIndex {
@@ -278,19 +352,15 @@ struct DrawnTabSystemView: View {
             ctx.stroke(bar, with: .color(palette.barline), lineWidth: 1.5)
         }
 
-        // fret numbers
+        // fret numbers (the active-column accent is drawn by PlayheadLayer)
         for (local, measure) in system.measures.enumerated() {
-            let active = (isCurrentSystem && measure.globalIndex == currentMeasure && isPlaying)
-                ? TabRenderModel.activeColumn(in: measure, beatFraction: beatFraction)
-                : nil
-            for (colIdx, col) in measure.columns.enumerated() {
+            for col in measure.columns {
                 let x = noteX(measureLocal: local, position: col.position,
                               staffLeft: staffLeft, measureWidth: measureWidth)
-                let isActive = (colIdx == active)
                 for s in 0..<6 {
                     guard let fret = col.frets[safe: s] ?? nil else { continue }
                     let y = m.stringLineY(s)
-                    drawFret(&ctx, fret: fret, x: x, y: y, m: m, active: isActive)
+                    drawFret(&ctx, fret: fret, x: x, y: y, m: m, active: false)
                 }
             }
         }
@@ -329,11 +399,16 @@ struct DrawnTabSystemView: View {
             ctx.stroke(line, with: .color(palette.staffLine), lineWidth: 1)
         }
         // treble clef glyph
-        ctx.draw(resolveText("\u{1D11E}", size: 40, weight: .regular, design: .default,
+        ctx.draw(resolveText("\u{1D11E}", size: 32, weight: .regular, design: .default,
                              color: palette.noteInk.opacity(0.85)),
                  at: CGPoint(x: staffLeft - 12, y: top + 8 + m.staffSpacing * 2), anchor: .trailing)
 
         let staffMidY = top + 8 + m.staffSpacing * 2  // ≈ B4 line
+        // Clip noteheads/stems/flags to the staff block so low chord voicings
+        // can't spill into the tab rows below.
+        var inner = ctx
+        inner.clip(to: Path(CGRect(x: 0, y: top - 6, width: staffLeft + staffWidth + 20,
+                                   height: m.staffBlockH + 2)))
         for (local, measure) in system.measures.enumerated() {
             for col in measure.columns {
                 guard let midi = col.melodyMIDI, let dur = col.duration else { continue }
@@ -343,7 +418,7 @@ struct DrawnTabSystemView: View {
                 var ny = staffMidY - CGFloat(midi - 59) * 3
                 ny = min(top + m.staffBlockH - 12, max(top - 4, ny))
                 let open = (dur == .half || dur == .dottedHalf || dur == .whole)
-                drawNotehead(&ctx, x: x, y: ny, open: open, dur: dur, staffMidY: staffMidY)
+                drawNotehead(&inner, x: x, y: ny, open: open, dur: dur, staffMidY: staffMidY)
             }
         }
     }
@@ -385,46 +460,79 @@ struct DrawnTabSystemView: View {
         }
     }
 
-    private func drawPlayhead(_ ctx: inout GraphicsContext, m: TabMetrics,
-                              staffLeft: CGFloat, staffWidth: CGFloat) {
-        guard isCurrentSystem,
-              let frac = model.playheadFraction(inSystem: system,
-                                                currentMeasure: currentMeasure,
-                                                beatFraction: beatFraction) else { return }
-        let x = staffLeft + CGFloat(frac) * staffWidth
-        let topY = (showStaff ? m.headerH + m.rhythmH : m.staffTopY) - 4
-        let botY = m.staffTopY + m.tabH + 4
-        var line = Path()
-        line.move(to: CGPoint(x: x, y: topY))
-        line.addLine(to: CGPoint(x: x, y: botY))
-        if palette.playheadGlow {
-            ctx.stroke(line, with: .color(palette.accent.opacity(0.5)), lineWidth: 6)
-        }
-        ctx.stroke(line, with: .color(palette.accent), lineWidth: 2)
-        let dot = CGRect(x: x - 5, y: topY - 6, width: 10, height: 10)
-        ctx.fill(Path(ellipseIn: dot), with: .color(palette.accent))
-    }
-
-    // MARK: Text helper
-
     private func resolveText(_ s: String, size: CGFloat, weight: Font.Weight,
                              design: Font.Design, color: Color) -> Text {
         Text(s).font(.system(size: size, weight: weight, design: design)).foregroundColor(color)
     }
+}
 
-    // MARK: Seek
+// MARK: - Playhead layer
 
-    private func seek(at point: CGPoint, width: CGFloat, m: TabMetrics) {
-        guard system.measureCount > 0 else { return }
-        let staffLeft = m.gutter
-        let denom = CGFloat(max(model.referenceMeasuresPerSystem, system.measureCount, 1))
-        let measureWidth = max(1, width - m.gutter) / denom
-        guard point.x >= staffLeft else {
-            if let first = system.measures.first { onSeek(first.globalIndex) }
-            return
+/// The moving playhead + active-column accent. Small and cheap; redraws on
+/// each (quantized) beatFraction step while the static layer stays put.
+private struct PlayheadLayer: View {
+    let system: TabSystemLayout
+    let model: TabRenderModel
+    let palette: TabPalette
+    let scale: CGFloat
+    let showRhythm: Bool
+    let showStaff: Bool
+    let hasChords: Bool
+    let currentMeasure: Int
+    let beatFraction: Double
+
+    var body: some View {
+        let m = TabMetrics(scale: scale, showRhythm: showRhythm, showStaff: showStaff,
+                           hasChords: hasChords)
+        Canvas { ctx, size in
+            let staffLeft = m.gutter
+            let fullWidth = max(1, size.width - m.gutter)
+            let denom = CGFloat(max(model.referenceMeasuresPerSystem, system.measureCount, 1))
+            let measureWidth = fullWidth / denom
+            let staffWidth = measureWidth * CGFloat(system.measureCount)
+
+            // active-column accent
+            if let localIdx = system.measures.firstIndex(where: { $0.globalIndex == currentMeasure }) {
+                let measure = system.measures[localIdx]
+                if let active = TabRenderModel.activeColumn(in: measure, beatFraction: beatFraction),
+                   let col = measure.columns[safe: active] {
+                    let x = staffLeft + (CGFloat(localIdx) + CGFloat(col.position)) * measureWidth
+                        + min(8, measureWidth * 0.12)
+                    for s in 0..<6 {
+                        guard let fret = col.frets[safe: s] ?? nil else { continue }
+                        let y = m.stringLineY(s)
+                        let text = "\(fret)"
+                        let w = max(16, CGFloat(text.count) * m.fretFont * 0.8 + 8)
+                        let pill = CGRect(x: x - w/2, y: y - m.fretFont * 0.75,
+                                          width: w, height: m.fretFont * 1.5)
+                        ctx.fill(Path(roundedRect: pill, cornerRadius: 4), with: .color(palette.accent))
+                        ctx.draw(Text(text).font(.system(size: m.fretFont, weight: .bold, design: .monospaced))
+                                    .foregroundColor(palette.accentInk),
+                                 at: CGPoint(x: x, y: y), anchor: .center)
+                    }
+                }
+            }
+
+            // playhead line
+            if let frac = model.playheadFraction(inSystem: system,
+                                                 currentMeasure: currentMeasure,
+                                                 beatFraction: beatFraction) {
+                let x = staffLeft + CGFloat(frac) * staffWidth
+                let topY = (showStaff ? m.headerH + m.rhythmH : m.staffTopY) - 4
+                let botY = m.staffTopY + m.tabH + 4
+                var line = Path()
+                line.move(to: CGPoint(x: x, y: topY))
+                line.addLine(to: CGPoint(x: x, y: botY))
+                if palette.playheadGlow {
+                    ctx.stroke(line, with: .color(palette.accent.opacity(0.5)), lineWidth: 6)
+                }
+                ctx.stroke(line, with: .color(palette.accent), lineWidth: 2)
+                let dot = CGRect(x: x - 5, y: topY - 6, width: 10, height: 10)
+                ctx.fill(Path(ellipseIn: dot), with: .color(palette.accent))
+            }
         }
-        let local = min(system.measureCount - 1, Int((point.x - staffLeft) / measureWidth))
-        onSeek(system.measures[local].globalIndex)
+        .frame(height: m.total)
+        .allowsHitTesting(false)
     }
 }
 

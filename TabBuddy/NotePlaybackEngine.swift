@@ -23,7 +23,14 @@ final class NotePlaybackEngine: ObservableObject {
     // MARK: - Audio engine
 
     private let engine = AVAudioEngine()
-    private let playerNode = AVAudioPlayerNode()
+    /// One voice per guitar string (index 0 = high E … 5 = low E). A new note
+    /// interrupts only its own string's voice, so the other strings keep
+    /// ringing — chords and arpeggios sustain like a real guitar instead of
+    /// the old single-voice monophonic playback.
+    private let stringNodes: [AVAudioPlayerNode] = (0..<6).map { _ in AVAudioPlayerNode() }
+    /// Sums the six string voices before the shared reverb (an effect node
+    /// accepts only one input).
+    private let stringMixer = AVAudioMixerNode()
     /// A small room reverb gives the dry plucked-string synth some natural space
     /// and a soft tail (which keeps ringing after a note is interrupted), which
     /// is most of the perceived quality jump over the bare Karplus-Strong sound.
@@ -62,13 +69,18 @@ final class NotePlaybackEngine: ObservableObject {
     // MARK: - Setup
 
     private func setupEngine() {
-        engine.attach(playerNode)
+        engine.attach(stringMixer)
         engine.attach(reverb)
+        for node in stringNodes {
+            engine.attach(node)
+            engine.connect(node, to: stringMixer, format: format)
+        }
         reverb.loadFactoryPreset(.smallRoom)
         reverb.wetDryMix = 22  // mostly dry, a touch of room
-        // playerNode → reverb → mixer. The reverb tail survives `.interrupts`
-        // (which only replaces the dry player buffer), giving a natural release.
-        engine.connect(playerNode, to: reverb, format: format)
+        // strings → mixer → reverb → main. The reverb tail survives
+        // `.interrupts` (which only replaces a dry voice's buffer), giving a
+        // natural release.
+        engine.connect(stringMixer, to: reverb, format: format)
         engine.connect(reverb, to: engine.mainMixerNode, format: format)
     }
 
@@ -105,7 +117,7 @@ final class NotePlaybackEngine: ObservableObject {
     }
 
     func stop() {
-        playerNode.stop()
+        for node in stringNodes { node.stop() }
         if engine.isRunning {
             engine.stop()
         }
@@ -114,8 +126,10 @@ final class NotePlaybackEngine: ObservableObject {
     /// Immediately silence any playing notes (used on seek/stop).
     func stopNotes() {
         guard engine.isRunning else { return }
-        playerNode.stop()
-        playerNode.play()  // re-arm for next schedule
+        for node in stringNodes {
+            node.stop()
+            node.play()  // re-arm for next schedule
+        }
     }
 
     // MARK: - Direct MIDI Playback
@@ -126,94 +140,55 @@ final class NotePlaybackEngine: ObservableObject {
         guard engine.isRunning else { return }
         guard let buffer = noteCache[midi] else { return }
 
-        playerNode.volume = volume
-        playerNode.scheduleBuffer(buffer, at: nil, options: .interrupts,
-                                  completionHandler: nil)
-        if !playerNode.isPlaying {
-            playerNode.play()
+        let node = stringNodes[0]
+        node.volume = Self.stringGain(volume)
+        node.scheduleBuffer(buffer, at: nil, options: .interrupts,
+                            completionHandler: nil)
+        if !node.isPlaying {
+            node.play()
         }
     }
 
+    /// Per-voice gain: six freely ringing voices sum, so each is scaled to
+    /// leave headroom (typical simultaneous ring is 2–3 strings).
+    private static func stringGain(_ volume: Float) -> Float { volume * 0.6 }
+
     // MARK: - Note Playback
 
-    /// Play a chord or single note from parsed fret data.
-    /// Uses pre-cached buffers for zero-latency playback.
-    /// Each call interrupts any currently playing note — just like a real guitar
-    /// where new notes naturally mute previous strings.
-    /// Serial queue for chord mixing — `playNotes` fires from the display-link
-    /// tick on the main thread, and mixing PCM there starves touch handling on
-    /// note-dense pieces.
-    private nonisolated static let mixQueue = DispatchQueue(label: "NotePlaybackEngine.mix",
-                                                            qos: .userInteractive)
+    /// Play a chord or single note from parsed fret data, one voice per
+    /// string. A new note on a string interrupts only that string (like a
+    /// fretting hand landing on it); everything else keeps ringing.
+    /// Scheduling runs off the display-link/main thread.
+    private nonisolated static let scheduleQueue = DispatchQueue(label: "NotePlaybackEngine.schedule",
+                                                                 qos: .userInteractive)
 
     func playNotes(_ frets: [Int?], tuningMIDI: [Int]? = nil) {
         guard isEnabled, engine.isRunning else { return }
 
         let openStrings = tuningMIDI ?? Self.standardTuningMIDI
-        var midiNotes: [Int] = []
+        var toPlay: [(string: Int, midi: Int)] = []
         for (stringIndex, fret) in frets.enumerated() {
-            guard let f = fret, stringIndex < openStrings.count else { continue }
-            let midiNote = openStrings[stringIndex] + f
-            midiNotes.append(midiNote)
+            guard let f = fret, stringIndex < openStrings.count,
+                  stringIndex < stringNodes.count else { continue }
+            toPlay.append((stringIndex, openStrings[stringIndex] + f))
         }
 
-        guard !midiNotes.isEmpty else { return }
+        guard !toPlay.isEmpty else { return }
 
-        let vol = volume
-        Self.mixQueue.async { [weak self] in
+        let gain = Self.stringGain(volume)
+        Self.scheduleQueue.async { [weak self] in
             guard let self else { return }
-            // Cached buffers are immutable after prepare; scheduleBuffer is
-            // thread-safe, so mixing off-main is sound.
-            guard let chordBuffer = self.mixCachedNotes(midiNotes) else { return }
-
-            self.playerNode.volume = vol
-            // .interrupts: immediately replace any currently playing buffer
-            // This keeps audio in sync with the visual highlight
-            self.playerNode.scheduleBuffer(chordBuffer, at: nil, options: .interrupts,
-                                           completionHandler: nil)
-            if !self.playerNode.isPlaying {
-                self.playerNode.play()
+            for (string, midi) in toPlay {
+                guard let buffer = self.noteCache[midi] else { continue }
+                let node = self.stringNodes[string]
+                node.volume = gain
+                node.scheduleBuffer(buffer, at: nil, options: .interrupts,
+                                    completionHandler: nil)
+                if !node.isPlaying {
+                    node.play()
+                }
             }
         }
-    }
-
-    // MARK: - Buffer Mixing
-
-    /// Mix pre-cached single-note buffers into one chord buffer.
-    private func mixCachedNotes(_ midiNotes: [Int]) -> AVAudioPCMBuffer? {
-        // Gather cached buffers
-        let buffers = midiNotes.compactMap { noteCache[$0] }
-        guard !buffers.isEmpty else { return nil }
-
-        // If single note, return the cached buffer directly (no copy needed)
-        if buffers.count == 1 {
-            return buffers[0]
-        }
-
-        // Mix multiple notes into a new buffer
-        let frameCount = buffers.map { $0.frameLength }.max() ?? 0
-        guard let mixed = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
-            return nil
-        }
-        mixed.frameLength = frameCount
-        guard let mixedData = mixed.floatChannelData?[0] else { return nil }
-
-        // Zero
-        for i in 0..<Int(frameCount) {
-            mixedData[i] = 0
-        }
-
-        // Sum all buffers
-        let scale = 1.0 / Float(buffers.count)
-        for buf in buffers {
-            guard let bufData = buf.floatChannelData?[0] else { continue }
-            let len = min(Int(buf.frameLength), Int(frameCount))
-            for i in 0..<len {
-                mixedData[i] += bufData[i] * scale
-            }
-        }
-
-        return mixed
     }
 
     // MARK: - Karplus-Strong Synthesis

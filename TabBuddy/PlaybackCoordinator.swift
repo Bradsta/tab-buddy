@@ -212,9 +212,11 @@ final class PlaybackCoordinator: NSObject, ObservableObject {
             }
             if let notes = measures[measureIdx].notes {
                 var triggered: [NoteEvent] = []
-                for note in notes {
-                    // Use column as unique identifier (position alone can have duplicates)
-                    let key = note.column ?? Int(note.positionInMeasure * 10000)
+                for (noteIdx, note) in notes.enumerated() {
+                    // Unique per event: column for text tabs, array index for
+                    // canonical-derived maps (chord notes share a position, so
+                    // position alone would fire only one voice of a chord).
+                    let key = note.column ?? noteIdx
                     if note.positionInMeasure <= rawFraction,
                        !triggeredNotePositions.contains(key) {
                         triggeredNotePositions.insert(key)
