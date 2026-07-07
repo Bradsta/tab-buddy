@@ -93,9 +93,9 @@ struct TabMetrics {
     // Compact, text-tab-like density: a string row is just tall enough for
     // the fret digits, and the header/rhythm bands hug their content.
     var rowHeight: CGFloat { 17 * scale }
-    var fretFont: CGFloat { 12 * scale }
-    var rhythmFont: CGFloat { 10 }
-    var numberFont: CGFloat { 11 }
+    var fretFont: CGFloat { 20 * scale }
+    var rhythmFont: CGFloat { 12 }
+    var numberFont: CGFloat { 12 }
     var labelFont: CGFloat { 11 * scale }
 
     var headerH: CGFloat { hasChords ? 32 : 18 }
@@ -380,15 +380,17 @@ private struct StaticSystemLayer: View {
             let w = max(16, CGFloat(text.count) * m.fretFont * 0.8 + 8)
             let pill = CGRect(x: x - w/2, y: y - m.fretFont * 0.75, width: w, height: m.fretFont * 1.5)
             ctx.fill(Path(roundedRect: pill, cornerRadius: 4), with: .color(palette.accent))
-            ctx.draw(resolveText(text, size: m.fretFont, weight: .bold,
+            ctx.draw(resolveText(text, size: m.fretFont, weight: .heavy,
                                  design: .monospaced, color: palette.accentInk),
                      at: CGPoint(x: x, y: y), anchor: .center)
         } else {
-            // knockout: paint page color behind the digit so it masks the string line
-            let w = CGFloat(text.count) * m.fretFont * 0.66 + 4
-            let knock = CGRect(x: x - w/2, y: y - m.fretFont * 0.62, width: w, height: m.fretFont * 1.24)
+            // knockout: paint page color behind the digit so it masks the
+            // string line; capped to the row so neighbor lines stay intact
+            let w = CGFloat(text.count) * m.fretFont * 0.62 + 4
+            let kh = m.rowHeight * 0.92
+            let knock = CGRect(x: x - w/2, y: y - kh / 2, width: w, height: kh)
             ctx.fill(Path(knock), with: .color(palette.page))
-            ctx.draw(resolveText(text, size: m.fretFont, weight: .semibold,
+            ctx.draw(resolveText(text, size: m.fretFont, weight: .heavy,
                                  design: .monospaced, color: palette.fret),
                      at: CGPoint(x: x, y: y), anchor: .center)
         }
