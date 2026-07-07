@@ -84,6 +84,11 @@ struct Measure {
 
     /// Column range in the original text (text tabs only).
     var columnRange: Range<Int>?
+
+    /// Chord symbols over this measure ("F#m7" at fractional position),
+    /// from a chord line above the system (text tabs) or extracted lead-sheet
+    /// harmony (PDFs). nil = none.
+    var chords: [(name: String, position: Double)]? = nil
 }
 
 // MARK: - Note Event

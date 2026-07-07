@@ -63,6 +63,14 @@ struct TabMeasureLayout: Equatable {
     var columns: [TabColumnLayout]
     /// Optional section label (e.g. "INTRO"); reserved for the section model.
     var section: String?
+    /// Chord symbols over this measure ("F#m7" at fractional position).
+    var chords: [ChordLayout] = []
+}
+
+/// A chord symbol positioned within a measure.
+struct ChordLayout: Equatable {
+    var name: String
+    var position: Double
 }
 
 /// One note onset (a vertical stack of fretted strings sounding together).
@@ -104,7 +112,8 @@ enum TabRenderModelBuilder {
                     number: measure.measureNumber,
                     beatCount: max(1, measure.beatCount),
                     columns: columns,
-                    section: nil
+                    section: nil,
+                    chords: (measure.chords ?? []).map { ChordLayout(name: $0.name, position: $0.position) }
                 ))
                 globalIndex += 1
             }

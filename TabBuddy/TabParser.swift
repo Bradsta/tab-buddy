@@ -424,6 +424,7 @@ struct TabParser {
         var rhythmLineIndex: Int?       // index of rhythm notation line if present
         var numericRulerIndex: Int?     // index of numeric beat ruler ("1 2 3")
         var measureNumberLineIndex: Int? // index of line with leading measure number
+        var chordLineIndex: Int?        // index of chord-symbol line ("D  F#m7  B11")
     }
 
     /// Detect tab string lines and group them into systems.
@@ -713,6 +714,45 @@ struct TabParser {
         return true
     }
 
+    /// Chord-symbol regex: root letter, optional accidental, quality, tension,
+    /// parenthesized alterations, "alt", slash bass. Matches "D", "F#m7",
+    /// "B11", "Dbmaj9", "G7(#11)", "C#7alt.", "A/C#".
+    private static let chordPattern =
+        #"^[A-G][#b]?(?:maj|min|dim|aug|sus|add|m|M|ø|°)?[0-9]{0,2}(?:\([^)]{1,6}\))?(?:alt\.?)?(?:/[A-G][#b]?)?$"#
+
+    /// A line of chord symbols above a system ("D        F#m7   B11").
+    static func isChordSymbolLine(_ line: String) -> Bool {
+        let tokens = line.split(whereSeparator: { $0 == " " || $0 == "\t" }).map(String.init)
+        guard !tokens.isEmpty, tokens.count <= 16 else { return false }
+        var qualified = false
+        for tok in tokens {
+            guard tok.range(of: chordPattern, options: .regularExpression) != nil else { return false }
+            if tok.count > 1 { qualified = true }
+        }
+        // All bare letters could be a spelled-out tuning ("E A D G B E").
+        if !qualified && tokens.count >= 5 { return false }
+        return true
+    }
+
+    /// (chordName, startColumn) tokens from a chord line.
+    private static func chordTokens(in line: String) -> [(name: String, column: Int)] {
+        var out: [(String, Int)] = []
+        let chars = Array(line)
+        var i = 0
+        while i < chars.count {
+            if chars[i] == " " || chars[i] == "\t" { i += 1; continue }
+            let start = i
+            var tok = ""
+            while i < chars.count, chars[i] != " ", chars[i] != "\t" {
+                tok.append(chars[i]); i += 1
+            }
+            if tok.range(of: chordPattern, options: .regularExpression) != nil {
+                out.append((tok, start))
+            }
+        }
+        return out
+    }
+
     /// A ruler line above the staff mixing an optional leading measure number,
     /// tuplet cells ("|--3--|", "|----6----|"), beat-dot cells ("|   .   ."),
     /// and stray punctuation. Not tab content — its bars would otherwise shred
@@ -778,6 +818,8 @@ struct TabParser {
                 group.rhythmLineIndex = idx
             } else if isNumericRulerLine(line) {
                 group.numericRulerIndex = idx
+            } else if isChordSymbolLine(line) {
+                group.chordLineIndex = idx
             }
         }
 
@@ -999,6 +1041,20 @@ struct TabParser {
                     }
                 }
                 measures[0] = m
+            }
+        }
+
+        // Attach chord symbols (from the chord line above the system) to the
+        // measures whose column span contains them.
+        if let chordIdx = group.chordLineIndex {
+            for (name, column) in chordTokens(in: lines[chordIdx]) {
+                guard let mIdx = measures.firstIndex(where: { m in
+                    guard let r = m.columnRange else { return false }
+                    return column >= r.lowerBound - 1 && column < r.upperBound
+                }) else { continue }
+                let r = measures[mIdx].columnRange!
+                let pos = max(0, min(1, Double(column - r.lowerBound) / Double(max(r.count, 1))))
+                measures[mIdx].chords = (measures[mIdx].chords ?? []) + [(name, pos)]
             }
         }
 

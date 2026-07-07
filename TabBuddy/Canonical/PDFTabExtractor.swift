@@ -366,7 +366,9 @@ enum PDFTabExtractor {
     // MARK: - ASCII synthesis
 
     private static func asciiSystem(_ notes: [Note], spacing: Double,
-                                    barXs: [Double] = []) -> [String] {
+                                    barXs: [Double] = [],
+                                    beatsPerMeasure: Int = 4,
+                                    chords: [(name: String, x: Double)] = []) -> [String] {
         guard let minX = notes.first?.x else { return [] }
         let labels = ["e", "B", "G", "D", "A", "E"]
         let scale = spacing * 0.4          // ~3pt per column at standard engraving
@@ -438,7 +440,7 @@ enum PDFTabExtractor {
             guard segEnd > segStart else { continue }
             let nextOnset = (i + 1 < onsetCols.count && onsetCols[i + 1] < segEnd)
                 ? onsetCols[i + 1] : segEnd
-            let rawBeats = Double(nextOnset - col) / Double(segEnd - segStart) * 4.0
+            let rawBeats = Double(nextOnset - col) / Double(segEnd - segStart) * Double(beatsPerMeasure)
             let letter = RhythmDuration.nearest(toBeats: rawBeats).notation
             for (k, ch) in letter.enumerated() where col + k < rhythm.count {
                 rhythm[col + k] = ch
@@ -449,7 +451,22 @@ enum PDFTabExtractor {
             labels[s] + "|-" + rows[s]
                 + String(repeating: "-", count: max(0, maxLen - lengths[s])) + "-|"
         }
-        return ["   " + String(rhythm)] + stringRows
+
+        // Chord-symbol line above the system (parser attaches by column).
+        var result: [String] = []
+        if !chords.isEmpty {
+            var chordRow = [Character](repeating: " ", count: maxLen + 16)
+            var nextFree = 0
+            for (name, cx) in chords.sorted(by: { $0.x < $1.x }) {
+                let target = max(nextFree, max(0, 2 + Int(((cx - minX) / scale).rounded())))
+                guard target + name.count < chordRow.count else { break }
+                for (k, ch) in name.enumerated() { chordRow[target + k] = ch }
+                nextFree = target + name.count + 1
+            }
+            result.append("   " + String(chordRow))
+        }
+        result.append("   " + String(rhythm))
+        return result + stringRows
     }
 
     // MARK: - Debug introspection
@@ -526,6 +543,8 @@ enum PDFTabExtractor {
         let tuning = GuitarTuning.standard.midiNotes
         var out: [String] = []
         var produced = false
+        var emittedNotationHeader = false
+        var beatsPerMeasure = 4
 
         for p in 0..<doc.pageCount {
             guard let page = doc.page(at: p) else { continue }
@@ -543,6 +562,20 @@ enum PDFTabExtractor {
             for staff in staves {
                 let pitches = melody(for: staff, glyphs: gs, raster: raster)
                 guard !pitches.isEmpty else { continue }
+
+                // Key + time signature from the first notated staff.
+                if !emittedNotationHeader {
+                    emittedNotationHeader = true
+                    let header = notationHeader(staff: staff, glyphs: gs,
+                                                firstNoteX: pitches[0].x)
+                    if !header.isEmpty {
+                        out.insert(contentsOf: header + [""], at: 0)
+                        for line in header where line.hasPrefix("Time: ") {
+                            beatsPerMeasure = Int(line.dropFirst(6).prefix(while: \.isNumber)) ?? 4
+                        }
+                    }
+                }
+
                 var notes: [Note] = []
                 for (midi, x, _) in pitches {
                     // Fold into guitar range, then map to the lowest fret.
@@ -560,7 +593,10 @@ enum PDFTabExtractor {
                 let noteXs = pitches.map(\.x)
                 let bars = raster.barXs(topPDF: staff.top, bottomPDF: staff.bottom)
                     .filter { bx in !noteXs.contains { abs($0 + staff.spacing * 0.5 - bx) < staff.spacing * 1.2 } }
-                out.append(contentsOf: asciiSystem(notes, spacing: staff.spacing * 1.25, barXs: bars))
+                out.append(contentsOf: asciiSystem(notes, spacing: staff.spacing * 1.25,
+                                                   barXs: bars,
+                                                   beatsPerMeasure: beatsPerMeasure,
+                                                   chords: chordSymbols(for: staff, glyphs: gs)))
                 out.append("")
             }
         }
@@ -574,13 +610,91 @@ enum PDFTabExtractor {
         for i in 0..<ns.length {
             guard let scalar = UnicodeScalar(ns.character(at: i)) else { continue }
             let ch = Character(scalar)
-            guard ch.isNumber || ch == "#" || ch == "b" || noteheadChars.contains(ch) else { continue }
+            guard ch.isNumber || ch.isLetter || noteheadChars.contains(ch)
+                || "#b¨‹ŒŠ„/()°ø∆.©∏∑".contains(ch) else { continue }
             guard let sel = page.selection(for: NSRange(location: i, length: 1)) else { continue }
             let b = sel.bounds(for: page)
             guard b.width > 0, b.height > 0 else { continue }
             out.append(Glyph(ch: ch, x: b.origin.x, cy: b.origin.y + b.height / 2,
                              w: b.width, h: b.height))
         }
+        return out
+    }
+
+    /// Key + time signature header lines for the first notated staff, in the
+    /// directive format TabParser reads ("Key: A", "Time: 4/4").
+    private static func notationHeader(staff: NotationStaff, glyphs: [Glyph],
+                                       firstNoteX: Double) -> [String] {
+        let spacing = staff.spacing
+        var out: [String] = []
+
+        // Key signature accidentals ('#'/'b') left of the first notehead.
+        var flats = 0, sharps = 0
+        for g in glyphs where g.x < firstNoteX && g.x > firstNoteX - 120 {
+            guard g.cy < staff.top + spacing * 2, g.cy > staff.bottom - spacing * 2 else { continue }
+            if g.ch == "b" { flats += 1 }
+            if g.ch == "#" { sharps += 1 }
+        }
+        let fifths = sharps > 0 ? min(sharps, 7) : -min(flats, 7)
+        if fifths != 0 {
+            let sharpNames = ["C", "G", "D", "A", "E", "B", "F#", "C#"]
+            let flatNames = ["C", "F", "Bb", "Eb", "Ab", "Db", "Gb", "Cb"]
+            out.append("Key: " + (fifths > 0 ? sharpNames[fifths] : flatNames[-fifths]))
+        }
+
+        // Time signature: a vertically stacked digit pair before the first note.
+        let sigDigits = glyphs.filter {
+            $0.ch.isNumber && $0.x < firstNoteX && $0.x > firstNoteX - 80
+                && $0.cy < staff.top + spacing && $0.cy > staff.bottom - spacing
+        }
+        for top in sigDigits {
+            for bottom in sigDigits {
+                guard abs(top.x - bottom.x) < 3, top.cy > bottom.cy + spacing else { continue }
+                if let n = Int(String(top.ch)), let d = Int(String(bottom.ch)),
+                   n >= 2, n <= 12, [2, 4, 8, 16].contains(d) {
+                    out.append("Time: \(n)/\(d)")
+                    return out
+                }
+            }
+        }
+        return out
+    }
+
+    /// Chord-symbol tokens above a staff: glyph runs grouped by x-gap, with
+    /// the engraving font's ligature glyphs normalized (¨→b, ‹→m, Œ„Š→maj).
+    private static func chordSymbols(for staff: NotationStaff, glyphs: [Glyph]) -> [(name: String, x: Double)] {
+        let spacing = staff.spacing
+        var band = glyphs.filter {
+            !noteheadChars.contains($0.ch)
+                && $0.cy > staff.top + spacing * 0.5 && $0.cy < staff.top + spacing * 9
+        }
+        band.sort { $0.x < $1.x }
+        guard !band.isEmpty else { return [] }
+
+        let subs: [Character: String] = ["¨": "b", "‹": "m", "Œ": "m", "„": "a", "Š": "j",
+                                         "°": "dim", "ø": "m7b5", "∆": "maj",
+                                         // second engraving font: © = sharp, ∏ = flat, ∑ = natural
+                                         "©": "#", "∏": "b", "∑": ""]
+        var out: [(String, Double)] = []
+        var token = ""
+        var tokenX = band[0].x
+        var lastEnd = band[0].x
+
+        func flush() {
+            if !token.isEmpty, let first = token.first, ("A"..."G").contains(String(first)),
+               TabParser.isChordSymbolLine(token) {
+                out.append((token, tokenX))
+            }
+            token = ""
+        }
+
+        for g in band {
+            if g.x - lastEnd > 7 { flush(); tokenX = g.x }
+            if token.isEmpty { tokenX = g.x }
+            token += subs[g.ch] ?? String(g.ch)
+            lastEnd = g.x + g.w
+        }
+        flush()
         return out
     }
 

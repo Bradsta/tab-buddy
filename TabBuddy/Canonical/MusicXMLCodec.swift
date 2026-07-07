@@ -86,6 +86,10 @@ enum MusicXMLCodec {
                 }
             }
 
+            for chord in measure.chords {
+                xml += harmonyXML(chord, beats: measure.beatCount)
+            }
+
             for note in measure.notes {
                 xml += noteXML(note)
             }
@@ -123,6 +127,30 @@ enum MusicXMLCodec {
         }
         s += "        </staff-details>\n"
         s += "      </attributes>\n"
+        return s
+    }
+
+    /// MusicXML <harmony>: root parsed from the chord name; the remainder is
+    /// carried in kind's display text; offset encodes the in-measure position.
+    private static func harmonyXML(_ chord: CanonicalChord, beats: Int) -> String {
+        var root = ""
+        var alter = 0
+        var rest = chord.name
+        if let first = rest.first, ("A"..."G").contains(String(first)) {
+            root = String(first)
+            rest.removeFirst()
+            if rest.first == "#" { alter = 1; rest.removeFirst() }
+            else if rest.first == "b" { alter = -1; rest.removeFirst() }
+        }
+        guard !root.isEmpty else { return "" }
+        let offset = Int((chord.positionInMeasure * Double(beats) * Double(divisions)).rounded())
+        var s = "      <harmony>\n"
+        s += "        <root><root-step>\(root)</root-step>"
+        if alter != 0 { s += "<root-alter>\(alter)</root-alter>" }
+        s += "</root>\n"
+        s += "        <kind text=\"\(esc(rest))\">other</kind>\n"
+        if offset > 0 { s += "        <offset>\(offset)</offset>\n" }
+        s += "      </harmony>\n"
         return s
     }
 
@@ -272,6 +300,14 @@ private final class MusicXMLParserDelegate: NSObject, XMLParserDelegate {
     private var runningBeats = 0.0       // position accumulator within the measure
     private var lastHeadPosition = 0.0   // position of the current chord group's head
 
+    // Current harmony being assembled
+    private var inHarmony = false
+    private var harmonyRootStep = ""
+    private var harmonyRootAlter = 0
+    private var harmonyKindText = ""
+    private var harmonyOffsetDivs = 0
+    private var curChords: [CanonicalChord] = []
+
     // Current note being assembled
     private var inNote = false
     private var noteIsChord = false
@@ -296,8 +332,15 @@ private final class MusicXMLParserDelegate: NSObject, XMLParserDelegate {
         case "measure":
             curMeasureNumber = Int(attributeDict["number"] ?? "") ?? (measures.count + 1)
             curNotes = []
+            curChords = []
             runningBeats = 0
             lastHeadPosition = 0
+        case "harmony":
+            inHarmony = true
+            harmonyRootStep = ""; harmonyRootAlter = 0
+            harmonyKindText = ""; harmonyOffsetDivs = 0
+        case "kind":
+            if inHarmony { harmonyKindText = attributeDict["text"] ?? "" }
         case "note":
             inNote = true
             noteIsChord = false
@@ -371,10 +414,26 @@ private final class MusicXMLParserDelegate: NSObject, XMLParserDelegate {
         case "note":
             finishNote()
             inNote = false
+        case "root-step":
+            if inHarmony { harmonyRootStep = trimmed }
+        case "root-alter":
+            if inHarmony { harmonyRootAlter = Int(trimmed) ?? 0 }
+        case "offset":
+            if inHarmony { harmonyOffsetDivs = Int(trimmed) ?? 0 }
+        case "harmony":
+            if !harmonyRootStep.isEmpty {
+                let accidental = harmonyRootAlter == 1 ? "#" : (harmonyRootAlter == -1 ? "b" : "")
+                let position = Double(harmonyOffsetDivs)
+                    / (Double(MusicXMLCodec.divisions) * Double(max(beats, 1)))
+                curChords.append(CanonicalChord(name: harmonyRootStep + accidental + harmonyKindText,
+                                                positionInMeasure: max(0, min(1, position))))
+            }
+            inHarmony = false
         case "measure":
             measures.append(CanonicalMeasure(number: curMeasureNumber,
                                              notes: curNotes,
-                                             beatCount: beats))
+                                             beatCount: beats,
+                                             chords: curChords))
         case "miscellaneous-field":
             handleMisc(name: curMiscName, value: trimmed)
             curMiscName = nil

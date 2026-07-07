@@ -210,6 +210,15 @@ struct DrawnTabSystemView: View {
                                       design: .default, color: palette.section)
                 ctx.draw(tag, at: CGPoint(x: x + 18, y: y), anchor: .leading)
             }
+
+            // Chord symbols at their in-measure positions (lead-sheet harmony).
+            for chord in measure.chords {
+                let cx = staffLeft + CGFloat(local) * measureWidth
+                    + CGFloat(chord.position) * measureWidth + 7
+                let name = resolveText(chord.name, size: 11, weight: .semibold,
+                                       design: .default, color: palette.section)
+                ctx.draw(name, at: CGPoint(x: max(cx, x + 14), y: y), anchor: .leading)
+            }
             // A / B loop flags
             if loopStart == measure.globalIndex {
                 drawLoopFlag(&ctx, "A", x: x + measureWidth - 16, y: y)

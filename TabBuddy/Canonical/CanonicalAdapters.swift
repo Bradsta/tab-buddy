@@ -55,9 +55,13 @@ enum CanonicalAdapters {
             }
             notesTotal += canonNotes.count
             let mBeats = map.isFreeTime ? onsetCount : measure.beatCount
+            let chords = (measure.chords ?? []).map {
+                CanonicalChord(name: $0.name, positionInMeasure: $0.position)
+            }
             measures.append(CanonicalMeasure(number: measure.measureNumber,
                                              notes: canonNotes,
-                                             beatCount: mBeats))
+                                             beatCount: mBeats,
+                                             chords: chords))
         }
 
         // Confidence: coverage of measures that actually carried notes.
@@ -104,6 +108,7 @@ enum CanonicalAdapters {
                             capoOffsets: capoOffsets,
                             beatsPerMeasure: beats,
                             noteValue: noteValue,
+                            keyFifths: fifths(forKeyName: map.key),
                             bpm: map.bpm,
                             measures: measures,
                             provenance: provenance)
@@ -149,6 +154,18 @@ enum CanonicalAdapters {
                                           measureCount: max(tab.measureCount, 1),
                                           bpm: tab.bpm ?? 120,
                                           tuningMIDI: tab.tuningMIDI)
+        map.key = keyName(forFifths: tab.keyFifths)
+        // Chords ride along by measure order.
+        if tab.measures.contains(where: { !$0.chords.isEmpty }) {
+            var all = map.allMeasures
+            for (i, cm) in tab.measures.enumerated() where i < all.count {
+                if !cm.chords.isEmpty {
+                    all[i].chords = cm.chords.map { ($0.name, $0.positionInMeasure) }
+                }
+            }
+            map.systems = [MeasureSystem(rect: .zero, lineRange: nil, measures: all)]
+        }
+
         let perRow = 4
         let all = map.allMeasures
         guard all.count > perRow else { return map }
@@ -348,6 +365,32 @@ enum CanonicalAdapters {
             // lowercase single letter where possible for the classic tab look
             return name.count == 1 ? name.lowercased() : name
         }
+    }
+
+    /// Key name ("A", "Eb minor") -> MusicXML fifths, nil if unrecognized.
+    static func fifths(forKeyName name: String?) -> Int? {
+        guard let name else { return nil }
+        let lower = name.lowercased().trimmingCharacters(in: .whitespaces)
+        let isMinor = lower.contains("min") || lower.hasSuffix("m")
+        var root = ""
+        for ch in lower {
+            if root.isEmpty, ("a"..."g").contains(String(ch)) { root = String(ch) }
+            else if root.count == 1, ch == "#" || ch == "b" { root.append(ch) }
+            else if !root.isEmpty { break }
+        }
+        let majors = ["c": 0, "g": 1, "d": 2, "a": 3, "e": 4, "b": 5, "f#": 6, "c#": 7,
+                      "f": -1, "bb": -2, "eb": -3, "ab": -4, "db": -5, "gb": -6, "cb": -7]
+        let minors = ["a": 0, "e": 1, "b": 2, "f#": 3, "c#": 4, "g#": 5, "d#": 6, "a#": 7,
+                      "d": -1, "g": -2, "c": -3, "f": -4, "bb": -5, "eb": -6, "ab": -7]
+        return isMinor ? minors[root] : majors[root]
+    }
+
+    /// MusicXML fifths -> major key name for display.
+    static func keyName(forFifths fifths: Int?) -> String? {
+        guard let fifths, fifths >= -7, fifths <= 7 else { return nil }
+        let sharps = ["C", "G", "D", "A", "E", "B", "F#", "C#"]
+        let flats = ["C", "F", "Bb", "Eb", "Ab", "Db", "Gb", "Cb"]
+        return fifths >= 0 ? sharps[fifths] : flats[-fifths]
     }
 
     /// Best-effort tuning lookup by name (e.g. "Drop D"); nil if unrecognized.

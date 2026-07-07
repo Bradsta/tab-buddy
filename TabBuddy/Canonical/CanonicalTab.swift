@@ -103,12 +103,32 @@ struct CanonicalMeasure: Codable, Equatable {
     var notes: [CanonicalNote]
     /// Beats in this measure (from time signature or a detected beat ruler).
     var beatCount: Int
+    /// Chord symbols over this measure (lead-sheet harmony). Additive.
+    var chords: [CanonicalChord]
 
-    init(number: Int, notes: [CanonicalNote] = [], beatCount: Int = 4) {
+    init(number: Int, notes: [CanonicalNote] = [], beatCount: Int = 4,
+         chords: [CanonicalChord] = []) {
         self.number = number
         self.notes = notes
         self.beatCount = beatCount
+        self.chords = chords
     }
+
+    enum CodingKeys: String, CodingKey { case number, notes, beatCount, chords }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        number = try c.decode(Int.self, forKey: .number)
+        notes = try c.decode([CanonicalNote].self, forKey: .notes)
+        beatCount = try c.decode(Int.self, forKey: .beatCount)
+        chords = try c.decodeIfPresent([CanonicalChord].self, forKey: .chords) ?? []
+    }
+}
+
+/// A chord symbol at a position within a measure ("F#m7", "A/C#").
+struct CanonicalChord: Codable, Equatable {
+    var name: String
+    var positionInMeasure: Double
 }
 
 // MARK: - CanonicalNote
@@ -258,5 +278,10 @@ enum CanonicalConverterVersion {
     // v11: proportional note durations via synthesized rhythm line, ledger-
     //      band rejection (staff-line continuity for notation), trailing
     //      whole-rest measures kept, notation/TAB page routing guard.
-    static let current = 11
+    // v12: lead-sheet harmony — chord symbols extracted (font-mush
+    //      normalization), carried through parser/canonical/MusicXML
+    //      <harmony>, rendered in the Tab Player; key signature -> canonical
+    //      keyFifths + viewer subtitle; printed time signature extracted and
+    //      used for duration math. Chord lines above text tabs parse too.
+    static let current = 12
 }
