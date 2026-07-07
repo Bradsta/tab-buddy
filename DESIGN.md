@@ -1,233 +1,188 @@
-# TabBuddy — Canonical Library Architecture
+# TabBuddy × Gamic Arts — viewer/maker chrome revamp ("Quiet header", direction 1b)
 
-This document is the design spec for TabBuddy's evolution from a viewer of
-imported tab files into a system built around a **Tab Buddy-generated canonical
-representation** of each tab, stored in a **Tab Buddy-controlled iCloud app
-container** so a user's library follows them device-to-device.
+Implementation spec for the TabBuddy iOS app (SwiftUI). Reference mockups:
+`templates/tab-buddy-revamp/TabBuddyRevamp.dc.html` — option **1b** (iPad, 834×1194) and **2a** (iPhone, 390×844).
+Design tokens live in the Gamic Arts design-system folder (`tokens/*.css`, entry `styles.css`); hex conversions for Swift are below.
 
-It captures the full multi-phase vision. Only a subset is built at any given
-time; see **Build phases** for status.
+## 1. Goal
 
----
+One chrome for every way you read a tab. Today the top bar and bottom transport differ between
+text tabs, PDFs, "Original" renders, and the TabBuddy (canonical) player. After this change:
 
-## 1. Motivation
+- **One header** (52pt, translucent) shared by every viewer surface and the Tab Maker.
+- **One transport grammar** — three fixed zones: `[play cluster] [position] [tools]`. Only the
+  middle zone's meaning changes per surface.
+- **The `⋯` ellipsis menu is deleted.** Rename / Edit tags / details move into a menu on the
+  title itself (title shows a small caret; tap opens it).
+- **Play always means "go":** playback on the canonical player, auto-scroll on original text/PDF.
+  Same button, same size, same seat.
 
-Today TabBuddy stores each imported tab as a security-scoped **bookmark** to the
-user's own `.txt`/`.pdf`, with metadata (tags, favorites, BPM, loops, play
-counts) in a **local-only SwiftData store**. Two consequences:
+Out of scope: library/browser (card grid already shipped), Collections, OCR import, lens/diff
+implementation (surfaced in direction 1c; hooks noted in §8).
 
-1. **Nothing follows the user across devices.** Bookmarks are device-local;
-   the SwiftData store is device-local. A 250 MB / ~5k-file library can't be
-   carried in full.
-2. **The view is inert.** PDFs render via PDFKit (no playback, highlight, or
-   transform). Text tabs parse to a lossy `MeasureMap` used only for the
-   playback-highlight overlay — the displayed content is still the raw original.
+## 2. Delete list
 
-## 2. Core idea
+- `TabViewerView.header` (custom HStack header): favorite star inline, tag chips, loop pill,
+  wand quick-toggle, `Menu { … ellipsis.circle }` — all gone, replaced per §4.
+- `ScrollTransportBar` as a separate layout — merge into the shared transport (§5).
+- `TabMakerToolbar` as a *top* toolbar — the maker's tools move into the bottom transport (§6).
 
-Convert every imported tab into a **canonical** form — Tab Buddy-generated
-**MusicXML** — that captures as much of the tab as the source allows: headers,
-tuning/capo, tempo, time/key signature, and notes (string + fret + pitch +
-duration). Then:
+## 3. Tokens → Swift
 
-- **Drive a standardized TabBuddy display and playback from the canonical**, so
-  every tab — regardless of whether it came from text, a PDF, or (later) a scan —
-  becomes a first-class interactive tab.
-- **Keep the original as a reference**, used for *diff* (canonical vs. source)
-  and *correction*, not as the thing rendered.
-- **Sync the small canonical + metadata** (kilobytes/file) via the iCloud app
-  container. **Leave the heavy originals out of sync** — they become evictable
-  and re-downloadable on demand.
+Add these as asset-catalog colors (light / dark). CSS var names given for cross-reference.
 
-The canonical is **best-effort and versioned**: faithful on what the source
-encoded, inferred on what it didn't, and re-derivable as converters improve.
-
-## 3. Layered data model
-
-Each library entry has three layers:
-
-| Layer | What | Lives where | Syncs? |
+| Asset name | CSS var | Light | Dark |
 |---|---|---|---|
-| **Original** | the imported `.txt`/`.pdf` | bookmark ref (as today); later evictable | no (heavy) |
-| **Canonical** | generated `.musicxml` | iCloud container `canonical/<id>.musicxml` | yes (tiny) |
-| **Metadata + provenance** | tags, favorites, BPM, loops, play counts, source/confidence/version | `library.json` manifest (+ SwiftData cache) | yes (tiny) |
+| `Paper` (app canvas) | `--paper` | `#FDFBF7` | `#1B1613` |
+| `Surface` (cards, bars) | `--surface` | `#FFFFFC` | `#27221E` |
+| `SurfaceInset` (wells, inactive tiles) | `--surface-inset` | `#F5F2ED` | `#322D29`* |
+| `SurfaceRaised` (sheets, popovers, thumb) | `--surface-raised` | `#FFFFFF` | `#322D29` |
+| `Fg1` primary text | `--fg-1` | `#231C18` | warm near-white (see `tokens/dark.css`) |
+| `Fg2` secondary | `--fg-2` | `#60564F` | — |
+| `Fg3` tertiary/placeholder | `--fg-3` | `#8D827A` | — |
+| `Separator` hairlines | `--separator` | `#E2DDD7` | — |
+| `SeparatorStrong` (track bg) | `--separator-strong` | `#D1CBC4` | — |
+| `Accent` (TabBuddy rose) | `--accent-tabbuddy` | `#DB6868` | `#F07E79` |
+| `AccentStrong` (pressed / soft-fill text) | derived | `#C24D4F` | — |
+| `AccentSoft` (tinted fills: tempo pill, active-measure highlight) | derived | `#FFE5E4` | — |
+| `AccentSofter` (badges, tinted rows) | derived | `#FFF2F1` | — |
+| `CautionSoft` / `CautionText` (low-confidence badge) | `--caution-soft` | `#FCEED6` / `#8B5F00` | — |
+| `BarTint` (header/transport material) | `--bar-tint` | `#FDFBF7` @ 78% + system blur | dark paper @ 78% |
 
-**Identity is device-independent:** primary key `libraryPath` (relative path in
-the library root), fallback `contentHash` (`FileItem.fingerprint`). The bookmark
-is *not* identity — it's a device-local convenience for reaching the original.
+\* dark values for the full neutral ramp are in `tokens/dark.css`; convert the same way if needed.
 
-### Provenance (per canonical)
-- `sourceType`: `txtDirect` | `pdfText` | `ocr` (later) | `composed`
-- `confidence`: 0–1 quality estimate of the conversion
-- `converterVersion`: integer; lets us re-derive/upgrade canonicals in place
-- `rhythmSource`: `synthesized` | `midiAligned` | `authored`
-- `clipped`: bool — source appeared cut off (e.g. PDF page truncation)
+**Replace all uses of** `Color.accentColor` (system blue today), `.yellow` favorite stars, and
+`Color(uiColor: .systemIndigo)` loop tint → `Accent`. Semantic green/red stay for meaning only.
 
-## 4. In-memory types & the bridge
+Type: SF Pro via system styles — header title `.headline` (17 semibold), subtitle 12 regular,
+readouts `Spline Sans Mono`-equivalent = `.monospacedDigit()` on SF (the suite uses Spline Sans
+Mono on web; on iOS use SF Mono or monospaced digits). Tab content stays monospaced.
+Radii: control 11, small chip 8, pills `Capsule`. Motion: 140/240ms ease-out, no bounces.
 
-`CanonicalTab` (Codable value type) is the in-memory mirror of the MusicXML
-document and the hub every path converges on:
+## 4. Header (shared: text / PDF / canonical / maker)
 
-```
-                         ┌──────────────► MusicXML file (canonical, source of truth)
-TabParser (.txt/.pdf) ─┐ │
-PDFKit text extract  ──┼─► MeasureMap ─► CanonicalTab ─┼─► TabStaffView (standardized display)
-(later) OCR          ──┘                               ├─► MeasureMap ─► PlaybackCoordinator
-                          ComposedTab ◄────────────────┤    (existing playback engine)
-                          (Maker edit) ────────────────┘
-                                                        └─► ASCII (text diff vs original)
-```
+Height 52pt, background = `BarTint` + `.ultraThinMaterial`-style blur, bottom hairline
+`Separator`. Layout `[leading 1fr | center auto | trailing 1fr]`:
 
-Existing reused building blocks:
-- `TabParser.parse(_:) -> MeasureMap` (`TabBuddy/TabParser.swift`)
-- `MeasureMap`/`MeasureSystem`/`Measure`/`NoteEvent` (`TabBuddy/MeasureMap.swift`)
-- `ComposedTab`/`ComposedNote`/`GuitarTuning` (`TabBuddy/Maker/`) — editor model
-- `StaffPitchMapper` (pitch↔staff step+accidental)
-- `FretSuggestionEngine.suggest/allPositions` (pitch→string/fret)
-- `MeasureMapBuilder.build(...)` (`[ComposedNote] -> MeasureMap`)
-- `Maker/TabStaffView` (renders tab from notes + tuning — the standardized view)
+- **Leading:** back chevron in `Accent`. iPad: chevron + previous-screen word ("Library" /
+  "Compositions"). iPhone: chevron only. Keep the interactive swipe-back enabler.
+- **Center — title cluster (tappable, one hit target):**
+  - Title, 17 semibold `Fg1`, middle truncation, tiny caret-down (11–12pt, `Fg3`) after it.
+  - Subtitle 12 `Fg2`: viewer → `Tuning · TimeSig · first tag` (omit unknowns, lowercase tags);
+    PDF → `PDF · N pages · tag`; maker → `Tuning · TimeSig · N bars`.
+  - **Confidence badge** (viewer only, when a canonical exists): capsule, mono 10pt,
+    dot + `NN%`. ≥ threshold: `AccentSofter` bg / `AccentStrong` text. Below: `CautionSoft` /
+    `CautionText`. iPad: badge sits beside the title; iPhone: beside the subtitle.
+  - Tapping the cluster opens a menu/sheet: **Rename…, Edit tags…, Favorite ⭐︎ toggle,
+    file details** (source, converter version, confidence). This replaces the ellipsis.
+- **Trailing:**
+  - iPad: favorite star (filled `Accent` when on) + **view switch**.
+  - iPhone: view switch only (favorite lives in the title menu).
+  - **View switch** = segmented capsule on `SurfaceInset`, selected segment `SurfaceRaised` +
+    shadow-1. Viewer: `✦ TabBuddy | 🗎 Original` (icons: sparkle / file-text; iPhone icon-only,
+    38×30 segments). Maker: `✎ Edit | 👁 Preview`. Persist per-file (`preferredTextMode` /
+    `renderMode` as today). Hide the switch when no canonical exists yet.
 
-**Why a file, not a SwiftData model:** since the iCloud container is the source
-of truth, the `.musicxml` file *is* the canonical. SwiftData becomes a hydrated
-cache/index. This also keeps imported canonicals out of the Maker's "my
-compositions" `@Query` list. `ComposedTab` stays the editor's working format;
-adapters convert `CanonicalTab <-> ComposedTab` for correction.
+Title block on the *page* (mockup shows title printed large in 1a only) — **not** used in 1b;
+content starts directly under the header.
 
-### Conversion fidelity (honest ceiling)
-| Characteristic | MusicXML home | Fidelity |
-|---|---|---|
-| Headers (title/artist/comments) | `work-title`, `credit`, `words` | strong |
-| Tuning / capo | `staff-tuning` (+ private per-string capo) | strong |
-| Tempo, time/key sig | `sound tempo`, `metronome`, `time`, `key` | strong |
-| Notes: string + fret | `technical/string` + `fret` | strong (lossless) |
-| **Rhythm / durations** | `duration`, `type` | **synthesized** unless a paired `.mid` aligns it |
-| Articulations (bend/HO/PO/slide) | `hammer-on`, `bend`, … | partial |
-| Clipped-off content | — | unrecoverable |
+## 5. Transport (shared bar)
 
-MIDI is a **derived/auxiliary** format (timing source via `MIDITempoExtractor`,
-ground-truth in the `Tools/` ML pipeline), **not** a canonical container — it
-encodes pitch, not string+fret, and can't represent tab articulations.
-MusicXML is the open interchange container because it has native `string`/`fret`.
+Full-width bottom bar, same material as header, top hairline. All hit targets ≥ 44pt.
+Replaces both `TabTransportBar`'s visual layer and `ScrollTransportBar`. Keep
+`PlaybackCoordinator` / engine wiring and the `onSeek`/`onLoopChanged`/`onBeforePlay` hooks.
 
-## 5. Two classes of edit (keep separate)
+### Zone grammar
 
-- **Corrections** — "the converter misread this." These **mutate the canonical**
-  (via Maker → `ComposedTab` → re-emit MusicXML). They are the diff target and
-  raise fidelity. Layered on top of an immutable original so the diff anchor is
-  preserved.
-- **Lenses / transforms** — "the canonical is right; show it differently."
-  **Ephemeral, non-destructive** reinterpretations at view time; never written
-  back into the canonical. Examples:
-  - *Remove a (possibly partial) capo*: add capo offset to fretted strings,
-    holding sounding pitch constant — `new_fret = fret + capoOffset[string]`.
-  - *"Too lazy to tune up"*: source assumes a string raised by k semitones; play
-    it at standard and add k to that string's frets.
+| Zone | Canonical player | Original text / PDF | Maker |
+|---|---|---|---|
+| **Play cluster** (left) | skip-to-start · **Play 52pt** · readout `m. 12/48` + `1:24` | back-to-top · **Play 52pt** (= auto-scroll) · readout `p. 1/3` + `scroll` | skip · **Play 52pt** · readout `bar 3/8` + elapsed |
+| **Position** (center, flexible) | measure scrubber | speed slider (gauge icon + `NN px/s` readout) | insertion-point scrubber |
+| **Tools** (right) | tempo pill · Sound · Metronome · Count-in · Loop · Follow · Display | Loop-to-top · Display | Listen (mic) · tempo pill · Play sits here on maker if preferred — see §6 |
 
-  Both are one operation: a per-string pitch-offset reconfiguration that
-  re-solves fret numbers while **sounding pitch stays invariant** (audio,
-  metronome, highlight untouched). Pure function
-  `applyLens(CanonicalTab, LensConfig) -> (notes, tuningMIDI)` feeding the
-  existing `TabStaffView`. Offer *literal* (shift on same string) vs *re-voiced*
-  (`FretSuggestionEngine` re-picks for playability); clamp/flag out-of-range
-  frets. Default ephemeral; opt-in "remember this view for this tab" as a saved
-  preset that is explicitly **not** part of the canonical.
+Control anatomy:
+- **Play:** 52pt circle (48 on iPhone), `Accent` fill, white icon, soft accent shadow.
+  Pause state swaps glyph only. During count-in show pause + pulsing readout.
+- **Icon tile:** 44×44, radius 11. Inactive: `SurfaceInset` bg, `Fg1` icon. Active: `Accent` bg,
+  white icon. 10pt label under the tile in `Fg2` (`Accent` when active). Labels hide on iPhone.
+- **Tempo pill:** height 44 (38 iPhone), `AccentSoft` bg, `AccentStrong` content:
+  ♪ icon + BPM mono semibold; percent-of-original as its label ("94%"). Tap → existing tempo /
+  speed-trainer popover (restyle with tokens; quick buttons 50/75/90/100 use `Accent` tint).
+- **Scrubber:** 4pt track `SeparatorStrong`, filled `Accent`, 22pt `SurfaceRaised` thumb with
+  shadow-2. Same component for measure position and scroll speed.
+- **Readout:** mono, value 15 semibold `Fg1`, sub-line 12 `Fg2` (loop state may tint sub-line
+  `Accent` — not indigo).
+- **Display popover** (sliders icon) keeps per-surface contents: text size (original text),
+  auto-scroll options, player display settings. On iPhone it also absorbs **Sound, Count-in,
+  Follow** (see below).
 
-## 6. Confidence-gated display
+### iPhone compact layout (mockup 2a)
 
-The display inversion is **not** a hard cutover:
-- High-confidence canonical → render the standardized `TabStaffView` + playback.
-- Low-confidence / clipped → keep rendering the **original** (current PDFKit/text
-  path) as fallback; canonical still available for playback-only / correction.
-- User corrections **promote** a file from fallback → canonical over time.
+Two rows inside the bar, then home-indicator inset:
+1. **Controls row:** play cluster left, spacer, then (player) tempo pill · Metronome · Loop ·
+   Display as 38pt tiles. Sound / Count-in / Follow move into Display.
+2. **Slider row:** full-width scrubber (player/maker: position; PDF/text: speed with gauge icon
+   and `px/s` readout).
 
-The existing extension-branch in `TabViewerView` is retained as this fallback
-path, gated by `provenance.confidence`.
+### Semantics
 
-## 7. iCloud app-container storage
+- Original text + PDF share *identical* transports. `showDisplayButton` special-casing goes away
+  (PDF Display popover can be empty of text-size and still offer scroll options).
+- Loop on originals = loop-to-top (as today); keep the Loop seat so muscle memory holds.
+- Auto-scroll speed 0 + play tap → nudge to default speed 8 (existing behavior, keep).
 
-Library data + canonical live in a **Tab Buddy-controlled iCloud app container**
-(CloudDocuments ubiquity container), not CloudKit. Layout:
+## 6. Tab Maker
 
-```
-<ubiquity-container>/Documents/
-  library.json              # manifest = portable source of truth for metadata
-  canonical/<FileItem.id>.musicxml
-  previews/<id>.png         # optional: cheap thumbnail for original-absent devices
-```
+- Top `TabMakerToolbar` is removed. Header per §4 (editable title stays in the center cluster —
+  dashed underline affordance, tap to edit; Edit/Preview switch trailing).
+- Bottom transport, three zones (iPad): **tools** (pencil, eraser — pencil active by default;
+  duration chips `1/2 1/4 1/8 1/16` as 32pt mono chips, active = `AccentSoft`) · **position**
+  (`bar N/M` + scrubber) · **playback** (mic "Listen", tempo pill, Play 52).
+  Time-signature / tuning / measure ± move into the Display popover (they're set rarely).
+  iPhone: tools row 1, playback row 2 (mockup 2a, third frame).
+- Mic active state: use `Accent`, not `.red` (red is reserved for destructive/negative).
+- Fret-suggestion popover (already in `FretSuggestionEngine` + `NoteInputOverlay`): card
+  `SurfaceRaised`, radius 15, shadow-3; headline "F♯4 · easiest reach here"; alternatives as
+  capsules — recommended = `AccentSoft`/`AccentStrong`, others `SurfaceInset`/`Fg2`.
 
-- **Manifest is the source of truth**; local SwiftData is a hydrated cache.
-  - On launch / iCloud change → read manifest, reconcile into SwiftData (key by
-    `id`/`libraryPath`/`contentHash`).
-  - On user edit → write SwiftData + debounced manifest write → iCloud
-    propagates → other devices reconcile.
-- **Conflict resolution** reuses the field-level last-writer-wins merge already
-  in `BackupManager.importJSON` (`lastOpenedAt` = max, etc.); per-`.musicxml`
-  conflicts = last-writer-wins (or keep-both).
-- Access via `NSFileCoordinator`/`NSFilePresenter`.
-- **Canonical-present / original-absent** is the *normal* state on secondary
-  devices: the viewer must render + play from `.musicxml` alone, and re-link an
-  original later via `libraryPath`/`contentHash` if one appears locally.
-- Originals stay where they are (bookmark), evictable; on-demand re-download is a
-  later enhancement.
+## 7. Confidence-gated fallback (PDF)
 
-**External prerequisite:** iCloud capability + container
-`iCloud.com.gamicarts.TabBuddy` must be enabled in the Apple Developer account
-and provisioning profile (entitlements file change alone is insufficient).
+When a canonical exists but `provenance.confidence` is below the display threshold and the
+Original is showing, insert a one-line notice card above the PDF (Surface bg, hairline, radius 11):
 
-## 8. On-the-go import (later)
+> `62%` badge + "Showing the original — the TabBuddy version isn't stage-ready yet. **Review**"
 
-"Someone hands me a tab" → slurp it in on device:
-- Text / text-extractable PDF → fully on-device today (`TabParser` / PDFKit).
-- Scanned/raster PDF or **photo** → on-device **Vision OCR** of fret digits +
-  staff-line geometry → reconstructed ASCII → `TabParser` → canonical. New work;
-  tablature is geometrically regular (6 staff lines, printed digits), far more
-  tractable than general OMR.
-- Needs a Share Sheet extension + camera/photo capture entry points (today only
-  an in-app `fileImporter` exists; no `onOpenURL`/share target).
-- Always keep the original for diff/correction.
+"Review" opens the canonical view (later: the correction/diff flow). Dismissable per file.
+Copy is Gamic voice: sentence case, plain, no exclamation points.
 
-## 9. V2 — guide construction of a guitar tab from other-instrument sheet music
+## 8. Future hooks (do not build now, don't paint into a corner)
 
-Pipeline: `sheet music → note events → arrange/reduce to guitar →
-pitch→string/fret → CanonicalTab → tab`. Stage 3 already exists
-(`FretSuggestionEngine` + `StaffPitchMapper` + `MeasureMapBuilder`). Split:
+- **Diff view:** third state of the view switch (`columns` icon) — keep the switch enum extensible.
+- **Lens (capo/tuning transforms):** non-destructive; when active, render a dismissable chip
+  under the header: `⇄ Lens: no capo (−2) — sounds the same, frets shift` on `AccentSofter`.
+  Never mutates the canonical.
 
-- **v2a — digital input** (MusicXML/MIDI sheet music): no OMR; reuses the bridge,
-  `FretSuggestionEngine`, and the Maker as the **guided** arrangement/voicing
-  surface (piano is more polyphonic/wider than 6 strings + 4 fingers, so
-  reduction is human-steered, not fully automatic). Reachable once the bridge
-  exists.
-- **v2b — image input** (photo/PDF of notation): gated on an on-device OMR
-  CoreML model; defer until v2a proves the arrangement UX.
+## 9. Code touchpoints
 
-Everything in the current foundation (MusicXML container, `CanonicalTab` hub,
-Maker correction surface, `FretSuggestionEngine`) is load-bearing for v2 too —
-nothing here is a dead end.
+- `TabViewerView.swift` — delete `header`; adopt shared `ViewerHeader` (new) via safe-area top
+  inset; route rename/tags/favorite into the title menu; drop `usingDrawnPlayer` quick-toggle
+  button (view switch covers it).
+- `TabTransportBar.swift` — restyle to §5 tokens/anatomy; keep engine logic, hooks, speed
+  trainer; move Sound/Count-in/Follow into Display on compact width (`horizontalSizeClass`).
+- `ScrollTransportBar.swift` — delete; originals use the shared transport with the
+  scroll-speed middle zone.
+- `TabMakerView.swift` / `TabMakerToolbar.swift` — toolbar → bottom transport per §6; title
+  field moves into `ViewerHeader` center slot.
+- `TabPlayerView.swift` — active-measure highlight → `AccentSoft`; playhead `Accent`.
+- Global: asset-catalog colors from §3; app accent = rose; kill `.yellow` / `.systemIndigo` /
+  system-blue accents.
 
----
+## 10. QA checklist
 
-## Build phases
-
-See `PROGRESS.md` for the detailed, dated implementation log and file inventory.
-
-- **Phase 0 — this doc.** ✅ Done.
-- **Phase 1 — MusicXML bridge core** (pure, testable, no UI/iCloud):
-  `CanonicalTab`, `MusicXMLCodec`, `CanonicalAdapters`. ✅ Done (10 unit tests).
-- **Phase 2 — on-device convert + provenance + (partial) viewer**: extended
-  `FileItem` (canonical ref + provenance + denormalized title/tuning),
-  `CanonicalStore`, `CanonicalConverter` (batch + convert-on-open),
-  `LibraryMigration` safety net, import wiring, **swappable viewer** (Original ↔
-  TabBuddy canonical). ✅ Core done. ⏳ Remaining: full confidence-gated display
-  inversion using `TabStaffView`; richer side-by-side diff UI.
-- **Phase 3 — iCloud app-container storage**: entitlement/provisioning,
-  `LibraryStore`, manifest-as-source-of-truth + SwiftData hydration, migration.
-  ⏳ Not started (needs iCloud container enabled in the Apple Developer account).
-- **Card Library redesign** (from the design handoff package): ✅ Screen 1 done
-  (`FileCardView`, card grid, "Jump back in" rail, tuning/title denormalization).
-  ⏳ Deferred: Collections model + split-view sidebar, canonical import-review
-  sheet, drag-to-organize, group-by, color-coded tags.
-
-### Out of scope until later (tracked above)
-OCR/scan & camera import; full display-inversion rollout; ephemeral lens
-transforms; original eviction / on-demand re-download; Share Sheet extension;
-v2a/v2b arranger; Collections data model.
+- [ ] Header pixel-identical (except center/trailing content) across text-original, text-player, PDF-original, PDF-canonical, maker.
+- [ ] Play button same size/position on every surface, both size classes.
+- [ ] No `⋯` anywhere; rename/tags/favorite reachable from the title menu in ≤ 2 taps.
+- [ ] View switch persists per file; hidden when no canonical exists.
+- [ ] Confidence badge tint flips at the threshold; notice card only on gated PDFs.
+- [ ] Dark mode: lifted accent `#F07E79`, dark neutral ramp from `tokens/dark.css`.
+- [ ] All hit targets ≥ 44pt; transport labels visible on iPad, hidden on iPhone.

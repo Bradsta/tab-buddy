@@ -52,6 +52,9 @@ final class FileItem : Equatable {
     /// Playback practice speed is a percentage of this.
     var referenceBPM: Double? = nil
 
+    /// user dismissed the low-confidence notice card on this file's PDF view
+    var confidenceNoticeDismissed: Bool = false
+
     // MARK: Canonical (Phase 2)
 
     /// Filename of the generated canonical MusicXML in `CanonicalStore`
@@ -98,7 +101,15 @@ final class FileItem : Equatable {
     /// Tuning name for display: canonical preset name when recognizable
     /// ("EADGBE" → "Standard"), else the raw derived text.
     var displayTuning: String {
-        GuitarTuning.canonicalName(for: tuning) ?? tuning ?? "Standard"
+        if let name = GuitarTuning.canonicalName(for: tuning) { return name }
+        // Show a raw tuning string only if it actually looks like one
+        // (note letters) — stale metadata occasionally carries junk like a
+        // time signature, which must never render in the tuning pill.
+        if let t = tuning?.trimmingCharacters(in: .whitespaces), !t.isEmpty,
+           t.range(of: "^[A-Ga-g][#b]?( ?[A-Ga-g][#b]?){3,7}$", options: .regularExpression) != nil {
+            return t
+        }
+        return "Standard"
     }
 
     /// Typed instrument (nil/unknown string → guitar).

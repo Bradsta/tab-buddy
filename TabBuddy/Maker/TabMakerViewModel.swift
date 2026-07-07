@@ -69,6 +69,9 @@ final class TabMakerViewModel: ObservableObject {
     @Published var playbackMeasureIndex: Int = 0
     @Published var playbackBeatFraction: Double = 0
 
+    /// The most recently pencil-placed note — drives the fret-suggestion card.
+    @Published var lastPlacedNoteID: UUID? = nil
+
     @Published var isTranscribing: Bool = false
     @Published var transcriptionNoteName: String = "-"
     @Published var transcriptionConfidence: Double = 0
@@ -123,6 +126,8 @@ final class TabMakerViewModel: ObservableObject {
     // MARK: - Draft Note (during drag)
 
     func updateDraftNote(measureIndex: Int, positionInMeasure: Double, staffStep: Int) {
+        // A fresh placement begins — retire the previous suggestion card.
+        if draftNote == nil { lastPlacedNoteID = nil }
         let clamped = max(StaffPitchMapper.guitarLowestStep,
                           min(StaffPitchMapper.guitarHighestStep, staffStep))
 
@@ -177,6 +182,17 @@ final class TabMakerViewModel: ObservableObject {
         syncNotesToModel()
         draftNote = nil
         lastPreviewedMIDI = nil
+        lastPlacedNoteID = note.id
+    }
+
+    /// Re-seat a placed note on a specific string/fret (fret-suggestion card).
+    func setPosition(noteID: UUID, string: Int, fret: Int) {
+        guard let index = notes.firstIndex(where: { $0.id == noteID }) else { return }
+        notes[index].selectedString = string
+        notes[index].selectedFret = fret
+        syncNotesToModel()
+        notePlayer.start()
+        notePlayer.playMIDI(notes[index].midiPitch)
     }
 
     func cancelDraft() {
@@ -233,6 +249,7 @@ final class TabMakerViewModel: ObservableObject {
     func deleteNote(id: UUID) {
         let countBefore = notes.count
         notes.removeAll { $0.id == id }
+        if lastPlacedNoteID == id { lastPlacedNoteID = nil }
         if notes.count != countBefore {
             syncNotesToModel()
         }

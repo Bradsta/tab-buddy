@@ -258,36 +258,36 @@ struct TabPlayerView: View {
 
     // MARK: - Display popover
 
+    /// Display sections — the transport bar owns the surrounding Form and, on
+    /// iPhone, prepends the absorbed Sound/Count-in controls.
+    @ViewBuilder
     private var displayPopover: some View {
         let mode = Binding(get: { notation }, set: { notationRaw = $0.rawValue })
-        return Form {
-            Section("Notation") {
-                Picker("Notation", selection: mode) {
-                    Text("Tab only").tag(NotationMode.tabOnly)
-                    Text("Tab + staff").tag(NotationMode.tabAndStaff)
-                }.pickerStyle(.segmented)
-                Toggle("Rhythm letters", isOn: $showRhythm)
-                HStack {
-                    Text("Size")
-                    Spacer()
-                    Button { fontScale = max(0.8, fontScale - 0.1) } label: { Image(systemName: "textformat.size.smaller") }
-                    Text("\(Int(fontScale * 100))%").font(.caption).monospacedDigit().foregroundStyle(.secondary)
-                    Button { fontScale = min(1.8, fontScale + 0.1) } label: { Image(systemName: "textformat.size.larger") }
-                }.buttonStyle(.borderless)
-            }
-            Section("Auto-scroll") {
-                Picker("Auto-scroll", selection: Binding(
-                    get: { autoScroll }, set: { autoScrollRaw = $0.rawValue })) {
-                    Text("Off").tag(AutoScrollMode.off)
-                    Text("Follow playback").tag(AutoScrollMode.follow)
-                    Text("Line by line").tag(AutoScrollMode.line)
-                }.pickerStyle(.inline)
-            }
-            Section("Tuning & capo") {
-                LabeledContent("Tuning", value: map.tuning ?? "Standard")
-                LabeledContent("Capo", value: map.capoSemitones.map { $0 == 0 ? "None" : "\($0)" } ?? "None")
-            }
+        Section("Notation") {
+            Picker("Notation", selection: mode) {
+                Text("Tab only").tag(NotationMode.tabOnly)
+                Text("Tab + staff").tag(NotationMode.tabAndStaff)
+            }.pickerStyle(.segmented)
+            Toggle("Rhythm letters", isOn: $showRhythm)
+            HStack {
+                Text("Size")
+                Spacer()
+                Button { fontScale = max(0.8, fontScale - 0.1) } label: { Image(systemName: "textformat.size.smaller") }
+                Text("\(Int(fontScale * 100))%").font(.caption).monospacedDigit().foregroundStyle(.secondary)
+                Button { fontScale = min(1.8, fontScale + 0.1) } label: { Image(systemName: "textformat.size.larger") }
+            }.buttonStyle(.borderless)
         }
-        .frame(minWidth: 320, minHeight: 440)
+        Section("Auto-scroll") {
+            Picker("Auto-scroll", selection: Binding(
+                get: { autoScroll }, set: { autoScrollRaw = $0.rawValue })) {
+                Text("Off").tag(AutoScrollMode.off)
+                Text("Follow playback").tag(AutoScrollMode.follow)
+                Text("Line by line").tag(AutoScrollMode.line)
+            }.pickerStyle(.inline)
+        }
+        Section("Tuning & capo") {
+            LabeledContent("Tuning", value: map.tuning ?? "Standard")
+            LabeledContent("Capo", value: map.capoSemitones.map { $0 == 0 ? "None" : "\($0)" } ?? "None")
+        }
     }
 }

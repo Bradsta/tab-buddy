@@ -13,6 +13,8 @@
 		B1626C3E29F631E600304E9E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B1626C3D29F631E600304E9E /* Assets.xcassets */; };
 		B1626C4129F631E600304E9E /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B1626C4029F631E600304E9E /* Preview Assets.xcassets */; };
 		B1626C4B29F631E600304E9E /* TabBuddyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1626C4A29F631E600304E9E /* TabBuddyTests.swift */; };
+		E10000062F7E000100AB0001 /* GoldenImportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000062F7E000100AB0000 /* GoldenImportTests.swift */; };
+		E10000072F7E000100AB0001 /* Fixtures in Resources */ = {isa = PBXBuildFile; fileRef = E10000072F7E000100AB0000 /* Fixtures */; };
 		D10000202F6E000100AB0001 /* CanonicalBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000202F6E000100AB0000 /* CanonicalBridgeTests.swift */; };
 		D10000212F6E000100AB0001 /* CanonicalMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000212F6E000100AB0000 /* CanonicalMigrationTests.swift */; };
 		D10000222F6E000100AB0001 /* ForewordCapoRhythmFreeTimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000222F6E000100AB0000 /* ForewordCapoRhythmFreeTimeTests.swift */; };
@@ -38,6 +40,9 @@
 		D10000112F6E000100AB0101 /* PDFTabExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000112F6E000100AB0100 /* PDFTabExtractor.swift */; };
 		E10000012F7E000100AB0001 /* NoteTranscriberCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000012F7E000100AB0000 /* NoteTranscriberCore.swift */; };
 		E10000022F7E000100AB0001 /* TunerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000022F7E000100AB0000 /* TunerView.swift */; };
+		E10000032F7E000100AB0001 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000032F7E000100AB0000 /* DesignSystem.swift */; };
+		E10000042F7E000100AB0001 /* ViewerHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000042F7E000100AB0000 /* ViewerHeader.swift */; };
+		E10000052F7E000100AB0001 /* FretSuggestionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000052F7E000100AB0000 /* FretSuggestionCard.swift */; };
 		D10000122F6E000100AB0001 /* CanonicalAdapters.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000122F6E000100AB0000 /* CanonicalAdapters.swift */; };
 		D10000132F6E000100AB0001 /* CanonicalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000132F6E000100AB0000 /* CanonicalStore.swift */; };
 		D10000142F6E000100AB0001 /* CanonicalConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000142F6E000100AB0000 /* CanonicalConverter.swift */; };
@@ -54,7 +59,6 @@
 		D10000342F6E000100AB0000 /* DrawnTabSystemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000332F6E000100AB0000 /* DrawnTabSystemView.swift */; };
 		D10000362F6E000100AB0000 /* TabPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000352F6E000100AB0000 /* TabPlayerView.swift */; };
 		D10000512F6E000100AB0000 /* TabTransportBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000502F6E000100AB0000 /* TabTransportBar.swift */; };
-		D10000532F6E000100AB0000 /* ScrollTransportBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000522F6E000100AB0000 /* ScrollTransportBar.swift */; };
 		D10000552F6E000100AB0000 /* SwipeBackEnabler.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000542F6E000100AB0000 /* SwipeBackEnabler.swift */; };
 		D10000092F6E000100AB0001 /* TabMakerDocumentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000092F6E000100AB0000 /* TabMakerDocumentView.swift */; };
 		D100000A2F6E000100AB0001 /* TabMakerToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = D100000A2F6E000100AB0000 /* TabMakerToolbar.swift */; };
@@ -114,6 +118,8 @@
 		B1626C4029F631E600304E9E /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		B1626C4629F631E600304E9E /* TabBuddyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TabBuddyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B1626C4A29F631E600304E9E /* TabBuddyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBuddyTests.swift; sourceTree = "<group>"; };
+		E10000062F7E000100AB0000 /* GoldenImportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoldenImportTests.swift; sourceTree = "<group>"; };
+		E10000072F7E000100AB0000 /* Fixtures */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Fixtures; sourceTree = "<group>"; };
 		D10000202F6E000100AB0000 /* CanonicalBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalBridgeTests.swift; sourceTree = "<group>"; };
 		D10000212F6E000100AB0000 /* CanonicalMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalMigrationTests.swift; sourceTree = "<group>"; };
 		D10000222F6E000100AB0000 /* ForewordCapoRhythmFreeTimeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForewordCapoRhythmFreeTimeTests.swift; sourceTree = "<group>"; };
@@ -141,6 +147,9 @@
 		D10000112F6E000100AB0100 /* PDFTabExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFTabExtractor.swift; sourceTree = "<group>"; };
 		E10000012F7E000100AB0000 /* NoteTranscriberCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteTranscriberCore.swift; sourceTree = "<group>"; };
 		E10000022F7E000100AB0000 /* TunerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunerView.swift; sourceTree = "<group>"; };
+		E10000032F7E000100AB0000 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		E10000042F7E000100AB0000 /* ViewerHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewerHeader.swift; sourceTree = "<group>"; };
+		E10000052F7E000100AB0000 /* FretSuggestionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FretSuggestionCard.swift; sourceTree = "<group>"; };
 		D10000122F6E000100AB0000 /* CanonicalAdapters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalAdapters.swift; sourceTree = "<group>"; };
 		D10000132F6E000100AB0000 /* CanonicalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalStore.swift; sourceTree = "<group>"; };
 		D10000142F6E000100AB0000 /* CanonicalConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalConverter.swift; sourceTree = "<group>"; };
@@ -155,7 +164,6 @@
 		D10000332F6E000100AB0000 /* DrawnTabSystemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawnTabSystemView.swift; sourceTree = "<group>"; };
 		D10000352F6E000100AB0000 /* TabPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabPlayerView.swift; sourceTree = "<group>"; };
 		D10000502F6E000100AB0000 /* TabTransportBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabTransportBar.swift; sourceTree = "<group>"; };
-		D10000522F6E000100AB0000 /* ScrollTransportBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollTransportBar.swift; sourceTree = "<group>"; };
 		D10000542F6E000100AB0000 /* SwipeBackEnabler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeBackEnabler.swift; sourceTree = "<group>"; };
 		D10000092F6E000100AB0000 /* TabMakerDocumentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabMakerDocumentView.swift; sourceTree = "<group>"; };
 		D100000A2F6E000100AB0000 /* TabMakerToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabMakerToolbar.swift; sourceTree = "<group>"; };
@@ -242,6 +250,8 @@
 				C10000092F5E000100AB1001 /* PitchDetector.swift */,
 				E10000012F7E000100AB0000 /* NoteTranscriberCore.swift */,
 				E10000022F7E000100AB0000 /* TunerView.swift */,
+				E10000032F7E000100AB0000 /* DesignSystem.swift */,
+				E10000042F7E000100AB0000 /* ViewerHeader.swift */,
 				C100000A2F5E000100AB1001 /* LiveTranscriptionView.swift */,
 				C10000052F5E000100AB1001 /* MIDITempoExtractor.swift */,
 				C10000062F5E000100AB1001 /* PlaybackHighlightView.swift */,
@@ -283,6 +293,8 @@
 			isa = PBXGroup;
 			children = (
 				B1626C4A29F631E600304E9E /* TabBuddyTests.swift */,
+				E10000062F7E000100AB0000 /* GoldenImportTests.swift */,
+				E10000072F7E000100AB0000 /* Fixtures */,
 				D10000202F6E000100AB0000 /* CanonicalBridgeTests.swift */,
 				D10000212F6E000100AB0000 /* CanonicalMigrationTests.swift */,
 				D10000222F6E000100AB0000 /* ForewordCapoRhythmFreeTimeTests.swift */,
@@ -307,6 +319,7 @@
 				D10000022F6E000100AB0000 /* ComposedTab.swift */,
 				D10000032F6E000100AB0000 /* StaffPitchMapper.swift */,
 				D10000042F6E000100AB0000 /* FretSuggestionEngine.swift */,
+				E10000052F7E000100AB0000 /* FretSuggestionCard.swift */,
 				D10000052F6E000100AB0000 /* MeasureMapBuilder.swift */,
 				D10000062F6E000100AB0000 /* TabMakerViewModel.swift */,
 				D10000072F6E000100AB0000 /* StaffView.swift */,
@@ -341,7 +354,6 @@
 				D10000332F6E000100AB0000 /* DrawnTabSystemView.swift */,
 				D10000352F6E000100AB0000 /* TabPlayerView.swift */,
 				D10000502F6E000100AB0000 /* TabTransportBar.swift */,
-				D10000522F6E000100AB0000 /* ScrollTransportBar.swift */,
 			);
 			path = Player;
 			sourceTree = "<group>";
@@ -461,6 +473,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E10000072F7E000100AB0001 /* Fixtures in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -515,7 +528,6 @@
 				D10000342F6E000100AB0000 /* DrawnTabSystemView.swift in Sources */,
 				D10000362F6E000100AB0000 /* TabPlayerView.swift in Sources */,
 				D10000512F6E000100AB0000 /* TabTransportBar.swift in Sources */,
-				D10000532F6E000100AB0000 /* ScrollTransportBar.swift in Sources */,
 				D10000552F6E000100AB0000 /* SwipeBackEnabler.swift in Sources */,
 				D10000092F6E000100AB0001 /* TabMakerDocumentView.swift in Sources */,
 				D100000A2F6E000100AB0001 /* TabMakerToolbar.swift in Sources */,
@@ -527,6 +539,9 @@
 				D10000112F6E000100AB0101 /* PDFTabExtractor.swift in Sources */,
 				E10000012F7E000100AB0001 /* NoteTranscriberCore.swift in Sources */,
 				E10000022F7E000100AB0001 /* TunerView.swift in Sources */,
+				E10000032F7E000100AB0001 /* DesignSystem.swift in Sources */,
+				E10000042F7E000100AB0001 /* ViewerHeader.swift in Sources */,
+				E10000052F7E000100AB0001 /* FretSuggestionCard.swift in Sources */,
 				D10000122F6E000100AB0001 /* CanonicalAdapters.swift in Sources */,
 				D10000132F6E000100AB0001 /* CanonicalStore.swift in Sources */,
 				D10000142F6E000100AB0001 /* CanonicalConverter.swift in Sources */,
@@ -540,6 +555,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B1626C4B29F631E600304E9E /* TabBuddyTests.swift in Sources */,
+				E10000062F7E000100AB0001 /* GoldenImportTests.swift in Sources */,
 				D10000202F6E000100AB0001 /* CanonicalBridgeTests.swift in Sources */,
 				D10000212F6E000100AB0001 /* CanonicalMigrationTests.swift in Sources */,
 				D10000222F6E000100AB0001 /* ForewordCapoRhythmFreeTimeTests.swift in Sources */,

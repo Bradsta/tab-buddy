@@ -70,8 +70,6 @@ struct MakerCompositionListView: View {
                             .font(.headline)
                             .foregroundColor(.primary)
                         HStack(spacing: 12) {
-                            Label("\(tab.beatsPerMeasure)/\(tab.noteValue)",
-                                  systemImage: "metronome")
                             Label(tab.tuningName, systemImage: "guitars")
                             Label("\(Int(tab.bpm)) BPM", systemImage: "speedometer")
                             Label("\(tab.measureCount) measures",

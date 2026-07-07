@@ -123,22 +123,20 @@ struct TabViewerView: View {
     }
 
     var body: some View {
-        GeometryReader { geo in
-            VStack(spacing: 0) {
-                header
-                Divider()
-                viewerBody
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                // The drawn Tab Player carries its own transport; every other
-                // (scrollable) render — raw text and PDF — gets the shared
-                // scroll transport along its bottom.
+        viewerBody
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .background(DS.paper.ignoresSafeArea())
+            // One header for every surface (DESIGN.md §4), via safe-area inset
+            // so SwiftUI scroll surfaces slide under the translucent bar.
+            .safeAreaInset(edge: .top, spacing: 0) { viewerHeader }
+            // The drawn Tab Player carries its own transport; every other
+            // (scrollable) render — raw text and PDF — gets the shared
+            // scroll transport along its bottom.
+            .safeAreaInset(edge: .bottom, spacing: 0) {
                 if showScrollTransport {
-                    Divider()
                     originalTransport
                 }
             }
-            .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
-        }
         // Hide the empty system nav bar (reclaims top space) but keep the
         // interactive swipe-back — `navigationBarBackButtonHidden` is what
         // disables that edge gesture, so we deliberately don't set it.
@@ -299,127 +297,130 @@ struct TabViewerView: View {
         }
     }
     
-    private var header: some View {
-        HStack(alignment: .center, spacing: 12) {
-            // back to library
-            Button {
-                if !path.isEmpty { path.removeLast() }
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.title3.weight(.semibold))
-            }
-            .buttonStyle(.borderless)
+    // MARK: - Header (shared chrome, DESIGN.md §4)
 
-            // ★ favourite toggle
-            Button {
-                let wasFavorite = file!.isFavorite
-                file!.isFavorite.toggle()
+    private var viewerHeader: some View {
+        ViewerHeader(
+            title: file?.displayTitle ?? "",
+            subtitle: headerSubtitle,
+            confidence: file?.hasCanonical == true ? file?.provenance?.confidence : nil,
+            isFavorite: file?.isFavorite ?? false,
+            onToggleFavorite: file == nil ? nil : { toggleFavorite() },
+            onRename: { newName = file?.displayTitle ?? ""; showRename = true },
+            onEditTags: { showTags = true },
+            detailRows: headerDetailRows,
+            switchSegments: [
+                ViewSwitchSegment(id: 0, icon: "sparkles", label: "TabBuddy"),
+                ViewSwitchSegment(id: 1, icon: "doc.text", label: "Original"),
+            ],
+            switchSelection: playerAvailable ? viewSwitchSelection : nil,
+            backLabel: "Library",
+            onBack: { if !path.isEmpty { path.removeLast() } }
+        )
+    }
+
+    /// Viewer subtitle per surface: player/text → `Tuning · TimeSig · tag`;
+    /// PDF original → `PDF · tag`. Unknowns omitted, tags lowercase.
+    private var headerSubtitle: String {
+        var parts: [String] = []
+        if isPDF && !usingDrawnPlayer {
+            parts.append("PDF")
+        } else if let map = measureMap {
+            parts.append(map.tuning ?? "Standard")
+            if let ts = map.timeSignature { parts.append("\(ts.beats)/\(ts.noteValue)") }
+        }
+        if let tag = file?.tags.first { parts.append(tag.lowercased()) }
+        return parts.joined(separator: " · ")
+    }
+
+    private var headerDetailRows: [String] {
+        guard let file else { return [] }
+        var rows: [String] = [file.filename]
+        if let p = file.provenance {
+            rows.append("Source: \(p.sourceType.rawValue)")
+            rows.append("Converter v\(p.converterVersion)")
+            rows.append("Confidence \(Int((p.confidence * 100).rounded()))%")
+        }
+        return rows
+    }
+
+    /// View switch: 0 = TabBuddy (drawn player), 1 = Original. Per-file sticky.
+    private var viewSwitchSelection: Binding<Int> {
+        Binding(
+            get: { usingDrawnPlayer ? 0 : 1 },
+            set: { idx in
+                file?.preferredTextMode = (idx == 0 ? TextViewMode.player : .original).rawValue
                 try? context.save()
-
-                undoManager?.registerUndo(withTarget: context) { ctx in
-                    file!.isFavorite = wasFavorite
-                    try? ctx.save()
-                }
-                undoManager?.setActionName(wasFavorite
-                                          ? "Unfavorite File"
-                                          : "Favorite File")
-            } label: {
-                Image(systemName: file!.isFavorite ? "star.fill" : "star")
-                    .foregroundStyle(file!.isFavorite ? .yellow : .secondary)
             }
-            .buttonStyle(.borderless)
+        )
+    }
 
-            // title + subtitle (Tuning · Capo · Key · TimeSig)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(file!.displayTitle)
-                    .font(.headline)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                if usingDrawnPlayer, !subtitleText.isEmpty {
-                    Text(subtitleText)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-            }
+    private func toggleFavorite() {
+        guard let file else { return }
+        let wasFavorite = file.isFavorite
+        file.isFavorite.toggle()
+        try? context.save()
 
-            // tag chips (show first 2 + overflow count)
-            if let tags = file?.tags, !tags.isEmpty {
-                HStack(spacing: 6) {
-                    ForEach(tags.prefix(2), id: \.self) { tag in
-                        Text(tag)
-                            .font(.caption2)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(.secondary.opacity(0.15), in: Capsule())
-                    }
-                    if tags.count > 2 {
-                        Text("+\(tags.count - 2)")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-
-            // loop indicator
-            if loopStartY != nil && loopEndY != nil {
-                Text("\u{27F3} Loop")
-                    .font(.caption2)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(.orange.opacity(0.2), in: Capsule())
-                    .foregroundStyle(.orange)
-            }
-
-            Spacer(minLength: 8)
-
-            // (Scroll speed now lives in each view's bottom transport.)
-
-            // One-tap view toggle: drawn Tab Player ↔ original render.
-            // (The ⋯ menu keeps the labeled picker; this is the fast path.)
-            if playerAvailable {
-                Button {
-                    let newMode: TextViewMode = usingDrawnPlayer ? .original : .player
-                    file?.preferredTextMode = newMode.rawValue
-                    try? context.save()
-                } label: {
-                    Image(systemName: usingDrawnPlayer ? "doc.text" : "wand.and.stars")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(Color.accentColor)
-                }
-                .buttonStyle(.borderless)
-                .accessibilityLabel(usingDrawnPlayer ? "Show Original" : "Show Tab Player")
-            }
-
-            // overflow menu
-            Menu {
-                Button("Rename…") { newName = file!.displayTitle; showRename = true }
-                Button("Edit Tags…") { showTags = true }
-
-                // View toggle: drawn player vs. raw original text (text tabs);
-                // PDF vs. TabBuddy ASCII (PDFs).
-                if playerAvailable {
-                    Divider()
-                    Picker("View", selection: Binding(
-                        get: { textMode },
-                        set: { file?.preferredTextMode = $0.rawValue; try? context.save() })) {
-                        Label("Tab Player", systemImage: "wand.and.stars").tag(TextViewMode.player)
-                        Label("Original", systemImage: "doc.text").tag(TextViewMode.original)
-                    }
-                } else if isPDF, file?.hasCanonical == true {
-                    Divider()
-                    Picker("View", selection: $renderMode) {
-                        Label("Original", systemImage: "doc.text").tag(ViewerRenderMode.original)
-                        Label("TabBuddy", systemImage: "wand.and.stars").tag(ViewerRenderMode.canonical)
-                    }
-                }
-            } label: {
-                Image(systemName: "ellipsis.circle")
-            }
-            .menuStyle(.borderlessButton)
+        undoManager?.registerUndo(withTarget: context) { ctx in
+            file.isFavorite = wasFavorite
+            try? ctx.save()
         }
-        .padding(.horizontal)          // keeps existing 16-pt side insets
+        undoManager?.setActionName(wasFavorite ? "Unfavorite File" : "Favorite File")
+    }
+
+    // MARK: - Confidence-gated fallback notice (DESIGN.md §7)
+
+    /// Shown on the Original PDF render when a canonical exists but its
+    /// extraction confidence is below the display threshold.
+    private var showConfidenceNotice: Bool {
+        guard let file, isPDF, !usingDrawnPlayer, !file.confidenceNoticeDismissed,
+              file.hasCanonical, playerAvailable,
+              let conf = file.provenance?.confidence else { return false }
+        return conf < ViewerHeader.confidenceThreshold
+    }
+
+    private var confidenceNoticeCard: some View {
+        let conf = file?.provenance?.confidence ?? 0
+        return HStack(spacing: 10) {
+            Text("\(Int((conf * 100).rounded()))%")
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2.5)
+                .background(DS.cautionSoft, in: Capsule())
+                .foregroundStyle(DS.cautionText)
+            Text("Showing the original — the TabBuddy version isn't stage-ready yet.")
+                .font(.system(size: 13))
+                .foregroundStyle(DS.fg2)
+                .lineLimit(2)
+            Spacer(minLength: 4)
+            Button("Review") {
+                file?.preferredTextMode = TextViewMode.player.rawValue
+                try? context.save()
+            }
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(DS.accentStrong)
+            .buttonStyle(.plain)
+            Button {
+                file?.confidenceNoticeDismissed = true
+                try? context.save()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(DS.fg3)
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Dismiss")
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(DS.surface, in: RoundedRectangle(cornerRadius: DS.radiusControl))
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.radiusControl)
+                .stroke(DS.separator, lineWidth: 1)
+        )
+    }
 
         // --------------------------------------------------------------------
         /// Whether the file is a PDF (governs the PDFKit fallback).
@@ -460,11 +461,10 @@ struct TabViewerView: View {
             !usingDrawnPlayer
         }
 
-        /// Reading-oriented transport for the file views (text + PDF):
-        /// back-to-top, an inline auto-scroll speed slider, and loop-to-top.
-        /// No play/scrubber — those only make sense for the drawn player.
+        /// Shared transport for the Original file views (text + PDF): play =
+        /// auto-scroll, speed slider in the middle zone, loop-to-top + Display.
         private var originalTransport: some View {
-            ScrollTransportBar(
+            OriginalTransportBar(
                 scrollSpeed: $scrollSpeed,
                 loopToTop: Binding(
                     get: { loopToTopText },
@@ -476,14 +476,15 @@ struct TabViewerView: View {
                         if on && scrollSpeed == 0 { scrollSpeed = 8 }
                     }),
                 onBackToTop: { scrollToTop() },
-                showDisplayButton: !isPDF,
-                displayContent: { originalDisplayPopover }
+                displayContent: { originalDisplaySections }
             )
         }
 
-        /// Display popover for the raw-text view: just text size.
-        private var originalDisplayPopover: some View {
-            Form {
+        /// Display sections for the Original views (the transport owns the
+        /// Form). Text tabs offer text size; PDFs have no text controls.
+        @ViewBuilder
+        private var originalDisplaySections: some View {
+            if !isPDF {
                 Section("Text") {
                     HStack {
                         Text("Size")
@@ -494,7 +495,6 @@ struct TabViewerView: View {
                     }.buttonStyle(.borderless)
                 }
             }
-            .frame(minWidth: 280, minHeight: 140)
         }
 
         private func scrollToTop() {
@@ -537,8 +537,15 @@ struct TabViewerView: View {
                     .padding(.horizontal, 4)
             } else if isPDF {
                 if let url = file?.url {
-                    TabPDFView(url: url, scrollViewProxy: $scrollViewProxy)
-                        .padding()
+                    VStack(spacing: 0) {
+                        if showConfidenceNotice {
+                            confidenceNoticeCard
+                                .padding(.horizontal, 12)
+                                .padding(.top, 8)
+                        }
+                        TabPDFView(url: url, scrollViewProxy: $scrollViewProxy)
+                            .padding()
+                    }
                 }
             } else {
                 TabText(fontSize: $fontSize,

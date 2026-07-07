@@ -31,42 +31,49 @@ struct TabPalette: Equatable {
     var sectionBG: Color
     var loopFill: Color
     var loopBorder: Color
+    var activeMeasureFill: Color   // AccentSoft wash under the playing measure
     var noteInk: Color        // standard-notation noteheads / stems
     var playheadGlow: Bool
 
+    /// The standard palette. Line/text inks are dynamic system colors so the
+    /// staff stays visible when the page flips to dark (pure black) mode.
     static let light = TabPalette(
-        page: Color(uiColor: .systemBackground),
-        staffLine: Color(red: 60/255, green: 60/255, blue: 67/255).opacity(0.22),
-        barline: Color(red: 60/255, green: 60/255, blue: 67/255).opacity(0.34),
-        measureNumber: Color(red: 0.71, green: 0.71, blue: 0.74),
-        rhythmLetter: Color(red: 0.60, green: 0.60, blue: 0.63),
+        page: DS.paper,
+        staffLine: Color(uiColor: .label).opacity(0.24),
+        barline: Color(uiColor: .label).opacity(0.38),
+        measureNumber: Color(uiColor: .tertiaryLabel),
+        rhythmLetter: Color(uiColor: .secondaryLabel),
         fret: Color(uiColor: .label),
-        label: Color(red: 0.71, green: 0.71, blue: 0.74),
-        accent: .accentColor,
+        label: Color(uiColor: .tertiaryLabel),
+        accent: DS.accent,
         accentInk: .white,
-        section: Color(red: 94/255, green: 92/255, blue: 230/255),
-        sectionBG: Color(red: 94/255, green: 92/255, blue: 230/255).opacity(0.12),
-        loopFill: Color(red: 94/255, green: 92/255, blue: 230/255).opacity(0.09),
-        loopBorder: Color(red: 94/255, green: 92/255, blue: 230/255).opacity(0.55),
+        section: DS.accentStrong,
+        sectionBG: DS.accent.opacity(0.12),
+        loopFill: DS.accent.opacity(0.09),
+        loopBorder: DS.accent.opacity(0.55),
+        activeMeasureFill: DS.accentSoft.opacity(0.55),
         noteInk: Color(uiColor: .label),
         playheadGlow: false
     )
 
+    // Focus (stage) mode is always dark regardless of the system theme, so it
+    // uses fixed dark values: pure black stage, lifted rose accent.
     static let focus = TabPalette(
-        page: Color(red: 0x0E/255, green: 0x0F/255, blue: 0x12/255),
-        staffLine: Color.white.opacity(0.16),
-        barline: Color.white.opacity(0.30),
+        page: .black,
+        staffLine: Color.white.opacity(0.20),
+        barline: Color.white.opacity(0.34),
         measureNumber: Color.white.opacity(0.40),
         rhythmLetter: Color.white.opacity(0.45),
-        fret: Color(red: 0xF2/255, green: 0xF2/255, blue: 0xF7/255),
+        fret: Color(red: 0xF2/255, green: 0xF2/255, blue: 0xF2/255),
         label: Color.white.opacity(0.45),
-        accent: Color(red: 0x0A/255, green: 0x84/255, blue: 1.0),
-        accentInk: Color(red: 0x0E/255, green: 0x0F/255, blue: 0x12/255),
-        section: Color(red: 0x9D/255, green: 0x9B/255, blue: 0xF0/255),
-        sectionBG: Color(red: 94/255, green: 92/255, blue: 230/255).opacity(0.20),
-        loopFill: Color(red: 94/255, green: 92/255, blue: 230/255).opacity(0.14),
-        loopBorder: Color(red: 94/255, green: 92/255, blue: 230/255).opacity(0.55),
-        noteInk: Color(red: 0xF2/255, green: 0xF2/255, blue: 0xF7/255),
+        accent: Color(red: 0xF0/255, green: 0x7E/255, blue: 0x79/255),        // Accent dark
+        accentInk: .black,
+        section: Color(red: 0xFF/255, green: 0x91/255, blue: 0x8B/255),       // AccentStrong dark
+        sectionBG: Color(red: 0xF0/255, green: 0x7E/255, blue: 0x79/255).opacity(0.20),
+        loopFill: Color(red: 0xF0/255, green: 0x7E/255, blue: 0x79/255).opacity(0.14),
+        loopBorder: Color(red: 0xF0/255, green: 0x7E/255, blue: 0x79/255).opacity(0.55),
+        activeMeasureFill: Color(red: 0x47/255, green: 0x29/255, blue: 0x28/255).opacity(0.6), // AccentSoft dark
+        noteInk: Color(red: 0xF2/255, green: 0xF2/255, blue: 0xF2/255),
         playheadGlow: true
     )
 }
@@ -177,7 +184,7 @@ struct DrawnTabSystemView: View {
     @State private var lastWidth: CGFloat = 0
 
     /// Full-bleed page color for focus mode (matches `TabPalette.focus.page`).
-    static let focusBackground = Color(red: 0x0E/255, green: 0x0F/255, blue: 0x12/255)
+    static let focusBackground = Color.black
 
     // MARK: Text helper
 
@@ -490,6 +497,18 @@ private struct PlayheadLayer: View {
             let denom = CGFloat(max(model.referenceMeasuresPerSystem, system.measureCount, 1))
             let measureWidth = fullWidth / denom
             let staffWidth = measureWidth * CGFloat(system.measureCount)
+
+            // active-measure wash (AccentSoft under the playing measure)
+            if let localIdx = system.measures.firstIndex(where: { $0.globalIndex == currentMeasure }) {
+                let washTop = (showStaff ? m.headerH + m.rhythmH : m.staffTopY) - 2
+                let washBot = m.staffTopY + m.tabH + 2
+                let wash = CGRect(x: staffLeft + CGFloat(localIdx) * measureWidth,
+                                  y: washTop,
+                                  width: measureWidth,
+                                  height: washBot - washTop)
+                ctx.fill(Path(roundedRect: wash, cornerRadius: 4),
+                         with: .color(palette.activeMeasureFill))
+            }
 
             // active-column accent
             if let localIdx = system.measures.firstIndex(where: { $0.globalIndex == currentMeasure }) {

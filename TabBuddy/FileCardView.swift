@@ -106,7 +106,7 @@ struct FileCardView: View, Equatable {
                 instrumentPill
             }
             if file.lastOpenedAt > file.importedAt {
-                Text(file.lastOpenedAt, format: .relative(presentation: .named))
+                Text(minimalAgo(file.lastOpenedAt))
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(Color.accentColor)
                     .lineLimit(1)
@@ -137,7 +137,9 @@ struct FileCardView: View, Equatable {
                 .font(.system(size: 9, weight: .medium))
             Text(inst.label)
                 .font(.system(size: 10, weight: .medium))
+                .lineLimit(1)
         }
+        .fixedSize()
         .foregroundStyle(Color(.systemTeal))
         .padding(.init(top: 2, leading: 7, bottom: 2, trailing: 7))
         .background(Color(.systemTeal).opacity(0.12), in: RoundedRectangle(cornerRadius: 5))
@@ -147,10 +149,12 @@ struct FileCardView: View, Equatable {
         let alt = file.isAltTuning
         return Text(file.displayTuning)
             .font(.system(size: 10, weight: alt ? .semibold : .medium))
-            .foregroundStyle(alt ? Color(.systemIndigo) : Color(.secondaryLabel))
+            .lineLimit(1)
+            .fixedSize()
+            .foregroundStyle(alt ? DS.accentStrong : Color(.secondaryLabel))
             .padding(.init(top: 2, leading: 7, bottom: 2, trailing: 7))
             .background(
-                (alt ? Color(.systemIndigo).opacity(0.12) : Color(.systemGray).opacity(0.07)),
+                (alt ? AnyShapeStyle(DS.accentSofter) : AnyShapeStyle(Color(.systemGray).opacity(0.07))),
                 in: RoundedRectangle(cornerRadius: 5)
             )
     }

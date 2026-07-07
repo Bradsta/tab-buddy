@@ -2,19 +2,185 @@
 //  TabTransportBar.swift
 //  TabBuddy
 //
-//  The shared bottom transport used by both the drawn Tab Player and the raw
-//  "Original" text view, so the two share one layout: skip-to-start, a large
-//  play/pause, the measure + time/loop readout, a measure scrubber, the tempo
-//  pill (with the speed-trainer popover), metronome, count-in, A/B loop, the
-//  auto-scroll cycle, and a host-supplied Display popover.
+//  The one transport (DESIGN.md §5). Three fixed zones — [play cluster]
+//  [position] [tools] — shared by the drawn Tab Player (playback), the
+//  Original text/PDF views (auto-scroll; `OriginalTransportBar` below), and
+//  the Tab Maker. Only the middle zone's meaning changes per surface.
 //
-//  It drives the shared `PlaybackCoordinator` / engines; rendering-specific
-//  concerns (drawn playhead + scroll lock, or text highlight + text scroll)
-//  stay in the host and are reached through the `onLoopChanged` / `onSeek` /
-//  `onBeforePlay` hooks.
+//  Engine wiring is unchanged: the bar drives `PlaybackCoordinator` and the
+//  engines; rendering-specific concerns stay in the host behind the
+//  `onLoopChanged` / `onSeek` / `onBeforePlay` hooks.
+//
+//  Hosts supply Display-popover content as Form *sections* (no Form wrapper) —
+//  on iPhone the bar adds its own absorbed controls (Sound, Count-in) above.
 //
 
 import SwiftUI
+
+// MARK: - Shared transport primitives (DESIGN.md §5 control anatomy)
+
+/// Bar container: BarTint material, top hairline, standard padding.
+struct TransportChrome<Content: View>: View {
+    @ViewBuilder var content: () -> Content
+    var body: some View {
+        content()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity)
+            .background(BarMaterial())
+            .overlay(alignment: .top) { Hairline() }
+    }
+}
+
+/// The Play circle: accent fill, white glyph, soft accent shadow.
+struct PlayCircleButton: View {
+    @Environment(\.horizontalSizeClass) private var hSize
+    var isOn: Bool
+    var action: () -> Void
+
+    var body: some View {
+        let d = hSize == .compact ? DS.playDiameterCompact : DS.playDiameter
+        Button(action: action) {
+            ZStack {
+                Circle().fill(DS.accent)
+                    .frame(width: d, height: d)
+                    .shadow(color: DS.accent.opacity(0.34), radius: 8, y: 4)
+                Image(systemName: isOn ? "pause.fill" : "play.fill")
+                    .font(.title2)
+                    .foregroundColor(.white)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// 44×44 icon tile (38 on iPhone), radius 11; label under it on iPad only.
+struct TransportTileLabel: View {
+    @Environment(\.horizontalSizeClass) private var hSize
+    var icon: String
+    var label: String
+    var active: Bool
+
+    var body: some View {
+        let side = hSize == .compact ? DS.tileCompact : DS.tile
+        VStack(spacing: 3) {
+            Image(systemName: icon)
+                .font(.system(size: 17))
+                .frame(width: side, height: side)
+                .background(active ? AnyShapeStyle(DS.accent) : AnyShapeStyle(DS.surfaceInset),
+                            in: RoundedRectangle(cornerRadius: DS.radiusControl))
+                .foregroundStyle(active ? Color.white : DS.fg1)
+            if hSize != .compact {
+                Text(label)
+                    .font(.system(size: 10))
+                    .foregroundStyle(active ? DS.accent : DS.fg2)
+            }
+        }
+    }
+}
+
+struct TransportTile: View {
+    var icon: String
+    var label: String
+    var active: Bool
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            TransportTileLabel(icon: icon, label: label, active: active)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+}
+
+/// Tempo pill: AccentSoft fill, AccentStrong content, percent as its label.
+struct TempoPillLabel: View {
+    @Environment(\.horizontalSizeClass) private var hSize
+    var bpm: Int
+    var percent: Int
+    /// Overrides the percent sub-label (the maker shows "tempo" instead).
+    var subLabel: String? = nil
+
+    var body: some View {
+        let h = hSize == .compact ? DS.tileCompact : DS.tile
+        VStack(spacing: 3) {
+            HStack(spacing: 5) {
+                Image(systemName: "music.note").font(.callout)
+                Text("\(bpm)")
+                    .font(.system(size: 15, weight: .semibold, design: .monospaced))
+            }
+            .padding(.horizontal, 12)
+            .frame(height: h)
+            .background(DS.accentSoft, in: Capsule())
+            .foregroundStyle(DS.accentStrong)
+            if hSize != .compact {
+                Text(subLabel ?? "\(percent)%")
+                    .font(.system(size: 10))
+                    .foregroundStyle(DS.fg2)
+            }
+        }
+    }
+}
+
+/// Readout: mono value line + smaller sub-line (accent-tinted when looping).
+struct TransportReadout: View {
+    var value: String
+    var sub: String
+    var subAccented: Bool = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(value)
+                .font(.system(size: 15, weight: .semibold, design: .monospaced))
+                .foregroundStyle(DS.fg1)
+            Text(sub)
+                .font(.system(size: 12))
+                .foregroundStyle(subAccented ? DS.accent : DS.fg2)
+                .monospacedDigit()
+        }
+    }
+}
+
+/// Token scrubber: 4pt track, accent fill, 22pt raised thumb. One component
+/// for measure position and scroll speed.
+struct TokenScrubber: View {
+    @Binding var value: Double
+    let range: ClosedRange<Double>
+    var step: Double = 1
+
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let span = max(0.0001, range.upperBound - range.lowerBound)
+            let frac = CGFloat((value - range.lowerBound) / span)
+            let x = 11 + max(0, min(1, frac)) * (w - 22)
+            ZStack(alignment: .leading) {
+                Capsule().fill(DS.separatorStrong).frame(height: 4)
+                Capsule().fill(DS.accent).frame(width: x, height: 4)
+                Circle()
+                    .fill(DS.surfaceRaised)
+                    .overlay(Circle().stroke(DS.separator, lineWidth: 0.5))
+                    .frame(width: 22, height: 22)
+                    .shadow(color: .black.opacity(0.18), radius: 4, y: 2)
+                    .position(x: x, y: geo.size.height / 2)
+            }
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { g in
+                        let f = max(0, min(1, (g.location.x - 11) / max(1, w - 22)))
+                        var v = range.lowerBound + Double(f) * span
+                        if step > 0 { v = (v / step).rounded() * step }
+                        value = min(range.upperBound, max(range.lowerBound, v))
+                    }
+            )
+        }
+        .frame(height: 44)
+    }
+}
+
+// MARK: - Player transport
 
 struct TabTransportBar<Display: View>: View {
     @ObservedObject var coordinator: PlaybackCoordinator
@@ -41,8 +207,10 @@ struct TabTransportBar<Display: View>: View {
     /// Host hook just before playback starts (e.g. force text layout).
     var onBeforePlay: () -> Void = {}
 
+    /// Display-popover content as Form sections (the bar owns the Form).
     @ViewBuilder var displayContent: () -> Display
 
+    @Environment(\.horizontalSizeClass) private var hSize
     @AppStorage("player.autoScroll") private var autoScrollRaw = AutoScrollMode.follow.rawValue
     @AppStorage("player.countInBars") private var countInBars = 0
 
@@ -57,67 +225,48 @@ struct TabTransportBar<Display: View>: View {
 
     private var autoScroll: AutoScrollMode { AutoScrollMode(rawValue: autoScrollRaw) ?? .follow }
     private var tempoPercent: Int { max(1, Int((coordinator.bpm / max(1, originalBPM)) * 100 + 0.5)) }
+    private var isCompact: Bool { hSize == .compact }
 
     /// Surfaced so a host can mirror the count-in state into its playhead.
     var isCountingIn: Bool { countingIn }
 
     var body: some View {
-        HStack(spacing: 18) {
-            HStack(spacing: 14) {
-                Button { skip() } label: {
-                    Image(systemName: "backward.end.fill").font(.body)
-                }.buttonStyle(.borderless)
-
-                Button { togglePlay() } label: {
-                    ZStack {
-                        Circle().fill(Color.accentColor)
-                            .frame(width: 52, height: 52)
-                            .shadow(color: Color.accentColor.opacity(0.34), radius: 8, y: 4)
-                        Image(systemName: (coordinator.isPlaying || countingIn) ? "pause.fill" : "play.fill")
-                            .font(.title2).foregroundColor(.white)
+        TransportChrome {
+            if isCompact {
+                VStack(spacing: 4) {
+                    HStack(spacing: 10) {
+                        playCluster
+                        Spacer(minLength: 6)
+                        tempoControl
+                        control(icon: "metronome", label: "Metronome", active: metronome.isEnabled) {
+                            metronome.isEnabled.toggle()
+                        }
+                        control(icon: "repeat", label: "Loop", active: loopEnabled) { toggleLoop() }
+                        displayControl
                     }
-                }.buttonStyle(.plain)
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("m. \(coordinator.currentMeasureIndex + 1) / \(max(1, totalMeasures))")
-                        .font(.callout).fontWeight(.semibold).monospacedDigit()
-                    Text(readout).font(.caption)
-                        .foregroundStyle(loopEnabled ? Color(uiColor: .systemIndigo) : .secondary)
-                        .monospacedDigit()
+                    scrubber
                 }
-            }
-
-            scrubber
-
-            HStack(spacing: 14) {
-                tempoControl
-                control(icon: notePlayer.isEnabled ? "speaker.wave.2.fill" : "speaker.slash",
-                        label: "Sound", active: notePlayer.isEnabled) {
-                    notePlayer.isEnabled.toggle()
-                    // If turned on mid-playback, make sure the engine is running.
-                    if notePlayer.isEnabled && (coordinator.isPlaying || isCountingIn) {
-                        notePlayer.start()
+            } else {
+                HStack(spacing: 16) {
+                    playCluster
+                    scrubber
+                    HStack(spacing: 12) {
+                        tempoControl
+                        control(icon: notePlayer.isEnabled ? "speaker.wave.2.fill" : "speaker.slash",
+                                label: "Sound", active: notePlayer.isEnabled) { toggleSound() }
+                        control(icon: "metronome", label: "Metronome", active: metronome.isEnabled) {
+                            metronome.isEnabled.toggle()
+                        }
+                        countInControl
+                        control(icon: "repeat", label: "Loop", active: loopEnabled) { toggleLoop() }
+                        control(icon: autoScrollIcon, label: "Follow", active: autoScroll != .off) {
+                            cycleAutoScroll()
+                        }
+                        displayControl
                     }
-                }
-                control(icon: "metronome", label: "Metronome", active: metronome.isEnabled) {
-                    metronome.isEnabled.toggle()
-                }
-                countInControl
-                control(icon: "repeat", label: "Loop", active: loopEnabled) { toggleLoop() }
-                control(icon: autoScrollIcon, label: "Scroll", active: autoScroll != .off) {
-                    cycleAutoScroll()
-                }
-                control(icon: "slider.horizontal.3", label: "Display", active: false) {
-                    showDisplay = true
-                }
-                .popover(isPresented: $showDisplay) {
-                    displayContent().presentationCompactAdaptation(.popover)
                 }
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 10)
-        .background(Color(uiColor: .secondarySystemBackground).opacity(0.5))
         .onAppear {
             // Speed trainer: bump tempo each completed loop pass, capped at 100%.
             coordinator.onLoopCompleted = {
@@ -128,39 +277,50 @@ struct TabTransportBar<Display: View>: View {
         }
     }
 
-    // MARK: Pieces
+    // MARK: Zones
+
+    private var playCluster: some View {
+        HStack(spacing: 12) {
+            Button { skip() } label: {
+                Image(systemName: "backward.end.fill")
+                    .font(.body)
+                    .foregroundStyle(DS.fg1)
+                    .frame(width: 32, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            PlayCircleButton(isOn: coordinator.isPlaying || countingIn) { togglePlay() }
+
+            TransportReadout(
+                value: "m. \(coordinator.currentMeasureIndex + 1)/\(max(1, totalMeasures))",
+                sub: readout,
+                subAccented: loopEnabled
+            )
+        }
+    }
 
     private var readout: String {
+        if countingIn { return "count-in…" }
         if loopEnabled { return "Loop · pass \(trainerPass + 1)" }
         let secs = coordinator.bpm > 0 ? coordinator.accumulatedBeats * 60.0 / coordinator.bpm : 0
-        return String(format: "%d:%02d", Int(secs) / 60, Int(secs) % 60)
+        return minimalTime(secs)
     }
 
     private var scrubber: some View {
-        let total = Double(max(1, totalMeasures - 1))
-        return Slider(
+        TokenScrubber(
             value: Binding(
                 get: { Double(coordinator.currentMeasureIndex) },
                 set: { onSeek(); coordinator.seekToMeasure(Int($0.rounded())) }
             ),
-            in: 0...total,
-            step: 1
+            range: 0...Double(max(1, totalMeasures - 1))
         )
-        .frame(minWidth: 120)
+        .frame(minWidth: 120, maxWidth: .infinity)
     }
 
     private var tempoControl: some View {
         Button { showTempo = true } label: {
-            VStack(spacing: 3) {
-                HStack(spacing: 5) {
-                    Image(systemName: "music.note").font(.callout)
-                    Text("\(Int(coordinator.bpm))").font(.callout).fontWeight(.semibold).monospacedDigit()
-                }
-                .padding(.horizontal, 12).frame(height: 40)
-                .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 11))
-                .foregroundStyle(Color.accentColor)
-                Text("\(tempoPercent)%").font(.system(size: 10)).foregroundStyle(.secondary)
-            }
+            TempoPillLabel(bpm: Int(coordinator.bpm), percent: tempoPercent)
         }
         .buttonStyle(.plain)
         .popover(isPresented: $showTempo) {
@@ -176,27 +336,43 @@ struct TabTransportBar<Display: View>: View {
                 Text("2 bars").tag(2)
             }
         } label: {
-            controlLabel(icon: countInBars == 0 ? "number" : "\(countInBars).circle",
-                         label: "Count-in", active: countInBars > 0)
+            TransportTileLabel(icon: countInBars == 0 ? "number" : "\(countInBars).circle",
+                               label: "Count-in", active: countInBars > 0)
         }
+    }
+
+    private var displayControl: some View {
+        control(icon: "slider.horizontal.3", label: "Display", active: false) {
+            showDisplay = true
+        }
+        .popover(isPresented: $showDisplay) {
+            displayPopover.presentationCompactAdaptation(.popover)
+        }
+    }
+
+    /// The Display popover. On iPhone it absorbs the controls that lost their
+    /// tiles: Sound and Count-in (Follow already lives in the host sections).
+    private var displayPopover: some View {
+        Form {
+            if isCompact {
+                Section("Playback") {
+                    Toggle("Sound", isOn: Binding(
+                        get: { notePlayer.isEnabled },
+                        set: { _ in toggleSound() }))
+                    Picker("Count-in", selection: $countInBars) {
+                        Text("Off").tag(0)
+                        Text("1 bar").tag(1)
+                        Text("2 bars").tag(2)
+                    }
+                }
+            }
+            displayContent()
+        }
+        .frame(minWidth: 320, minHeight: 420)
     }
 
     private func control(icon: String, label: String, active: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) { controlLabel(icon: icon, label: label, active: active) }
-            .buttonStyle(.plain)
-    }
-
-    private func controlLabel(icon: String, label: String, active: Bool) -> some View {
-        VStack(spacing: 3) {
-            Image(systemName: icon)
-                .font(.system(size: 17))
-                .frame(width: 42, height: 42)
-                .background(active ? Color.accentColor : Color(uiColor: .systemFill).opacity(0.5),
-                            in: RoundedRectangle(cornerRadius: 11))
-                .foregroundStyle(active ? Color.white : Color.primary)
-            Text(label).font(.system(size: 10))
-                .foregroundStyle(active ? Color.accentColor : .secondary)
-        }
+        TransportTile(icon: icon, label: label, active: active, action: action)
     }
 
     private var autoScrollIcon: String {
@@ -208,6 +384,14 @@ struct TabTransportBar<Display: View>: View {
     }
 
     // MARK: Actions
+
+    private func toggleSound() {
+        notePlayer.isEnabled.toggle()
+        // If turned on mid-playback, make sure the engine is running.
+        if notePlayer.isEnabled && (coordinator.isPlaying || countingIn) {
+            notePlayer.start()
+        }
+    }
 
     private func togglePlay() {
         if coordinator.isPlaying || countingIn { stopPlayback() } else { startPlayback() }
@@ -296,7 +480,7 @@ struct TabTransportBar<Display: View>: View {
                         applyReferenceBPM(originalBPM + 5)
                     } label: { Image(systemName: "plus.circle").font(.title3) }
                         .buttonStyle(.borderless)
-                    Text("BPM").foregroundStyle(.secondary)
+                    Text("BPM").foregroundStyle(DS.fg2)
                 }
             } footer: {
                 Text("The song's real tempo — set it here when the tab doesn't list one. Practice speed is relative to it.")
@@ -306,20 +490,21 @@ struct TabTransportBar<Display: View>: View {
                     Text("Practice speed").fontWeight(.semibold)
                     Spacer()
                     Text("\(Int(coordinator.bpm)) / \(Int(originalBPM)) BPM")
-                        .foregroundStyle(.secondary).monospacedDigit()
+                        .foregroundStyle(DS.fg2).monospacedDigit()
                 }
                 Slider(
                     value: Binding(get: { coordinator.bpm }, set: { coordinator.bpm = $0; userBPM = $0 }),
                     in: max(30, originalBPM * 0.25)...max(60, originalBPM),
                     step: 1
                 )
+                .tint(DS.accent)
                 HStack {
                     ForEach([50, 75, 90, 100], id: \.self) { pct in
                         Button { setTempoPercent(pct) } label: {
                             Text("\(pct)%").frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
-                        .tint(tempoPercent == pct ? Color(uiColor: .systemIndigo) : nil)
+                        .tint(tempoPercent == pct ? DS.accent : nil)
                     }
                 }
             }
@@ -328,7 +513,7 @@ struct TabTransportBar<Display: View>: View {
                     VStack(alignment: .leading) {
                         Text("Ramp up each loop")
                         Text("+5% → 100% over successive passes")
-                            .font(.caption).foregroundStyle(.secondary)
+                            .font(.caption).foregroundStyle(DS.fg2)
                     }
                 }
                 .disabled(!loopEnabled)
@@ -362,5 +547,111 @@ struct TabTransportBar<Display: View>: View {
         coordinator.bpm = clamped
         userBPM = clamped
         onSetReferenceBPM(clamped)
+    }
+}
+
+// MARK: - Originals transport (text + PDF)
+
+/// The same transport grammar for the Original text and PDF views: play means
+/// auto-scroll, the middle zone is the speed slider, tools are loop-to-top and
+/// Display. Replaces the old ScrollTransportBar; text and PDF are identical.
+struct OriginalTransportBar<Display: View>: View {
+    @Binding var scrollSpeed: CGFloat
+    @Binding var loopToTop: Bool
+    var onBackToTop: () -> Void
+    /// Display sections from the host (text size for text tabs; PDFs pass none).
+    @ViewBuilder var displayContent: () -> Display
+
+    @Environment(\.horizontalSizeClass) private var hSize
+    @State private var showDisplay = false
+    /// Speed to restore when play is tapped after a pause.
+    @State private var resumeSpeed: CGFloat = 8
+
+    private var scrolling: Bool { scrollSpeed > 0 }
+    private var isCompact: Bool { hSize == .compact }
+
+    var body: some View {
+        TransportChrome {
+            if isCompact {
+                VStack(spacing: 4) {
+                    HStack(spacing: 10) {
+                        playCluster
+                        Spacer(minLength: 6)
+                        tools
+                    }
+                    speedSlider
+                }
+            } else {
+                HStack(spacing: 16) {
+                    playCluster
+                    speedSlider
+                    tools
+                }
+            }
+        }
+    }
+
+    private var playCluster: some View {
+        HStack(spacing: 12) {
+            Button { onBackToTop() } label: {
+                Image(systemName: "arrow.up.to.line")
+                    .font(.body)
+                    .foregroundStyle(DS.fg1)
+                    .frame(width: 32, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            PlayCircleButton(isOn: scrolling) { togglePlay() }
+
+            TransportReadout(
+                value: scrolling ? "\(Int(scrollSpeed)) px/s" : "Paused",
+                sub: loopToTop ? "loop to top" : "scroll",
+                subAccented: loopToTop
+            )
+        }
+    }
+
+    private var speedSlider: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "gauge.with.needle")
+                .font(.system(size: 15))
+                .foregroundStyle(DS.fg2)
+            TokenScrubber(
+                value: Binding(get: { Double(scrollSpeed) }, set: { scrollSpeed = CGFloat($0) }),
+                range: 0...40
+            )
+            .frame(minWidth: 120, maxWidth: .infinity)
+        }
+    }
+
+    private var tools: some View {
+        HStack(spacing: 12) {
+            TransportTile(icon: "repeat", label: "Loop to top", active: loopToTop) {
+                loopToTop.toggle()
+            }
+            TransportTile(icon: "slider.horizontal.3", label: "Display", active: false) {
+                showDisplay = true
+            }
+            .popover(isPresented: $showDisplay) {
+                Form {
+                    displayContent()
+                    Section("Scrolling") {
+                        Toggle("Loop to top", isOn: $loopToTop)
+                    }
+                }
+                .frame(minWidth: 300, minHeight: 220)
+                .presentationCompactAdaptation(.popover)
+            }
+        }
+    }
+
+    private func togglePlay() {
+        if scrolling {
+            resumeSpeed = scrollSpeed
+            scrollSpeed = 0
+        } else {
+            scrollSpeed = max(8, resumeSpeed)
+        }
     }
 }
