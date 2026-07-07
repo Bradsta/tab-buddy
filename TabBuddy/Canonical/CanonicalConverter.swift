@@ -306,8 +306,23 @@ final class CanonicalConverter: ObservableObject {
             // Monospace text-export PDFs parse directly. Rendered scores
             // (Guitar Pro / engraving exports) have scrambled text, so
             // reconstruct the TAB spatially from glyph positions instead.
-            if looksLikeAsciiTab(s) { return (s, .pdfText) }
+            func fretTotal(_ text: String) -> Int {
+                TabParser.parse(text).allMeasures
+                    .compactMap(\.notes).flatMap { $0 }
+                    .flatMap(\.frets).compactMap { $0 }.count
+            }
             PDFTabExtractor.resetOCRStats()
+            if looksLikeAsciiTab(s) {
+                // PDF text extraction can mangle line layout and silently
+                // truncate the parse (Tw2 tavern: 3 of 7 systems). If the
+                // spatial reconstruction reads more notes, trust it instead.
+                if let spatial = PDFTabExtractor.asciiTab(from: doc),
+                   fretTotal(spatial) > fretTotal(s) {
+                    let ocr = PDFTabExtractor.lastOCRStats.candidates > 0
+                    return (spatial, ocr ? .ocr : .pdfSpatial)
+                }
+                return (s, .pdfText)
+            }
             if let spatial = PDFTabExtractor.asciiTab(from: doc) {
                 // No text layer → the OCR fallback ran; record it honestly.
                 let ocr = PDFTabExtractor.lastOCRStats.candidates > 0

@@ -309,9 +309,11 @@ struct TabViewerView: View {
             onRename: { newName = file?.displayTitle ?? ""; showRename = true },
             onEditTags: { showTags = true },
             detailRows: headerDetailRows,
+            // Original is the primary reading surface; the TabBuddy render
+            // is opt-in per track until extraction earns more trust.
             switchSegments: [
-                ViewSwitchSegment(id: 0, icon: "sparkles", label: "TabBuddy"),
                 ViewSwitchSegment(id: 1, icon: "doc.text", label: "Original"),
+                ViewSwitchSegment(id: 0, icon: "sparkles", label: "TabBuddy"),
             ],
             switchSelection: playerAvailable ? viewSwitchSelection : nil,
             backLabel: "Library",

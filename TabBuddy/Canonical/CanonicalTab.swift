@@ -300,5 +300,9 @@ enum CanonicalConverterVersion {
     //      zone) — hand-verified 1:1 on Ard Skellig (86 measures, 401
     //      notes), locked by golden unit tests; barline pair collapse fixes
     //      measure counts.
-    static let current = 16
+    // v17: text-export PDFs cross-check the text-layer parse against the
+    //      spatial reconstruction and keep whichever reads more notes (PDF
+    //      text extraction can silently truncate — Tw2 tavern parsed 3 of 7
+    //      systems at "100%" confidence).
+    static let current = 17
 }
