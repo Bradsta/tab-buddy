@@ -25,7 +25,10 @@ enum CanonicalAdapters {
                              title: String,
                              artist: String? = nil,
                              sourceType: Provenance.SourceType) -> CanonicalTab {
-        let tuning = tuningMIDI(forName: map.tuning) ?? GuitarTuning.standard.midiNotes
+        // Normalize spelled-out tunings ("EADGBE", "D A D G A D") to preset
+        // names so both the display name and the MIDI mapping resolve.
+        let tuningName = GuitarTuning.canonicalName(for: map.tuning) ?? map.tuning
+        let tuning = tuningMIDI(forName: tuningName) ?? GuitarTuning.standard.midiNotes
         let beats = map.timeSignature?.beats ?? 4
         let noteValue = map.timeSignature?.noteValue ?? 4
         let capo = map.capoSemitones ?? 0
@@ -97,7 +100,7 @@ enum CanonicalAdapters {
                             artist: resolvedArtist,
                             comments: map.comments,
                             tuningMIDI: tuning,
-                            tuningName: map.tuning ?? GuitarTuning.standard.name,
+                            tuningName: tuningName ?? GuitarTuning.standard.name,
                             capoOffsets: capoOffsets,
                             beatsPerMeasure: beats,
                             noteValue: noteValue,
@@ -136,14 +139,28 @@ enum CanonicalAdapters {
 
     /// Produce a `MeasureMap` for the existing `PlaybackCoordinator`, reusing
     /// `MeasureMapBuilder` so playback semantics match the Maker exactly.
+    /// The builder puts every measure in one system; re-wrap into rows of 4 so
+    /// the drawn Tab Player flows vertically instead of one endless line.
     static func measureMap(from tab: CanonicalTab) -> MeasureMap {
         let notes = composedNotes(from: tab)
-        return MeasureMapBuilder.build(notes: notes,
-                                       beatsPerMeasure: tab.beatsPerMeasure,
-                                       noteValue: tab.noteValue,
-                                       measureCount: max(tab.measureCount, 1),
-                                       bpm: tab.bpm ?? 120,
-                                       tuningMIDI: tab.tuningMIDI)
+        var map = MeasureMapBuilder.build(notes: notes,
+                                          beatsPerMeasure: tab.beatsPerMeasure,
+                                          noteValue: tab.noteValue,
+                                          measureCount: max(tab.measureCount, 1),
+                                          bpm: tab.bpm ?? 120,
+                                          tuningMIDI: tab.tuningMIDI)
+        let perRow = 4
+        let all = map.allMeasures
+        guard all.count > perRow else { return map }
+        var systems: [MeasureSystem] = []
+        var index = 0
+        while index < all.count {
+            let slice = Array(all[index..<min(index + perRow, all.count)])
+            systems.append(MeasureSystem(rect: .zero, lineRange: nil, measures: slice))
+            index += perRow
+        }
+        map.systems = systems
+        return map
     }
 
     // MARK: - CanonicalTab <-> ComposedTab  (Maker correction surface)

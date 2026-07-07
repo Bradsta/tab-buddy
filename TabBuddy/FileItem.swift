@@ -78,6 +78,11 @@ final class FileItem : Equatable {
     /// Non-destructive: it never touches the underlying file. Additive-optional.
     var customTitle: String? = nil
 
+    /// Instrument classification derived at conversion ("guitar", "piano", …).
+    /// nil = not yet classified → treated as guitar (this is a guitar-tab app;
+    /// everything predating classification is a guitar tab). Additive-optional.
+    var instrument: String? = nil
+
     /// Display title for the library card: the user's custom title if set, else
     /// the filename with its extension stripped. (Auto-extracted `derivedTitle`
     /// is intentionally not used — extraction was too unreliable; users rename.)
@@ -86,10 +91,20 @@ final class FileItem : Equatable {
         return (filename as NSString).deletingPathExtension
     }
 
+    /// Tuning name for display: canonical preset name when recognizable
+    /// ("EADGBE" → "Standard"), else the raw derived text.
+    var displayTuning: String {
+        GuitarTuning.canonicalName(for: tuning) ?? tuning ?? "Standard"
+    }
+
+    /// Typed instrument (nil/unknown string → guitar).
+    var instrumentKind: Instrument {
+        instrument.flatMap { Instrument(rawValue: $0) } ?? .guitar
+    }
+
     /// Whether the tuning is a non-standard tuning (drives the indigo pill).
     var isAltTuning: Bool {
-        guard let t = tuning else { return false }
-        return t.caseInsensitiveCompare("Standard") != .orderedSame
+        displayTuning.caseInsensitiveCompare("Standard") != .orderedSame
     }
 
     /// True if a canonical has been generated for this file.
@@ -158,6 +173,8 @@ final class FileItem : Equatable {
         self.scrollSpeed = scrollSpeed
     }
 
+    // (see Instrument at the bottom of this file)
+
     /// SHA-256 of the first 8 KB + file size. Fast and stable across moves/renames.
     static func fingerprint(of url: URL) -> String? {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
@@ -177,5 +194,55 @@ final class FileItem : Equatable {
             hex.unicodeScalars.append(hexChars[Int(byte & 0x0F)])
         }
         return hex
+    }
+}
+
+// MARK: - Instrument
+
+/// Instrument classification for library files. Guitar tabs are detected
+/// structurally (ASCII tab / TAB staves); everything else is classified from
+/// header keywords, defaulting to piano for plain notation (lead sheets).
+enum Instrument: String, CaseIterable {
+    case guitar, bass, ukulele, piano, voice, sax, trumpet, flute, violin, cello, drums
+
+    /// SF Symbol for the library card affordance.
+    var symbol: String {
+        switch self {
+        case .guitar, .bass, .ukulele: return "guitars"
+        case .piano:                   return "pianokeys"
+        case .voice:                   return "music.mic"
+        case .drums:                   return "metronome"
+        default:                       return "music.note"
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .sax: return "Sax"
+        default:   return rawValue.capitalized
+        }
+    }
+
+    /// Keyword classification for non-tab sources. Returns nil when nothing
+    /// obviously matches (caller decides the default).
+    static func detect(inText text: String) -> Instrument? {
+        let lower = text.lowercased()
+        let keywords: [(Instrument, [String])] = [
+            (.sax,     ["saxophone", "alto sax", "tenor sax", "bari sax", " sax "]),
+            (.trumpet, ["trumpet"]),
+            (.flute,   ["flute"]),
+            (.violin,  ["violin"]),
+            (.cello,   ["cello"]),
+            (.drums,   ["drum kit", "drums", "percussion"]),
+            (.voice,   ["vocal", "voice", "lyrics by"]),
+            (.ukulele, ["ukulele", "uke "]),
+            (.bass,    ["bass guitar", "bass tab", "for bass"]),
+            (.piano,   ["piano", "keyboard"]),
+            (.guitar,  ["guitar"]),
+        ]
+        for (inst, words) in keywords {
+            for w in words where lower.contains(w) { return inst }
+        }
+        return nil
     }
 }

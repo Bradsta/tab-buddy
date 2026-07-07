@@ -98,7 +98,13 @@ struct FileCardView: View, Equatable {
 
     private var metaRow: some View {
         HStack(spacing: 8) {
-            tuningPill
+            // Guitar tabs show their tuning; anything else shows the
+            // instrument itself (tuning is meaningless there).
+            if file.instrumentKind == .guitar {
+                tuningPill
+            } else {
+                instrumentPill
+            }
             if file.lastOpenedAt > file.importedAt {
                 Text(file.lastOpenedAt, format: .relative(presentation: .named))
                     .font(.system(size: 11, weight: .medium))
@@ -124,9 +130,22 @@ struct FileCardView: View, Equatable {
         }
     }
 
+    private var instrumentPill: some View {
+        let inst = file.instrumentKind
+        return HStack(spacing: 3) {
+            Image(systemName: inst.symbol)
+                .font(.system(size: 9, weight: .medium))
+            Text(inst.label)
+                .font(.system(size: 10, weight: .medium))
+        }
+        .foregroundStyle(Color(.systemTeal))
+        .padding(.init(top: 2, leading: 7, bottom: 2, trailing: 7))
+        .background(Color(.systemTeal).opacity(0.12), in: RoundedRectangle(cornerRadius: 5))
+    }
+
     private var tuningPill: some View {
         let alt = file.isAltTuning
-        return Text(file.tuning ?? "Standard")
+        return Text(file.displayTuning)
             .font(.system(size: 10, weight: alt ? .semibold : .medium))
             .foregroundStyle(alt ? Color(.systemIndigo) : Color(.secondaryLabel))
             .padding(.init(top: 2, leading: 7, bottom: 2, trailing: 7))

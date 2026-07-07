@@ -119,7 +119,7 @@ struct TabParser {
             // Tuning
             if meta.tuning == nil && lower.contains("tuning") {
                 if lower.contains("standard") {
-                    meta.tuning = "EADGBE"
+                    meta.tuning = "Standard"
                 } else {
                     // Find the colon specifically after "tuning"
                     if let tuningRange = lower.range(of: "tuning"),

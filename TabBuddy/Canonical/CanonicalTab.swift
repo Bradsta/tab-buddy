@@ -169,6 +169,8 @@ struct Provenance: Codable, Equatable {
     enum SourceType: String, Codable {
         case txtDirect    // parsed straight from an ASCII .txt
         case pdfText      // text extracted from a (vector) PDF, then parsed
+        case pdfSpatial   // rendered-score PDF, TAB reconstructed from glyph positions
+        case notation     // notation-only PDF (lead sheet), melody mapped to guitar
         case ocr          // reconstructed via OCR/CV (future)
         case composed     // authored in the Maker
         case unknown
@@ -240,5 +242,21 @@ enum CanonicalConverterVersion {
     //     German H string, |r rest gutter), unlabeled bar-less systems,
     //     =-sustain and digit-dense lines, tuplet/beat-ruler and fingering-row
     //     rejection, separator-line filtering, prose-annotation digit masking.
-    static let current = 5
+    // v6: spatial TAB extraction for rendered-score PDFs (staff-line raster
+    //     detection + digit-glyph snapping → synthesized ASCII → TabParser).
+    // v7: tuning-name normalization (EADGBE → Standard), instrument
+    //     classification, notation (lead-sheet) melody extraction mapped to
+    //     guitar strings.
+    // v8: real bar-line detection (vertical strokes spanning the staff) for
+    //     both TAB and notation extraction — real measures instead of one
+    //     giant measure per staff.
+    // v9: raster notehead-blob fallback for flattened glyph boxes, melodic-
+    //     continuity stem disambiguation, beam-row outlier fix in staff
+    //     grouping (recovers dense beamed systems).
+    // v10: line-sitting noteheads no longer rejected as beams (multi-row
+    //      minimum-extension probe).
+    // v11: proportional note durations via synthesized rhythm line, ledger-
+    //      band rejection (staff-line continuity for notation), trailing
+    //      whole-rest measures kept, notation/TAB page routing guard.
+    static let current = 11
 }

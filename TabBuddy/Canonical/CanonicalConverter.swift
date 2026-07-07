@@ -47,11 +47,13 @@ final class CanonicalConverter: ObservableObject {
         let title: String?
         let tuning: String?
         let foreword: String?
+        let instrument: String?
         let succeeded: Bool
 
         static func failure(_ id: UUID) -> Outcome {
             Outcome(id: id, canonicalFilename: nil, provenanceData: nil,
-                    version: 0, title: nil, tuning: nil, foreword: nil, succeeded: false)
+                    version: 0, title: nil, tuning: nil, foreword: nil,
+                    instrument: nil, succeeded: false)
         }
     }
 
@@ -165,6 +167,8 @@ final class CanonicalConverter: ObservableObject {
         item.derivedTitle = canonical.title
         item.tuning = canonical.tuningName
         item.foreword = Self.forewordText(canonical)
+        // Prebuilt parses come from the text-tab viewer — guitar by definition.
+        item.instrument = Instrument.guitar.rawValue
         try? context.save()
     }
 
@@ -200,6 +204,7 @@ final class CanonicalConverter: ObservableObject {
         item.derivedTitle = outcome.title
         item.tuning = outcome.tuning
         item.foreword = outcome.foreword
+        item.instrument = outcome.instrument
     }
 
     // MARK: - Off-main work
@@ -213,6 +218,25 @@ final class CanonicalConverter: ObservableObject {
         }
 
         let map = TabParser.parse(text)
+
+        // Instrument classification: structural tab evidence means guitar;
+        // otherwise keywords, defaulting to piano for plain notation PDFs
+        // (lead sheets) and guitar for text files.
+        let hasNotes = map.allMeasures.contains { !($0.notes ?? []).isEmpty }
+        let instrument: Instrument
+        switch source {
+        case .pdfSpatial:
+            instrument = .guitar
+        case .notation:
+            // A lead sheet is never a guitar tab even though we synthesize one.
+            // Classify from the filename (the extracted melody has no keywords).
+            instrument = Instrument.detect(inText: job.title) ?? .piano
+        case .txtDirect:
+            instrument = hasNotes ? .guitar : (Instrument.detect(inText: text) ?? .guitar)
+        default:
+            instrument = hasNotes ? .guitar : (Instrument.detect(inText: text) ?? .piano)
+        }
+
         let canonical = CanonicalAdapters.canonicalTab(from: map,
                                                        title: job.title,
                                                        sourceType: source)
@@ -232,6 +256,7 @@ final class CanonicalConverter: ObservableObject {
                        title: canonical.title,
                        tuning: canonical.tuningName,
                        foreword: forewordText(canonical),
+                       instrument: instrument.rawValue,
                        succeeded: true)
     }
 
@@ -270,6 +295,17 @@ final class CanonicalConverter: ObservableObject {
                     s += "\n"
                 }
             }
+            // Monospace text-export PDFs parse directly. Rendered scores
+            // (Guitar Pro / engraving exports) have scrambled text, so
+            // reconstruct the TAB spatially from glyph positions instead.
+            if looksLikeAsciiTab(s) { return (s, .pdfText) }
+            if let spatial = PDFTabExtractor.asciiTab(from: doc) {
+                return (spatial, .pdfSpatial)
+            }
+            // Notation-only score (lead sheet): approximate the melody as tab.
+            if let melody = PDFTabExtractor.asciiFromNotation(from: doc) {
+                return (melody, .notation)
+            }
             return (s, .pdfText)
 
         default:
@@ -279,5 +315,16 @@ final class CanonicalConverter: ObservableObject {
 
     private nonisolated static func titleFromFilename(_ filename: String) -> String {
         (filename as NSString).deletingPathExtension
+    }
+
+    /// Any line dominated by dashes/sustains ⇒ a monospace ASCII tab export.
+    private nonisolated static func looksLikeAsciiTab(_ text: String) -> Bool {
+        for line in text.components(separatedBy: "\n") {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            guard t.count >= 8 else { continue }
+            let dashes = t.filter { $0 == "-" || $0 == "=" }.count
+            if dashes >= 6, Double(dashes) / Double(t.count) >= 0.3 { return true }
+        }
+        return false
     }
 }

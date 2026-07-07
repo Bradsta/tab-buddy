@@ -105,6 +105,65 @@ struct GuitarTuning: Identifiable, Hashable {
     static let allPresets: [GuitarTuning] = [
         .standard, .dropD, .openG, .openD, .dadgad, .halfStepDown, .fullStepDown
     ]
+
+    // MARK: - Name normalization
+
+    /// Canonical preset name for a raw tuning string from a tab header, or nil
+    /// when unrecognized (genuinely exotic tunings keep their raw text).
+    /// Handles "Standard", preset names, and note-letter spellings in either
+    /// direction with any separators: "EADGBE", "E A D G B E", "e-a-d-g-b-e",
+    /// "Eb Ab Db Gb Bb Eb", "D A D G A D", …
+    static func canonicalName(for raw: String?) -> String? {
+        guard let raw else { return nil }
+        let lower = raw.lowercased()
+        if lower.contains("standard") { return standard.name }
+        for p in allPresets where lower.contains(p.name.lowercased()) { return p.name }
+
+        // Note-letter signature. Two parses: letters+sharps only (so the 'b'
+        // in "eadgbe" is the B string, not a flat), then flats allowed.
+        func parse(withFlats: Bool) -> [String]? {
+            var tokens: [String] = []
+            let chars = Array(lower)
+            var i = 0
+            while i < chars.count {
+                let c = chars[i]
+                if "abcdefg".contains(c) {
+                    var tok = String(c)
+                    if i + 1 < chars.count {
+                        let n = chars[i + 1]
+                        if n == "#" || (withFlats && n == "b") {
+                            // flats → enharmonic sharps to match preset names
+                            if n == "b" {
+                                let flatToSharp = ["a": "g#", "b": "a#", "d": "c#", "e": "d#", "g": "f#"]
+                                tok = flatToSharp[tok] ?? tok
+                            } else {
+                                tok += "#"
+                            }
+                            i += 1
+                        }
+                    }
+                    tokens.append(tok)
+                } else if !(c == " " || c == "-" || c == "," || c == "/" || c == "'") {
+                    // other letters/digits — not a plain tuning spelling
+                    if c.isLetter || c.isNumber { return nil }
+                }
+                i += 1
+            }
+            return tokens.count == 6 ? tokens : nil
+        }
+
+        for withFlats in [false, true] {
+            guard let tokens = parse(withFlats: withFlats) else { continue }
+            let sig = tokens.joined()
+            for p in allPresets {
+                let names = p.noteNames.map { $0.lowercased() }   // high→low
+                if sig == names.joined() || sig == names.reversed().joined() {
+                    return p.name
+                }
+            }
+        }
+        return nil
+    }
 }
 
 // MARK: - Time Signature

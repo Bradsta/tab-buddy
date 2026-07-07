@@ -35,6 +35,7 @@
 		D10000012F6E000100AB0001 /* ComposedNote.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000012F6E000100AB0000 /* ComposedNote.swift */; };
 		D10000102F6E000100AB0001 /* CanonicalTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000102F6E000100AB0000 /* CanonicalTab.swift */; };
 		D10000112F6E000100AB0001 /* MusicXMLCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000112F6E000100AB0000 /* MusicXMLCodec.swift */; };
+		D10000112F6E000100AB0101 /* PDFTabExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000112F6E000100AB0100 /* PDFTabExtractor.swift */; };
 		D10000122F6E000100AB0001 /* CanonicalAdapters.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000122F6E000100AB0000 /* CanonicalAdapters.swift */; };
 		D10000132F6E000100AB0001 /* CanonicalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000132F6E000100AB0000 /* CanonicalStore.swift */; };
 		D10000142F6E000100AB0001 /* CanonicalConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000142F6E000100AB0000 /* CanonicalConverter.swift */; };
@@ -135,6 +136,7 @@
 		D10000022F6E000100AB0000 /* ComposedTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposedTab.swift; sourceTree = "<group>"; };
 		D10000102F6E000100AB0000 /* CanonicalTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalTab.swift; sourceTree = "<group>"; };
 		D10000112F6E000100AB0000 /* MusicXMLCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicXMLCodec.swift; sourceTree = "<group>"; };
+		D10000112F6E000100AB0100 /* PDFTabExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFTabExtractor.swift; sourceTree = "<group>"; };
 		D10000122F6E000100AB0000 /* CanonicalAdapters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalAdapters.swift; sourceTree = "<group>"; };
 		D10000132F6E000100AB0000 /* CanonicalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalStore.swift; sourceTree = "<group>"; };
 		D10000142F6E000100AB0000 /* CanonicalConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalConverter.swift; sourceTree = "<group>"; };
@@ -317,6 +319,7 @@
 			children = (
 				D10000102F6E000100AB0000 /* CanonicalTab.swift */,
 				D10000112F6E000100AB0000 /* MusicXMLCodec.swift */,
+				D10000112F6E000100AB0100 /* PDFTabExtractor.swift */,
 				D10000122F6E000100AB0000 /* CanonicalAdapters.swift */,
 				D10000132F6E000100AB0000 /* CanonicalStore.swift */,
 				D10000142F6E000100AB0000 /* CanonicalConverter.swift */,
@@ -515,6 +518,7 @@
 				D100000D2F6E000100AB0001 /* MakerCompositionListView.swift in Sources */,
 				D10000102F6E000100AB0001 /* CanonicalTab.swift in Sources */,
 				D10000112F6E000100AB0001 /* MusicXMLCodec.swift in Sources */,
+				D10000112F6E000100AB0101 /* PDFTabExtractor.swift in Sources */,
 				D10000122F6E000100AB0001 /* CanonicalAdapters.swift in Sources */,
 				D10000132F6E000100AB0001 /* CanonicalStore.swift in Sources */,
 				D10000142F6E000100AB0001 /* CanonicalConverter.swift in Sources */,
@@ -693,6 +697,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Tab Buddy";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Tab Buddy uses the microphone to detect notes you play on your guitar for live transcription.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIBackgroundModes = "remote-notification";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -726,6 +731,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Tab Buddy";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Tab Buddy uses the microphone to detect notes you play on your guitar for live transcription.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIBackgroundModes = "remote-notification";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
