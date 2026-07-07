@@ -6,6 +6,7 @@ enum AppPage: Hashable {
     case liveTranscribe
     case tabMaker
     case tabMakerDocument(UUID)
+    case tuner
 }
 
 enum ImportKind { case file, folder }
@@ -53,6 +54,8 @@ struct ContentView: View {
                     MakerCompositionListView(path: $path)
                 case .tabMakerDocument(let tabID):
                     TabMakerDocumentDestination(tabID: tabID)
+                case .tuner:
+                    TunerView()
                 }
             }
         }

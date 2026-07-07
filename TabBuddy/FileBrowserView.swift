@@ -581,6 +581,11 @@ struct FileBrowserView: View {
                 }
             }
             if editMode?.wrappedValue != .active {
+                Button {
+                    path.append(.tuner)
+                } label: { Label("Tuner", systemImage: "tuningfork") }
+            }
+            if editMode?.wrappedValue != .active {
                 importMenu
             }
             if editMode?.wrappedValue != .active {
