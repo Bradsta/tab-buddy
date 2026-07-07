@@ -140,6 +140,12 @@ final class NotePlaybackEngine: ObservableObject {
     /// Uses pre-cached buffers for zero-latency playback.
     /// Each call interrupts any currently playing note — just like a real guitar
     /// where new notes naturally mute previous strings.
+    /// Serial queue for chord mixing — `playNotes` fires from the display-link
+    /// tick on the main thread, and mixing PCM there starves touch handling on
+    /// note-dense pieces.
+    private nonisolated static let mixQueue = DispatchQueue(label: "NotePlaybackEngine.mix",
+                                                            qos: .userInteractive)
+
     func playNotes(_ frets: [Int?], tuningMIDI: [Int]? = nil) {
         guard isEnabled, engine.isRunning else { return }
 
@@ -153,16 +159,21 @@ final class NotePlaybackEngine: ObservableObject {
 
         guard !midiNotes.isEmpty else { return }
 
-        // Look up cached buffers and mix into a single chord buffer
-        guard let chordBuffer = mixCachedNotes(midiNotes) else { return }
+        let vol = volume
+        Self.mixQueue.async { [weak self] in
+            guard let self else { return }
+            // Cached buffers are immutable after prepare; scheduleBuffer is
+            // thread-safe, so mixing off-main is sound.
+            guard let chordBuffer = self.mixCachedNotes(midiNotes) else { return }
 
-        playerNode.volume = volume
-        // .interrupts: immediately replace any currently playing buffer
-        // This keeps audio in sync with the visual highlight
-        playerNode.scheduleBuffer(chordBuffer, at: nil, options: .interrupts,
-                                  completionHandler: nil)
-        if !playerNode.isPlaying {
-            playerNode.play()
+            self.playerNode.volume = vol
+            // .interrupts: immediately replace any currently playing buffer
+            // This keeps audio in sync with the visual highlight
+            self.playerNode.scheduleBuffer(chordBuffer, at: nil, options: .interrupts,
+                                           completionHandler: nil)
+            if !self.playerNode.isPlaying {
+                self.playerNode.play()
+            }
         }
     }
 

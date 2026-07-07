@@ -34,8 +34,21 @@ final class PlaybackCoordinator: NSObject, ObservableObject {
 
     /// The parsed tab structure driving playback
     var measureMap: MeasureMap? {
-        didSet { reset() }
+        didSet {
+            // Cache the flattened measure list — the display-link tick must
+            // not re-flatten (allocate) per frame.
+            cachedMeasures = measureMap?.allMeasures ?? []
+            reset()
+        }
     }
+
+    /// Flattened measures, cached off `measureMap` (tick-hot path).
+    private var cachedMeasures: [Measure] = []
+
+    /// True playhead position in beats. `accumulatedBeats` is a throttled
+    /// published mirror — publishing at display-link rate invalidates SwiftUI
+    /// 120×/s and starves touch handling.
+    private var playheadBeats: Double = 0
 
     /// Loop boundaries (measure indices, inclusive)
     var loopStartMeasure: Int?
@@ -92,12 +105,13 @@ final class PlaybackCoordinator: NSObject, ObservableObject {
     }
 
     func seekToMeasure(_ index: Int) {
-        guard let map = measureMap else { return }
-        let clamped = max(0, min(index, map.allMeasures.count - 1))
+        guard !cachedMeasures.isEmpty else { return }
+        let clamped = max(0, min(index, cachedMeasures.count - 1))
         currentMeasureIndex = clamped
         beatFraction = 0
-        accumulatedBeats = beatsUpToMeasure(clamped)
-        lastBeatInteger = Int(accumulatedBeats) - 1
+        playheadBeats = beatsUpToMeasure(clamped)
+        accumulatedBeats = playheadBeats
+        lastBeatInteger = Int(playheadBeats) - 1
         lastMeasureForNotes = -1
         triggeredNotePositions.removeAll()
         updateSystemIndex()
@@ -124,24 +138,25 @@ final class PlaybackCoordinator: NSObject, ObservableObject {
     }
 
     @objc private func tick(_ link: CADisplayLink) {
-        guard let map = measureMap, !map.allMeasures.isEmpty else { return }
+        let measures = cachedMeasures
+        guard !measures.isEmpty else { return }
 
         let dt = link.targetTimestamp - link.timestamp
         let beatsPerSecond = bpm / 60.0
         let beatsElapsed = beatsPerSecond * dt
 
-        accumulatedBeats += beatsElapsed
+        playheadBeats += beatsElapsed
 
         // Determine which measure we're in
-        let measures = map.allMeasures
         var beatsConsumed: Double = 0
         var measureIdx = 0
+        var rawFraction: Double = 0
 
         for (i, measure) in measures.enumerated() {
             let measureBeats = Double(measure.beatCount)
-            if accumulatedBeats < beatsConsumed + measureBeats {
+            if playheadBeats < beatsConsumed + measureBeats {
                 measureIdx = i
-                beatFraction = (accumulatedBeats - beatsConsumed) / measureBeats
+                rawFraction = (playheadBeats - beatsConsumed) / measureBeats
                 break
             }
             beatsConsumed += measureBeats
@@ -170,15 +185,21 @@ final class PlaybackCoordinator: NSObject, ObservableObject {
             return
         }
 
-        currentMeasureIndex = measureIdx
-        beatFraction = max(0, min(1, beatFraction))
+        // Publish sparingly: every @Published write invalidates the observing
+        // SwiftUI views, so quantize the fraction (1/64 measure) and only
+        // assign on change. Identical assignments still fire objectWillChange.
+        if measureIdx != currentMeasureIndex { currentMeasureIndex = measureIdx }
+        let quantized = max(0, min(1, (rawFraction * 64).rounded() / 64))
+        if quantized != beatFraction { beatFraction = quantized }
+        let beatsMirror = (playheadBeats * 10).rounded() / 10
+        if beatsMirror != accumulatedBeats { accumulatedBeats = beatsMirror }
 
         // Fire beat callback on integer beat boundaries
-        let currentBeatInt = Int(accumulatedBeats)
+        let currentBeatInt = Int(playheadBeats)
         if currentBeatInt != lastBeatInteger {
             lastBeatInteger = currentBeatInt
             let measure = measures[measureIdx]
-            let beatInMeasure = Int(beatFraction * Double(measure.beatCount))
+            let beatInMeasure = Int(rawFraction * Double(measure.beatCount))
             onBeat?(beatInMeasure, measure.beatCount)
         }
 
@@ -194,7 +215,7 @@ final class PlaybackCoordinator: NSObject, ObservableObject {
                 for note in notes {
                     // Use column as unique identifier (position alone can have duplicates)
                     let key = note.column ?? Int(note.positionInMeasure * 10000)
-                    if note.positionInMeasure <= beatFraction,
+                    if note.positionInMeasure <= rawFraction,
                        !triggeredNotePositions.contains(key) {
                         triggeredNotePositions.insert(key)
                         triggered.append(note)
@@ -207,7 +228,7 @@ final class PlaybackCoordinator: NSObject, ObservableObject {
         }
 
         // Fire frame update
-        onFrameUpdate?(measureIdx, beatFraction)
+        onFrameUpdate?(measureIdx, rawFraction)
 
         // Check if system changed
         updateSystemIndex()
@@ -218,6 +239,7 @@ final class PlaybackCoordinator: NSObject, ObservableObject {
     private func reset() {
         currentMeasureIndex = 0
         beatFraction = 0
+        playheadBeats = 0
         accumulatedBeats = 0
         lastBeatInteger = -1
         currentSystemIndex = 0
@@ -227,8 +249,7 @@ final class PlaybackCoordinator: NSObject, ObservableObject {
 
     /// Calculate total beats up to (but not including) a measure index.
     private func beatsUpToMeasure(_ index: Int) -> Double {
-        guard let map = measureMap else { return 0 }
-        return map.allMeasures.prefix(index).reduce(0.0) { $0 + Double($1.beatCount) }
+        cachedMeasures.prefix(index).reduce(0.0) { $0 + Double($1.beatCount) }
     }
 
     /// Update the current system index and fire callback if changed.

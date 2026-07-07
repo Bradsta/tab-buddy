@@ -85,7 +85,12 @@ struct TabViewerView: View {
             defer { url.stopAccessingSecurityScopedResource() }
 
             do {
-                let contents = try String(contentsOf: url)
+                // Coordinated read: downloads iCloud placeholders before reading.
+                var readResult: Result<String, Error> = .failure(CocoaError(.fileReadUnknown))
+                NSFileCoordinator().coordinate(readingItemAt: url, options: [], error: nil) { readURL in
+                    readResult = Result { try String(contentsOf: readURL) }
+                }
+                let contents = try readResult.get()
                 DispatchQueue.main.async {
                     // Normalize line endings (\r\n → \n) so UITextView and parser agree
                     textContent = contents.replacingOccurrences(of: "\r\n", with: "\n")
@@ -167,6 +172,8 @@ struct TabViewerView: View {
             // their parse). Runs off the main actor; idempotent and best-effort.
             if let file, file.url?.pathExtension.lowercased() == "pdf" {
                 CanonicalConverter.shared.convertOnOpen(file, context: context)
+                // Already-converted PDFs can offer the drawn Tab Player now.
+                loadCanonicalMap()
             }
 
             if renderMode == .canonical { loadCanonicalText() }
@@ -182,6 +189,11 @@ struct TabViewerView: View {
         }
         .onChange(of: renderMode) { mode in
             if mode == .canonical { loadCanonicalText() }
+        }
+        .onChange(of: file?.canonicalVersion) { _ in
+            // Convert-on-open finished while the PDF is showing — refresh the
+            // player map so a stale (older-converter) map never sticks around.
+            if isPDF { loadCanonicalMap() }
         }
         .onDisappear {
             playCountTask?.cancel()
@@ -363,6 +375,22 @@ struct TabViewerView: View {
 
             // (Scroll speed now lives in each view's bottom transport.)
 
+            // One-tap view toggle: drawn Tab Player ↔ original render.
+            // (The ⋯ menu keeps the labeled picker; this is the fast path.)
+            if playerAvailable {
+                Button {
+                    let newMode: TextViewMode = usingDrawnPlayer ? .original : .player
+                    file?.preferredTextMode = newMode.rawValue
+                    try? context.save()
+                } label: {
+                    Image(systemName: usingDrawnPlayer ? "doc.text" : "wand.and.stars")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(Color.accentColor)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel(usingDrawnPlayer ? "Show Original" : "Show Tab Player")
+            }
+
             // overflow menu
             Menu {
                 Button("Rename…") { newName = file!.displayTitle; showRename = true }
@@ -399,10 +427,12 @@ struct TabViewerView: View {
             file?.url?.pathExtension.lowercased() == "pdf"
         }
 
-        /// True when this tab *can* show the drawn player (non-PDF, parsed into
-        /// at least one system). Governs whether the View toggle is offered.
+        /// True when this tab *can* show the drawn player (parsed into at
+        /// least one system). Text tabs parse directly; PDFs get a map from
+        /// their canonical (spatial/notation extraction) once converted.
+        /// Governs whether the View toggle is offered.
         private var playerAvailable: Bool {
-            !isPDF && (measureMap?.systems.isEmpty == false)
+            measureMap?.systems.isEmpty == false
         }
 
         /// The drawn Tab Player is used for a player-capable tab unless the user
@@ -671,6 +701,25 @@ struct TabViewerView: View {
             return
         }
         canonicalText = CanonicalAdapters.asciiTab(from: canonical)
+    }
+
+    /// For PDFs: build the playback/player MeasureMap from the stored
+    /// canonical (produced by spatial TAB or notation extraction). This is
+    /// what lets a PDF open in the drawn Tab Player.
+    private func loadCanonicalMap() {
+        guard let file, file.hasCanonical, let fname = file.canonicalFilename,
+              let data = CanonicalStore.read(filename: fname),
+              let canonical = MusicXMLCodec.decode(data),
+              !canonical.allNotes.isEmpty else { return }
+        let map = CanonicalAdapters.measureMap(from: canonical)
+        guard !map.systems.isEmpty else { return }
+        measureMap = map
+        playbackCoordinator.measureMap = map
+
+        if file.userBPM == nil, let bpm = canonical.bpm {
+            userBPM = bpm
+            playbackCoordinator.bpm = bpm
+        }
     }
 
     private func parseTextTab() {

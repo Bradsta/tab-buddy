@@ -104,6 +104,9 @@ struct TabPlayerView: View {
                         proseBlock("Foreword", fw)
                     }
                     ForEach(model.systems) { sys in
+                        // Playhead inputs only for the current system — passing
+                        // live values to every row re-renders every visible
+                        // Canvas on each playhead step.
                         DrawnTabSystemView(
                             system: sys,
                             model: model,
@@ -112,8 +115,8 @@ struct TabPlayerView: View {
                             showRhythm: showRhythm,
                             showStaff: showStaff,
                             isCurrentSystem: sys.index == curSys,
-                            currentMeasure: coordinator.currentMeasureIndex,
-                            beatFraction: coordinator.beatFraction,
+                            currentMeasure: sys.index == curSys ? coordinator.currentMeasureIndex : -1,
+                            beatFraction: sys.index == curSys ? coordinator.beatFraction : 0,
                             isPlaying: coordinator.isPlaying,
                             loopStart: loopEnabled ? loopStart : nil,
                             loopEnd: loopEnabled ? loopEnd : nil,

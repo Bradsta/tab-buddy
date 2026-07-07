@@ -26,9 +26,14 @@ struct TabPDFView: View {
                                    scrollViewProxy: $scrollViewProxy,
                                    forceWhiteBackground: false)
                 }
-            } else {
+            } else if isLoading {
                 ProgressView("Loading PDF...")
                     .progressViewStyle(CircularProgressViewStyle())
+            } else {
+                Text("Couldn't load this PDF. Check that the file is available in iCloud.")
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding()
             }
         }
         .onAppear {
@@ -38,9 +43,18 @@ struct TabPDFView: View {
 
     private func loadPDF() {
         DispatchQueue.global(qos: .userInitiated).async {
-            guard url.startAccessingSecurityScopedResource() else { return }
+            // Best-effort: needed for bookmark-scoped (ad-hoc) files. Library
+            // files resolve under the library root, whose scope is already
+            // held — for those this returns false, which is fine.
+            _ = url.startAccessingSecurityScopedResource()
 
-            let document = PDFDocument(url: url)
+            // Coordinated read: an iCloud file that hasn't been downloaded is
+            // just a placeholder — coordination triggers the download and
+            // waits for the real file.
+            var document: PDFDocument? = nil
+            NSFileCoordinator().coordinate(readingItemAt: url, options: [], error: nil) { readURL in
+                document = PDFDocument(url: readURL)
+            }
             let isLight = document.map { Self.hasLightBackground($0) } ?? false
 
             DispatchQueue.main.async {
