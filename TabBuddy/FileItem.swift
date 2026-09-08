@@ -39,6 +39,13 @@ final class FileItem : Equatable {
     /// relative path from the library root (nil for non-library files)
     var libraryPath: String? = nil
 
+    /// Phase-3 storage identity. Additive/defaulted for CloudKit migration.
+    var libraryID: UUID? = nil
+    var storageRelativePath: String? = nil
+    var byteSize: Int64 = 0
+    var sourceModificationDate: Date? = nil
+    var needsLibraryMigration: Bool = false
+
     /// lightweight content fingerprint for detecting moved/renamed files
     var contentHash: String? = nil
 
@@ -73,7 +80,7 @@ final class FileItem : Equatable {
     /// Denormalized from the canonical for fast card display.
     var derivedTitle: String? = nil
 
-    /// Tuning name derived from the canonical (nil = unknown → treat as Standard).
+    /// Tuning name derived from the canonical (nil = unknown).
     /// Denormalized for fast card display / tuning filters.
     var tuning: String? = nil
 
@@ -86,40 +93,100 @@ final class FileItem : Equatable {
     var customTitle: String? = nil
 
     /// Instrument classification derived at conversion ("guitar", "piano", …).
-    /// nil = not yet classified → treated as guitar (this is a guitar-tab app;
-    /// everything predating classification is a guitar tab). Additive-optional.
+    /// nil = not yet classified. Additive-optional for existing libraries.
     var instrument: String? = nil
+    /// A score may contain several instruments. User edits take precedence over extraction.
+    var instruments: [String] = []
+    var metadataEdited: Bool = false
+    var composer: String? = nil
+    var arranger: String? = nil
+    var collectionTitle: String? = nil
+    var arrangement: String? = nil
+    var embeddedTitle: String? = nil
+    var artist: String? = nil
+    var sourceID: String? = nil
+    var copyrightNotice: String? = nil
+    var metadataReadVersion: Int = 0
+    var backgroundProcessingVersion: Int = 0
+    var sourceName: String? = nil
+    var sourceURL: String? = nil
+    var preferredNotation: String? = nil
+
+    var instrumentKinds: [Instrument] {
+        let values = instruments.compactMap(Instrument.init(rawValue:))
+        if !values.isEmpty { return Array(Set(values)).sorted { $0.label < $1.label } }
+        return [instrument.flatMap(Instrument.init(rawValue:)) ?? .unknown]
+    }
+
+    var searchableMetadata: String {
+        ([embeddedTitle, artist, composer, arranger, collectionTitle, arrangement, sourceName].compactMap { $0 }
+         + instrumentKinds.map(\.label)).joined(separator: " ")
+    }
+
+    struct InferredMetadata: Sendable {
+        var instruments: [String] = []
+        var composer: String?
+        var arranger: String?
+        var collection: String?
+    }
+
+    nonisolated static func inferredMetadata(from text: String) -> InferredMetadata {
+        var result = InferredMetadata(instruments: Instrument.detectAll(inText: text).map(\.rawValue))
+        for line in text.components(separatedBy: .newlines) {
+            let clean = line.trimmingCharacters(in: .whitespaces)
+            let lower = clean.lowercased()
+            for prefix in ["composed by:", "composer:", "arranged by:", "arranger:", "game:", "album:"] where lower.hasPrefix(prefix) {
+                let value = String(clean.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+                guard !value.isEmpty else { continue }
+                switch prefix {
+                case "composed by:", "composer:": if result.composer == nil { result.composer = value }
+                case "arranged by:", "arranger:": if result.arranger == nil { result.arranger = value }
+                default: if result.collection == nil { result.collection = value }
+                }
+            }
+        }
+        return result
+    }
+
+    func applyInferredMetadata(_ value: InferredMetadata) {
+        guard !metadataEdited else { return }
+        if instruments.isEmpty && !value.instruments.isEmpty {
+            instruments = value.instruments
+            instrument = instruments.first
+        }
+        if composer == nil { composer = value.composer }
+        if arranger == nil { arranger = value.arranger }
+        if collectionTitle == nil { collectionTitle = value.collection }
+    }
+
+    func inferMetadata(from text: String) {
+        guard !metadataEdited else { return }
+        applyInferredMetadata(Self.inferredMetadata(from: text))
+    }
 
     /// Display title for the library card: the user's custom title if set, else
     /// the filename with its extension stripped. (Auto-extracted `derivedTitle`
     /// is intentionally not used — extraction was too unreliable; users rename.)
     var displayTitle: String {
         if let t = customTitle?.trimmingCharacters(in: .whitespacesAndNewlines), !t.isEmpty { return t }
+        if let title = embeddedTitle, !title.isEmpty { return title }
         return (filename as NSString).deletingPathExtension
     }
 
     /// Tuning name for display: canonical preset name when recognizable
     /// ("EADGBE" → "Standard"), else the raw derived text.
     var displayTuning: String {
-        if let name = GuitarTuning.canonicalName(for: tuning) { return name }
-        // Show a raw tuning string only if it actually looks like one
-        // (note letters) — stale metadata occasionally carries junk like a
-        // time signature, which must never render in the tuning pill.
-        if let t = tuning?.trimmingCharacters(in: .whitespaces), !t.isEmpty,
-           t.range(of: "^[A-Ga-g][#b]?( ?[A-Ga-g][#b]?){3,7}$", options: .regularExpression) != nil {
-            return t
-        }
-        return "Standard"
+        GuitarTuning.displayName(for: tuning)
     }
 
-    /// Typed instrument (nil/unknown string → guitar).
+    /// First declared instrument, or unspecified.
     var instrumentKind: Instrument {
-        instrument.flatMap { Instrument(rawValue: $0) } ?? .guitar
+        instrumentKinds.first ?? .unknown
     }
 
     /// Whether the tuning is a non-standard tuning (drives the indigo pill).
     var isAltTuning: Bool {
-        displayTuning.caseInsensitiveCompare("Standard") != .orderedSame
+        displayTuning != "Unknown" && displayTuning.caseInsensitiveCompare("Standard") != .orderedSame
     }
 
     /// True if a canonical has been generated for this file.
@@ -132,16 +199,12 @@ final class FileItem : Equatable {
         set { provenanceData = newValue.flatMap { try? JSONEncoder().encode($0) } }
     }
 
-    /// Resolve this item's file URL.
-    ///
-    /// Library items resolve as `library root + libraryPath` — the root's
-    /// security scope is held open by `LibraryManager`, so no per-file scope
-    /// (or bookmark) is needed. Ad-hoc imports fall back to their per-file
-    /// bookmark, whose scope is activated here; callers balance with
-    /// `stopAccessingSecurityScopedResource()` (a harmless no-op on
-    /// library-derived URLs).
+    var effectiveRelativePath: String? { storageRelativePath ?? libraryPath }
+
+    /// Legacy, side-effect-free bookmark resolution. New code must use
+    /// `LibraryManager.acquireFile(_:)` so security scope has one owner.
     var url: URL? {
-        if let lp = libraryPath, let root = LibraryManager.activeRoot {
+        if let lp = effectiveRelativePath, let root = LibraryManager.activeRoot {
             return root.appendingPathComponent(lp)
         }
 
@@ -152,14 +215,13 @@ final class FileItem : Equatable {
                 bookmarkDataIsStale: &stale)
         else { return nil }
 
-        if !u.startAccessingSecurityScopedResource() { return nil }
         return u
     }
 
     /// Check if the file is reachable (library-relative path or resolvable
     /// bookmark), without starting a security scope.
     var isBookmarkValid: Bool {
-        if libraryPath != nil, LibraryManager.activeRoot != nil { return true }
+        if effectiveRelativePath != nil, LibraryManager.activeRoot != nil { return true }
         var stale = false
         return (try? URL(resolvingBookmarkData: bookmark, options: [], bookmarkDataIsStale: &stale)) != nil
     }
@@ -216,9 +278,9 @@ final class FileItem : Equatable {
 
 /// Instrument classification for library files. Guitar tabs are detected
 /// structurally (ASCII tab / TAB staves); everything else is classified from
-/// header keywords, defaulting to piano for plain notation (lead sheets).
+/// header keywords; ambiguous sources remain unspecified.
 enum Instrument: String, CaseIterable {
-    case guitar, bass, ukulele, piano, voice, sax, trumpet, flute, violin, cello, drums
+    case guitar, bass, ukulele, piano, voice, sax, trumpet, flute, violin, cello, drums, mandolin, banjo, viola, clarinet, other, unknown
 
     /// SF Symbol for the library card affordance.
     var symbol: String {
@@ -233,14 +295,39 @@ enum Instrument: String, CaseIterable {
 
     var label: String {
         switch self {
-        case .sax: return "Sax"
+        case .unknown: return "Unspecified"
+        case .sax: return "Saxophone"
         default:   return rawValue.capitalized
+        }
+    }
+
+    static func fromMIDI(program: Int?, percussion: Bool) -> Instrument {
+        if percussion { return .drums }
+        guard let program else { return .unknown }
+        switch program {
+        case 0...7: return .piano
+        case 24...31: return .guitar
+        case 32...39: return .bass
+        case 40: return .violin
+        case 41: return .viola
+        case 42: return .cello
+        case 52...54: return .voice
+        case 56: return .trumpet
+        case 64...67: return .sax
+        case 71: return .clarinet
+        case 73: return .flute
+        case 105: return .banjo
+        default: return .other
         }
     }
 
     /// Keyword classification for non-tab sources. Returns nil when nothing
     /// obviously matches (caller decides the default).
     static func detect(inText text: String) -> Instrument? {
+        detectAll(inText: text).first
+    }
+
+    static func detectAll(inText text: String) -> [Instrument] {
         let lower = text.lowercased()
         let keywords: [(Instrument, [String])] = [
             (.sax,     ["saxophone", "alto sax", "tenor sax", "bari sax", " sax "]),
@@ -249,15 +336,22 @@ enum Instrument: String, CaseIterable {
             (.violin,  ["violin"]),
             (.cello,   ["cello"]),
             (.drums,   ["drum kit", "drums", "percussion"]),
-            (.voice,   ["vocal", "voice", "lyrics by"]),
+            (.voice,   ["vocal", "voice"]),
+            (.mandolin, ["mandolin"]), (.banjo, ["banjo"]),
+            (.viola, ["viola"]), (.clarinet, ["clarinet"]),
             (.ukulele, ["ukulele", "uke "]),
             (.bass,    ["bass guitar", "bass tab", "for bass"]),
             (.piano,   ["piano", "keyboard"]),
             (.guitar,  ["guitar"]),
         ]
-        for (inst, words) in keywords {
-            for w in words where lower.contains(w) { return inst }
+        var result = keywords.compactMap { instrument, words in
+            words.contains { word in
+                lower.range(of: "\\b" + NSRegularExpression.escapedPattern(for: word.trimmingCharacters(in: .whitespaces)) + "\\b", options: .regularExpression) != nil
+            } ? instrument : nil
         }
-        return nil
+        if lower.contains("bass guitar") && !lower.contains("and guitar") {
+            result.removeAll { $0 == .guitar }
+        }
+        return result
     }
 }

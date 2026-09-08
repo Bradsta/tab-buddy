@@ -88,6 +88,7 @@ struct TabMetrics {
     /// Whether the system carries chord symbols — they get their own band
     /// above the measure numbers so the two never collide.
     var hasChords: Bool = false
+    var stringCount: Int = 6
 
     var gutter: CGFloat { 60 }
     // Compact, text-tab-like density: a string row is just tall enough for
@@ -106,7 +107,7 @@ struct TabMetrics {
     var rhythmH: CGFloat { showRhythm ? 13 : 0 }
     var staffSpacing: CGFloat { 9 }
     var staffBlockH: CGFloat { showStaff ? (staffSpacing * 5 + 34 + 6) : 0 }
-    var tabH: CGFloat { rowHeight * 6 }
+    var tabH: CGFloat { rowHeight * CGFloat(stringCount) }
     var bottomGap: CGFloat { 14 * scale }
 
     var staffTopY: CGFloat { headerH + rhythmH + staffBlockH }
@@ -143,7 +144,7 @@ struct DrawnTabSystemView: View {
 
     private var metrics: TabMetrics {
         TabMetrics(scale: scale, showRhythm: showRhythm, showStaff: showStaff,
-                   hasChords: system.measures.contains { !$0.chords.isEmpty })
+                   hasChords: system.measures.contains { !$0.chords.isEmpty }, stringCount: model.stringCount)
     }
 
     var body: some View {
@@ -225,7 +226,7 @@ private struct StaticSystemLayer: View {
 
     private var metrics: TabMetrics {
         TabMetrics(scale: scale, showRhythm: showRhythm, showStaff: showStaff,
-                   hasChords: system.measures.contains { !$0.chords.isEmpty })
+                   hasChords: system.measures.contains { !$0.chords.isEmpty }, stringCount: model.stringCount)
     }
 
     var body: some View {
@@ -335,7 +336,7 @@ private struct StaticSystemLayer: View {
     private func drawTabStaff(_ ctx: inout GraphicsContext, m: TabMetrics,
                               staffLeft: CGFloat, staffWidth: CGFloat, measureWidth: CGFloat) {
         // tuning labels + string lines
-        for s in 0..<6 {
+        for s in 0..<model.stringCount {
             let y = m.stringLineY(s)
             var line = Path()
             line.move(to: CGPoint(x: staffLeft, y: y))
@@ -364,7 +365,7 @@ private struct StaticSystemLayer: View {
             for col in measure.columns {
                 let x = noteX(measureLocal: local, position: col.position,
                               staffLeft: staffLeft, measureWidth: measureWidth)
-                for s in 0..<6 {
+                for s in 0..<model.stringCount {
                     guard let fret = col.frets[safe: s] ?? nil else { continue }
                     let y = m.stringLineY(s)
                     drawFret(&ctx, fret: fret, x: x, y: y, m: m, active: false)
@@ -492,7 +493,7 @@ private struct PlayheadLayer: View {
 
     var body: some View {
         let m = TabMetrics(scale: scale, showRhythm: showRhythm, showStaff: showStaff,
-                           hasChords: hasChords)
+                           hasChords: hasChords, stringCount: model.stringCount)
         Canvas { ctx, size in
             let staffLeft = m.gutter
             let fullWidth = max(1, size.width - m.gutter)
@@ -519,7 +520,7 @@ private struct PlayheadLayer: View {
                    let col = measure.columns[safe: active] {
                     let x = staffLeft + (CGFloat(localIdx) + CGFloat(col.position)) * measureWidth
                         + min(8, measureWidth * 0.12)
-                    for s in 0..<6 {
+                    for s in 0..<model.stringCount {
                         guard let fret = col.frets[safe: s] ?? nil else { continue }
                         let y = m.stringLineY(s)
                         let text = "\(fret)"

@@ -8,8 +8,7 @@
 //  renderer draws directly. No UIKit / SwiftData dependencies, so it is trivial
 //  to unit-test.
 //
-//  String indexing follows the project convention everywhere: index 0 = high E
-//  (top staff line) … index 5 = low E (bottom line).
+//  String indices follow physical row order, from the top line downward.
 //
 
 import CoreGraphics
@@ -19,10 +18,7 @@ import Foundation
 
 /// Whole-piece layout: an ordered list of systems plus a global measure count.
 struct TabRenderModel: Equatable {
-    static let stringCount = 6
-    /// Open-string MIDI notes, high-E-first. Used to place standard-notation
-    /// noteheads from (string, fret). Standard tuning.
-    static let openStringMIDI = [64, 59, 55, 50, 45, 40]
+    var stringCount: Int { stringLabels.count }
 
     var systems: [TabSystemLayout]
     var totalMeasures: Int
@@ -33,7 +29,7 @@ struct TabRenderModel: Equatable {
     /// line. Systems busier than the reference fall back to filling the width.
     var referenceMeasuresPerSystem: Int
 
-    /// Tuning-letter labels top→bottom (string index 0→5).
+    /// Tuning-letter labels top→bottom (physical row order).
     var stringLabels: [String]
 
     static let empty = TabRenderModel(systems: [], totalMeasures: 0,
@@ -84,12 +80,7 @@ struct TabColumnLayout: Equatable {
 
     /// The highest-sounding pitch in this column (lowest string index with a
     /// fret), as a MIDI number — used to place a standard-notation notehead.
-    var melodyMIDI: Int? {
-        for (s, fret) in frets.enumerated() {
-            if let fret { return TabRenderModel.openStringMIDI[s] + fret }
-        }
-        return nil
-    }
+    var melodyMIDI: Int? = nil
 }
 
 // MARK: - Builder
@@ -106,7 +97,7 @@ enum TabRenderModelBuilder {
             let firstNumber = sys.measures.first?.measureNumber ?? (globalIndex + 1)
 
             for measure in sys.measures {
-                let columns = columns(for: measure)
+                let columns = columns(for: measure, map: map)
                 measures.append(TabMeasureLayout(
                     globalIndex: globalIndex,
                     number: measure.measureNumber,
@@ -129,8 +120,18 @@ enum TabRenderModelBuilder {
             systems: systems,
             totalMeasures: globalIndex,
             referenceMeasuresPerSystem: referenceMeasureCount(systems),
-            stringLabels: ["e", "B", "G", "D", "A", "E"]
+            stringLabels: labels(for: map)
         )
+    }
+
+    private static func labels(for map: MeasureMap) -> [String] {
+        if let midi = map.resolvedOpenStringMIDI {
+            return GuitarTuning(name: "", midiNotes: midi).noteNames
+        }
+        if let raw = map.tuning, let labels = GuitarTuning.noteSpelling(raw), labels.count == map.stringCount {
+            return Array(labels.reversed())
+        }
+        return (1...map.stringCount).map(String.init)
     }
 
     /// The most common measures-per-system (mode); ties and emptiness fall back
@@ -145,21 +146,27 @@ enum TabRenderModelBuilder {
     }
 
     /// Convert a measure's `NoteEvent`s into ascending note columns.
-    private static func columns(for measure: Measure) -> [TabColumnLayout] {
+    private static func columns(for measure: Measure, map: MeasureMap) -> [TabColumnLayout] {
         guard let notes = measure.notes, !notes.isEmpty else { return [] }
         return notes
             .sorted { $0.positionInMeasure < $1.positionInMeasure }
             .map { note in
                 var frets = note.frets
-                if frets.count < TabRenderModel.stringCount {
+                if frets.count < map.stringCount {
                     frets.append(contentsOf:
-                        Array(repeating: nil, count: TabRenderModel.stringCount - frets.count))
+                        Array(repeating: nil, count: map.stringCount - frets.count))
                 }
                 let duration = note.durationInBeats.map { RhythmDuration.nearest(toBeats: $0) }
                 return TabColumnLayout(
                     position: min(1, max(0, note.positionInMeasure)),
-                    frets: Array(frets.prefix(TabRenderModel.stringCount)),
-                    duration: duration
+                    frets: Array(frets.prefix(map.stringCount)),
+                    duration: duration,
+                    melodyMIDI: map.resolvedOpenStringMIDI.flatMap { tuning in
+                        frets.enumerated().compactMap { index, fret -> Int? in
+                            guard let fret, tuning.indices.contains(index) else { return nil }
+                            return tuning[index] + fret + (map.capoSemitones ?? 0)
+                        }.max()
+                    }
                 )
             }
     }

@@ -1,227 +1,67 @@
 import Foundation
 import SwiftData
 
-/// Recursively imports every `.pdf` / `.txt` in the chosen files / folders.
-/// Shows progress, supports cancel, avoids Swift-6 data-race violations.
+/// UI-facing import progress. Every import copies into the single active root;
+/// adding files in place is done by placing them under an external root and
+/// refreshing the library.
 @MainActor
 final class FolderImporter: ObservableObject {
-    @Published var total     = 0          // files discovered
-    @Published var processed = 0          // files imported so far
+    @Published var total = 0
+    @Published var processed = 0
     @Published var isRunning = false
-    
+    @Published var lastError: String?
+
     private var task: Task<Void, Never>?
-    
-    // MARK: – Public API -----------------------------------------------------
+    private var taskID: UUID?
+
     func start(urls: [URL], context: ModelContext) {
-        cancel()
-        isRunning  = true
-        processed  = 0
-        total      = 0
-        
-        // snapshot existing names for O(1) duplicate checks
-        let existingNames = Set(
-            (try? context.fetch(FetchDescriptor<FileItem>()))?.map(\.filename) ?? []
-        )
-        
-        task = Task.detached(priority: .userInitiated) { [weak self] in
-            guard let self else { return }
-
-            // ── 1️⃣  Gather URLs while directory scope is OPEN ───────────────
-            var openedDirs: [URL] = []
-            var gathered: [URL] = []
-
-            for root in urls {
-                // Open security scope first; on macOS this is required even to
-                // read `.isDirectoryKey` on a picker-provided URL.
-                if root.startAccessingSecurityScopedResource() {
-                    openedDirs.append(root)
-                }
-
-                if Self.isDirectory(root) {
-                    if let enumr = FileManager.default.enumerator(
-                        at: root,
-                        includingPropertiesForKeys: [.isRegularFileKey],
-                        options: [.skipsHiddenFiles, .skipsPackageDescendants]
-                    ) {
-                        for case let f as URL in enumr where await Self.accepts(f) {
-                            gathered.append(f)
-                        }
-                    }
-                } else if await Self.accepts(root) {
-                    gathered.append(root)
-                }
-            }
-
-            let candidates = gathered
-            await MainActor.run { self.total = candidates.count }
-
-            // Snapshot existing names before we hop into the group
-            var seen = existingNames
-
-            // ── 2️⃣  MAKE BOOKMARKS (Swift-6-safe) ───────────────────────────
-            let fresh: [(name: String, data: Data, folder: String, hash: String?)] =
-                (try? await withThrowingTaskGroup(of: (String, Data, String, String?)?.self) { group in
-                    var next = candidates.startIndex
-                    func queue() {
-                        guard next < candidates.endIndex else { return }
-                        let url = candidates[next]; next = candidates.index(after: next)
-                        group.addTask {
-                            guard let data = try? url.bookmarkData() else { return nil }
-                            let folder = url.deletingLastPathComponent().lastPathComponent
-                            // No fingerprint at import time (it reads the file,
-                            // forcing iCloud downloads) — computed lazily on open.
-                            return (url.lastPathComponent, data, folder, nil)
-                        }
-                    }
-                    for _ in 0..<4 { queue() }
-
-                    var buffer: [(String, Data, String, String?)] = []
-
-                    for try await result in group {
-                        await MainActor.run { self.processed += 1 }
-                        if let pair = result, seen.insert(pair.0).inserted {
-                            buffer.append(pair)
-                        }
-                        queue()
-                    }
-                    return buffer
-                }) ?? []
-
-            // ── 3️⃣  Commit inserts on main actor ────────────────────────────
-            print("[FolderImporter] candidates=\(candidates.count) fresh=\(fresh.count)")
-            await MainActor.run {
-                for rec in fresh {
-                    context.insert(
-                        FileItem(bookmark: rec.data,
-                                 filename: rec.name,
-                                 isFavorite: false,
-                                 tags: [],
-                                 folderName: rec.folder,
-                                 contentHash: rec.hash,
-                                 importedAt: Date())
-                    )
-                }
-                do {
-                    try context.save()
-                    print("[FolderImporter] saved \(fresh.count) items")
-                } catch {
-                    print("[FolderImporter] context.save() failed: \(error)")
-                }
-                TagIndexer.rebuild(in: context)
-            }
-
-            // ── 4️⃣  Close directory scopes & finish ─────────────────────────
-            for dir in openedDirs { dir.stopAccessingSecurityScopedResource() }
-            await MainActor.run { self.finish(cancelled: false) }
-        }
+        startWithLibraryCopy(urls: urls, context: context,
+                             libraryManager: .shared)
     }
-    
-    // MARK: – Library Copy Import ------------------------------------------------
-    func startWithLibraryCopy(urls: [URL], context: ModelContext, libraryManager: LibraryManager) {
+
+    func startWithLibraryCopy(urls: [URL], context: ModelContext,
+                              libraryManager: LibraryManager) {
         cancel()
-        isRunning  = true
-        processed  = 0
-        total      = 0
+        total = 0
+        processed = 0
+        isRunning = true
+        lastError = nil
+        let currentTaskID = UUID()
+        taskID = currentTaskID
 
-        // snapshot existing names for O(1) duplicate checks
-        let existingNames = Set(
-            (try? context.fetch(FetchDescriptor<FileItem>()))?.map(\.filename) ?? []
-        )
-
-        task = Task.detached(priority: .userInitiated) { [weak self] in
-            guard let self else { return }
-
-            // ── 1️⃣  Gather source files while directory scope is OPEN ──────────
-            var openedDirs: [URL] = []
-            var gathered: [URL] = []
-            var folderRoot: URL? = nil
-
-            for root in urls {
-                // Open security scope first; on macOS this is required even to
-                // read `.isDirectoryKey` on a picker-provided URL.
-                if root.startAccessingSecurityScopedResource() {
-                    openedDirs.append(root)
-                }
-
-                if Self.isDirectory(root) {
-                    folderRoot = root
-                    if let enumr = FileManager.default.enumerator(
-                        at: root,
-                        includingPropertiesForKeys: [.isRegularFileKey],
-                        options: [.skipsHiddenFiles, .skipsPackageDescendants]
-                    ) {
-                        for case let f as URL in enumr where await Self.accepts(f) {
-                            gathered.append(f)
-                        }
+        // Retain the picker grant before returning from its completion handler.
+        let sourceLeases = urls.map { url in
+            let scoped = url.startAccessingSecurityScopedResource()
+            return FileAccessLease(url: url, release: scoped ? { url.stopAccessingSecurityScopedResource() } : nil)
+        }
+        task = Task {
+            defer { sourceLeases.forEach { $0.close() } }
+            do {
+                _ = try await libraryManager.importFiles(urls, context: context) { done, count in
+                    await MainActor.run {
+                        guard self.taskID == currentTaskID else { return }
+                        self.processed = done
+                        self.total = count
                     }
-                } else if await Self.accepts(root) {
-                    gathered.append(root)
+                }
+            } catch is CancellationError {
+                // Successfully committed files remain; temporary files are removed.
+            } catch {
+                if taskID == currentTaskID {
+                    lastError = error.localizedDescription
                 }
             }
-
-            let candidates = gathered
-            await MainActor.run { self.total = candidates.count }
-
-            // ── 2️⃣  Copy to library on main actor (needs security scope) ──────
-            let copied = await MainActor.run {
-                libraryManager.copyFilesToLibrary(
-                    sourceURLs: candidates,
-                    relativeTo: folderRoot
-                )
-            }
-
-            // ── 3️⃣  Commit inserts on main actor ──────────────────────────────
-            // Library-relative items need no per-file bookmark (resolved via
-            // libraryPath at open) and no fingerprint (computed lazily on open).
-            await MainActor.run {
-                var seen = existingNames
-                for (destURL, relativePath) in copied {
-                    let name = destURL.lastPathComponent
-                    guard seen.insert(name).inserted else { continue }
-                    context.insert(
-                        FileItem(bookmark: Data(),
-                                 filename: name,
-                                 folderName: destURL.deletingLastPathComponent().lastPathComponent,
-                                 libraryPath: relativePath,
-                                 importedAt: Date())
-                    )
-                }
-                self.processed = copied.count
-                try? context.save()
-                TagIndexer.rebuild(in: context)
-            }
-
-            // ── 5️⃣  Close directory scopes & finish ───────────────────────────
-            for dir in openedDirs { dir.stopAccessingSecurityScopedResource() }
-            await MainActor.run { self.finish(cancelled: false) }
+            guard taskID == currentTaskID else { return }
+            isRunning = false
+            task = nil
+            taskID = nil
         }
     }
 
-    /// Cancel any running import.
     func cancel() {
         task?.cancel()
         task = nil
+        taskID = nil
         isRunning = false
-    }
-    
-    // MARK: – Helpers -------------------------------------------------------
-    private func finish(cancelled: Bool) {
-        task = nil
-        isRunning = false
-        if cancelled { processed = 0; total = 0 }
-    }
-    
-    private static func accepts(_ url: URL) -> Bool {
-        ["pdf", "txt"].contains(url.pathExtension.lowercased())
-    }
-
-    /// Whether `url` points at a directory. Asks the filesystem rather than
-    /// relying on `url.hasDirectoryPath`, which depends on a trailing slash the
-    /// macOS document picker omits.
-    private nonisolated static func isDirectory(_ url: URL) -> Bool {
-        if let isDir = try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory {
-            return isDir
-        }
-        return url.hasDirectoryPath
     }
 }

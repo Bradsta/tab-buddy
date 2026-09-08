@@ -36,8 +36,8 @@ enum PDFTabExtractor {
     private struct TabStaff {
         let lines: [Double]
         var top: Double { lines[0] }
-        var bottom: Double { lines[5] }
-        var spacing: Double { (lines[0] - lines[5]) / 5 }
+        var bottom: Double { lines[lines.count - 1] }
+        var spacing: Double { (top - bottom) / Double(max(1, lines.count - 1)) }
     }
 
     private struct Glyph {
@@ -60,8 +60,22 @@ enum PDFTabExtractor {
 
     /// Reconstruct ASCII tab from a rendered-score PDF. Returns nil when no
     /// TAB staves with notes are found (not a tab score, or scanned image).
-    static func asciiTab(from doc: PDFDocument) -> String? {
-        var out: [String] = []
+    static func asciiTab(from doc: PDFDocument, stringCount requestedCount: Int? = nil) -> String? {
+        let header = doc.page(at: 0)?.string ?? ""
+        let map = TabParser.parse(header)
+        let instrument = Instrument.detect(inText: header)
+        let declaredCount = header.range(of: #"\b(?:[4-9]|1[0-2])[- ]strings?\b"#, options: [.regularExpression, .caseInsensitive])
+            .flatMap { Int(header[$0].prefix(while: \.isNumber)) }
+        let stringCount = requestedCount ?? declaredCount ?? (map.tuning == nil ? nil : map.resolvedOpenStringMIDI?.count)
+            ?? ((instrument == .bass || instrument == .ukulele) ? 4 : 6)
+        guard (2...12).contains(stringCount) else { return nil }
+        let knownTuning = map.resolvedOpenStringMIDI.flatMap { $0.count == stringCount ? $0 : nil }
+        let fallback = instrument == .bass && stringCount == 4 ? GuitarTuning.bass4 :
+            instrument == .ukulele && stringCount == 4 ? GuitarTuning.ukulele : nil
+        let spelledLabels = GuitarTuning.noteSpelling(map.tuning ?? "").flatMap { $0.count == stringCount ? Array($0.reversed()) : nil }
+        let labels = (knownTuning ?? fallback?.midiNotes).map { GuitarTuning(name: "", midiNotes: $0).noteNames }
+            ?? spelledLabels ?? (stringCount == 6 && map.tuning == nil ? GuitarTuning.standard.noteNames : Array(repeating: "", count: stringCount))
+        var out: [String] = map.tuning.map { ["Tuning: " + $0, ""] } ?? []
         var producedNotes = false
 
         for p in 0..<doc.pageCount {
@@ -72,13 +86,13 @@ enum PDFTabExtractor {
             }
             guard let raster = Raster(page) else { continue }
             let rows = raster.lineRows(requireContinuous: false)
-            let staves = tabStaves(from: rows)
+            let staves = tabStaves(from: rows, count: stringCount)
             guard !staves.isEmpty else { continue }
             // A lead-sheet page can fake one 6-row group (5 lines + a ledger
             // band). Real TAB pages have TAB staves in proportion to notation
             // staves — if 5-line staves dominate, this page is notation-only.
             let fiveLine = staffGroups(from: rows, size: 5).count
-            guard fiveLine < staves.count * 3 else { continue }
+            guard stringCount == 5 || fiveLine < staves.count * 3 else { continue }
             var ds = digitGlyphs(on: page)
             // Image-only scan (no text layer): OCR the fret digits instead.
             if ds.isEmpty { ds = ocrDigitGlyphs(on: page, staves: staves) }
@@ -104,7 +118,7 @@ enum PDFTabExtractor {
                     print("STAFF top=\(Int(staff.top)) firstNote=\(Int(ns.first?.x ?? -1)) bars=\(bars.map { Int($0) })")
                     for n in ns.prefix(4) { print("  NOTE x=\(Int(n.x)) s=\(n.string) f=\(n.fret)") }
                 }
-                out.append(contentsOf: asciiSystem(ns, spacing: staff.spacing, barXs: bars))
+                out.append(contentsOf: asciiSystem(ns, spacing: staff.spacing, barXs: bars, labels: labels))
                 out.append("")
             }
         }
@@ -302,14 +316,14 @@ enum PDFTabExtractor {
                 }
             }
             group.append(y)
-            if group.count == 6 { flush() }   // 6 is the largest staff we accept
+            if group.count == max(6, size) { flush() }   // Keep five-line notation distinct from six-line tablature.
         }
         flush()
         return groups
     }
 
-    private static func tabStaves(from rows: [Double]) -> [TabStaff] {
-        staffGroups(from: rows, size: 6).map { TabStaff(lines: $0) }
+    private static func tabStaves(from rows: [Double], count: Int = 6) -> [TabStaff] {
+        staffGroups(from: rows, size: count).map { TabStaff(lines: $0) }
             .sorted { $0.top > $1.top }
     }
 
@@ -833,7 +847,7 @@ enum PDFTabExtractor {
 
     private static func notes(for staff: TabStaff, digits: [Glyph]) -> [Note] {
         let spacing = staff.spacing
-        var perString: [[Glyph]] = Array(repeating: [], count: 6)
+        var perString: [[Glyph]] = Array(repeating: [], count: staff.lines.count)
         for d in digits {
             guard d.cy <= staff.top + spacing * 0.6, d.cy >= staff.bottom - spacing * 0.6 else { continue }
             // Music-font runs carry tall line boxes; real fret digits are staff-sized.
@@ -901,13 +915,13 @@ enum PDFTabExtractor {
     private static func asciiSystem(_ notes: [Note], spacing: Double,
                                     barXs: [Double] = [],
                                     beatsPerMeasure: Int = 4,
-                                    chords: [(name: String, x: Double)] = []) -> [String] {
+                                    chords: [(name: String, x: Double)] = [],
+                                    labels: [String] = ["e", "B", "G", "D", "A", "E"]) -> [String] {
         guard let minX = notes.first?.x else { return [] }
-        let labels = ["e", "B", "G", "D", "A", "E"]
         let scale = spacing * 0.4          // ~3pt per column at standard engraving
         let chordTol = spacing * 0.2
         var rows = labels.map { _ in "" }
-        var lengths = [Int](repeating: 0, count: 6)
+        var lengths = [Int](repeating: 0, count: labels.count)
 
         var columns: [(x: Double, notes: [Note])] = []
         for n in notes {
@@ -935,7 +949,7 @@ enum PDFTabExtractor {
         for ev in events {
             let target = 2 + Int(((ev.x - minX) / scale).rounded())
             if ev.bar {
-                for s in 0..<6 {
+                for s in labels.indices {
                     let pad = max(target, lengths[s] + 1)
                     rows[s] += String(repeating: "-", count: max(0, pad - lengths[s])) + "|"
                     lengths[s] = pad + 1
@@ -945,7 +959,7 @@ enum PDFTabExtractor {
             }
             let width = ev.notes.map { String($0.fret).count }.max() ?? 1
             var placed = 0
-            for s in 0..<6 {
+            for s in labels.indices {
                 let pad = max(target, lengths[s] + 1)
                 rows[s] += String(repeating: "-", count: max(0, pad - lengths[s]))
                 if let n = ev.notes.first(where: { $0.string == s }) {
@@ -983,8 +997,9 @@ enum PDFTabExtractor {
         // If a detected end-frame bar already closed the system, don't
         // append a second close — that mints a one-column sliver measure.
         let endsWithBar = rows.allSatisfy { $0.hasSuffix("|") }
-        let stringRows = (0..<6).map { s in
-            labels[s] + "|-" + rows[s]
+        let labelWidth = labels.map(\.count).max() ?? 0
+        let stringRows = labels.indices.map { s in
+            labels[s].padding(toLength: labelWidth, withPad: " ", startingAt: 0) + "|-" + rows[s]
                 + String(repeating: "-", count: max(0, maxLen - lengths[s]))
                 + (endsWithBar ? "" : "-|")
         }
@@ -1190,7 +1205,7 @@ enum PDFTabExtractor {
                 for m in shifted.sorted(by: >) {
                     var best: (string: Int, fret: Int)? = nil
                     outer: for candidate in [m, m + 12, m - 12, m + 24] {
-                        for st in 0..<6 where !used.contains(st) {
+                        for st in tuning.indices where !used.contains(st) {
                             let fret = candidate - tuning[st]
                             guard fret >= 0, fret <= 15 else { continue }
                             if best == nil || fret < best!.fret { best = (st, fret) }

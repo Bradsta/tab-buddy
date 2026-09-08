@@ -100,3 +100,10 @@ iOSInjectionProject/
 
 # Design handoff bundles (reference only, not source)
 Guitar sheet music app density*.zip
+
+# Downloaded song arrangements are local-only test inputs.
+TabBuddyTests/Fixtures/GuitarPro/LocalSamples/
+
+# Private downloaded corpus, catalog, logs, and resumable acquisition state.
+.local-tab-corpus/
+__pycache__/

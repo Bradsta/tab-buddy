@@ -13,6 +13,7 @@ import SwiftData
 struct FileCardView: View, Equatable {
     @Environment(\.modelContext) private var context
     @Environment(\.undoManager) private var undoManager
+    @ObservedObject private var libraryManager = LibraryManager.shared
 
     @Bindable var file: FileItem
 
@@ -23,18 +24,22 @@ struct FileCardView: View, Equatable {
     /// Selection mode (edit mode) overlays a checkmark and taps toggle selection.
     var isSelecting: Bool = false
     var isSelected: Bool = false
+    var availability: FileAvailability = .available
 
     let onOpen: () -> Void
     let onDelete: () -> Void
     var onToggleSelect: () -> Void = {}
 
     @State private var showTags = false
+    @State private var showDetails = false
     @State private var showRename = false
     @State private var newName = ""
+    @State private var showFileDeleteConfirmation = false
 
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.file == rhs.file && lhs.isRail == rhs.isRail
             && lhs.isSelecting == rhs.isSelecting && lhs.isSelected == rhs.isSelected
+            && lhs.availability == rhs.availability
     }
 
     private var isPDF: Bool { file.filename.lowercased().hasSuffix(".pdf") }
@@ -70,8 +75,22 @@ struct FileCardView: View, Equatable {
         .contentShape(Rectangle())
         .onTapGesture { isSelecting ? onToggleSelect() : onOpen() }
         .contextMenu { contextMenu }
+        .sheet(isPresented: $showDetails) { ScoreDetailsView(file: file) }
         .sheet(isPresented: $showTags) { TagEditorView(file: file) }
         .sheet(isPresented: $showRename) { renameSheet }
+        .alert(libraryManager.mode == .externalFolder ? "Delete file from its folder?" : "Delete this file?",
+               isPresented: $showFileDeleteConfirmation) {
+            Button("Delete File", role: .destructive) {
+                if libraryManager.mode == .externalFolder {
+                    Task { try? await libraryManager.deleteUnderlyingFile(file, context: context) }
+                } else {
+                    onDelete()
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This removes the underlying file and cannot be undone.")
+        }
     }
 
     // MARK: - Pieces
@@ -98,12 +117,15 @@ struct FileCardView: View, Equatable {
 
     private var metaRow: some View {
         HStack(spacing: 8) {
-            // Guitar tabs show their tuning; anything else shows the
-            // instrument itself (tuning is meaningless there).
-            if file.instrumentKind == .guitar {
-                tuningPill
-            } else {
-                instrumentPill
+            if !knownInstruments.isEmpty {
+                Button { showDetails = true } label: { instrumentPill }
+                    .buttonStyle(.borderless).disabled(isSelecting)
+                    .accessibilityLabel("Edit instrument")
+            }
+            if file.displayTuning != "Unknown" {
+                Button { showDetails = true } label: { tuningPill }
+                    .buttonStyle(.borderless).disabled(isSelecting)
+                    .accessibilityLabel("Edit tuning")
             }
             if file.lastOpenedAt > file.importedAt {
                 Text(minimalAgo(file.lastOpenedAt))
@@ -118,6 +140,12 @@ struct FileCardView: View, Equatable {
                 }
                 .foregroundStyle(Color(.secondaryLabel))
             }
+            if availability != .available {
+                Label(availabilityLabel, systemImage: availabilityIcon)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(availability == .missing ? Color.red : Color.orange)
+                    .lineLimit(1)
+            }
             if isPDF {
                 Text("PDF")
                     .font(.system(size: 8, weight: .bold))
@@ -130,33 +158,49 @@ struct FileCardView: View, Equatable {
         }
     }
 
+    private var availabilityLabel: String {
+        switch availability {
+        case .available: return "Available"
+        case .downloading: return "Downloading"
+        case .accessNeeded: return "Access Needed"
+        case .missing: return "Missing"
+        case .failed: return "Unavailable"
+        }
+    }
+
+    private var availabilityIcon: String {
+        switch availability {
+        case .available: return "checkmark.circle"
+        case .downloading: return "icloud.and.arrow.down"
+        case .accessNeeded: return "folder.badge.questionmark"
+        case .missing: return "questionmark.folder"
+        case .failed: return "exclamationmark.triangle"
+        }
+    }
+
+    private var knownInstruments: [Instrument] { file.instrumentKinds.filter { $0 != .unknown } }
+
     private var instrumentPill: some View {
-        let inst = file.instrumentKind
+        let inst = knownInstruments.first ?? .unknown
         return HStack(spacing: 3) {
             Image(systemName: inst.symbol)
                 .font(.system(size: 9, weight: .medium))
-            Text(inst.label)
+            Text(inst.label + (knownInstruments.count > 1 ? " +\(knownInstruments.count - 1)" : ""))
                 .font(.system(size: 10, weight: .medium))
                 .lineLimit(1)
         }
-        .fixedSize()
-        .foregroundStyle(Color(.systemTeal))
+        .foregroundStyle(Color(.secondaryLabel))
         .padding(.init(top: 2, leading: 7, bottom: 2, trailing: 7))
-        .background(Color(.systemTeal).opacity(0.12), in: RoundedRectangle(cornerRadius: 5))
+        .background(Color(.systemGray).opacity(0.06), in: RoundedRectangle(cornerRadius: 5))
     }
 
     private var tuningPill: some View {
-        let alt = file.isAltTuning
-        return Text(file.displayTuning)
-            .font(.system(size: 10, weight: alt ? .semibold : .medium))
+        Text(file.displayTuning)
+            .font(.system(size: 10, weight: .medium))
             .lineLimit(1)
-            .fixedSize()
-            .foregroundStyle(alt ? DS.accentStrong : Color(.secondaryLabel))
+            .foregroundStyle(Color(.secondaryLabel))
             .padding(.init(top: 2, leading: 7, bottom: 2, trailing: 7))
-            .background(
-                (alt ? AnyShapeStyle(DS.accentSofter) : AnyShapeStyle(Color(.systemGray).opacity(0.07))),
-                in: RoundedRectangle(cornerRadius: 5)
-            )
+            .background(Color(.systemGray).opacity(0.06), in: RoundedRectangle(cornerRadius: 5))
     }
 
     private var tagRow: some View {
@@ -194,7 +238,18 @@ struct FileCardView: View, Equatable {
             showRename = true
         } label: { Label("Rename", systemImage: "pencil") }
         Divider()
-        Button(role: .destructive) { onDelete() } label: { Label("Delete", systemImage: "trash") }
+        if libraryManager.mode == .externalFolder {
+            Button { onDelete() } label: {
+                Label("Remove from Library", systemImage: "minus.circle")
+            }
+            Button(role: .destructive) { showFileDeleteConfirmation = true } label: {
+                Label("Delete File from Folder", systemImage: "trash")
+            }
+        } else {
+            Button(role: .destructive) { showFileDeleteConfirmation = true } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
     }
 
     @ViewBuilder

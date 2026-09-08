@@ -102,8 +102,16 @@ struct GuitarTuning: Identifiable, Hashable {
         midiNotes: [62, 57, 53, 48, 43, 38]  // D4 A3 F3 C3 G2 D2
     )
 
+    static let bass4 = GuitarTuning(name: "Bass standard (4 strings)", midiNotes: [43, 38, 33, 28])
+    static let bass5 = GuitarTuning(name: "Bass standard (5 strings)", midiNotes: [43, 38, 33, 28, 23])
+    static let bass6 = GuitarTuning(name: "Bass standard (6 strings)", midiNotes: [48, 43, 38, 33, 28, 23])
+    static let ukulele = GuitarTuning(name: "Ukulele high G", midiNotes: [69, 64, 60, 67])
+    static let guitar7 = GuitarTuning(name: "Guitar standard (7 strings)", midiNotes: [64, 59, 55, 50, 45, 40, 35])
+    static let guitar8 = GuitarTuning(name: "Guitar standard (8 strings)", midiNotes: [64, 59, 55, 50, 45, 40, 35, 30])
+
     static let allPresets: [GuitarTuning] = [
-        .standard, .dropD, .openG, .openD, .dadgad, .halfStepDown, .fullStepDown
+        .standard, .dropD, .openG, .openD, .dadgad, .halfStepDown, .fullStepDown,
+        .bass4, .bass5, .bass6, .ukulele, .guitar7, .guitar8
     ]
 
     // MARK: - Name normalization
@@ -113,11 +121,43 @@ struct GuitarTuning: Identifiable, Hashable {
     /// Handles "Standard", preset names, and note-letter spellings in either
     /// direction with any separators: "EADGBE", "E A D G B E", "e-a-d-g-b-e",
     /// "Eb Ab Db Gb Bb Eb", "D A D G A D", …
+    static func displayName(for raw: String?) -> String {
+        guard let raw, !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return "Unknown" }
+        if let name = canonicalName(for: raw) { return name }
+        let clean = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let notes = noteSpelling(clean) { return notes.joined(separator: " ") }
+        return clean
+    }
+
+    /// Keep custom note sequences, including repeated pitches, without inventing a preset.
+    static func noteSpelling(_ raw: String) -> [String]? {
+        let clean = raw.replacingOccurrences(of: "♭", with: "b").replacingOccurrences(of: "♯", with: "#")
+        // Separators disambiguate B strings from flat signs, especially on four-string instruments.
+        let separated = clean.components(separatedBy: CharacterSet.whitespacesAndNewlines
+            .union(CharacterSet(charactersIn: "-,/()"))).filter { !$0.isEmpty }
+        if (1...12).contains(separated.count), separated.allSatisfy({
+            $0.range(of: "^[A-Ga-g][#b]?$", options: .regularExpression) != nil
+        }) {
+            return separated.map { $0.prefix(1).uppercased() + $0.dropFirst() }
+        }
+        for pattern in ["[A-Ga-g]#?", "[A-Ga-g][#b]?"] {
+            let regex = try! NSRegularExpression(pattern: pattern)
+            let range = NSRange(clean.startIndex..., in: clean)
+            let matches = regex.matches(in: clean, range: range)
+            let remaining = regex.stringByReplacingMatches(in: clean, range: range, withTemplate: "")
+            guard (1...12).contains(matches.count), remaining.allSatisfy({ $0.isWhitespace || "-,/()".contains($0) }) else { continue }
+            return matches.compactMap { Range($0.range, in: clean).map { r in
+                let token = String(clean[r]); return token.prefix(1).uppercased() + token.dropFirst()
+            } }
+        }
+        return nil
+    }
+
     static func canonicalName(for raw: String?) -> String? {
         guard let raw else { return nil }
-        let lower = raw.lowercased()
-        if lower.contains("standard") { return standard.name }
-        for p in allPresets where lower.contains(p.name.lowercased()) { return p.name }
+        let lower = raw.replacingOccurrences(of: "♭", with: "b").replacingOccurrences(of: "♯", with: "#").lowercased()
+        if ["standard", "standard tuning", "e standard"].contains(lower.trimmingCharacters(in: .whitespacesAndNewlines)) { return standard.name }
+        for p in allPresets where p.name != standard.name && lower.contains(p.name.lowercased()) { return p.name }
 
         // Note-letter signature. Two parses: letters+sharps only (so the 'b'
         // in "eadgbe" is the B string, not a flat), then flats allowed.
@@ -149,7 +189,7 @@ struct GuitarTuning: Identifiable, Hashable {
                 }
                 i += 1
             }
-            return tokens.count == 6 ? tokens : nil
+            return (1...12).contains(tokens.count) ? tokens : nil
         }
 
         for withFlats in [false, true] {

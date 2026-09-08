@@ -33,6 +33,7 @@ struct ViewerHeader: View {
     var onToggleFavorite: (() -> Void)? = nil
     var onRename: (() -> Void)? = nil
     var onEditTags: (() -> Void)? = nil
+    var onEditDetails: (() -> Void)? = nil
     /// Short detail rows for the menu footer (source, converter, confidence).
     var detailRows: [String] = []
 
@@ -123,6 +124,7 @@ struct ViewerHeader: View {
         Menu {
             if let onRename { Button("Rename…", action: onRename) }
             if let onEditTags { Button("Edit tags…", action: onEditTags) }
+            if let onEditDetails { Button("Score details…", action: onEditDetails) }
             if let onToggleFavorite {
                 Button(action: onToggleFavorite) {
                     Label(isFavorite ? "Unfavorite" : "Favorite",

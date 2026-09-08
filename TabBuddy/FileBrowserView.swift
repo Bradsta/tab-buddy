@@ -12,12 +12,12 @@ import UniformTypeIdentifiers
 /// fileExporter) per view, so the picker is funneled through one importer
 /// keyed on this enum rather than several stacked importers.
 enum ImportTarget: Equatable {
-    case files, folder, library, backup
+    case files, folder, existingLibrary, externalLibrary, moveDestination, backup
 
     var contentTypes: [UTType] {
         switch self {
-        case .files: return [.pdf, .plainText]
-        case .folder, .library: return [.folder]
+        case .files: return [.pdf, .plainText] + GuitarProFileType.contentTypes
+        case .folder, .existingLibrary, .externalLibrary, .moveDestination: return [.folder]
         case .backup: return [.json]
         }
     }
@@ -176,13 +176,25 @@ struct FileBrowserView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.undoManager) private var undoManager
     @Environment(\.editMode) private var editMode
+    @Environment(\.scenePhase) private var scenePhase
 
     /// Multi-select support
     @State private var selectedFiles: Set<UUID> = []
     @State private var showMassTagModal = false
+    @State private var showStorageSettings = false
+    @State private var pendingSettingsAction: LibrarySettingsAction?
+    @State private var showDiscovery = false
+    @State private var importAfterDiscovery = false
+    @AppStorage("browser.instrumentFilter") private var instrumentFilter = ""
+    @State private var storagePickerTarget: ImportTarget?
+    @State private var preferICloud = true
     
     // Live list, auto-refreshes when you insert / delete / edit
     @Query private var items: [FileItem]
+    @StateObject private var browserIndex = LibraryBrowserIndex()
+    @State private var catalogRevision = 0
+    @State private var scheduledCatalogRevision: Int?
+    @State private var displayedFileLimit = 200
     
     @Binding var currentFile: FileItem?
     @Binding var path: [AppPage]
@@ -220,116 +232,34 @@ struct FileBrowserView: View {
         folderPath.isEmpty ? "" : folderPath.joined(separator: "/") + "/"
     }
 
-    private var visibleFiles: [FileItem] {
-        var list = items
+    private var libraryItems: [FileItem] { browserIndex.libraryFiles }
+    private var libraryInstruments: [Instrument] { browserIndex.instruments }
+    private var visibleFiles: [FileItem] { browserIndex.visible }
+    private var visibleSubfolders: [String] { browserIndex.folders }
 
-        // –– 1) text search ––
-        let needle = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-                                .lowercased()
-        if !needle.isEmpty {
-            list = list.filter { file in
-                file.filename.localizedCaseInsensitiveContains(needle) ||
-                file.tags.contains { $0.localizedCaseInsensitiveContains(needle) } ||
-                file.folderName.localizedCaseInsensitiveContains(needle) ||
-                (file.customTitle?.localizedCaseInsensitiveContains(needle) ?? false) ||
-                (file.foreword?.localizedCaseInsensitiveContains(needle) ?? false)
-            }
-        }
-
-        // –– 2) tag chip filter ––
-        if let tag = activeTagFilter {
-            list = list.filter { $0.tags.contains(tag) }
-        }
-
-        // –– 3) favourite toggle ––
-        if filterFavorite {
-            list = list.filter(\.isFavorite)
-        }
-
-        // –– 4) folder filter (only show files directly in current folder) ––
-        if browseMode == .folders {
-            let prefix = currentFolderPrefix
-            list = list.filter { file in
-                guard let lp = file.libraryPath else {
-                    return prefix.isEmpty  // non-library files only at root
-                }
-                if prefix.isEmpty {
-                    // Root: show files with no subfolder
-                    return !lp.contains("/")
-                }
-                guard lp.hasPrefix(prefix) else { return false }
-                let remainder = String(lp.dropFirst(prefix.count))
-                return !remainder.contains("/")  // direct children only
-            }
-        }
-
-        // –– 5) sort ––
-        switch sortMode {
-        case .name:
-            list.sort { ($0.isFavorite ? 0 : 1, $0.filename.lowercased())
-                     < ($1.isFavorite ? 0 : 1, $1.filename.lowercased()) }
-        case .recent:
-            list.sort { $0.lastOpenedAt > $1.lastOpenedAt }
-        case .imported:
-            list.sort { $0.importedAt > $1.importedAt }
-        case .mostPlayed:
-            list.sort { $0.playCount > $1.playCount }
-        }
-        return list
+    private var browserRequest: LibraryBrowserIndex.Request {
+        .init(search: searchText, instrument: instrumentFilter, tag: activeTagFilter,
+              favorites: filterFavorite, sort: sortMode.rawValue,
+              folderPrefix: browseMode == .folders ? currentFolderPrefix : nil,
+              revision: browserIndex.revision)
     }
 
-    /// Subfolders visible at the current folder level
-    private var visibleSubfolders: [String] {
-        guard browseMode == .folders else { return [] }
-        let prefix = currentFolderPrefix
-        var folders = Set<String>()
-        for file in items {
-            guard let lp = file.libraryPath else { continue }
-            if prefix.isEmpty {
-                // Root: collect first path component if it's a directory
-                if let slash = lp.firstIndex(of: "/") {
-                    folders.insert(String(lp[lp.startIndex..<slash]))
-                }
-            } else {
-                guard lp.hasPrefix(prefix) else { continue }
-                let remainder = String(lp.dropFirst(prefix.count))
-                if let slash = remainder.firstIndex(of: "/") {
-                    folders.insert(String(remainder[remainder.startIndex..<slash]))
-                }
-            }
-        }
-        return folders.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    private var libraryInstrumentSelection: Binding<String> {
+        Binding(get: { instrumentFilter }, set: { instrumentFilter = $0 })
     }
-    
+
     private func delete(_ file: FileItem) {
-        // 1. Remove now
-        context.delete(file)
-        try? context.save()
-
-        // 2. Register undo
-        undoManager?.registerUndo(withTarget: context) { ctx in
-            ctx.insert(file)           // resurrect the same object
-            try? ctx.save()
-        }
-        undoManager?.setActionName("Delete File")
+        Task { await libraryManager.removeItems([file], context: context) }
     }
 
     private func clearAll() {
-        let snapshot = items           // capture before deletion
-
-        for item in snapshot { context.delete(item) }
-        try? context.save()
-
-        undoManager?.registerUndo(withTarget: context) { ctx in
-            for item in snapshot { ctx.insert(item) }
-            try? ctx.save()
-        }
-        undoManager?.setActionName("Remove All Files")
+        let snapshot = libraryItems
+        Task { await libraryManager.removeItems(snapshot, context: context) }
     }
 
     
     private func open(_ file: FileItem) {
-        guard file.isBookmarkValid else { return }
+        guard libraryManager.availability(of: file, context: context) == .available else { return }
 
         // Recency updates on open; playCount is incremented by the viewer only
         // after the tab has stayed open a few seconds (see TabViewerView).
@@ -339,13 +269,29 @@ struct FileBrowserView: View {
         // Backfill the content fingerprint lazily — scanning no longer hashes
         // (it would force-download every iCloud file); the file is about to be
         // read for display anyway. Used to re-link moved/renamed files.
-        if file.contentHash == nil, let url = file.url {
-            Task.detached(priority: .utility) {
-                let hash = FileItem.fingerprint(of: url)
-                url.stopAccessingSecurityScopedResource()
+        if file.contentHash == nil {
+            Task(priority: .utility) {
+                // Let the reader acquire and display the score before optional indexing.
+                do { try await Task.sleep(for: .seconds(2)) } catch { return }
+                guard file.modelContext != nil, !file.isDeleted, file.contentHash == nil else { return }
+                guard let lease = try? await libraryManager.acquireFile(file) else { return }
+                let url = lease.url
+                let hash = await Task.detached(priority: .utility) {
+                    let values = try? url.resourceValues(forKeys: [.isUbiquitousItemKey, .ubiquitousItemDownloadingStatusKey])
+                    guard values?.isUbiquitousItem != true || values?.ubiquitousItemDownloadingStatus != .notDownloaded else { return nil as String? }
+                    var result: String?
+                    NSFileCoordinator().coordinate(readingItemAt: url, options: .withoutChanges, error: nil) { readableURL in
+                        result = FileItem.fingerprint(of: readableURL)
+                    }
+                    return result
+                }.value
+                lease.close()
                 await MainActor.run {
-                    file.contentHash = hash
-                    try? context.save()
+                    guard file.modelContext != nil else { return }
+                    if let hash, file.contentHash == nil {
+                        file.contentHash = hash
+                        try? context.save()
+                    }
                 }
             }
         }
@@ -392,14 +338,7 @@ struct FileBrowserView: View {
     }
 
     /// Tabs opened in the last 7 days, most-recent first (for the rail).
-    private var jumpBackInFiles: [FileItem] {
-        let cutoff = Date().addingTimeInterval(-7 * 24 * 3600)
-        return items
-            .filter { $0.lastOpenedAt > $0.importedAt && $0.lastOpenedAt >= cutoff }
-            .sorted { $0.lastOpenedAt > $1.lastOpenedAt }
-            .prefix(10)
-            .map { $0 }
-    }
+    private var jumpBackInFiles: [FileItem] { browserIndex.recent }
 
     /// Show the rail only at the unfiltered root, outside edit mode.
     private var showJumpBackIn: Bool {
@@ -407,6 +346,7 @@ struct FileBrowserView: View {
             && folderPath.isEmpty
             && activeTagFilter == nil
             && !filterFavorite
+            && instrumentFilter.isEmpty
             && searchText.trimmingCharacters(in: .whitespaces).isEmpty
             && editMode?.wrappedValue != .active
             && !jumpBackInFiles.isEmpty
@@ -436,10 +376,13 @@ struct FileBrowserView: View {
             }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 11) {
-                    ForEach(jumpBackInFiles) { file in
+                    ForEach(jumpBackInFiles, id: \.persistentModelID) { file in
+                        if file.modelContext != nil && !file.isDeleted {
                         FileCardView(file: file, isRail: true, showEyebrow: true,
+                                     availability: libraryManager.availability(of: file, context: context),
                                      onOpen: { open(file) }, onDelete: { delete(file) })
                             .frame(width: 216)
+                        }
                     }
                 }
                 .padding(.bottom, 2)
@@ -449,61 +392,99 @@ struct FileBrowserView: View {
 
     @ViewBuilder
     private func allTabsSection(visible: [FileItem]) -> some View {
+        let folders = browseMode == .folders ? folderMemberships : [:]
         VStack(alignment: .leading, spacing: 11) {
             HStack(alignment: .firstTextBaseline) {
-                Text(browseMode == .folders ? (folderPath.last ?? "Library") : "All tabs")
+                Text(browseMode == .folders ? (folderPath.last ?? "Library") : "All scores")
                     .font(.system(size: 20, weight: .bold))
                 Spacer()
-                Text("\(visible.count) tab\(visible.count == 1 ? "" : "s")")
+                Text("\(visible.count) score\(visible.count == 1 ? "" : "s")")
                     .font(.system(size: 13)).foregroundStyle(.secondary)
             }
 
             if visible.isEmpty && visibleSubfolders.isEmpty {
-                Text("No tabs here yet")
+                Text(!browserIndex.hasSnapshot ? "Loading library…" : (searchText.isEmpty ? "No scores here yet" : "No matching scores"))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 40)
+                    .padding(.vertical, 24)
             } else {
                 LazyVGrid(columns: gridColumns, alignment: .leading, spacing: 11) {
                     if browseMode == .folders {
                         ForEach(visibleSubfolders, id: \.self) { folder in
-                            folderCard(folder)
+                            folderCard(folder, members: folders[folder] ?? [])
                         }
                     }
-                    ForEach(visible) { file in
+                    ForEach(Array(visible.prefix(displayedFileLimit)), id: \.persistentModelID) { file in
+                        if file.modelContext != nil && !file.isDeleted {
                         FileCardView(file: file,
                                      isRail: false,
                                      showEyebrow: browseMode == .flat,
                                      isSelecting: isSelecting,
                                      isSelected: selectedFiles.contains(file.id),
+                                     availability: libraryManager.availability(of: file, context: context),
                                      onOpen: { open(file) },
                                      onDelete: { delete(file) },
                                      onToggleSelect: { toggleSelect(file) })
+                        }
+                    }
+                    if visible.count > displayedFileLimit {
+                        ProgressView().onAppear { displayedFileLimit += 200 }
                     }
                 }
             }
         }
     }
 
-    private func folderCard(_ folder: String) -> some View {
-        Button {
-            withAnimation { folderPath.append(folder) }
+    /// Build membership once per rendered folder section, not once per folder card.
+    private var folderMemberships: [String: [FileItem]] { browserIndex.folderMembers }
+
+    private func folderCard(_ folder: String, members: [FileItem]) -> some View {
+        let ids = Set(members.filter { $0.modelContext != nil && !$0.isDeleted }.map(\.id))
+        let allSelected = !ids.isEmpty && ids.isSubset(of: selectedFiles)
+        return Button {
+            if isSelecting {
+                if allSelected { selectedFiles.subtract(ids) }
+                else { selectedFiles.formUnion(ids) }
+            } else {
+                withAnimation { folderPath.append(folder) }
+            }
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "folder.fill").foregroundStyle(Color.accentColor)
-                Text(folder).font(.system(size: 15, weight: .semibold)).lineLimit(1)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(folder).font(.system(size: 15, weight: .semibold)).lineLimit(1)
+                    Text("\(members.count) scores").font(.caption).foregroundStyle(.secondary)
+                }
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.secondary)
+                Image(systemName: isSelecting ? (allSelected ? "checkmark.circle.fill" : (ids.isDisjoint(with: selectedFiles) ? "circle" : "minus.circle")) : "chevron.right")
+                    .foregroundStyle(allSelected ? Color.accentColor : Color.secondary)
             }
             .padding(.init(top: 11, leading: 13, bottom: 11, trailing: 13))
             .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
             .background(Color(.secondarySystemGroupedBackground))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Color(.separator), lineWidth: 0.5))
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(allSelected ? Color.accentColor : Color(.separator), lineWidth: allSelected ? 2 : 0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
+        .contextMenu {
+            Button("Select Folder", systemImage: "checkmark.circle") {
+                editMode?.wrappedValue = .active
+                selectedFiles.formUnion(ids)
+            }
+            Button(libraryManager.mode == .externalFolder ? "Remove Folder References" : "Delete Folder Scores", role: .destructive) {
+                selectedFiles = Set(LibraryManager.folderItems(in: libraryItems, relativeFolder: currentFolderPrefix + folder).map(\.id))
+                showDeleteSelectedConfirmation = true
+            }
+        }
+    }
+
+    private func selectableIDs(visible: [FileItem]) -> Set<UUID> {
+        var ids = Set(visible.map(\.id))
+        if browseMode == .folders {
+            for members in folderMemberships.values { ids.formUnion(members.map(\.id)) }
+        }
+        return ids
     }
 
     private func toggleSelect(_ file: FileItem) {
@@ -562,11 +543,11 @@ struct FileBrowserView: View {
                 Button("Undo") { undoManager?.undo() }
             }
             if editMode?.wrappedValue == .active {
-                Button(selectedFiles.count == visible.count ? "Deselect All" : "Select All") {
-                    if selectedFiles.count == visible.count {
+                Button(selectableIDs(visible: visible).isSubset(of: selectedFiles) ? "Deselect All" : "Select All") {
+                    if selectableIDs(visible: visible).isSubset(of: selectedFiles) {
                         selectedFiles.removeAll()
                     } else {
-                        selectedFiles = Set(visible.map(\.id))
+                        selectedFiles = selectableIDs(visible: visible)
                     }
                 }
             }
@@ -596,6 +577,8 @@ struct FileBrowserView: View {
 
     private var importMenu: some View {
         Menu {
+            Button { showDiscovery = true } label: { Label("Find music online", systemImage: "globe") }
+            Divider()
             Button {
                 path.append(.tabMaker)
             } label: { Label("Compose Tab", systemImage: "music.note.list") }
@@ -627,56 +610,30 @@ struct FileBrowserView: View {
 
             Divider()
 
-            Button { activeImport = .library } label: {
-                if let name = libraryManager.libraryName {
-                    Label("Change Library (\(name))", systemImage: "folder.badge.gearshape")
-                } else {
-                    Label("Set Library Folder", systemImage: "folder.badge.plus")
-                }
+            Button { showStorageSettings = true } label: {
+                Label("Settings", systemImage: "gearshape")
             }
-
-            if libraryManager.isConfigured {
-                Button {
-                    libraryManager.rescan(context: context)
-                } label: {
-                    Label("Rescan Library", systemImage: "arrow.clockwise")
-                }
-                Button(role: .destructive) {
-                    libraryManager.removeLibraryFolder()
-                } label: {
-                    Label("Remove Library", systemImage: "folder.badge.minus")
-                }
-            }
-
-            Divider()
-
-            Button {
-                canonicalConverter.convertLibrary(context: context)
-            } label: {
-                Label("Generate Tab Data", systemImage: "wand.and.stars")
-            }
-            .disabled(canonicalConverter.isConverting)
-
-            Divider()
-
-            Button {
-                if let data = BackupManager.exportJSON(context: context) {
-                    backupData = data
-                    showBackupExporter = true
-                }
-            } label: {
-                Label("Export Backup", systemImage: "square.and.arrow.up")
-            }
-            Button { activeImport = .backup } label: {
-                Label("Restore Backup", systemImage: "square.and.arrow.down")
-            }
-
-            Divider()
-
-            Button(role: .destructive) {
-                showClearConfirmation = true
-            } label: { Label("Remove All Files", systemImage: "trash") }
         } label: { Image(systemName: "ellipsis.circle") }
+    }
+
+    private func performSettingsAction(_ action: LibrarySettingsAction) {
+        // Start new presentations only after Settings has fully dismissed.
+        switch action {
+        case .exportBackup:
+            if let data = BackupManager.exportJSON(context: context) {
+                backupData = data
+                showBackupExporter = true
+            }
+        case .restoreBackup: activeImport = .backup
+        case .removeAll: showClearConfirmation = true
+        case .generateTabData:
+            Task {
+                await libraryManager.stopBackgroundProcessing()
+                canonicalConverter.convertLibrary(context: context)
+            }
+        case .prepare: libraryManager.startBackgroundProcessing(context: context, automatic: false)
+        case .rescan: libraryManager.rescan(context: context)
+        }
     }
 
     // MARK: - Body
@@ -702,10 +659,85 @@ struct FileBrowserView: View {
                 folderImporter: folderImporter,
                 libraryManager: libraryManager
             ))
-            .overlay { rescanOverlay }
-            .overlay { importOverlay }
-            .overlay { conversionOverlay }
+            .sheet(isPresented: $showDiscovery, onDismiss: {
+                if importAfterDiscovery { importAfterDiscovery = false; activeImport = .files }
+            }) {
+                ScoreDiscoveryView(query: searchText, instrumentRaw: instrumentFilter) {
+                    importAfterDiscovery = true
+                    showDiscovery = false
+                }
+            }
+            .sheet(isPresented: $showStorageSettings, onDismiss: {
+                if let target = storagePickerTarget {
+                    storagePickerTarget = nil
+                    activeImport = target
+                }
+                if let action = pendingSettingsAction {
+                    pendingSettingsAction = nil
+                    performSettingsAction(action)
+                }
+            }) {
+                LibraryStorageSettings(libraryManager: libraryManager,
+                                       performLibraryAction: { pendingSettingsAction = $0 },
+                                       isGeneratingTabData: canonicalConverter.isConverting) {
+                    storagePickerTarget = $0
+                }
+            }
+            .task { libraryManager.refreshStorageAvailability() }
+            .task(id: catalogRevision) {
+                guard scheduledCatalogRevision != catalogRevision else { return }
+                scheduledCatalogRevision = catalogRevision
+                browserIndex.scheduleRebuild(items, libraryID: libraryManager.activeLibraryID)
+            }
+            .task(id: browserRequest) {
+                await browserIndex.filter(browserRequest)
+            }
+            .onChange(of: searchText) { _, _ in displayedFileLimit = 200 }
+            .onChange(of: sortMode) { _, _ in displayedFileLimit = 200 }
+            .onChange(of: activeTagFilter) { _, _ in displayedFileLimit = 200 }
+            .onChange(of: instrumentFilter) { _, _ in displayedFileLimit = 200 }
+            .onChange(of: filterFavorite) { _, _ in displayedFileLimit = 200 }
+            .onChange(of: folderPath) { _, _ in displayedFileLimit = 200 }
+            .onChange(of: browseMode) { _, _ in displayedFileLimit = 200 }
+            .onChange(of: items) { _, _ in catalogRevision += 1 }
+            .onChange(of: libraryManager.activeLibraryID) { _, _ in
+                browserIndex.clear()
+                catalogRevision += 1
+            }
+            .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { notification in
+                guard let savedContext = notification.object as? ModelContext, savedContext === context else { return }
+                catalogRevision += 1
+            }
+
+            .onReceive(NotificationCenter.default.publisher(for: .NSUbiquityIdentityDidChange)) { _ in
+                libraryManager.refreshStorageAvailability()
+                libraryManager.bootstrap(context: context)
+            }
+            .overlay {
+                if libraryManager.isRemoving {
+                    ZStack {
+                        Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
+                        ProgressView("Removing \(libraryManager.removalProcessed) of \(libraryManager.removalTotal)…",
+                                     value: Double(libraryManager.removalProcessed),
+                                     total: Double(max(1, libraryManager.removalTotal)))
+                            .frame(width: 260).padding().background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    }
+                }
+            }
+            .overlay(alignment: .bottom) { backgroundWorkStatus }
+            .overlay { moveOverlay }
             .overlay { massTagOverlay(visible: visible) }
+            .onChange(of: scenePhase) { phase in
+                libraryManager.setBackgroundProcessingAllowed(phase == .active)
+                guard phase == .active else { return }
+                libraryManager.refreshStorageAvailability()
+                guard libraryManager.isConfigured else { return }
+                // Opening the app uses the saved catalog. Both rescan and
+                // offline refresh enumerate the entire folder, so reserve them
+                // for setup, explicit changes, and user-requested refreshes.
+                libraryManager.importPendingSharedFiles(context: context)
+                libraryManager.startBackgroundProcessing(context: context)
+            }
             // Note: no automatic whole-library canonical conversion after
             // import — reading and parsing thousands of (possibly undownloaded
             // iCloud) files made first-run setup take forever. Canonicals are
@@ -716,6 +748,19 @@ struct FileBrowserView: View {
     @ViewBuilder
     private func mainContent(visible: [FileItem]) -> some View {
         VStack(spacing: 0) {
+            libraryStatusBanner
+            HStack {
+                Picker("Instrument", selection: libraryInstrumentSelection) {
+                    Text("All instruments").tag("")
+                    ForEach(libraryInstruments, id: \.rawValue) { Text($0.label).tag($0.rawValue) }
+                }.pickerStyle(.menu)
+                    .onChange(of: libraryInstruments, initial: true) { _, instruments in
+                        if browserIndex.revision > 0 && !instrumentFilter.isEmpty && !instruments.contains(where: { $0.rawValue == instrumentFilter }) {
+                            instrumentFilter = ""
+                        }
+                    }
+                Spacer()
+            }.padding(.horizontal)
             TagHeader(active: $activeTagFilter)
             Divider()
             breadcrumbBar
@@ -739,41 +784,117 @@ struct FileBrowserView: View {
     }
 
     @ViewBuilder
-    private var rescanOverlay: some View {
-        if libraryManager.isRescanning {
-            ZStack {
-                Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
-                VStack(spacing: 16) {
-                    Text("Rescanning Library…").font(.headline)
-                    if libraryManager.rescanTotal > 0 {
-                        Text("\(libraryManager.rescanProcessed) of \(libraryManager.rescanTotal) files")
-                            .font(.subheadline).foregroundStyle(.secondary)
-                        ProgressView(value: Double(libraryManager.rescanProcessed),
-                                     total: Double(max(libraryManager.rescanTotal, 1)))
-                            .progressViewStyle(.linear).frame(width: 240)
-                    } else {
-                        ProgressView()
-                    }
+    private var libraryStatusBanner: some View {
+        if !libraryManager.isConfigured {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Your Tab Buddy Library").font(.headline)
+                Text("Imported songs are copied into your library. The original files stay where they are.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+                Toggle("Sync library with iCloud", isOn: Binding(get: { preferICloud && libraryManager.iCloudAvailable == true }, set: { preferICloud = $0 }))
+                    .disabled(libraryManager.iCloudAvailable != true)
+                Text(libraryManager.iCloudAvailable == true
+                     ? "Keep songs, tags, favorites, and recent activity in sync. You can change this in Library Storage."
+                     : "Your library can stay on this device. You can enable iCloud later.")
+                    .font(.caption).foregroundStyle(.secondary)
+                if let error = libraryManager.lastError { Text(error).font(.caption).foregroundStyle(.red) }
+                Button(libraryManager.isConfiguring ? "Creating Library…" : "Get Started") {
+                    libraryManager.configureManaged(context: context, useICloud: preferICloud)
                 }
-                .padding()
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .buttonStyle(.borderedProminent)
+                .disabled(libraryManager.isConfiguring || libraryManager.iCloudAvailable == nil)
             }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.secondarySystemGroupedBackground))
+        } else if libraryManager.accessNeeded {
+            HStack {
+                Image(systemName: "folder.badge.questionmark")
+                VStack(alignment: .leading) {
+                    Text(libraryManager.mode == .managedICloud ? "iCloud Unavailable" : "Access Needed").font(.headline)
+                    Text(libraryManager.mode == .managedICloud
+                         ? "Your library stays in iCloud. Check iCloud Drive in device Settings, then retry."
+                         : "Connect the matching library folder on this device.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                if libraryManager.mode == .externalFolder {
+                    Button("Connect") { activeImport = .externalLibrary }
+                } else {
+                    Button("Retry") { libraryManager.bootstrap(context: context); libraryManager.rescan(context: context) }
+                }
+            }
+            .padding()
+            .background(Color.orange.opacity(0.12))
+        } else if items.contains(where: \.needsLibraryMigration) {
+            HStack {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                VStack(alignment: .leading) {
+                    Text("Legacy Imports").font(.headline)
+                    Text("Copy older bookmarked files into the active library.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button("Move Files") { libraryManager.migrateLegacyImports(context: context) }
+            }
+            .padding()
+            .background(Color.blue.opacity(0.1))
+        } else if let error = libraryManager.lastError {
+            HStack {
+                Image(systemName: "exclamationmark.triangle")
+                Text(error).font(.caption)
+                Spacer()
+                Button("Retry") { libraryManager.rescan(context: context) }
+            }.padding().background(Color.red.opacity(0.1))
+        }
+    }
+
+    @ViewBuilder
+    private var rescanStatus: some View {
+        if libraryManager.isRescanning {
+            LibraryScanStatus(progress: libraryManager.scanProgress, isPausing: libraryManager.isProcessingLibrary) {
+                libraryManager.cancelScan()
+            }
+        } else if let summary = libraryManager.rescanSummary {
+            HStack {
+                Text(summary).font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Button { libraryManager.rescanSummary = nil } label: {
+                    Image(systemName: "xmark").frame(minWidth: 44, minHeight: 44)
+                }.accessibilityLabel("Dismiss scan summary")
+            }.padding(.horizontal)
         }
     }
 
     @ViewBuilder
     private var importOverlay: some View {
         if folderImporter.isRunning {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(folderImporter.total == 0 ? "Finding import files…" : "Imported \(folderImporter.processed) of \(folderImporter.total) files")
+                    .font(.subheadline)
+                if folderImporter.total == 0 { IndeterminateScanProgress() }
+                else { ProgressView(value: Double(folderImporter.processed), total: Double(max(1, folderImporter.total))) }
+                Button("Cancel", role: .cancel) { folderImporter.cancel() }.frame(minHeight: 44)
+            }.padding(.horizontal)
+        }
+    }
+
+    @ViewBuilder
+    private var moveOverlay: some View {
+        if libraryManager.isMoving {
             ZStack {
                 Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
                 VStack(spacing: 16) {
-                    Text("Importing \(folderImporter.processed) of \(folderImporter.total) files…")
-                        .font(.headline)
-                    ProgressView(value: Double(folderImporter.processed),
-                                 total: Double(max(folderImporter.total, 1)))
-                        .progressViewStyle(.linear).frame(width: 240)
-                    Button("Cancel", role: .cancel) { folderImporter.cancel() }
-                        .buttonStyle(.borderedProminent)
+                    Text("Moving Library…").font(.headline)
+                    Text("\(libraryManager.moveProcessed) of \(libraryManager.moveTotal) files")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    ProgressView(value: Double(libraryManager.moveProcessed),
+                                 total: Double(max(libraryManager.moveTotal, 1)))
+                        .frame(width: 240)
+                    Text("The original library remains active until verification completes.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Button("Cancel", role: .cancel) {
+                        libraryManager.cancelMove()
+                    }
                 }
                 .padding()
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
@@ -784,23 +905,55 @@ struct FileBrowserView: View {
     @ViewBuilder
     private var conversionOverlay: some View {
         if canonicalConverter.isConverting {
-            ZStack {
-                Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
-                VStack(spacing: 16) {
-                    Text("Generating Tab Data…").font(.headline)
-                    if canonicalConverter.total > 0 {
-                        Text("\(canonicalConverter.processed) of \(canonicalConverter.total) files")
-                            .font(.subheadline).foregroundStyle(.secondary)
-                        ProgressView(value: Double(canonicalConverter.processed),
-                                     total: Double(max(canonicalConverter.total, 1)))
-                            .progressViewStyle(.linear).frame(width: 240)
-                    } else {
-                        ProgressView()
-                    }
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Generating Tab Data…").font(.subheadline)
+                ProgressView(value: Double(canonicalConverter.processed), total: Double(max(1, canonicalConverter.total)))
+                Text("\(canonicalConverter.processed) of \(canonicalConverter.total) files").font(.caption)
+            }.padding(.horizontal)
+        }
+    }
+
+    @ViewBuilder
+    private var backgroundWorkStatus: some View {
+        if libraryManager.isRescanning || libraryManager.rescanSummary != nil || libraryManager.processingSummary != nil || libraryManager.isProcessingLibrary || folderImporter.isRunning || canonicalConverter.isConverting {
+            VStack(spacing: 8) {
+                if libraryManager.isRescanning {
+                    rescanStatus
+                } else if folderImporter.isRunning {
+                    importOverlay
+                } else if canonicalConverter.isConverting {
+                    conversionOverlay
+                } else if libraryManager.isProcessingLibrary {
+                    LibraryPreparationStatus(progress: libraryManager.preparationProgress) {
+                        libraryManager.pauseBackgroundProcessing()
+                    }.padding(.horizontal)
+                } else if let summary = libraryManager.processingSummary {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text("Library preparation").font(.subheadline)
+                            Spacer()
+                            Button("Dismiss") { libraryManager.processingSummary = nil }.frame(minHeight: 44)
+                        }
+                        Text(summary).font(.caption).foregroundStyle(.secondary)
+                        if libraryManager.processingDeferred > 0 {
+                            Text(libraryManager.mode == .managedICloud
+                                 ? "Cloud-only files can be prepared once downloaded. Open a score or use Keep available offline in Settings."
+                                 : "Cloud-only files can be prepared once downloaded. Open a score or download the folder in the Files app.")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                        if let failure = libraryManager.processingLastFailure {
+                            Text(failure).font(.caption).foregroundStyle(.secondary).lineLimit(3)
+                        }
+                    }.padding(.horizontal)
+                } else {
+                    rescanStatus
                 }
-                .padding()
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
             }
+            .padding(.vertical, 8)
+            .frame(maxWidth: 520)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+            .shadow(radius: 4, y: 2)
+            .padding()
         }
     }
 
@@ -861,20 +1014,16 @@ private struct BrowserDialogs: ViewModifier {
                 Button("Remove All Files", role: .destructive, action: clearAll)
                 Button("Cancel", role: .cancel) { }
             }
-            .alert("Delete \(selectedFiles.count) selected files?",
+            .alert(libraryManager.mode == .externalFolder ? "Remove \(selectedFiles.count) library references?" : "Delete \(selectedFiles.count) selected files?",
                    isPresented: $showDeleteSelectedConfirmation) {
-                Button("Delete", role: .destructive) {
+                Button(libraryManager.mode == .externalFolder ? "Remove References" : "Delete", role: .destructive) {
                     let filesToDelete = items.filter { selectedFiles.contains($0.id) }
-                    for file in filesToDelete { context.delete(file) }
-                    try? context.save()
-                    undoManager?.registerUndo(withTarget: context) { ctx in
-                        for file in filesToDelete { ctx.insert(file) }
-                        try? ctx.save()
-                    }
-                    undoManager?.setActionName("Delete Selected Files")
+                    Task { await libraryManager.removeItems(filesToDelete, context: context) }
                     selectedFiles.removeAll()
                 }
                 Button("Cancel", role: .cancel) { }
+            } message: {
+                Text(libraryManager.mode == .externalFolder ? "Source files stay in your folder. A later rescan will restore references for files that still exist there." : "This deletes the selected song files from your managed library, including songs in selected subfolders.")
             }
             .confirmationDialog("Copy files to your library?",
                                 isPresented: $showCopyToLibraryPrompt,
@@ -883,11 +1032,15 @@ private struct BrowserDialogs: ViewModifier {
                     folderImporter.startWithLibraryCopy(urls: pendingImportURLs, context: context, libraryManager: libraryManager)
                     pendingImportURLs = []
                 }
-                Button("Import in Place") {
-                    folderImporter.start(urls: pendingImportURLs, context: context)
-                    pendingImportURLs = []
-                }
                 Button("Cancel", role: .cancel) { pendingImportURLs = [] }
+            }
+            .alert("Import failed", isPresented: Binding(
+                get: { folderImporter.lastError != nil },
+                set: { if !$0 { folderImporter.lastError = nil } }
+            )) {
+                Button("OK") { folderImporter.lastError = nil }
+            } message: {
+                Text(folderImporter.lastError ?? "The files could not be imported.")
             }
             .alert("Restore Complete", isPresented: $showRestoreResult) {
                 Button("OK", role: .cancel) { }
@@ -916,32 +1069,109 @@ private struct BrowserDialogs: ViewModifier {
 
     private func handleImport(_ result: Result<[URL], Error>, target: ImportTarget?) {
         activeImport = nil
-        guard case .success(let urls) = result else { return }
+        guard case .success(let urls) = result else {
+            if case .failure(let error) = result { folderImporter.lastError = error.localizedDescription }
+            return
+        }
         switch target {
         case .files, .folder:
-            if libraryManager.isConfigured {
-                pendingImportURLs = urls
-                showCopyToLibraryPrompt = true
-            } else {
-                folderImporter.start(urls: urls, context: context)
+            guard libraryManager.isConfigured else {
+                folderImporter.lastError = LibraryFileError.notConfigured.localizedDescription
+                return
             }
-        case .library:
+            folderImporter.start(urls: urls, context: context)
+        case .existingLibrary:
+            if let url = urls.first { libraryManager.useExistingFolder(url: url, context: context) }
+        case .externalLibrary:
             if let url = urls.first {
-                libraryManager.setLibraryFolder(url: url)
-                // Populate immediately — the scan is metadata-only (no file
-                // reads), so even large iCloud libraries appear quickly.
-                libraryManager.rescan(context: context)
+                libraryManager.configureExternal(url: url, context: context)
+            }
+        case .moveDestination:
+            if let url = urls.first {
+                libraryManager.moveLibrary(to: .externalFolder,
+                                           externalParent: url,
+                                           context: context)
             }
         case .backup:
             guard let url = urls.first,
                   url.startAccessingSecurityScopedResource() else { return }
             defer { url.stopAccessingSecurityScopedResource() }
             if let data = try? Data(contentsOf: url) {
-                restoreCount = BackupManager.importJSON(data: data, context: context)
+                restoreCount = BackupManager.importJSON(data: data, context: context, libraryID: libraryManager.activeLibraryID)
                 showRestoreResult = true
             }
         case .none:
             break
         }
+    }
+}
+
+/// Finding files has no denominator. Animate activity without inventing a percentage.
+private struct IndeterminateScanProgress: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: reduceMotion)) { timeline in
+            GeometryReader { geometry in
+                let phase = reduceMotion ? 0.5 : timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.5) / 1.5
+                Capsule().fill(Color.accentColor.opacity(0.15))
+                    .overlay(alignment: .leading) {
+                        Capsule().fill(Color.accentColor)
+                            .frame(width: geometry.size.width / 3)
+                            .offset(x: geometry.size.width * (phase * 4 / 3 - 1 / 3))
+                    }.clipShape(Capsule())
+            }
+        }.frame(height: 4)
+    }
+}
+
+private struct LibraryPreparationStatus: View {
+    @ObservedObject var progress: LibraryPreparationProgress
+    let pause: () -> Void
+
+    var body: some View {
+        let value = progress.value
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Preparing library…").font(.subheadline)
+                Spacer()
+                Button("Pause", action: pause).frame(minHeight: 44)
+            }
+            ProgressView(value: Double(value.checked), total: Double(max(1, value.total)))
+            Text("\(value.checked) of \(value.total) checked · \(value.prepared) prepared · \(value.deferred) waiting for download · \(value.failed) failed")
+                .font(.caption).foregroundStyle(.secondary)
+            if let failure = value.lastFailure {
+                Text(failure).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+            }
+        }
+    }
+}
+
+private struct LibraryScanStatus: View {
+    @ObservedObject var progress: LibraryScanProgress
+    let isPausing: Bool
+    let cancel: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(isPausing ? "Pausing preparation…" : "Rescanning Library…").font(.subheadline)
+                if isPausing {
+                    Text("Rescan will start when the current file finishes.").font(.caption).foregroundStyle(.secondary)
+                    IndeterminateScanProgress()
+                } else if progress.total > 0 {
+                    Text("\(progress.processed) of \(progress.total) checked · \(progress.added) added · \(progress.processed - progress.added) existing")
+                        .font(.caption).foregroundStyle(.secondary)
+                    ProgressView(value: Double(progress.processed), total: Double(max(progress.total, 1)))
+                } else {
+                    Text("Finding files… \(progress.found) found · \(progress.processed) saved to catalog · \(progress.added) new")
+                        .font(.caption).foregroundStyle(.secondary)
+                    IndeterminateScanProgress().accessibilityLabel("Finding files; total not yet known")
+                }
+            }
+            Spacer(minLength: 8)
+            Button("Cancel", role: .cancel, action: cancel).frame(minHeight: 44)
+        }
+        .padding(.horizontal).padding(.vertical, 8)
+        .background(Color(.secondarySystemGroupedBackground))
     }
 }

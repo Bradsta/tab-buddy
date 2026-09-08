@@ -20,6 +20,7 @@ final class MetronomeEngine: ObservableObject {
 
     private let engine = AVAudioEngine()
     private let playerNode = AVAudioPlayerNode()
+    private var engineConfigured = false
 
     /// Pre-rendered click buffers (accent + normal)
     private var accentBuffer: AVAudioPCMBuffer?
@@ -35,7 +36,6 @@ final class MetronomeEngine: ObservableObject {
         format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
         accentBuffer = synthesizeClick(frequency: 1200, duration: 0.03, amplitude: 0.8)
         normalBuffer = synthesizeClick(frequency: 800, duration: 0.025, amplitude: 0.5)
-        setupEngine()
     }
 
     // MARK: - Setup
@@ -61,6 +61,7 @@ final class MetronomeEngine: ObservableObject {
     func start() {
         guard !engine.isRunning else { return }
         configureAudioSession()
+        if !engineConfigured { setupEngine(); engineConfigured = true }
         do {
             try engine.start()
         } catch {
@@ -81,8 +82,8 @@ final class MetronomeEngine: ObservableObject {
     /// - Parameters:
     ///   - beatInMeasure: 0-based beat index within the measure
     ///   - beatsPerMeasure: total beats in the measure
-    func playClick(beatInMeasure: Int, beatsPerMeasure: Int) {
-        guard isEnabled, engine.isRunning else { return }
+    func playClick(beatInMeasure: Int, beatsPerMeasure: Int, force: Bool = false) {
+        guard (isEnabled || force), engine.isRunning else { return }
 
         let buffer = (beatInMeasure == 0) ? accentBuffer : normalBuffer
         guard let buf = buffer else { return }

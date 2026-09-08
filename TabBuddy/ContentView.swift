@@ -16,10 +16,8 @@ struct ContentView: View {
     // Inject a write-capable context
     @Environment(\.modelContext) private var context
 
-    // Live query (auto-updates UI when data changes)
-    @Query(.init(sortBy: [SortDescriptor(\FileItem.filename)]))
-    private var items: [FileItem]
-    
+    @State private var didBootstrap = false
+
     @State private var currentFile: FileItem?
     @State private var path: [AppPage] = []
     @State private var viewerIdentity = UUID()
@@ -60,23 +58,35 @@ struct ContentView: View {
             }
         }
         .onAppear {
+            guard !didBootstrap else { return }
+            didBootstrap = true
             LibraryMigration.runIfNeeded(context: context)
+            LibraryManager.shared.bootstrap(context: context)
+            LibraryManager.shared.importPendingSharedFiles(context: context)
             TagIndexer.rebuild(in: context)
             backfillFolderNames()
         }
     }
 
     private func backfillFolderNames() {
-        let needsBackfill = items.filter { $0.folderName.isEmpty }
-        guard !needsBackfill.isEmpty else { return }
-
-        for item in needsBackfill {
-            guard let url = item.url else { continue }
-            defer { url.stopAccessingSecurityScopedResource() }
-            item.folderName = url.deletingLastPathComponent().lastPathComponent
+        // Root-level files intentionally have no folder label. Derive nested
+        // labels from stored paths; opening every source file is unnecessary.
+        Task {
+            let query = FetchDescriptor<FileItem>(predicate: #Predicate { $0.folderName == "" })
+            guard let items = try? context.fetch(query) else { return }
+            for (index, item) in items.enumerated() {
+                if let path = item.effectiveRelativePath {
+                    let parent = (path as NSString).deletingLastPathComponent
+                    if !parent.isEmpty { item.folderName = (parent as NSString).lastPathComponent }
+                }
+                if index.isMultiple(of: 100) {
+                    do { try await Task.sleep(for: .milliseconds(1)) } catch { return }
+                }
+            }
+            if context.hasChanges { try? context.save() }
         }
-        try? context.save()
     }
+
 }
 
 /// Resolves a ComposedTab by UUID from SwiftData and presents TabMakerView.

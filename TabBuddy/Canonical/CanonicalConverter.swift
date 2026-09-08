@@ -34,12 +34,12 @@ final class CanonicalConverter: ObservableObject {
     private struct Job {
         let id: UUID
         let bookmark: Data
-        let libraryPath: String?
+        let relativePath: String?
         let title: String
     }
 
     /// Result of converting one job, applied back on the main actor.
-    private struct Outcome {
+    struct Outcome: Sendable {
         let id: UUID
         let canonicalFilename: String?
         let provenanceData: Data?
@@ -77,7 +77,7 @@ final class CanonicalConverter: ObservableObject {
         guard !pending.isEmpty else { return }
 
         // Snapshot on the main actor; index for commit.
-        let jobs = pending.map { Job(id: $0.id, bookmark: $0.bookmark, libraryPath: $0.libraryPath, title: Self.titleFromFilename($0.filename)) }
+        let jobs = pending.map { Job(id: $0.id, bookmark: $0.bookmark, relativePath: $0.effectiveRelativePath, title: Self.titleFromFilename($0.filename)) }
         var byID: [UUID: FileItem] = [:]
         for item in pending { byID[item.id] = item }
 
@@ -98,7 +98,7 @@ final class CanonicalConverter: ObservableObject {
                     guard cursor < jobs.count else { return }
                     let job = jobs[cursor]
                     cursor += 1
-                    group.addTask { Self.process(job) }
+                    group.addTask { await Self.process(job) }
                 }
 
                 for _ in 0..<width { enqueue() }
@@ -123,6 +123,26 @@ final class CanonicalConverter: ObservableObject {
         }
     }
 
+    /// Value-only preparation; callers retain model ownership on their own actor.
+    nonisolated static func prepareText(id: UUID, title: String, text: String) -> Outcome {
+        processText(Job(id: id, bookmark: Data(), relativePath: nil, title: title), text: text, source: .txtDirect)
+    }
+
+    func applyPreparedText(_ outcome: Outcome, to item: FileItem) {
+        guard item.canonicalVersion < CanonicalConverterVersion.current else { return }
+        applyOutcome(outcome, to: item)
+    }
+
+    /// Background TXT preparation reuses the already-read text and never converts PDFs.
+    func backfillText(_ item: FileItem, text: String) async {
+        guard !isConverting, item.canonicalVersion < CanonicalConverterVersion.current else { return }
+        let job = Job(id: item.id, bookmark: Data(), relativePath: nil, title: item.displayTitle)
+        let work = Task.detached(priority: .utility) { Self.processText(job, text: text, source: .txtDirect) }
+        let outcome = await work.value
+        guard !Task.isCancelled, item.modelContext != nil else { return }
+        applyOutcome(outcome, to: item)
+    }
+
     /// Just-in-time conversion when a file is opened. Idempotent — does nothing
     /// if the file already has a current canonical. For text tabs the viewer has
     /// already parsed, pass `prebuilt` to reuse the parse (near-zero cost); for
@@ -133,51 +153,60 @@ final class CanonicalConverter: ObservableObject {
         guard item.canonicalVersion < CanonicalConverterVersion.current else { return }
 
         if let prebuilt {
-            let canonical = CanonicalAdapters.canonicalTab(
-                from: prebuilt.map,
-                title: Self.titleFromFilename(item.filename),
-                sourceType: prebuilt.source)
-            persist(canonical, to: item, context: context)
+            guard prebuilt.map.resolvedOpenStringMIDI != nil else { return }
+            let title = Self.titleFromFilename(item.filename)
+            Task {
+                let canonical = await Task.detached(priority: .utility) {
+                    CanonicalAdapters.canonicalTab(from: prebuilt.map, title: title, sourceType: prebuilt.source)
+                }.value
+                guard item.modelContext != nil, !item.isDeleted else { return }
+                await persist(canonical, to: item, context: context)
+            }
             return
         }
 
-        let job = Job(id: item.id, bookmark: item.bookmark, libraryPath: item.libraryPath, title: Self.titleFromFilename(item.filename))
+        let job = Job(id: item.id, bookmark: item.bookmark, relativePath: item.effectiveRelativePath, title: Self.titleFromFilename(item.filename))
         Task.detached(priority: .utility) { [weak self] in
-            let outcome = Self.process(job)
+            let outcome = await Self.process(job)
+            guard let self else { return }
             await MainActor.run {
-                guard self != nil else { return }
-                self?.applyOutcome(outcome, to: item)
+                self.applyOutcome(outcome, to: item)
                 try? context.save()
             }
         }
     }
 
     /// Encode + store a canonical and stamp the FileItem (main actor).
-    private func persist(_ canonical: CanonicalTab, to item: FileItem, context: ModelContext) {
-        let data = MusicXMLCodec.encode(canonical)
+    private func persist(_ canonical: CanonicalTab, to item: FileItem, context: ModelContext) async {
         let filename = CanonicalStore.filename(for: item.id)
         do {
-            try CanonicalStore.write(data, filename: filename)
-        } catch {
-            return
-        }
+            try await Task.detached(priority: .utility) {
+                try CanonicalStore.write(MusicXMLCodec.encode(canonical), filename: filename)
+            }.value
+        } catch { return }
+        guard item.modelContext != nil, !item.isDeleted else { return }
         item.canonicalFilename = filename
         item.provenance = canonical.provenance
         item.canonicalVersion = canonical.provenance.converterVersion
         item.derivedTitle = canonical.title
-        item.tuning = canonical.tuningName
+        if !item.metadataEdited && item.tuning == nil { item.tuning = canonical.tuningName }
         item.foreword = Self.forewordText(canonical)
         // Prebuilt parses come from the text-tab viewer — guitar by definition.
-        item.instrument = Instrument.guitar.rawValue
+        item.inferMetadata(from: [canonical.title, canonical.artist, canonical.comments].compactMap { $0 }.joined(separator: "\n"))
+        if !item.metadataEdited && item.instruments.isEmpty {
+            let kind: Instrument = canonical.tuningName.hasPrefix("Bass") ? .bass : canonical.tuningName.hasPrefix("Ukulele") ? .ukulele : .guitar
+            item.instrument = kind.rawValue
+            item.instruments = [kind.rawValue]
+        }
         try? context.save()
     }
 
     /// Convert a single file synchronously-ish (used for small, just-imported
     /// sets). Returns whether a canonical was produced.
     @discardableResult
-    func convert(_ item: FileItem, context: ModelContext) -> Bool {
-        let job = Job(id: item.id, bookmark: item.bookmark, libraryPath: item.libraryPath, title: Self.titleFromFilename(item.filename))
-        let outcome = Self.process(job)
+    func convert(_ item: FileItem, context: ModelContext) async -> Bool {
+        let job = Job(id: item.id, bookmark: item.bookmark, relativePath: item.effectiveRelativePath, title: Self.titleFromFilename(item.filename))
+        let outcome = await Self.process(job)
         applyOutcome(outcome, to: item)
         try? context.save()
         return outcome.succeeded
@@ -197,46 +226,52 @@ final class CanonicalConverter: ObservableObject {
     }
 
     private func applyOutcome(_ outcome: Outcome, to item: FileItem) {
-        guard outcome.succeeded else { return }
+        guard outcome.succeeded, item.modelContext != nil else { return }
         item.canonicalFilename = outcome.canonicalFilename
         item.provenanceData = outcome.provenanceData
         item.canonicalVersion = outcome.version
         item.derivedTitle = outcome.title
-        item.tuning = outcome.tuning
+        if !item.metadataEdited && item.tuning == nil { item.tuning = outcome.tuning }
         item.foreword = outcome.foreword
-        item.instrument = outcome.instrument
+        if !item.metadataEdited {
+            if item.instruments.isEmpty { item.instrument = outcome.instrument }
+            item.inferMetadata(from: [outcome.title, outcome.foreword].compactMap { $0 }.joined(separator: "\n"))
+        }
     }
 
     // MARK: - Off-main work
 
     /// Read, parse, encode, and write the canonical for one job. Pure value I/O —
     /// safe to run off the main actor.
-    private nonisolated static func process(_ job: Job) -> Outcome {
-        guard let (text, source) = extractText(bookmark: job.bookmark, libraryPath: job.libraryPath),
+    private nonisolated static func process(_ job: Job) async -> Outcome {
+        guard let (text, source) = await extractText(bookmark: job.bookmark, relativePath: job.relativePath),
               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return .failure(job.id)
         }
 
+        return processText(job, text: text, source: source)
+    }
+
+    private nonisolated static func processText(_ job: Job, text: String, source: Provenance.SourceType) -> Outcome {
         let map = TabParser.parse(text)
 
-        // Instrument classification: structural tab evidence means guitar;
-        // otherwise keywords, defaulting to piano for plain notation PDFs
-        // (lead sheets) and guitar for text files.
+        // Prefer explicit instrument evidence; plain notation does not identify an instrument.
         let hasNotes = map.allMeasures.contains { !($0.notes ?? []).isEmpty }
         let instrument: Instrument
         switch source {
         case .pdfSpatial, .ocr:
-            instrument = .guitar
+            instrument = Instrument.detect(inText: job.title + "\n" + text) ?? .guitar
         case .notation:
             // A lead sheet is never a guitar tab even though we synthesize one.
             // Classify from the filename (the extracted melody has no keywords).
-            instrument = Instrument.detect(inText: job.title) ?? .piano
+            instrument = Instrument.detect(inText: job.title) ?? .unknown
         case .txtDirect:
-            instrument = hasNotes ? .guitar : (Instrument.detect(inText: text) ?? .guitar)
+            instrument = Instrument.detect(inText: text) ?? (hasNotes ? .guitar : .unknown)
         default:
-            instrument = hasNotes ? .guitar : (Instrument.detect(inText: text) ?? .piano)
+            instrument = Instrument.detect(inText: text) ?? (hasNotes ? .guitar : .unknown)
         }
 
+        guard map.resolvedOpenStringMIDI != nil else { return .failure(job.id) }
         var canonical = CanonicalAdapters.canonicalTab(from: map,
                                                        title: job.title,
                                                        sourceType: source)
@@ -270,23 +305,17 @@ final class CanonicalConverter: ObservableObject {
 
     /// Resolve the file (library-relative path first, else bookmark) and
     /// extract tab text from it.
-    private nonisolated static func extractText(bookmark: Data, libraryPath: String?) -> (String, Provenance.SourceType)? {
-        let url: URL
-        var startedScope = false
-        if let lp = libraryPath, let root = LibraryManager.activeRoot {
-            // The library root's security scope is held open by LibraryManager.
-            url = root.appendingPathComponent(lp)
+    private nonisolated static func extractText(bookmark: Data, relativePath: String?) async -> (String, Provenance.SourceType)? {
+        let lease: FileAccessLease
+        if let relativePath {
+            guard let acquired = try? await LibraryFileService.shared.acquireFile(relativePath: relativePath) else { return nil }
+            lease = acquired
         } else {
-            var stale = false
-            guard let u = try? URL(resolvingBookmarkData: bookmark, options: [],
-                                   bookmarkDataIsStale: &stale) else { return nil }
-            guard u.startAccessingSecurityScopedResource() else { return nil }
-            url = u
-            startedScope = true
+            guard let acquired = try? await LibraryFileService.shared.acquireLegacyFile(bookmark: bookmark) else { return nil }
+            lease = acquired
         }
-        defer {
-            if startedScope { url.stopAccessingSecurityScopedResource() }
-        }
+        defer { lease.close() }
+        let url = lease.url
 
         switch url.pathExtension.lowercased() {
         case "txt":

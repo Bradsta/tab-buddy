@@ -4,16 +4,13 @@
 //
 //  The drawn Tab Player: a scrollable stack of `DrawnTabSystemView`s driven by
 //  the shared `PlaybackCoordinator`, plus the shared `TabTransportBar` and a
-//  Display popover (notation, rhythm, size, auto-scroll, tuning/capo).
+//  Display popover (notation, rhythm, size, auto-scroll).
 //
 //  Embedded by `TabViewerView` for text MeasureMap-backed tabs. PDFs keep their
 //  PDFKit fallback; the raw "Original" text view reuses `TabTransportBar` too.
 //
 
 import SwiftUI
-
-enum NotationMode: String { case tabOnly, tabAndStaff }
-enum AutoScrollMode: String { case off, follow, line }
 
 struct TabPlayerView: View {
     let map: MeasureMap
@@ -26,12 +23,16 @@ struct TabPlayerView: View {
     @Binding var userBPM: Double
 
     @Environment(\.modelContext) private var context
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var smoothSpeed: CGFloat = 0
+    @State private var smoothLoop = false
+    @State private var smoothRestart = 0
 
     // –– Persisted view preferences ––
     @AppStorage("player.notation") private var notationRaw = NotationMode.tabOnly.rawValue
     @AppStorage("player.showRhythm") private var showRhythm = true
     @AppStorage("player.fontScale") private var fontScale = 1.0
-    @AppStorage("player.autoScroll") private var autoScrollRaw = AutoScrollMode.follow.rawValue
+    @AppStorage("player.autoScroll") private var autoScrollRaw = AutoScrollMode.smooth.rawValue
 
     // –– Session state ––
     @State private var model: TabRenderModel = .empty
@@ -56,35 +57,49 @@ struct TabPlayerView: View {
     var body: some View {
         VStack(spacing: 0) {
             systemsScroll(palette: .light, scale: fontScale)
-            Divider()
-            TabTransportBar(
-                coordinator: coordinator,
-                metronome: metronome,
-                notePlayer: notePlayer,
-                userBPM: $userBPM,
-                originalBPM: originalBPM,
-                totalMeasures: model.totalMeasures,
-                beatsPerMeasure: beatsPerMeasure,
-                loopEnabled: $loopEnabled,
-                loopStart: $loopStart,
-                loopEnd: $loopEnd,
-                onLoopChanged: { applyLoop(); persistLoop() },
-                onSetReferenceBPM: { newRef in
-                    originalBPM = newRef
-                    if let f = file {
-                        f.referenceBPM = newRef
-                        try? context.save()
-                    }
-                },
-                onSeek: { lastAutoScrollTarget = -1; notePlayer.stopNotes() },
-                displayContent: { displayPopover }
-            )
+            PracticeNavigationPicker(mode: $autoScrollRaw)
+            if autoScroll == .smooth {
+                OriginalTransportBar(scrollSpeed: $smoothSpeed, loopToTop: $smoothLoop,
+                    onBackToTop: { smoothRestart += 1 }, displayContent: { displayPopover })
+            } else {
+                measureTransport
+            }
         }
+        .onChange(of: autoScrollRaw) { _ in
+            coordinator.pause(); metronome.stop(); notePlayer.stop(); smoothSpeed = 0
+        }
+        .onChange(of: scenePhase) { if $0 != .active { smoothSpeed = 0 } }
+        .onDisappear { smoothSpeed = 0 }
         .onAppear { configure() }
         .onChange(of: map.measureCount) { _ in
             model = TabRenderModelBuilder.build(from: map)
         }
         .onChange(of: userBPM) { coordinator.bpm = $0 }
+    }
+
+    private var measureTransport: some View {
+        TabTransportBar(
+            coordinator: coordinator,
+            metronome: metronome,
+            notePlayer: notePlayer,
+            userBPM: $userBPM,
+            originalBPM: originalBPM,
+            totalMeasures: model.totalMeasures,
+            beatsPerMeasure: beatsPerMeasure,
+            loopEnabled: $loopEnabled,
+            loopStart: $loopStart,
+            loopEnd: $loopEnd,
+            onLoopChanged: { applyLoop(); persistLoop() },
+            onSetReferenceBPM: { newRef in
+                originalBPM = newRef
+                if let f = file {
+                    f.referenceBPM = newRef
+                    try? context.save()
+                }
+            },
+            onSeek: { lastAutoScrollTarget = -1; notePlayer.stopNotes() },
+            displayContent: { displayPopover }
+        )
     }
 
     // MARK: - Setup
@@ -94,7 +109,10 @@ struct TabPlayerView: View {
         originalBPM = file?.referenceBPM ?? map.bpm ?? userBPM
         if originalBPM <= 0 { originalBPM = 120 }
         if let s = file?.loopStartMeasure, let e = file?.loopEndMeasure {
-            loopStart = s; loopEnd = e; loopEnabled = true
+            let last = max(0, map.measureCount - 1)
+            loopStart = max(0, min(last, min(s, e)))
+            loopEnd = max(0, min(last, max(s, e)))
+            loopEnabled = map.measureCount > 0
             applyLoop()
         }
     }
@@ -135,6 +153,8 @@ struct TabPlayerView: View {
                         proseBlock("Afterword", aw)
                     }
                 }
+                .background(SmoothScoreScroller(speed: autoScroll == .smooth ? smoothSpeed : 0,
+                                                loop: smoothLoop, restart: smoothRestart))
                 .padding(.horizontal, 24)
                 .padding(.top, 4)
             }
@@ -145,7 +165,7 @@ struct TabPlayerView: View {
                     .onChange(of: geo.size.height) { viewportHeight = $0 }
             })
             .onChange(of: currentSystemIndex) { sys in
-                guard autoScroll != .off, coordinator.isPlaying else { return }
+                guard autoScroll != .off, autoScroll != .smooth, coordinator.isPlaying else { return }
                 let (target, anchor) = autoScrollTarget(currentSystem: sys, scale: scale)
                 // Don't re-issue the same scroll — this is what keeps a loop that
                 // fits on screen from shifting back and forth every pass.
@@ -226,17 +246,11 @@ struct TabPlayerView: View {
 
     // MARK: - Loop
 
-    /// While looping, a tap re-anchors the nearer A/B bound; otherwise it seeks.
+    /// Seeking has the same meaning whether or not a practice loop is active.
     private func handleTap(measure g: Int) {
-        if loopEnabled {
-            guard let s = loopStart else { loopStart = g; applyLoop(); persistLoop(); return }
-            if g < s { loopStart = g } else { loopEnd = g }
-            applyLoop(); persistLoop()
-        } else {
-            notePlayer.stopNotes()
-            lastAutoScrollTarget = -1
-            coordinator.seekToMeasure(g)
-        }
+        notePlayer.stopNotes()
+        lastAutoScrollTarget = -1
+        coordinator.seekToMeasure(g)
     }
 
     private func applyLoop() {
@@ -262,32 +276,7 @@ struct TabPlayerView: View {
     /// iPhone, prepends the absorbed Sound/Count-in controls.
     @ViewBuilder
     private var displayPopover: some View {
-        let mode = Binding(get: { notation }, set: { notationRaw = $0.rawValue })
-        Section("Notation") {
-            Picker("Notation", selection: mode) {
-                Text("Tab only").tag(NotationMode.tabOnly)
-                Text("Tab + staff").tag(NotationMode.tabAndStaff)
-            }.pickerStyle(.segmented)
-            Toggle("Rhythm letters", isOn: $showRhythm)
-            HStack {
-                Text("Size")
-                Spacer()
-                Button { fontScale = max(0.8, fontScale - 0.1) } label: { Image(systemName: "textformat.size.smaller") }
-                Text("\(Int(fontScale * 100))%").font(.caption).monospacedDigit().foregroundStyle(.secondary)
-                Button { fontScale = min(1.8, fontScale + 0.1) } label: { Image(systemName: "textformat.size.larger") }
-            }.buttonStyle(.borderless)
-        }
-        Section("Auto-scroll") {
-            Picker("Auto-scroll", selection: Binding(
-                get: { autoScroll }, set: { autoScrollRaw = $0.rawValue })) {
-                Text("Off").tag(AutoScrollMode.off)
-                Text("Follow playback").tag(AutoScrollMode.follow)
-                Text("Line by line").tag(AutoScrollMode.line)
-            }.pickerStyle(.inline)
-        }
-        Section("Tuning & capo") {
-            LabeledContent("Tuning", value: map.tuning ?? "Standard")
-            LabeledContent("Capo", value: map.capoSemitones.map { $0 == 0 ? "None" : "\($0)" } ?? "None")
-        }
+        PlayerDisplaySections(notation: $notationRaw, scale: $fontScale,
+                              autoScroll: $autoScrollRaw, rhythm: $showRhythm)
     }
 }

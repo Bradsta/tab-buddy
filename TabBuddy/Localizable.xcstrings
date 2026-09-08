@@ -1,17 +1,27 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {
-
-    },
     "#" : {
 
     },
     "#%@" : {
 
     },
+    "%@ note" : {
+
+    },
     "%lld" : {
 
+    },
+    "%lld · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld · %2$@"
+          }
+        }
+      }
     },
     "%lld / %lld BPM" : {
       "localizations" : {
@@ -22,6 +32,9 @@
           }
         }
       }
+    },
+    "%lld bars" : {
+
     },
     "%lld BPM" : {
 
@@ -42,22 +55,15 @@
         }
       }
     },
-    "%lld tab%@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld tab%2$@"
-          }
-        }
-      }
+    "%lld percent" : {
+
     },
-    "%lld/%lld" : {
+    "%lld score%@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$lld/%2$lld"
+            "value" : "%1$lld score%2$@"
           }
         }
       }
@@ -71,9 +77,6 @@
     "+5% → 100% over successive passes" : {
 
     },
-    "⟳ Loop" : {
-
-    },
     "𝄞" : {
 
     },
@@ -83,10 +86,22 @@
     "2 bars" : {
 
     },
+    "Access Needed" : {
+
+    },
     "Add" : {
 
     },
+    "Add instrument" : {
+
+    },
     "Add Tag" : {
+
+    },
+    "Advanced" : {
+
+    },
+    "All instruments" : {
 
     },
     "Apply Tag to Selection" : {
@@ -95,10 +110,22 @@
     "Apply to %lld files" : {
 
     },
+    "Arrangement" : {
+
+    },
+    "Arrangement (e.g. solo, duet, lead sheet)" : {
+
+    },
+    "Arranger / transcriber" : {
+
+    },
     "Auto-scroll" : {
 
     },
-    "Auto-scroll speed" : {
+    "Back to top" : {
+
+    },
+    "Bar" : {
 
     },
     "BPM" : {
@@ -110,10 +137,19 @@
     "Capo" : {
 
     },
-    "Change Library (%@)" : {
+    "Check Again" : {
+
+    },
+    "Choose a Different Folder…" : {
+
+    },
+    "Choose a source to browse, or enter a title to search that source with DuckDuckGo." : {
 
     },
     "Clear" : {
+
+    },
+    "Clear loop" : {
 
     },
     "Close" : {
@@ -125,19 +161,49 @@
     "Compose Tab" : {
 
     },
+    "Composer" : {
+
+    },
     "Composition not found" : {
 
     },
     "Compositions" : {
 
     },
+    "Connect" : {
+
+    },
+    "Connect the matching library folder on this device." : {
+
+    },
     "Copy files to your library?" : {
+
+    },
+    "Copy older bookmarked files into the active library." : {
 
     },
     "Copy to Library (%@)" : {
 
     },
+    "Copying and verifying songs…" : {
+
+    },
+    "Couldn't load this PDF. Check that the file is available in iCloud." : {
+
+    },
     "Count-in" : {
+
+    },
+    "Create guitar arrangement" : {
+
+    },
+    "Creating arrangement…" : {
+
+    },
+    "Creating Library…" : {
+
+    },
+    "Credits & arrangement" : {
 
     },
     "Delete" : {
@@ -149,16 +215,25 @@
     "Delete File" : {
 
     },
-    "Delete Selected (%lld)" : {
+    "Delete File from Folder" : {
 
     },
-    "Delete Selected Files" : {
+    "Delete file from its folder?" : {
+
+    },
+    "Delete Selected (%lld)" : {
 
     },
     "Delete Tag" : {
 
     },
+    "Delete this file?" : {
+
+    },
     "Deselect All" : {
+
+    },
+    "Dismiss" : {
 
     },
     "Done" : {
@@ -167,13 +242,22 @@
     "Done Selecting" : {
 
     },
+    "Download a PDF, text tab, or Guitar Pro file from the source, then import it here or share it to TabBuddy. Purchases and accounts stay with the source." : {
+
+    },
+    "Downloading songs…" : {
+
+    },
     "Edit Tags" : {
 
     },
-    "Edit Tags…" : {
+    "Edit tags…" : {
 
     },
     "Enable a loop to use the speed trainer." : {
+
+    },
+    "End at current bar" : {
 
     },
     "Existing Tags" : {
@@ -197,7 +281,32 @@
     "Favorite" : {
 
     },
+    "Find music" : {
+
+    },
+    "Find music online" : {
+
+    },
+    "Follow measures" : {
+
+    },
     "Follow playback" : {
+
+    },
+    "Fret %lld on %@ string" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Fret %1$lld on %2$@ string"
+          }
+        }
+      }
+    },
+    "From bar %lld" : {
+
+    },
+    "Game, album, or collection" : {
 
     },
     "Generate Tab Data" : {
@@ -206,16 +315,28 @@
     "Generating Tab Data…" : {
 
     },
+    "Get Started" : {
+
+    },
+    "iCloud Drive is unavailable. You can use the local app library without an iCloud account." : {
+
+    },
+    "iCloud Unavailable" : {
+
+    },
+    "Import Downloaded Files" : {
+
+    },
     "Import Files" : {
 
     },
     "Import Folder" : {
 
     },
-    "Import in Place" : {
+    "Imported" : {
 
     },
-    "Imported" : {
+    "Imported songs are copied into your library. The original files stay where they are." : {
 
     },
     "Importing %lld of %lld files…" : {
@@ -228,13 +349,34 @@
         }
       }
     },
+    "Instrument" : {
+
+    },
+    "Instruments in this arrangement" : {
+
+    },
     "Jump back in" : {
+
+    },
+    "Keep an additional copy of your songs on this device. Sync stays on. Turning this off removes only these extra offline copies." : {
+
+    },
+    "Keep available offline" : {
+
+    },
+    "Keep songs, tags, favorites, and recent activity in sync. You can change this in Library Storage." : {
 
     },
     "Last 7 days" : {
 
     },
+    "Legacy Imports" : {
+
+    },
     "Library" : {
+
+    },
+    "Library Storage" : {
 
     },
     "Line by line" : {
@@ -252,15 +394,17 @@
     "Loading PDF..." : {
 
     },
-    "m. %lld / %lld" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "m. %1$lld / %2$lld"
-          }
-        }
-      }
+    "Location" : {
+
+    },
+    "Loop to top" : {
+
+    },
+    "Measures" : {
+
+    },
+    "Metronome" : {
+
     },
     "Microphone Access Required" : {
 
@@ -268,7 +412,16 @@
     "Most Played" : {
 
     },
+    "Move Files" : {
+
+    },
+    "Moving Library…" : {
+
+    },
     "Name" : {
+
+    },
+    "Navigation" : {
 
     },
     "New" : {
@@ -283,7 +436,10 @@
     "No Compositions" : {
 
     },
-    "No tabs here yet" : {
+    "No matching scores" : {
+
+    },
+    "No scores here yet" : {
 
     },
     "no_file_selected" : {
@@ -304,7 +460,13 @@
     "Off" : {
 
     },
+    "Offline Access" : {
+
+    },
     "OK" : {
+
+    },
+    "On" : {
 
     },
     "Open" : {
@@ -313,10 +475,28 @@
     "Open Settings" : {
 
     },
+    "Optional, approximate conversion. Your original sheet music stays unchanged." : {
+
+    },
     "Original" : {
 
     },
+    "Pause" : {
+
+    },
     "PDF" : {
+
+    },
+    "Play" : {
+
+    },
+    "Playback" : {
+
+    },
+    "Position" : {
+
+    },
+    "Practice speed" : {
 
     },
     "Ramp up each loop" : {
@@ -325,13 +505,22 @@
     "Recent" : {
 
     },
+    "Reconnect Folder…" : {
+
+    },
+    "Refresh Downloads" : {
+
+    },
+    "Remove %@" : {
+
+    },
     "Remove All Files" : {
 
     },
     "Remove all imported files?" : {
 
     },
-    "Remove Library" : {
+    "Remove from Library" : {
 
     },
     "Remove Tag" : {
@@ -349,10 +538,16 @@
     "Rename…" : {
 
     },
+    "Repeat section" : {
+
+    },
     "Rescan Library" : {
 
     },
     "Rescanning Library…" : {
+
+    },
+    "Restart" : {
 
     },
     "Restore Backup" : {
@@ -364,10 +559,25 @@
     "Restored metadata for %lld files." : {
 
     },
+    "Retry" : {
+
+    },
+    "Review" : {
+
+    },
     "Rhythm letters" : {
 
     },
     "Save" : {
+
+    },
+    "Score details" : {
+
+    },
+    "Score details…" : {
+
+    },
+    "Scroll speed" : {
 
     },
     "scroll_speed" : {
@@ -381,6 +591,12 @@
           }
         }
       }
+    },
+    "Scrolling" : {
+
+    },
+    "Search online" : {
+
     },
     "Search tags or names" : {
 
@@ -403,22 +619,64 @@
     "Select All" : {
 
     },
-    "Set Library Folder" : {
+    "Sets the display name in your library. The original file (%@) is untouched." : {
 
     },
-    "Sets the display name in your library. The original file (%@) is untouched." : {
+    "Sheet music" : {
+
+    },
+    "Showing the original — the TabBuddy version isn't stage-ready yet." : {
 
     },
     "Size" : {
 
     },
+    "Size: %lld%%" : {
+
+    },
+    "Smooth scroll" : {
+
+    },
+    "Solo selected track" : {
+
+    },
     "Song name" : {
+
+    },
+    "Song tempo" : {
+
+    },
+    "Song, composer, artist, or game" : {
 
     },
     "Sort" : {
 
     },
+    "Sound" : {
+
+    },
+    "Source" : {
+
+    },
+    "Source name" : {
+
+    },
+    "Source page URL" : {
+
+    },
+    "Sources" : {
+
+    },
+    "Start at current bar" : {
+
+    },
     "Stop" : {
+
+    },
+    "Sync library with iCloud" : {
+
+    },
+    "Sync songs, tags, favorites, and recent activity across devices. Turning this off keeps a local library and stops metadata sync on this device. Existing iCloud data is kept." : {
 
     },
     "Tab + staff" : {
@@ -427,13 +685,10 @@
     "Tab Buddy needs microphone access to detect the notes you play. Enable it in Settings." : {
 
     },
+    "Tab Buddy needs microphone access to hear your guitar. Enable it in Settings." : {
+
+    },
     "Tab only" : {
-
-    },
-    "Tab Player" : {
-
-    },
-    "TabBuddy" : {
 
     },
     "Tag Actions" : {
@@ -451,13 +706,43 @@
     "Tap + to create your first tab" : {
 
     },
+    "Tap a string to hear it" : {
+
+    },
+    "Tap the score or drag the position slider to seek. Set the bars to repeat here." : {
+
+    },
     "Tempo" : {
 
     },
     "Text" : {
 
     },
+    "The original library remains active until verification completes." : {
+
+    },
+    "The song's real tempo — set it here when the tab doesn't list one. Practice speed is relative to it." : {
+
+    },
+    "This removes the underlying file and cannot be undone." : {
+
+    },
+    "Time signature" : {
+
+    },
     "Title" : {
+
+    },
+    "To bar %lld" : {
+
+    },
+    "Track" : {
+
+    },
+    "Tracks" : {
+
+    },
+    "Tuner" : {
 
     },
     "Tuning" : {
@@ -475,7 +760,22 @@
     "Unfavorite File" : {
 
     },
-    "View" : {
+    "Updating library sync…" : {
+
+    },
+    "Use a folder you manage yourself. Existing songs are copied before the library location changes." : {
+
+    },
+    "Use App Library on This Device" : {
+
+    },
+    "Your library can stay on this device. You can enable iCloud later." : {
+
+    },
+    "Your library stays in iCloud. Check iCloud Drive in device Settings, then retry." : {
+
+    },
+    "Your Tab Buddy Library" : {
 
     }
   },

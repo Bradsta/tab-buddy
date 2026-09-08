@@ -25,6 +25,26 @@ struct MeasureMap {
     /// Ordered list of visual systems (rows of tab lines)
     var systems: [MeasureSystem]
 
+    /// Physical rows, top to bottom. Exact pitches are supplied by structured files.
+    var detectedStringCount: Int? = nil
+    var openStringMIDI: [Int]? = nil
+
+    var stringCount: Int {
+        max(1, detectedStringCount ?? allMeasures.flatMap { $0.notes ?? [] }.map { $0.frets.count }.max()
+            ?? openStringMIDI?.count ?? GuitarTuning.noteSpelling(tuning ?? "")?.count ?? 6)
+    }
+
+    /// Unknown custom tunings stay readable without inventing sounding pitches.
+    var resolvedOpenStringMIDI: [Int]? {
+        if let openStringMIDI, openStringMIDI.count == stringCount { return openStringMIDI }
+        let name = GuitarTuning.canonicalName(for: tuning)
+        if let preset = GuitarTuning.allPresets.first(where: { $0.name == name && $0.midiNotes.count == stringCount }) {
+            return preset.midiNotes
+        }
+        if tuning == nil && stringCount == 6 { return GuitarTuning.standard.midiNotes }
+        return nil
+    }
+
     // MARK: Foreword (captured from header text)
     /// In-file title (first meaningful header line), nil if none found.
     var title: String? = nil
@@ -107,22 +127,13 @@ struct NoteEvent {
 
     /// Expected pitches in Hz for each fretted string.
     /// Computed from tuning + fret number using equal temperament.
-    var expectedPitches: [Double?] {
-        // Standard tuning open string frequencies (high E to low E)
-        let standardOpen: [Double] = [
-            329.63,  // E4
-            246.94,  // B3
-            196.00,  // G3
-            146.83,  // D3
-            110.00,  // A2
-            82.41    // E2
-        ]
-        return frets.enumerated().map { i, fret in
-            guard let f = fret, i < standardOpen.count else { return nil }
-            // Equal temperament: freq = open * 2^(fret/12)
-            return standardOpen[i] * pow(2.0, Double(f) / 12.0)
+    func expectedPitches(openStringMIDI: [Int]) -> [Double?] {
+        frets.enumerated().map { index, fret in
+            guard let fret, openStringMIDI.indices.contains(index) else { return nil }
+            return 440 * pow(2, Double(openStringMIDI[index] + fret - 69) / 12)
         }
     }
+
 }
 
 // MARK: - Rhythm Duration

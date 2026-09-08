@@ -28,9 +28,6 @@ struct MIDITempoExtractor {
         defer { DisposeMusicSequence(seq) }
 
         // Load the MIDI file
-        let started = url.startAccessingSecurityScopedResource()
-        defer { if started { url.stopAccessingSecurityScopedResource() } }
-
         guard MusicSequenceFileLoad(seq, url as CFURL,
                                     .midiType, .smf_ChannelsToTracks) == noErr
         else { return nil }

@@ -10,7 +10,7 @@ import UniformTypeIdentifiers
 
 class ShareViewController: UIViewController {
 
-    private let appGroupID = "group.com.gamicarts.TabBuddy"
+    private let appGroupID = "group.com.gamicarts.TabBuddy.shared"
     private let pendingDir = "PendingImports"
 
     private let spinner = UIActivityIndicatorView(style: .large)
@@ -22,6 +22,7 @@ class ShareViewController: UIViewController {
     /// Loaded file URLs staged in a temp location, waiting for the user to confirm a name.
     private var stagedFiles: [(tempURL: URL, originalName: String)] = []
     private var pendingURL: URL?
+    private var attachmentLoadError: Error?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -113,21 +114,33 @@ class ShareViewController: UIViewController {
             .appendingPathComponent(pendingDir)
 
         guard let pendingURL else {
-            done()
+            showLoadError(NSError(
+                domain: "TabBuddy.ShareExtension",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "The shared import folder is unavailable."]
+            ))
             return
         }
 
-        try? FileManager.default.createDirectory(
-            at: pendingURL,
-            withIntermediateDirectories: true
-        )
+        do {
+            try FileManager.default.createDirectory(
+                at: pendingURL,
+                withIntermediateDirectories: true
+            )
+        } catch {
+            showLoadError(error)
+            return
+        }
 
         let group = DispatchGroup()
 
         for item in items {
             guard let attachments = item.attachments else { continue }
             for provider in attachments {
-                if provider.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) {
+                if let type = GuitarProFileType.contentTypes.first(where: { provider.hasItemConformingToTypeIdentifier($0.identifier) }) {
+                    group.enter()
+                    stageFile(provider: provider, type: type) { group.leave() }
+                } else if provider.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) {
                     group.enter()
                     stageFile(provider: provider, type: UTType.pdf) {
                         group.leave()
@@ -155,8 +168,18 @@ class ShareViewController: UIViewController {
         completion: @escaping () -> Void
     ) {
         provider.loadFileRepresentation(forTypeIdentifier: type.identifier) { [weak self] url, error in
-            defer { completion() }
-            guard let url, error == nil else { return }
+            guard let url, error == nil else {
+                let loadError = error ?? NSError(
+                    domain: "TabBuddy.ShareExtension",
+                    code: 2,
+                    userInfo: [NSLocalizedDescriptionKey: "The attachment could not be loaded."]
+                )
+                DispatchQueue.main.async {
+                    self?.attachmentLoadError = loadError
+                    completion()
+                }
+                return
+            }
 
             let originalName = url.lastPathComponent
 
@@ -164,10 +187,19 @@ class ShareViewController: UIViewController {
             let tmp = FileManager.default.temporaryDirectory
                 .appendingPathComponent(UUID().uuidString)
                 .appendingPathExtension(url.pathExtension)
-            try? FileManager.default.copyItem(at: url, to: tmp)
+            do {
+                try FileManager.default.copyItem(at: url, to: tmp)
+            } catch {
+                DispatchQueue.main.async {
+                    self?.attachmentLoadError = error
+                    completion()
+                }
+                return
+            }
 
             DispatchQueue.main.async {
                 self?.stagedFiles.append((tempURL: tmp, originalName: originalName))
+                completion()
             }
         }
     }
@@ -176,7 +208,11 @@ class ShareViewController: UIViewController {
 
     private func showNamePrompt() {
         guard !stagedFiles.isEmpty else {
-            done()
+            showLoadError(attachmentLoadError ?? NSError(
+                domain: "TabBuddy.ShareExtension",
+                code: 3,
+                userInfo: [NSLocalizedDescriptionKey: "No supported PDF or text file was found."]
+            ))
             return
         }
 
@@ -197,6 +233,10 @@ class ShareViewController: UIViewController {
         }
         saveButton.isHidden = false
         cancelButton.isHidden = false
+
+        if let attachmentLoadError {
+            showAlert(title: "Some Files Couldn’t Be Loaded", error: attachmentLoadError)
+        }
     }
 
     @objc private func nameFieldReturn() {
@@ -213,32 +253,118 @@ class ShareViewController: UIViewController {
     }
 
     @objc private func saveTapped() {
-        guard let pendingURL else { done(); return }
+        guard let pendingURL else {
+            showSaveError(NSError(
+                domain: "TabBuddy.ShareExtension",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "The shared import folder is unavailable."]
+            ))
+            return
+        }
 
         let chosenName = (nameField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        saveButton.isEnabled = false
+        nameField.isEnabled = false
+        var movedFiles: [(source: URL, destination: URL)] = []
 
-        for (index, staged) in stagedFiles.enumerated() {
-            let ext = staged.tempURL.pathExtension
-            let baseName: String
-            if !chosenName.isEmpty && stagedFiles.count == 1 {
-                baseName = chosenName
-            } else if !chosenName.isEmpty {
-                baseName = "\(chosenName) \(index + 1)"
-            } else {
-                baseName = (staged.originalName as NSString).deletingPathExtension
+        do {
+            for (index, staged) in stagedFiles.enumerated() {
+                let ext = staged.tempURL.pathExtension
+                let originalStem = (staged.originalName as NSString).deletingPathExtension
+                let requestedBaseName: String
+                if !chosenName.isEmpty && stagedFiles.count == 1 {
+                    requestedBaseName = chosenName
+                } else if !chosenName.isEmpty {
+                    requestedBaseName = "\(chosenName) \(index + 1)"
+                } else {
+                    requestedBaseName = originalStem
+                }
+
+                let baseName = sanitizedBaseName(requestedBaseName,
+                                                 fallback: originalStem)
+                var requested = pendingURL.appendingPathComponent(baseName)
+                if !ext.isEmpty { requested.appendPathExtension(ext) }
+                let destination = availableDestination(for: requested)
+                try FileManager.default.moveItem(at: staged.tempURL, to: destination)
+                movedFiles.append((source: staged.tempURL, destination: destination))
             }
-
-            let finalName = "\(baseName).\(ext)"
-            let dest = pendingURL.appendingPathComponent(finalName)
-
-            if !FileManager.default.fileExists(atPath: dest.path) {
-                try? FileManager.default.moveItem(at: staged.tempURL, to: dest)
-            } else {
-                try? FileManager.default.removeItem(at: staged.tempURL)
+        } catch {
+            // Restore the staging area so the user can retry. If a rollback
+            // itself fails, the successfully moved file remains pending for
+            // the main app instead of being deleted.
+            for moved in movedFiles.reversed() {
+                try? FileManager.default.moveItem(at: moved.destination, to: moved.source)
             }
+            saveButton.isEnabled = true
+            nameField.isEnabled = true
+            showSaveError(error)
+            return
         }
 
         done()
+    }
+
+    private func sanitizedBaseName(_ requested: String, fallback: String) -> String {
+        let invalid = CharacterSet(charactersIn: "/\\:").union(.controlCharacters)
+        let components = requested.components(separatedBy: invalid)
+            .filter { !$0.isEmpty }
+        let sanitized = components.joined(separator: "-")
+            .trimmingCharacters(in: .whitespacesAndNewlines.union(
+                CharacterSet(charactersIn: ".")
+            ))
+        if !sanitized.isEmpty { return sanitized }
+
+        let fallbackComponents = fallback.components(separatedBy: invalid)
+            .filter { !$0.isEmpty }
+        let sanitizedFallback = fallbackComponents.joined(separator: "-")
+            .trimmingCharacters(in: .whitespacesAndNewlines.union(
+                CharacterSet(charactersIn: ".")
+            ))
+        return sanitizedFallback.isEmpty ? "Shared Tab" : sanitizedFallback
+    }
+
+    private func availableDestination(for requested: URL) -> URL {
+        guard FileManager.default.fileExists(atPath: requested.path) else { return requested }
+        let directory = requested.deletingLastPathComponent()
+        let ext = requested.pathExtension
+        let stem = requested.deletingPathExtension().lastPathComponent
+        var counter = 2
+        while true {
+            var candidate = directory.appendingPathComponent("\(stem) (\(counter))")
+            if !ext.isEmpty { candidate.appendPathExtension(ext) }
+            if !FileManager.default.fileExists(atPath: candidate.path) { return candidate }
+            counter += 1
+        }
+    }
+
+    private func showSaveError(_ error: Error) {
+        showAlert(title: "Couldn’t Save Tab", error: error)
+    }
+
+    private func showLoadError(_ error: Error) {
+        spinner.stopAnimating()
+        spinner.isHidden = true
+        label.text = "Couldn’t load this tab."
+        cancelButton.isHidden = false
+        let alert = UIAlertController(
+            title: "Couldn’t Load Tab",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Close", style: .default) { [weak self] _ in
+            self?.cancelTapped()
+        })
+        present(alert, animated: true)
+    }
+
+    private func showAlert(title: String, error: Error) {
+        let alert = UIAlertController(
+            title: title,
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
 
     private func done() {

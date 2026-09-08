@@ -18,16 +18,11 @@ struct TabStaffView: View {
     let playbackBeatFraction: Double
     let isPlaying: Bool
 
-    /// Total height of the tab staff
-    static let tabHeight: CGFloat = 120
-
     /// Vertical spacing between string lines
     private let stringSpacing: CGFloat = 16
 
     /// Top padding before first string
     private let topPadding: CGFloat = 12
-
-    private let standardLabels = ["e", "B", "G", "D", "A", "E"]
 
     var body: some View {
         Canvas { context, size in
@@ -49,7 +44,7 @@ struct TabStaffView: View {
                 drawDraftFretNumber(context: context, draft: draft)
             }
         }
-        .frame(height: Self.tabHeight)
+        .frame(height: CGFloat(max(1, tuningMIDI.count)) * stringSpacing + 24)
     }
 
     // MARK: - String Y Position
@@ -61,7 +56,7 @@ struct TabStaffView: View {
     // MARK: - Drawing
 
     private func drawStringLines(context: GraphicsContext, width: CGFloat) {
-        for i in 0..<6 {
+        for i in tuningMIDI.indices {
             let y = stringY(i)
             var path = Path()
             path.move(to: CGPoint(x: StaffView.headerWidth - 40, y: y))
@@ -71,9 +66,9 @@ struct TabStaffView: View {
     }
 
     private func drawTuningLabels(context: GraphicsContext) {
-        for i in 0..<6 {
+        for i in tuningMIDI.indices {
             let y = stringY(i)
-            let label = Text(standardLabels[i])
+            let label = Text(GuitarTuning(name: "", midiNotes: tuningMIDI).noteNames[i])
                 .font(.system(size: 11, weight: .medium, design: .monospaced))
                 .foregroundColor(.primary.opacity(0.5))
             context.draw(context.resolve(label),
@@ -84,7 +79,7 @@ struct TabStaffView: View {
 
     private func drawBarlines(context: GraphicsContext) {
         let topY = stringY(0) - 4
-        let bottomY = stringY(5) + 4
+        let bottomY = stringY(max(0, tuningMIDI.count - 1)) + 4
 
         for i in 0...measureCount {
             let x = StaffView.headerWidth + CGFloat(i) * measureWidth
@@ -98,7 +93,7 @@ struct TabStaffView: View {
 
     private func drawPlaybackCursor(context: GraphicsContext) {
         let topY = stringY(0) - 4
-        let bottomY = stringY(5) + 4
+        let bottomY = stringY(max(0, tuningMIDI.count - 1)) + 4
         let x = StaffView.headerWidth + CGFloat(playbackMeasureIndex) * measureWidth
             + CGFloat(playbackBeatFraction) * measureWidth
 
@@ -131,6 +126,7 @@ struct TabStaffView: View {
             return
         }
 
+        guard tuningMIDI.indices.contains(stringIndex) else { return }
         let x = noteX(measureIndex: note.measureIndex, position: note.positionInMeasure)
         let y = stringY(stringIndex)
 

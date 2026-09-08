@@ -276,7 +276,7 @@ struct LiveTranscriptionView: View {
             """
         }
 
-        let lineLabels = ["e", "B", "G", "D", "A", "E"]
+        let lineLabels = GuitarTuning.standard.noteNames
         let maxCharsPerLine = 60
 
         // Group notes into systems of maxCharsPerLine
@@ -291,10 +291,10 @@ struct LiveTranscriptionView: View {
 
             for note in chunk {
                 if let string = note.guitarString, let fret = note.fret,
-                   string >= 0 && string < 6 {
+                   string >= 0 && string < lineLabels.count {
                     let fretStr = String(fret)
                     // Pad other strings with dashes
-                    for i in 0..<6 {
+                    for i in lineLabels.indices {
                         if i == string {
                             lines[i] += fretStr
                         } else {
@@ -302,16 +302,16 @@ struct LiveTranscriptionView: View {
                         }
                     }
                     // Add separator dash
-                    for i in 0..<6 { lines[i] += "-" }
+                    for i in lineLabels.indices { lines[i] += "-" }
                 } else {
                     // Unknown string — put ? on all lines
-                    for i in 0..<6 { lines[i] += "?-" }
+                    for i in lineLabels.indices { lines[i] += "?-" }
                 }
             }
 
             // Pad to equal length and close
             let maxLen = lines.map(\.count).max() ?? 0
-            for i in 0..<6 {
+            for i in lineLabels.indices {
                 let pad = maxLen - lines[i].count
                 if pad > 0 { lines[i] += String(repeating: "-", count: pad) }
                 lines[i] += "|"

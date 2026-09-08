@@ -8,6 +8,8 @@
 
 import XCTest
 import SwiftData
+import SwiftUI
+import PDFKit
 @testable import TabBuddy
 
 final class CanonicalMigrationTests: XCTestCase {
@@ -88,4 +90,110 @@ final class CanonicalMigrationTests: XCTestCase {
         CanonicalStore.delete(filename: name)
         XCTAssertFalse(CanonicalStore.exists(filename: name))
     }
+    @MainActor
+    func testScoreMetadataSurvivesBackupAndUserEditsWin() throws {
+        let context = try makeContext()
+        let file = FileItem(bookmark: Data(), filename: "sonata.pdf")
+        context.insert(file)
+        XCTAssertEqual(file.instrumentKinds, [.unknown])
+        file.inferMetadata(from: "Piano and voice\nComposer: Example Composer\nArranger: Example Arranger\nAlbum: Exercises")
+        XCTAssertEqual(Set(file.instrumentKinds), [.piano, .voice])
+        XCTAssertEqual(file.composer, "Example Composer")
+        file.metadataEdited = true
+        file.arrangement = "Duet"
+        file.sourceURL = "https://example.com/score"
+        file.inferMetadata(from: "Guitar\nComposer: Wrong")
+        XCTAssertEqual(file.composer, "Example Composer")
+        XCTAssertEqual(Set(file.instrumentKinds), [.piano, .voice])
+        let backup = try XCTUnwrap(BackupManager.exportJSON(context: context))
+        file.instruments = [Instrument.guitar.rawValue]
+        file.composer = "Changed"
+        file.sourceURL = nil
+        XCTAssertEqual(BackupManager.importJSON(data: backup, context: context), 1)
+        XCTAssertEqual(Set(file.instrumentKinds), [.piano, .voice])
+        XCTAssertEqual(file.arrangement, "Duet")
+        XCTAssertEqual(file.sourceURL, "https://example.com/score")
+        XCTAssertTrue(file.metadataEdited)
+    }
+
+    @MainActor
+    func testDiscoveryAndDetailsLayouts() throws {
+        let context = try makeContext()
+        let file = FileItem(bookmark: Data(), filename: "Piano and Voice.pdf")
+        file.instruments = ["piano", "voice"]
+        context.insert(file)
+        let views: [(String, AnyView)] = [
+            ("Discovery — iPhone", AnyView(ScoreDiscoveryView(query: "Bach", instrumentRaw: "piano", onImport: {}))),
+            ("Score details — iPhone", AnyView(ScoreDetailsView(file: file).modelContainer(context.container)))
+        ]
+        for (name, view) in views {
+            let host = UIHostingController(rootView: view)
+            let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+            window.rootViewController = host
+            window.makeKeyAndVisible()
+            defer { window.isHidden = true }
+            host.view.frame = window.bounds
+            host.view.layoutIfNeeded()
+            let renderer = UIGraphicsImageRenderer(bounds: host.view.bounds)
+            let image = renderer.image { _ in host.view.drawHierarchy(in: host.view.bounds, afterScreenUpdates: true) }
+            let attachment = XCTAttachment(image: image)
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+    }
+
+    func testEmbeddedTextMetadataRoundTripsWithoutChangingTabBody() throws {
+        let body = Data("Original credits\r\ne|--0--|\r\nB|--1--|\r\n".utf8)
+        let metadata = EmbeddedScoreMetadata(title: "Étude [/TabBuddy Metadata]", composer: " Original\ncomposer ", instruments: ["guitar"], sourceURL: "https://example.com/score")
+        let enriched = try metadata.writing(to: body, extension: "txt")
+        XCTAssertEqual(try EmbeddedScoreMetadata.read(data: enriched, extension: "txt"), metadata)
+        XCTAssertEqual(try EmbeddedScoreMetadata.textBody(enriched), body)
+        XCTAssertEqual(try metadata.writing(to: enriched, extension: "txt"), enriched)
+    }
+
+    func testEmbeddedPDFMetadataPreservesPageTextAndAnnotations() throws {
+        let data = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 300, height: 400)).pdfData { renderer in
+            renderer.beginPage()
+            ("Original score" as NSString).draw(at: CGPoint(x: 20, y: 20), withAttributes: [.font: UIFont.systemFont(ofSize: 14)])
+        }
+        let document = try XCTUnwrap(PDFDocument(data: data))
+        let annotation = PDFAnnotation(bounds: CGRect(x: 10, y: 60, width: 30, height: 30), forType: .text, withProperties: nil)
+        annotation.contents = "Original annotation"
+        document.page(at: 0)?.addAnnotation(annotation)
+        let before = try XCTUnwrap(document.dataRepresentation())
+        let metadata = EmbeddedScoreMetadata(title: "Piano study", composer: "Test composer", instruments: ["piano"], sourceURL: "https://example.com/score")
+        let after = try metadata.writing(to: before, extension: "pdf")
+        XCTAssertEqual(try EmbeddedScoreMetadata.read(data: after, extension: "pdf"), metadata)
+        let reopened = try XCTUnwrap(PDFDocument(data: after))
+        XCTAssertEqual(reopened.pageCount, 1)
+        XCTAssertEqual(reopened.string, document.string)
+        XCTAssertEqual(reopened.page(at: 0)?.annotations.first?.contents, "Original annotation")
+        XCTAssertEqual(reopened.documentAttributes?[PDFDocumentAttribute.titleAttribute] as? String, metadata.title)
+    }
+
+    func testLegacyGuitarProHeaderEditPreservesMusicalBytes() throws {
+        func block(_ value: String) -> Data {
+            let bytes = Data(value.utf8)
+            var length = UInt32(bytes.count + 1).littleEndian
+            return withUnsafeBytes(of: &length) { Data($0) } + Data([UInt8(bytes.count)]) + bytes
+        }
+        for version in [3, 4, 5] {
+            let text = "FICHIER GUITAR PRO v\(version).00"
+            var original = Data([UInt8(text.utf8.count)]) + Data(text.utf8)
+            original.append(Data(repeating: 0, count: 31 - original.count))
+            for _ in 0..<(version == 5 ? 9 : 8) { original += block("Original") }
+            original += Data([1, 0, 0, 0]) + block("Keep original notice")
+            let music = Data([0, 255, 24, 48, 80, 0, 1, 2])
+            original += music
+            let metadata = EmbeddedScoreMetadata(title: "Edited", artist: "Artist", composer: "Composer", instruments: ["bass"], sourceURL: "https://example.com/tab", sourceID: String(repeating: "Long source identifier 音", count: 40))
+            let updated = try metadata.writing(to: original, extension: "gp\(version)")
+            let info = try LegacyGuitarProMetadata(updated)
+            XCTAssertEqual(updated.dropFirst(info.suffixOffset), music)
+            XCTAssertTrue(info.notices.contains("Keep original notice"))
+            XCTAssertEqual(try EmbeddedScoreMetadata.read(data: updated, extension: "gp\(version)"), metadata)
+            XCTAssertEqual(try metadata.writing(to: updated, extension: "gp\(version)"), updated)
+        }
+    }
+
 }

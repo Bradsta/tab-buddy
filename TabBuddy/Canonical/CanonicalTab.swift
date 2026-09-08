@@ -304,5 +304,7 @@ enum CanonicalConverterVersion {
     //      spatial reconstruction and keep whichever reads more notes (PDF
     //      text extraction can silently truncate — Tw2 tavern parsed 3 of 7
     //      systems at "100%" confidence).
-    static let current = 17
+    // v18: normalize tuning names and infer custom tunings from string labels.
+    // v19: preserve physical string counts and instrument tuning across adapters.
+    static let current = 19
 }

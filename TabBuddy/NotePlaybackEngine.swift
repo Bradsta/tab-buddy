@@ -27,8 +27,8 @@ final class NotePlaybackEngine: ObservableObject {
     /// interrupts only its own string's voice, so the other strings keep
     /// ringing — chords and arpeggios sustain like a real guitar instead of
     /// the old single-voice monophonic playback.
-    private let stringNodes: [AVAudioPlayerNode] = (0..<6).map { _ in AVAudioPlayerNode() }
-    /// Sums the six string voices before the shared reverb (an effect node
+    private var stringNodes: [AVAudioPlayerNode] = [AVAudioPlayerNode()]
+    /// Sums the string voices before the shared reverb (an effect node
     /// accepts only one input).
     private let stringMixer = AVAudioMixerNode()
     /// A small room reverb gives the dry plucked-string synth some natural space
@@ -36,6 +36,7 @@ final class NotePlaybackEngine: ObservableObject {
     /// is most of the perceived quality jump over the bare Karplus-Strong sound.
     private let reverb = AVAudioUnitReverb()
 
+    private var engineConfigured = false
     private let sampleRate: Double = 44100
     private let format: AVAudioFormat
 
@@ -55,15 +56,13 @@ final class NotePlaybackEngine: ObservableObject {
 
     /// Pre-computed Karplus-Strong buffers for each MIDI note.
     /// Key: MIDI note number, Value: pre-rendered audio buffer.
-    /// Covers MIDI 28 (E1, lowest possible) through 88 (E6, fret 24 on high E).
+    /// Covers MIDI 21–96, including extended bass and guitar ranges.
     private var noteCache: [Int: AVAudioPCMBuffer] = [:]
 
     // MARK: - Init
 
     init() {
         format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
-        setupEngine()
-        buildNoteCache()
     }
 
     // MARK: - Setup
@@ -81,15 +80,16 @@ final class NotePlaybackEngine: ObservableObject {
         // `.interrupts` (which only replaces a dry voice's buffer), giving a
         // natural release.
         engine.connect(stringMixer, to: reverb, format: format)
-        engine.connect(reverb, to: engine.mainMixerNode, format: format)
+        // Reverb output must be stereo: the Mac reverb (MatrixReverb, used when
+        // running Designed-for-iPad) has no mono output bus. Mono in is fine.
+        let reverbOutput = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)!
+        engine.connect(reverb, to: engine.mainMixerNode, format: reverbOutput)
     }
 
-    /// Pre-compute Karplus-Strong buffers for all playable guitar notes.
-    /// MIDI 28–88 covers everything from drop tunings through fret 24.
-    /// ~60 notes × 15,435 frames × 4 bytes ≈ 3.6 MB — very manageable.
+    /// Build plucked-string samples only when audio is first requested.
     private func buildNoteCache() {
         let frameCount = Int(sampleRate * noteDuration)
-        for midi in 28...88 {
+        for midi in 21...96 {
             let frequency = 440.0 * pow(2.0, Double(midi - 69) / 12.0)
             if let buffer = synthesizeNote(frequency: frequency, frameCount: frameCount) {
                 noteCache[midi] = buffer
@@ -108,6 +108,11 @@ final class NotePlaybackEngine: ObservableObject {
             try session.setActive(true)
         } catch {
             print("NotePlaybackEngine: audio session setup failed: \(error)")
+        }
+        if !engineConfigured {
+            setupEngine()
+            buildNoteCache()
+            engineConfigured = true
         }
         do {
             try engine.start()
@@ -165,7 +170,15 @@ final class NotePlaybackEngine: ObservableObject {
     func playNotes(_ frets: [Int?], tuningMIDI: [Int]? = nil) {
         guard isEnabled, engine.isRunning else { return }
 
-        let openStrings = tuningMIDI ?? Self.standardTuningMIDI
+        guard let openStrings = tuningMIDI ?? (frets.count == 6 ? Self.standardTuningMIDI : nil) else { return }
+        if stringNodes.count < frets.count {
+            for _ in stringNodes.count..<frets.count {
+                let node = AVAudioPlayerNode()
+                engine.attach(node)
+                engine.connect(node, to: stringMixer, format: format)
+                stringNodes.append(node)
+            }
+        }
         var toPlay: [(string: Int, midi: Int)] = []
         for (stringIndex, fret) in frets.enumerated() {
             guard let f = fret, stringIndex < openStrings.count,
@@ -176,11 +189,12 @@ final class NotePlaybackEngine: ObservableObject {
         guard !toPlay.isEmpty else { return }
 
         let gain = Self.stringGain(volume)
-        Self.scheduleQueue.async { [weak self] in
-            guard let self else { return }
+        let cache = noteCache
+        let nodes = stringNodes
+        Self.scheduleQueue.async {
             for (string, midi) in toPlay {
-                guard let buffer = self.noteCache[midi] else { continue }
-                let node = self.stringNodes[string]
+                guard let buffer = cache[midi] else { continue }
+                let node = nodes[string]
                 node.volume = gain
                 node.scheduleBuffer(buffer, at: nil, options: .interrupts,
                                     completionHandler: nil)

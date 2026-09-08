@@ -1,8 +1,26 @@
 # TabBuddy × Gamic Arts — viewer/maker chrome revamp ("Quiet header", direction 1b)
 
+For the current implemented feature and storage contract, see [PROJECT.md](PROJECT.md). Sections below include historical design targets and external reference assets; unchecked items are not claims of completed work.
+
 Implementation spec for the TabBuddy iOS app (SwiftUI). Reference mockups:
 `templates/tab-buddy-revamp/TabBuddyRevamp.dc.html` — option **1b** (iPad, 834×1194) and **2a** (iPhone, 390×844).
 Design tokens live in the Gamic Arts design-system folder (`tokens/*.css`, entry `styles.css`); hex conversions for Swift are below.
+
+## Large-operation feedback (2026-09-07)
+
+Bulk removal displays processed/total progress, yields between batches, and reports failures. Catalog scanning publishes availability once rather than redrawing the library for every score. Existing external-folder versus managed-file deletion semantics remain distinct.
+
+## Existing folders and library moves (2026-09-06)
+
+Advanced separates **Use Existing Folder** (adopt the exact selected directory and scan in place) from **Copy Library to New Folder** (create a named child folder and copy the current library). A generic Choose Folder action must not silently choose between these operations. Switching to another existing collection retains the previous catalog and files; backup restoration targets only the selected collection.
+
+## Implemented multi-instrument decisions (2026-09-06)
+
+- Use one shared library with an instrument filter, not separate global guitar/piano modes. A score can belong to multiple instruments. Recents remain the landing view when no filter is selected.
+- Keep format, instrument, and arrangement separate. Show a short instrument badge on a card; edit fuller credits and provenance in Score details. Uncertain detection reads Unspecified. Explicit user edits win.
+- Preserve original notation by default. Guitar arrangement generation is a deliberate PDF action. Guitar Pro notation choices are per score and hide tablature options for non-string tracks.
+- Keep Find music beside the instrument filter, also reachable from Add and empty search results. Carry the current query/filter into discovery. Source cards explain formats and access; websites handle accounts and purchases, and the existing file importer handles acquisition.
+- This is a source-link directory with web search, not an aggregated result list. A combined catalog and automated source adapters are future work. Do not suggest that third-party arrangements are commercially cleared.
 
 ## 1. Goal
 
@@ -88,48 +106,39 @@ content starts directly under the header.
 
 ## 5. Transport (shared bar)
 
-Full-width bottom bar, same material as header, top hairline. All hit targets ≥ 44pt.
-Replaces both `TabTransportBar`'s visual layer and `ScrollTransportBar`. Keep
-`PlaybackCoordinator` / engine wiring and the `onSeek`/`onLoopChanged`/`onBeforePlay` hooks.
+TabBuddy's drawn score and Guitar Pro use the **same `TabTransportBar` SwiftUI
+component**, including popovers and count-in / speed-trainer behavior. Guitar Pro
+supplies engine actions and mirrors score position; it never starts the native
+playback clock. Its web content contains only the score and loading/error state.
 
-### Zone grammar
+The bar has the same material, accent, hit targets, and labels across formats.
 
-| Zone | Canonical player | Original text / PDF | Maker |
-|---|---|---|---|
-| **Play cluster** (left) | skip-to-start · **Play 52pt** · readout `m. 12/48` + `1:24` | back-to-top · **Play 52pt** (= auto-scroll) · readout `p. 1/3` + `scroll` | skip · **Play 52pt** · readout `bar 3/8` + elapsed |
-| **Position** (center, flexible) | measure scrubber | speed slider (gauge icon + `NN px/s` readout) | insertion-point scrubber |
-| **Tools** (right) | tempo pill · Sound · Metronome · Count-in · Loop · Follow · Display | Loop-to-top · Display | Listen (mic) · tempo pill · Play sits here on maker if preferred — see §6 |
+- **iPhone:** restart, play/pause, flexible space, speed, loop, Settings on the
+  first row. Bar/time readout plus the position scrubber on the second row.
+- **iPad:** the same controls on one row with the readout beside Play and the
+  scrubber taking the flexible space. No extra row of rarely used icon tiles.
+- **Speed:** 25–150%, quick 50/75/100/125% buttons, optional +5% per loop capped
+  at 100%. Editable reference BPM appears only where the source needs it.
+- **Loop:** explicit repeat toggle, start/end bar steppers, set start/end to the
+  current bar, and clear. The readout shows the range and pass number.
+- **Settings:** sound, metronome, count-in, notation, size, auto-scroll, tuning,
+  and capo. Multi-track files add track selection and solo. Native text tabs
+  retain their rhythm-letter option.
+- **Score taps always seek**, even with a loop enabled; they never change loop
+  bounds. The loop editor is the only place to edit a practice range.
+- **Count-in:** audible even with the metronome disabled; cancels on pause,
+  navigation, or app backgrounding. Both players use the same implementation.
+- **Display preferences:** notation, size, and follow mode are shared. Saved
+  Guitar Pro speed, track, solo, sound, and bar-range settings remain per file.
 
-Control anatomy:
-- **Play:** 52pt circle (48 on iPhone), `Accent` fill, white icon, soft accent shadow.
-  Pause state swaps glyph only. During count-in show pause + pulsing readout.
-- **Icon tile:** 44×44, radius 11. Inactive: `SurfaceInset` bg, `Fg1` icon. Active: `Accent` bg,
-  white icon. 10pt label under the tile in `Fg2` (`Accent` when active). Labels hide on iPhone.
-- **Tempo pill:** height 44 (38 iPhone), `AccentSoft` bg, `AccentStrong` content:
-  ♪ icon + BPM mono semibold; percent-of-original as its label ("94%"). Tap → existing tempo /
-  speed-trainer popover (restyle with tokens; quick buttons 50/75/90/100 use `Accent` tint).
-- **Scrubber:** 4pt track `SeparatorStrong`, filled `Accent`, 22pt `SurfaceRaised` thumb with
-  shadow-2. Same component for measure position and scroll speed.
-- **Readout:** mono, value 15 semibold `Fg1`, sub-line 12 `Fg2` (loop state may tint sub-line
-  `Accent` — not indigo).
-- **Display popover** (sliders icon) keeps per-surface contents: text size (original text),
-  auto-scroll options, player display settings. On iPhone it also absorbs **Sound, Count-in,
-  Follow** (see below).
+`PlayerDisplaySections` owns common display controls; each renderer supplies the
+score-specific extras. Guitar Pro keeps notation details and its audio engine;
+TabBuddy keeps its native text/canonical renderer. Both use the warm paper/rose
+palette, including dark appearance.
 
-### iPhone compact layout (mockup 2a)
-
-Two rows inside the bar, then home-indicator inset:
-1. **Controls row:** play cluster left, spacer, then (player) tempo pill · Metronome · Loop ·
-   Display as 38pt tiles. Sound / Count-in / Follow move into Display.
-2. **Slider row:** full-width scrubber (player/maker: position; PDF/text: speed with gauge icon
-   and `px/s` readout).
-
-### Semantics
-
-- Original text + PDF share *identical* transports. `showDisplayButton` special-casing goes away
-  (PDF Display popover can be empty of text-size and still offer scroll options).
-- Loop on originals = loop-to-top (as today); keep the Loop seat so muscle memory holds.
-- Auto-scroll speed 0 + play tap → nudge to default speed 8 (existing behavior, keep).
+Original text and PDF retain auto-scroll semantics and their existing compact
+transport, using the same Play, Settings, tiles, and scrubber primitives. Maker
+continues to use these primitives with its editing controls.
 
 ## 6. Tab Maker
 
@@ -186,3 +195,62 @@ Copy is Gamic voice: sentence case, plain, no exclamation points.
 - [ ] Confidence badge tint flips at the threshold; notice card only on gated PDFs.
 - [ ] Dark mode: lifted accent `#F07E79`, dark neutral ramp from `tokens/dark.css`.
 - [ ] All hit targets ≥ 44pt; transport labels visible on iPad, hidden on iPhone.
+
+
+### Practice navigation and tuning labels
+
+Library discovery centers on recents, most played, search, and tags. Tuning labels use one normalization rule: recognized note sequences show their preset name; custom sequences retain every string pitch, including repeated pitches. Missing tuning information is shown as Unknown. Existing derived files refresh through converter version 18.
+
+Both native tabs and Guitar Pro expose Smooth scroll and Follow measures directly above their transport. Smooth scroll is the initial preference and uses a separate scrolling speed, pause, back-to-top, and loop-to-top; it does not start synthesized audio. Follow measures uses score timing, bar seeking, and practice loops. Sound remains an optional setting; Guitar Pro sound defaults off. Switching navigation modes pauses motion. Manual dragging temporarily takes precedence over automatic scrolling.
+
+
+## Library sync and offline access
+
+Use one primary **Sync library with iCloud** switch for songs and library metadata together. “Local” must not silently continue syncing tags, favorites, or recents. First-run setup offers iCloud when available and a usable local library otherwise. Changing the connection briefly returns the user to the library after saved changes and verified file copying.
+
+Keep **Keep available offline** separate: users should not turn sync off merely to practice without a connection. Show download progress and errors; preserve completed copies. Custom folders belong under Advanced. Disabling sync or changing folders preserves the previous cloud data; deleting cloud data is a separate, unimplemented operation.
+
+
+## Portable score details
+
+Keep descriptive edits in Score details, with a format-specific footer explaining whether they travel inside the file. Save shows progress, prevents duplicate submission/dismissal, and reports write failures without claiming success. Embedded credits take precedence over inferred title keywords; artist and composer are distinct. Personal practice state stays outside shared score files.
+
+The library instrument dropdown offers All instruments plus only instruments represented in the active library. Include Unspecified only when needed. Derive choices before search/tag/folder filters; reset to All instruments if the selected instrument disappears after edits, deletion, or a library switch. Score details and online discovery retain their full instrument choices.
+
+Online discovery belongs only in the Add (+) submenu as Find music online. Do not repeat it beside library filters or in empty/search-result states.
+
+Rescan progress must advance during catalog reconciliation and Cancel must stop between bounded batches. Existing-folder setup must not wait for embedded metadata reads across the collection. Retain already catalogued songs after cancellation, without declaring unprocessed songs missing.
+
+Opening/foregrounding the app must display the saved library immediately. Do not schedule a full rescan or offline refresh based on elapsed time. Keep external-folder discovery under the explicit Rescan Library action; initial folder setup and direct imports still update the catalog.
+
+Rescan status uses a bottom overlay that does not shift the grid. Keep browsing, search, and score opening available; display file counts once known and a Finding files label during enumeration. Cancel remains a 44-point control.
+
+Settings consolidates storage/offline controls, maintenance (Rescan Library and Generate Tab Data), metadata backup export/restore, and destructive removal. Keep the main ellipsis menu to Select and Settings. Dismiss Settings before showing a file picker, exporter, or removal confirmation; do not stack competing presentations.
+
+Show an indeterminate bar during file discovery, honoring Reduce Motion, alongside the running supported-file count. Switch to a determinate bar once the total is known. Report checked, added-to-library, and existing counts; a rescan does not import/copy files. Retain a dismissible completion/cancellation summary so users can read the result.
+
+Large imports retain successful work: publish the first copied song immediately, commit subsequent songs in batches of 100, and flush the final partial batch on success, cancellation, or failure. A late error must not make earlier copied songs disappear from the catalog. Folder discovery still precedes copying.
+
+Use one compact bottom panel for scans, imports, generation, and background preparation. Its appearance must not inset or push down the main library. Fast import catalogs copied names/paths first; bulk preparation is opt-in and saves progress every 100 files. Opening a library starts it only when the saved automatic-preparation setting is enabled (off by default). Pause is visible, and storage settings explain when preparation must be paused before moving files.
+
+External-folder rescans must save catalog checkpoints before advancing each 100-file progress batch. Distinguish enumeration, in-place catalog additions, and later processing; do not label these additions as copied imports.
+
+Rescan and background preparation are sequential. Show Pausing preparation during the handoff, await its current work before starting enumeration, and show one active status at a time. Retained summaries are displayed only when no active operation has priority.
+
+Folder cards show descendant score counts and whole/partial selection indicators. Selection includes nested songs and excludes similarly named sibling folders. External-folder removal is labeled Remove Folder References and explains source preservation and rediscovery; managed removal is labeled Delete Folder Scores. Build folder membership in one pass for large collections.
+
+Unknown instrument/tuning values do not produce tile chips. Known values use the same restrained treatment as tags and open Score details when tapped. Instruments and tuning stay structured so edits retain consistent filtering/search; do not infer them by interpreting arbitrary personal tags. Tuning includes presets, custom entry, and clear, with an explanation that this is descriptive metadata.
+
+External-folder discovery must stream durable catalog batches before full enumeration completes. Display both found and saved-to-catalog counts so a large discovery count cannot imply unsaved folders are retained. Reconcile missing paths only after a successful complete manifest; partial/cancelled discovery retains saved entries.
+
+Preparation progress distinguishes prepared files, known cloud placeholders waiting for download, and read failures; failures show the latest filename and reason. Only the status panel observes progress, refreshed at most four times per second during preparation plus batch checkpoints; a dismissible summary retains unresolved results. Available file contents use coordinated content reads; cloud placeholders are checked before opening and remain pending. No bulk download is started by preparation.
+
+Large-library responsiveness: scan and preparation counters are observed by their status subviews, not the library filter/sort view. Preparation fetches lightweight pending identifiers and processes at most 100 models at a time; text inference and conversion run on utility workers, with bounded catalog commits and time for UI work between batches. Discovery uses one path index and inserts new entries incrementally, without rebuilding the full catalog/tag index per discovery batch. Full reconciliation skips unchanged file-field writes. Folder mode is still catalog-backed; direct one-folder filesystem browsing is a proposed follow-up, not implemented.
+
+Library sorting/search use a cached value index, with displayed-title sort keys prepared once per catalog snapshot. Filtering and sorting run on a cancellable worker; typing is debounced by 120 ms, while pickers start immediately. Catalog snapshots are refreshed in yielding chunks after saves or query membership changes, coalescing overlapping refresh requests. Returning from a score reuses the completed query. The grid renders 200 matches initially and adds more as the user scrolls; counts and Select All cover every match. Folder membership, instrument choices, and the recent rail reuse cached results. Startup no longer maintains a second filename-sorted library query or opens files to derive folder labels.
+
+PDF opening displays file-access and coordinated-read errors with Retry instead of an empty viewer or a generic iCloud explanation. Known iCloud placeholders can reach the coordinated reader to download on demand; genuinely missing paths still fail. Opportunistic fingerprints are read on a utility worker and skip known cloud-only files.
+
+Name sorting follows the visible score title, including embedded titles and user renames. Normalized tuning labels remain searchable. While the first index is loading, the library says Loading library rather than No scores. Returning to a cached filter invalidates any older pending search. Preparation guidance points external-folder users to Files for downloads. Text score parsing and derived-file writing run off the UI thread; PDFs cancel loading on exit and show read errors with Retry.
+
+Player display menus omit the read-only Tuning & capo section; it offered no adjustment. Score details still supports descriptive tuning metadata, and score-defined tuning/capo continue to govern notation and playback.

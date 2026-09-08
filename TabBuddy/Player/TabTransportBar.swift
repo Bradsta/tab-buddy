@@ -7,12 +7,10 @@
 //  Original text/PDF views (auto-scroll; `OriginalTransportBar` below), and
 //  the Tab Maker. Only the middle zone's meaning changes per surface.
 //
-//  Engine wiring is unchanged: the bar drives `PlaybackCoordinator` and the
-//  engines; rendering-specific concerns stay in the host behind the
-//  `onLoopChanged` / `onSeek` / `onBeforePlay` hooks.
-//
-//  Hosts supply Display-popover content as Form *sections* (no Form wrapper) —
-//  on iPhone the bar adds its own absorbed controls (Sound, Count-in) above.
+//  TabBuddy and Guitar Pro use this exact native transport. Guitar Pro
+//  supplies PlayerPlaybackActions; PlaybackCoordinator mirrors its position
+//  without starting another clock. Both hosts add format-specific Settings
+//  sections beneath shared sound, metronome, and count-in controls.
 //
 
 import SwiftUI
@@ -51,6 +49,7 @@ struct PlayCircleButton: View {
             }
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(isOn ? "Pause" : "Play")
     }
 }
 
@@ -90,7 +89,9 @@ struct TransportTile: View {
             TransportTileLabel(icon: icon, label: label, active: active)
         }
         .buttonStyle(.plain)
+        .frame(minWidth: 44, minHeight: 44)
         .accessibilityLabel(label)
+        .accessibilityValue(active ? "On" : "Off")
     }
 }
 
@@ -148,6 +149,7 @@ struct TokenScrubber: View {
     @Binding var value: Double
     let range: ClosedRange<Double>
     var step: Double = 1
+    var accessibilityValueOffset: Double = 1
 
     var body: some View {
         GeometryReader { geo in
@@ -177,7 +179,24 @@ struct TokenScrubber: View {
             )
         }
         .frame(height: 44)
+        .accessibilityElement()
+        .accessibilityLabel("Position")
+        .accessibilityValue("\(Int(value + accessibilityValueOffset))")
+        .accessibilityAdjustableAction { direction in
+            let delta = max(1, step) * (direction == .increment ? 1 : -1)
+            value = min(range.upperBound, max(range.lowerBound, value + delta))
+        }
     }
+}
+
+/// Optional engine adapter: the shared transport never runs a second clock.
+struct PlayerPlaybackActions {
+    var play: () -> Void
+    var pause: () -> Void
+    var seek: (Int) -> Void
+    var sound: (Bool) -> Void
+    var tempo: (Double) -> Void
+    var metronome: (Bool) -> Void
 }
 
 // MARK: - Player transport
@@ -191,6 +210,10 @@ struct TabTransportBar<Display: View>: View {
     let originalBPM: Double
     let totalMeasures: Int
     let beatsPerMeasure: Int
+    var externalPlayback: PlayerPlaybackActions? = nil
+    var isReady: Bool = true
+    var elapsedSeconds: Double? = nil
+    var allowsReferenceTempoEditing: Bool = true
 
     @Binding var loopEnabled: Bool
     @Binding var loopStart: Int?
@@ -211,9 +234,10 @@ struct TabTransportBar<Display: View>: View {
     @ViewBuilder var displayContent: () -> Display
 
     @Environment(\.horizontalSizeClass) private var hSize
-    @AppStorage("player.autoScroll") private var autoScrollRaw = AutoScrollMode.follow.rawValue
     @AppStorage("player.countInBars") private var countInBars = 0
 
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var showLoop = false
     @State private var showTempo = false
     @State private var refBPMText = ""
     @FocusState private var refBPMFocused: Bool
@@ -223,7 +247,6 @@ struct TabTransportBar<Display: View>: View {
     @State private var countingIn = false
     @State private var countInTask: Task<Void, Never>?
 
-    private var autoScroll: AutoScrollMode { AutoScrollMode(rawValue: autoScrollRaw) ?? .follow }
     private var tempoPercent: Int { max(1, Int((coordinator.bpm / max(1, originalBPM)) * 100 + 0.5)) }
     private var isCompact: Bool { hSize == .compact }
 
@@ -234,45 +257,42 @@ struct TabTransportBar<Display: View>: View {
         TransportChrome {
             if isCompact {
                 VStack(spacing: 4) {
-                    HStack(spacing: 10) {
+                    HStack(spacing: 6) {
                         playCluster
-                        Spacer(minLength: 6)
+                        Spacer(minLength: 0)
                         tempoControl
-                        control(icon: "metronome", label: "Metronome", active: metronome.isEnabled) {
-                            metronome.isEnabled.toggle()
-                        }
-                        control(icon: "repeat", label: "Loop", active: loopEnabled) { toggleLoop() }
+                        loopControl
                         displayControl
                     }
-                    scrubber
+                    HStack(spacing: 12) {
+                        positionReadout
+                        scrubber
+                    }
                 }
             } else {
                 HStack(spacing: 16) {
                     playCluster
                     scrubber
-                    HStack(spacing: 12) {
-                        tempoControl
-                        control(icon: notePlayer.isEnabled ? "speaker.wave.2.fill" : "speaker.slash",
-                                label: "Sound", active: notePlayer.isEnabled) { toggleSound() }
-                        control(icon: "metronome", label: "Metronome", active: metronome.isEnabled) {
-                            metronome.isEnabled.toggle()
-                        }
-                        countInControl
-                        control(icon: "repeat", label: "Loop", active: loopEnabled) { toggleLoop() }
-                        control(icon: autoScrollIcon, label: "Follow", active: autoScroll != .off) {
-                            cycleAutoScroll()
-                        }
-                        displayControl
-                    }
+                    tempoControl
+                    loopControl
+                    displayControl
                 }
             }
+        }
+        .disabled(!isReady || totalMeasures == 0)
+        .onChange(of: coordinator.bpm) { externalPlayback?.tempo($0) }
+        .onChange(of: metronome.isEnabled) { externalPlayback?.metronome($0) }
+        .onChange(of: scenePhase) { if $0 != .active { stopPlayback() } }
+        .onDisappear {
+            stopPlayback()
+            coordinator.onLoopCompleted = nil
         }
         .onAppear {
             // Speed trainer: bump tempo each completed loop pass, capped at 100%.
             coordinator.onLoopCompleted = {
-                guard rampEnabled else { return }
-                setTempoPercent(min(100, tempoPercent + 5))
                 trainerPass += 1
+                guard rampEnabled, tempoPercent < 100 else { return }
+                setTempoPercent(min(100, tempoPercent + 5))
             }
         }
     }
@@ -280,30 +300,36 @@ struct TabTransportBar<Display: View>: View {
     // MARK: Zones
 
     private var playCluster: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: isCompact ? 6 : 12) {
             Button { skip() } label: {
                 Image(systemName: "backward.end.fill")
                     .font(.body)
                     .foregroundStyle(DS.fg1)
-                    .frame(width: 32, height: 44)
+                    .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Restart")
 
             PlayCircleButton(isOn: coordinator.isPlaying || countingIn) { togglePlay() }
 
-            TransportReadout(
-                value: "m. \(coordinator.currentMeasureIndex + 1)/\(max(1, totalMeasures))",
-                sub: readout,
-                subAccented: loopEnabled
-            )
+            if !isCompact { positionReadout }
         }
+    }
+
+    private var positionReadout: some View {
+        TransportReadout(
+            value: "Bar \(coordinator.currentMeasureIndex + 1)/\(max(1, totalMeasures))",
+            sub: readout,
+            subAccented: loopEnabled
+        )
+        .fixedSize(horizontal: true, vertical: false)
     }
 
     private var readout: String {
         if countingIn { return "count-in…" }
-        if loopEnabled { return "Loop · pass \(trainerPass + 1)" }
-        let secs = coordinator.bpm > 0 ? coordinator.accumulatedBeats * 60.0 / coordinator.bpm : 0
+        if loopEnabled { return "Loop \((loopStart ?? 0) + 1)–\((loopEnd ?? 0) + 1) · pass \(trainerPass + 1)" }
+        let secs = elapsedSeconds ?? (coordinator.bpm > 0 ? coordinator.accumulatedBeats * 60.0 / coordinator.bpm : 0)
         return minimalTime(secs)
     }
 
@@ -311,11 +337,12 @@ struct TabTransportBar<Display: View>: View {
         TokenScrubber(
             value: Binding(
                 get: { Double(coordinator.currentMeasureIndex) },
-                set: { onSeek(); coordinator.seekToMeasure(Int($0.rounded())) }
+                set: { seek(Int($0.rounded())) }
             ),
-            range: 0...Double(max(1, totalMeasures - 1))
+            range: 0...Double(max(0, totalMeasures - 1))
         )
-        .frame(minWidth: 120, maxWidth: .infinity)
+        .frame(minWidth: 80, maxWidth: .infinity)
+        .accessibilityLabel("Bar")
     }
 
     private var tempoControl: some View {
@@ -323,26 +350,16 @@ struct TabTransportBar<Display: View>: View {
             TempoPillLabel(bpm: Int(coordinator.bpm), percent: tempoPercent)
         }
         .buttonStyle(.plain)
+        .frame(minHeight: 44)
+        .accessibilityLabel("Practice speed")
+        .accessibilityValue("\(tempoPercent) percent")
         .popover(isPresented: $showTempo) {
             tempoPopover.presentationCompactAdaptation(.popover)
         }
     }
 
-    private var countInControl: some View {
-        Menu {
-            Picker("Count-in", selection: $countInBars) {
-                Text("Off").tag(0)
-                Text("1 bar").tag(1)
-                Text("2 bars").tag(2)
-            }
-        } label: {
-            TransportTileLabel(icon: countInBars == 0 ? "number" : "\(countInBars).circle",
-                               label: "Count-in", active: countInBars > 0)
-        }
-    }
-
     private var displayControl: some View {
-        control(icon: "slider.horizontal.3", label: "Display", active: false) {
+        control(icon: "slider.horizontal.3", label: "Settings", active: false) {
             showDisplay = true
         }
         .popover(isPresented: $showDisplay) {
@@ -350,20 +367,16 @@ struct TabTransportBar<Display: View>: View {
         }
     }
 
-    /// The Display popover. On iPhone it absorbs the controls that lost their
-    /// tiles: Sound and Count-in (Follow already lives in the host sections).
+    /// One Settings panel on both size classes, with format-specific sections.
     private var displayPopover: some View {
         Form {
-            if isCompact {
-                Section("Playback") {
-                    Toggle("Sound", isOn: Binding(
-                        get: { notePlayer.isEnabled },
-                        set: { _ in toggleSound() }))
-                    Picker("Count-in", selection: $countInBars) {
-                        Text("Off").tag(0)
-                        Text("1 bar").tag(1)
-                        Text("2 bars").tag(2)
-                    }
+            Section("Playback") {
+                Toggle("Sound", isOn: Binding(get: { notePlayer.isEnabled }, set: { _ in toggleSound() }))
+                Toggle("Metronome", isOn: $metronome.isEnabled)
+                Picker("Count-in", selection: $countInBars) {
+                    Text("Off").tag(0)
+                    Text("1 bar").tag(1)
+                    Text("2 bars").tag(2)
                 }
             }
             displayContent()
@@ -375,20 +388,15 @@ struct TabTransportBar<Display: View>: View {
         TransportTile(icon: icon, label: label, active: active, action: action)
     }
 
-    private var autoScrollIcon: String {
-        switch autoScroll {
-        case .off: return "arrow.down.circle"
-        case .follow: return "arrow.down"
-        case .line: return "arrow.down.to.line"
-        }
-    }
-
     // MARK: Actions
 
     private func toggleSound() {
         notePlayer.isEnabled.toggle()
+        if let externalPlayback { externalPlayback.sound(notePlayer.isEnabled); return }
         // If turned on mid-playback, make sure the engine is running.
-        if notePlayer.isEnabled && (coordinator.isPlaying || countingIn) {
+        if !notePlayer.isEnabled {
+            notePlayer.stop()
+        } else if coordinator.isPlaying || countingIn {
             notePlayer.start()
         }
     }
@@ -398,33 +406,47 @@ struct TabTransportBar<Display: View>: View {
     }
 
     private func startPlayback() {
+        guard isReady, totalMeasures > 0 else { return }
         onBeforePlay()
-        metronome.start()
-        if notePlayer.isEnabled { notePlayer.start() }
-        if countInBars > 0 { runCountIn { coordinator.play() } } else { coordinator.play() }
+        if externalPlayback == nil {
+            metronome.start()
+            if notePlayer.isEnabled { notePlayer.start() }
+        } else if countInBars > 0 { metronome.start() }
+        let start = {
+            if let externalPlayback { metronome.stop(); externalPlayback.play() }
+            else { coordinator.play() }
+        }
+        if countInBars > 0 { runCountIn(start) } else { start() }
     }
 
     private func stopPlayback() {
         countInTask?.cancel(); countingIn = false
-        coordinator.pause()
+        if let externalPlayback { externalPlayback.pause() } else { coordinator.pause() }
         metronome.stop()
         notePlayer.stop()
     }
 
-    private func skip() {
+    private func seek(_ measure: Int) {
         onSeek()
-        coordinator.seekToMeasure(loopEnabled ? (loopStart ?? 0) : 0)
+        let clamped = max(0, min(max(0, totalMeasures - 1), measure))
+        if let externalPlayback { externalPlayback.seek(clamped) }
+        else { coordinator.seekToMeasure(clamped) }
+    }
+
+    private func skip() {
+        seek(loopEnabled ? (loopStart ?? 0) : 0)
     }
 
     private func runCountIn(_ then: @escaping () -> Void) {
         countInTask?.cancel()
         countingIn = true
-        let beats = max(1, countInBars) * beatsPerMeasure
+        let meter = max(1, beatsPerMeasure)
+        let beats = max(1, countInBars) * meter
         let interval = UInt64((60.0 / max(1, coordinator.bpm)) * 1_000_000_000)
         countInTask = Task { @MainActor in
             for b in 0..<beats {
                 if Task.isCancelled { countingIn = false; return }
-                metronome.playClick(beatInMeasure: b % beatsPerMeasure, beatsPerMeasure: beatsPerMeasure)
+                metronome.playClick(beatInMeasure: b % meter, beatsPerMeasure: meter, force: true)
                 try? await Task.sleep(nanoseconds: interval)
             }
             if Task.isCancelled { countingIn = false; return }
@@ -433,22 +455,50 @@ struct TabTransportBar<Display: View>: View {
         }
     }
 
-    private func cycleAutoScroll() {
-        switch autoScroll {
-        case .off: autoScrollRaw = AutoScrollMode.follow.rawValue
-        case .follow: autoScrollRaw = AutoScrollMode.line.rawValue
-        case .line: autoScrollRaw = AutoScrollMode.off.rawValue
-        }
+    private var loopControl: some View {
+        control(icon: "repeat", label: "Loop", active: loopEnabled) { showLoop = true }
+            .popover(isPresented: $showLoop) {
+                Form {
+                    Section {
+                        Toggle("Repeat section", isOn: Binding(get: { loopEnabled }, set: { enabled in
+                            loopEnabled = enabled
+                            if loopStart == nil || loopEnd == nil {
+                                loopStart = coordinator.currentMeasureIndex
+                                loopEnd = min(totalMeasures - 1, coordinator.currentMeasureIndex + 1)
+                            }
+                            onLoopChanged()
+                        }))
+                        Stepper("From bar \((loopStart ?? 0) + 1)", value: loopBound(isStart: true), in: 1...max(1, totalMeasures))
+                        Stepper("To bar \((loopEnd ?? 0) + 1)", value: loopBound(isStart: false), in: 1...max(1, totalMeasures))
+                        Button("Start at current bar") { loopBound(isStart: true).wrappedValue = coordinator.currentMeasureIndex + 1 }
+                        Button("End at current bar") { loopBound(isStart: false).wrappedValue = coordinator.currentMeasureIndex + 1 }
+                        Button("Clear loop") {
+                            loopEnabled = false; loopStart = nil; loopEnd = nil; trainerPass = 0
+                            onLoopChanged()
+                        }
+                    } footer: {
+                        Text("Tap the score or drag the position slider to seek. Set the bars to repeat here.")
+                    }
+                }
+                .frame(minWidth: 300, minHeight: 340)
+                .presentationCompactAdaptation(.popover)
+            }
     }
 
-    private func toggleLoop() {
-        loopEnabled.toggle()
-        if loopEnabled, loopStart == nil || loopEnd == nil {
-            let cur = coordinator.currentMeasureIndex
-            loopStart = cur
-            loopEnd = min(totalMeasures - 1, cur + 1)
-        }
-        onLoopChanged()
+    private func loopBound(isStart: Bool) -> Binding<Int> {
+        Binding(get: { (isStart ? loopStart : loopEnd).map { $0 + 1 } ?? 1 }, set: { value in
+            let index = max(0, min(totalMeasures - 1, value - 1))
+            if isStart {
+                loopStart = index
+                loopEnd = max(index, loopEnd ?? index)
+            } else {
+                loopEnd = index
+                loopStart = min(index, loopStart ?? index)
+            }
+            loopEnabled = true
+            trainerPass = 0
+            onLoopChanged()
+        })
     }
 
     private func setTempoPercent(_ pct: Int) {
@@ -461,7 +511,8 @@ struct TabTransportBar<Display: View>: View {
 
     private var tempoPopover: some View {
         Form {
-            Section {
+            if allowsReferenceTempoEditing {
+                Section {
                 HStack {
                     Text("Song tempo").fontWeight(.semibold)
                     Spacer()
@@ -485,6 +536,7 @@ struct TabTransportBar<Display: View>: View {
             } footer: {
                 Text("The song's real tempo — set it here when the tab doesn't list one. Practice speed is relative to it.")
             }
+            }
             Section {
                 HStack {
                     Text("Practice speed").fontWeight(.semibold)
@@ -494,12 +546,12 @@ struct TabTransportBar<Display: View>: View {
                 }
                 Slider(
                     value: Binding(get: { coordinator.bpm }, set: { coordinator.bpm = $0; userBPM = $0 }),
-                    in: max(30, originalBPM * 0.25)...max(60, originalBPM),
+                    in: max(1, originalBPM * 0.25)...max(1, originalBPM * 1.5),
                     step: 1
                 )
                 .tint(DS.accent)
                 HStack {
-                    ForEach([50, 75, 90, 100], id: \.self) { pct in
+                    ForEach([50, 75, 100, 125], id: \.self) { pct in
                         Button { setTempoPercent(pct) } label: {
                             Text("\(pct)%").frame(maxWidth: .infinity)
                         }
@@ -597,10 +649,11 @@ struct OriginalTransportBar<Display: View>: View {
                 Image(systemName: "arrow.up.to.line")
                     .font(.body)
                     .foregroundStyle(DS.fg1)
-                    .frame(width: 32, height: 44)
+                    .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Back to top")
 
             PlayCircleButton(isOn: scrolling) { togglePlay() }
 
@@ -619,9 +672,10 @@ struct OriginalTransportBar<Display: View>: View {
                 .foregroundStyle(DS.fg2)
             TokenScrubber(
                 value: Binding(get: { Double(scrollSpeed) }, set: { scrollSpeed = CGFloat($0) }),
-                range: 0...40
+                range: 0...40, accessibilityValueOffset: 0
             )
             .frame(minWidth: 120, maxWidth: .infinity)
+            .accessibilityLabel("Scroll speed")
         }
     }
 
@@ -630,7 +684,7 @@ struct OriginalTransportBar<Display: View>: View {
             TransportTile(icon: "repeat", label: "Loop to top", active: loopToTop) {
                 loopToTop.toggle()
             }
-            TransportTile(icon: "slider.horizontal.3", label: "Display", active: false) {
+            TransportTile(icon: "slider.horizontal.3", label: "Settings", active: false) {
                 showDisplay = true
             }
             .popover(isPresented: $showDisplay) {
@@ -651,7 +705,42 @@ struct OriginalTransportBar<Display: View>: View {
             resumeSpeed = scrollSpeed
             scrollSpeed = 0
         } else {
-            scrollSpeed = max(8, resumeSpeed)
+            scrollSpeed = resumeSpeed > 0 ? resumeSpeed : 8
+        }
+    }
+}
+
+/// The same notation, size, and follow preferences for both score renderers.
+struct PlayerDisplaySections: View {
+    @Binding var notation: String
+    @Binding var scale: Double
+    @Binding var autoScroll: String
+    var rhythm: Binding<Bool>? = nil
+    var supportsOriginal = false
+    var supportsTab = true
+
+    var body: some View {
+        Section("Notation") {
+            Picker("Notation", selection: $notation) {
+                if supportsOriginal {
+                    Text("Original").tag(NotationMode.original.rawValue)
+                    Text("Sheet music").tag(NotationMode.staffOnly.rawValue)
+                }
+                if supportsTab {
+                    Text("Tab only").tag(NotationMode.tabOnly.rawValue)
+                    Text("Tab + staff").tag(NotationMode.tabAndStaff.rawValue)
+                }
+            }
+            if let rhythm { Toggle("Rhythm letters", isOn: rhythm) }
+            Stepper("Size: \(Int((scale * 100).rounded()))%", value: $scale, in: 0.8...1.8, step: 0.1)
+        }
+        Section("Auto-scroll") {
+            Picker("Auto-scroll", selection: $autoScroll) {
+                Text("Smooth scroll").tag(AutoScrollMode.smooth.rawValue)
+                Text("Off").tag(AutoScrollMode.off.rawValue)
+                Text("Follow playback").tag(AutoScrollMode.follow.rawValue)
+                Text("Line by line").tag(AutoScrollMode.line.rawValue)
+            }
         }
     }
 }

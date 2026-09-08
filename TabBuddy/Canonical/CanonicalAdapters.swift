@@ -28,7 +28,7 @@ enum CanonicalAdapters {
         // Normalize spelled-out tunings ("EADGBE", "D A D G A D") to preset
         // names so both the display name and the MIDI mapping resolve.
         let tuningName = GuitarTuning.canonicalName(for: map.tuning) ?? map.tuning
-        let tuning = tuningMIDI(forName: tuningName) ?? GuitarTuning.standard.midiNotes
+        let tuning = map.resolvedOpenStringMIDI ?? []
         let beats = map.timeSignature?.beats ?? 4
         let noteValue = map.timeSignature?.noteValue ?? 4
         let capo = map.capoSemitones ?? 0
@@ -104,7 +104,7 @@ enum CanonicalAdapters {
                             artist: resolvedArtist,
                             comments: map.comments,
                             tuningMIDI: tuning,
-                            tuningName: tuningName ?? GuitarTuning.standard.name,
+                            tuningName: tuningName ?? "Unknown",
                             capoOffsets: capoOffsets,
                             beatsPerMeasure: beats,
                             noteValue: noteValue,
@@ -154,6 +154,8 @@ enum CanonicalAdapters {
                                           measureCount: max(tab.measureCount, 1),
                                           bpm: tab.bpm ?? 120,
                                           tuningMIDI: tab.tuningMIDI)
+        map.tuning = tab.tuningName
+        map.capoSemitones = tab.capoOffsets.first
         map.key = keyName(forFifths: tab.keyFifths)
         // Chords ride along by measure order.
         if tab.measures.contains(where: { !$0.chords.isEmpty }) {

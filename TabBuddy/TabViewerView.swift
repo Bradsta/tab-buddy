@@ -18,7 +18,7 @@ struct TabViewerView: View {
     @Environment(\.undoManager) private var undoManager
 
     /// Global preference for which representation to show (per-user, sticky).
-    @AppStorage("viewer.renderMode") private var renderMode: ViewerRenderMode = .original
+    @State private var renderMode: ViewerRenderMode = .original
     /// Text-tab display, remembered per song. Defaults to the raw original text;
     /// the user can switch a given song to the drawn Tab Player and it sticks.
     private var textMode: TextViewMode {
@@ -60,7 +60,14 @@ struct TabViewerView: View {
     @State private var showRename = false
     @State private var newName    = ""
     @State private var showTags   = false
-    @State private var hasAccess = false
+    @State private var showDetails = false
+    @State private var creatingArrangement = false
+    @State private var fileLease: FileAccessLease?
+    @State private var resolvedFileURL: URL?
+    @State private var fileAccessError: String?
+    @State private var fileAccessTask: Task<Void, Never>?
+    @State private var textParseTask: Task<Void, Never>?
+    @State private var textLoadGeneration = UUID()
 
     // MARK: - Playback state
     @StateObject private var playbackCoordinator = PlaybackCoordinator()
@@ -73,17 +80,37 @@ struct TabViewerView: View {
     // Loop-to-top for the Original file view's auto-scroll transport.
     @State private var loopToTopText = false
 
+    private func resolveFile() {
+        fileAccessTask?.cancel()
+        fileAccessError = nil
+        fileAccessTask = Task {
+            guard let file else { return }
+            do {
+                let lease = try await LibraryManager.shared.acquireFile(file)
+                guard !Task.isCancelled else { lease.close(); return }
+                fileLease?.close()
+                fileLease = lease
+                resolvedFileURL = lease.url
+                if !isGuitarPro && !isPDF { loadText() }
+                setupPlaybackCallbacks()
+            } catch {
+                guard !Task.isCancelled else { return }
+                fileAccessError = error.localizedDescription
+                textContent = error.localizedDescription
+            }
+        }
+    }
+
     @MainActor
     private func loadText() {
-        guard let url = file?.url else {
+        guard let url = resolvedFileURL else {
             textContent = NSLocalizedString("failed_load_permissions", comment: "")
             return
         }
 
+        let generation = UUID()
+        textLoadGeneration = generation
         DispatchQueue.global(qos: .userInitiated).async {
-            _ = url.startAccessingSecurityScopedResource()
-            defer { url.stopAccessingSecurityScopedResource() }
-
             do {
                 // Coordinated read: downloads iCloud placeholders before reading.
                 var readResult: Result<String, Error> = .failure(CocoaError(.fileReadUnknown))
@@ -92,16 +119,15 @@ struct TabViewerView: View {
                 }
                 let contents = try readResult.get()
                 DispatchQueue.main.async {
+                    guard textLoadGeneration == generation else { return }
                     // Normalize line endings (\r\n → \n) so UITextView and parser agree
                     textContent = contents.replacingOccurrences(of: "\r\n", with: "\n")
                                          .replacingOccurrences(of: "\r", with: "\n")
-                    // Parse immediately after loading (don't rely solely on .onChange)
-                    if file?.url?.pathExtension.lowercased() != "pdf" {
-                        parseTextTab()
-                    }
+                    // The text change schedules one cancellable parse off the UI thread.
                 }
             } catch {
                 DispatchQueue.main.async {
+                    guard textLoadGeneration == generation else { return }
                     textContent = error.localizedDescription
                 }
             }
@@ -141,6 +167,7 @@ struct TabViewerView: View {
         // interactive swipe-back — `navigationBarBackButtonHidden` is what
         // disables that edge gesture, so we deliberately don't set it.
         .toolbar(.hidden, for: .navigationBar)
+        .sheet(isPresented: $showDetails) { if let file { ScoreDetailsView(file: file) } }
         .onAppear {
             // restore saved scroll speed for this file
             if let saved = file?.scrollSpeed {
@@ -151,25 +178,17 @@ struct TabViewerView: View {
                 userBPM = saved
                 playbackCoordinator.bpm = saved
             }
-            if !hasAccess {
-                hasAccess = file?.url?.startAccessingSecurityScopedResource() ?? false
-                loadText()
-            } else {
-                loadText()
-            }
+            resolveFile()
             // automatically start auto-scroll if a saved speed exists (delay to ensure PDF proxy is set)
-            if scrollSpeed > 0 {
+            if scrollSpeed > 0 && !isGuitarPro {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     startAutoScroll()
                 }
             }
             // Set up playback coordinator callbacks
-            setupPlaybackCallbacks()
-
-            // Convert-on-open for PDFs (text tabs convert in parseTextTab, reusing
-            // their parse). Runs off the main actor; idempotent and best-effort.
-            if let file, file.url?.pathExtension.lowercased() == "pdf" {
-                CanonicalConverter.shared.convertOnOpen(file, context: context)
+            // PDFs stay original; guitar arrangement generation is an explicit action.
+            if let file, file.filename.lowercased().hasSuffix(".pdf") {
+                file.inferMetadata(from: file.displayTitle)
                 // Already-converted PDFs can offer the drawn Tab Player now.
                 loadCanonicalMap()
             }
@@ -195,10 +214,12 @@ struct TabViewerView: View {
         }
         .onDisappear {
             playCountTask?.cancel()
-            if hasAccess {
-                file?.url?.stopAccessingSecurityScopedResource()
-                hasAccess = false
-            }
+            fileAccessTask?.cancel()
+            textParseTask?.cancel()
+            textLoadGeneration = UUID()
+            fileLease?.close()
+            fileLease = nil
+            resolvedFileURL = nil
             stopAutoScroll()
             playbackCoordinator.stop()
             metronome.stop()
@@ -227,7 +248,7 @@ struct TabViewerView: View {
         }
         .onChange(of: textContent) { _ in
             // Parse tab structure when text content loads
-            if file?.url?.pathExtension.lowercased() != "pdf" {
+            if !isPDF && !isGuitarPro {
                 parseTextTab()
             }
         }
@@ -239,7 +260,7 @@ struct TabViewerView: View {
         .onChange(of: scrollViewProxy) { proxy in
             coordinator.scrollViewProxy = proxy
             // restart auto-scroll for PDF when the proxy becomes available
-            guard file?.url?.pathExtension.lowercased() == "pdf",
+            guard isPDF,
                   proxy != nil,
                   scrollSpeed > 0 else { return }
             DispatchQueue.main.async {
@@ -287,10 +308,6 @@ struct TabViewerView: View {
         do {
             print("Loading TXT: \(fileURL)")
             
-            guard fileURL.startAccessingSecurityScopedResource() else {
-                return "\(LocalizedStringKey("failed_load_permissions"))"
-            }
-            
             return try String(contentsOf: fileURL)
         } catch {
             return error.localizedDescription
@@ -308,6 +325,7 @@ struct TabViewerView: View {
             onToggleFavorite: file == nil ? nil : { toggleFavorite() },
             onRename: { newName = file?.displayTitle ?? ""; showRename = true },
             onEditTags: { showTags = true },
+            onEditDetails: { showDetails = true },
             detailRows: headerDetailRows,
             // Original is the primary reading surface; the TabBuddy render
             // is opt-in per track until extraction earns more trust.
@@ -325,10 +343,12 @@ struct TabViewerView: View {
     /// PDF original → `PDF · tag`. Unknowns omitted, tags lowercase.
     private var headerSubtitle: String {
         var parts: [String] = []
-        if isPDF && !usingDrawnPlayer {
+        if isGuitarPro {
+            parts.append("Guitar Pro")
+        } else if isPDF && !usingDrawnPlayer {
             parts.append("PDF")
         } else if let map = measureMap {
-            parts.append(map.tuning ?? "Standard")
+            if let tuning = map.tuning { parts.append(tuning) }
             if let ts = map.timeSignature { parts.append("\(ts.beats)/\(ts.noteValue)") }
         }
         if let tag = file?.tags.first { parts.append(tag.lowercased()) }
@@ -338,6 +358,10 @@ struct TabViewerView: View {
     private var headerDetailRows: [String] {
         guard let file else { return [] }
         var rows: [String] = [file.filename]
+        if isGuitarPro {
+            rows.append("Player: alphaTab 1.8.4 · MPL-2.0")
+            rows.append("Source: github.com/CoderLine/alphaTab")
+        }
         if let p = file.provenance {
             rows.append("Source: \(p.sourceType.rawValue)")
             rows.append("Converter v\(p.converterVersion)")
@@ -425,9 +449,14 @@ struct TabViewerView: View {
     }
 
         // --------------------------------------------------------------------
+        /// Binary Guitar Pro files use their dedicated offline player.
+        private var isGuitarPro: Bool {
+            GuitarProFileType.contains(file?.filename ?? "")
+        }
+
         /// Whether the file is a PDF (governs the PDFKit fallback).
         private var isPDF: Bool {
-            file?.url?.pathExtension.lowercased() == "pdf"
+            file?.filename.lowercased().hasSuffix(".pdf") == true
         }
 
         /// True when this tab *can* show the drawn player (parsed into at
@@ -449,7 +478,7 @@ struct TabViewerView: View {
         private var subtitleText: String {
             guard let map = measureMap else { return "" }
             var parts: [String] = []
-            parts.append(map.tuning ?? "Standard")
+            if let tuning = map.tuning { parts.append(tuning) }
             if let capo = map.capoSemitones, capo > 0 { parts.append("Capo \(capo)") }
             if let key = map.key, !key.isEmpty { parts.append(key) }
             if let ts = map.timeSignature { parts.append("\(ts.beats)/\(ts.noteValue)") }
@@ -460,7 +489,7 @@ struct TabViewerView: View {
         /// text view *and* the PDF view — i.e. anything that isn't the drawn
         /// player (which carries its own playback transport).
         private var showScrollTransport: Bool {
-            !usingDrawnPlayer
+            !usingDrawnPlayer && !isGuitarPro
         }
 
         /// Shared transport for the Original file views (text + PDF): play =
@@ -486,6 +515,20 @@ struct TabViewerView: View {
         /// Form). Text tabs offer text size; PDFs have no text controls.
         @ViewBuilder
         private var originalDisplaySections: some View {
+            if isPDF, let file {
+                Section("Arrangement") {
+                    Button(creatingArrangement ? "Creating arrangement…" : "Create guitar arrangement") {
+                        creatingArrangement = true
+                        Task { @MainActor in
+                            let succeeded = await CanonicalConverter.shared.convert(file, context: context)
+                            creatingArrangement = false
+                            if succeeded { loadCanonicalMap() }
+                            else { LibraryManager.shared.lastError = "Could not create a guitar arrangement from this score. The original is still available." }
+                        }
+                    }.disabled(creatingArrangement)
+                    Text("Optional, approximate conversion. Your original sheet music stays unchanged.").font(.caption)
+                }
+            }
             if !isPDF {
                 Section("Text") {
                     HStack {
@@ -520,7 +563,13 @@ struct TabViewerView: View {
 
         @ViewBuilder
         private var viewerBody: some View {
-            if usingDrawnPlayer, let map = measureMap {
+            if isGuitarPro {
+                if let url = resolvedFileURL, let file {
+                    GuitarProView(url: url, fileID: file.id, file: file).id(file.id)
+                } else {
+                    Text(textContent).padding()
+                }
+            } else if usingDrawnPlayer, let map = measureMap {
                 // The redesigned native Tab Player, drawn from the MeasureMap.
                 TabPlayerView(map: map,
                               file: file,
@@ -538,7 +587,7 @@ struct TabViewerView: View {
                         onTapAtCharacter: nil)
                     .padding(.horizontal, 4)
             } else if isPDF {
-                if let url = file?.url {
+                if let url = resolvedFileURL {
                     VStack(spacing: 0) {
                         if showConfidenceNotice {
                             confidenceNoticeCard
@@ -548,6 +597,13 @@ struct TabViewerView: View {
                         TabPDFView(url: url, scrollViewProxy: $scrollViewProxy)
                             .padding()
                     }
+                } else if let error = fileAccessError {
+                    VStack(spacing: 12) {
+                        Text(error).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                        Button("Retry") { resolveFile() }
+                    }.padding()
+                } else {
+                    ProgressView("Opening PDF…")
                 }
             } else {
                 TabText(fontSize: $fontSize,
@@ -612,13 +668,14 @@ struct TabViewerView: View {
     // MARK: - Playback Integration
 
     private func setupPlaybackCallbacks() {
+        guard !isGuitarPro else { return }
         // Parse tab for text files
-        if file?.url?.pathExtension.lowercased() != "pdf" {
+        if !isPDF {
             parseTextTab()
         }
 
         // Try to find paired MIDI for auto-BPM
-        if let fileURL = file?.url {
+        if let fileURL = resolvedFileURL {
             if let midiURL = MIDITempoExtractor.findPairedMIDI(for: fileURL),
                let tempoData = MIDITempoExtractor.extract(from: midiURL) {
                 if file?.userBPM == nil {
@@ -643,16 +700,16 @@ struct TabViewerView: View {
         playbackCoordinator.onNoteReached = { [weak notePlayer] notes in
             guard let player = notePlayer, player.isEnabled else { return }
             if notes.count == 1 {
-                player.playNotes(notes[0].frets)
+                player.playNotes(notes[0].frets, tuningMIDI: measureMap?.resolvedOpenStringMIDI?.map { $0 + (measureMap?.capoSemitones ?? 0) } ?? [])
             } else {
                 // Merge frets from all notes — latest position wins on conflict
-                var merged: [Int?] = Array(repeating: nil, count: 6)
+                var merged: [Int?] = Array(repeating: nil, count: notes.map { $0.frets.count }.max() ?? 0)
                 for note in notes.sorted(by: { $0.positionInMeasure < $1.positionInMeasure }) {
                     for (i, fret) in note.frets.enumerated() {
                         if let f = fret { merged[i] = f }
                     }
                 }
-                player.playNotes(merged)
+                player.playNotes(merged, tuningMIDI: measureMap?.resolvedOpenStringMIDI?.map { $0 + (measureMap?.capoSemitones ?? 0) } ?? [])
             }
         }
 
@@ -732,22 +789,29 @@ struct TabViewerView: View {
     }
 
     private func parseTextTab() {
-        guard !textContent.isEmpty, textContent != "Loading…" else { return }
-        let parsed = TabParser.parse(textContent)
-        measureMap = parsed
-        playbackCoordinator.measureMap = parsed
-
-        // Use parsed BPM if available and user hasn't set one
-        if file?.userBPM == nil, let parsedBPM = parsed.bpm {
-            userBPM = parsedBPM
-            playbackCoordinator.bpm = parsedBPM
-        }
-
-        // Convert-on-open (cheap): reuse the parse we just did to persist a
-        // current canonical for this file if it's missing or stale.
-        if let file {
-            CanonicalConverter.shared.convertOnOpen(file, context: context,
-                                                    prebuilt: (parsed, .txtDirect))
+        textParseTask?.cancel()
+        guard !textContent.isEmpty, textContent != "Loading…", let item = file else { return }
+        let text = textContent
+        let title = item.displayTitle
+        textParseTask = Task {
+            let work = Task.detached(priority: .userInitiated) {
+                let parsed = TabParser.parse(text)
+                let inference = FileItem.inferredMetadata(from: title + "\n" + text.components(separatedBy: "\n").prefix(128).joined(separator: "\n"))
+                return (parsed, inference, EmbeddedScoreMetadata.parseHeader(text))
+            }
+            let (parsed, inference, metadata) = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
+            guard !Task.isCancelled, item.modelContext != nil, !item.isDeleted, textContent == text else { return }
+            measureMap = parsed
+            playbackCoordinator.measureMap = parsed
+            if item.userBPM == nil, let bpm = parsed.bpm {
+                userBPM = bpm
+                playbackCoordinator.bpm = bpm
+            }
+            item.applyInferredMetadata(inference)
+            if let metadata { item.applyEmbeddedMetadata(metadata) }
+            if !item.metadataEdited && item.tuning == nil { item.tuning = parsed.tuning }
+            try? context.save()
+            CanonicalConverter.shared.convertOnOpen(item, context: context, prebuilt: (parsed, .txtDirect))
         }
     }
 

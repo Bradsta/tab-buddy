@@ -34,9 +34,9 @@ enum MeasureMapBuilder {
 
             let noteEvents: [NoteEvent] = composedNotes.map { cn in
                 // Convert MIDI pitch to fret array using suggestion or override
-                var frets: [Int?] = Array(repeating: nil, count: 6)
+                var frets: [Int?] = Array(repeating: nil, count: tuningMIDI.count)
 
-                if let string = cn.selectedString, let fret = cn.selectedFret {
+                if let string = cn.selectedString, let fret = cn.selectedFret, frets.indices.contains(string) {
                     frets[string] = fret
                 } else if let suggestion = FretSuggestionEngine.suggest(
                     midiPitch: cn.midiPitch,
@@ -74,7 +74,9 @@ enum MeasureMapBuilder {
             timeSignature: (beats: beatsPerMeasure, noteValue: noteValue),
             key: nil,
             tuning: nil,
-            systems: [system]
+            systems: [system],
+            detectedStringCount: tuningMIDI.count,
+            openStringMIDI: tuningMIDI
         )
     }
 }

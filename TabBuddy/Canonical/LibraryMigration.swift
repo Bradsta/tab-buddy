@@ -18,7 +18,7 @@ import SwiftData
 enum LibraryMigration {
 
     /// Bump when a launch-time migration step is added.
-    static let currentSchemaVersion = 2   // 1 = pre-canonical
+    static let currentSchemaVersion = 3   // 3 = root-relative library architecture
     private static let schemaVersionKey = "tabbuddy.schemaVersion"
 
     /// Run any pending one-time migration steps. Safe to call on every launch;

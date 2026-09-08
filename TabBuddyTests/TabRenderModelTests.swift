@@ -55,7 +55,7 @@ final class TabRenderModelTests: XCTestCase {
               let firstCol = firstMeasure.columns.first else {
             return XCTFail("no columns parsed")
         }
-        XCTAssertEqual(firstCol.frets.count, TabRenderModel.stringCount)
+        XCTAssertEqual(firstCol.frets.count, m.stringCount)
         // High E (index 0) plays fret 0, B (index 1) plays fret 1 at the first onset.
         XCTAssertEqual(firstCol.frets[0], 0)
         XCTAssertEqual(firstCol.frets[1], 1)
@@ -93,4 +93,49 @@ final class TabRenderModelTests: XCTestCase {
             XCTAssertNil(TabRenderModel.activeColumn(in: measure, beatFraction: -0.01))
         }
     }
+    func testVariableStringRowsPreserveFretsAndKnownPitches() {
+        for tuning in [GuitarTuning.bass4, .bass5, .bass6, .ukulele, .guitar7, .guitar8] {
+            let width = tuning.noteNames.map(\.count).max() ?? 1
+            let text = tuning.noteNames.enumerated().map { "\($0.element.padding(toLength: width, withPad: " ", startingAt: 0))|--\($0.offset)--|" }.joined(separator: "\n")
+            let map = TabParser.parse("Tuning: Standard\n" + text)
+            let render = TabRenderModelBuilder.build(from: map)
+            XCTAssertEqual(render.stringCount, tuning.midiNotes.count, tuning.name)
+            let column = render.systems.first?.measures.first?.columns.first
+            XCTAssertEqual(column?.frets, tuning.midiNotes.indices.map { Optional($0) }, tuning.name)
+            XCTAssertEqual(map.resolvedOpenStringMIDI, tuning.midiNotes, tuning.name)
+            let canonical = CanonicalAdapters.canonicalTab(from: map, title: "Exercise", sourceType: .txtDirect)
+            let roundtrip = CanonicalAdapters.measureMap(from: canonical)
+            XCTAssertEqual(roundtrip.stringCount, tuning.midiNotes.count)
+            XCTAssertEqual(roundtrip.openStringMIDI, tuning.midiNotes)
+        }
+    }
+
+    func testRepeatedCustomPitchesDoNotBecomeStandardGuitar() {
+        let text = (0..<12).map { _ in "C|--0--|" }.joined(separator: "\n")
+        let map = TabParser.parse(text)
+        let render = TabRenderModelBuilder.build(from: map)
+        XCTAssertEqual(render.stringCount, 12)
+        XCTAssertEqual(render.stringLabels, Array(repeating: "C", count: 12))
+        XCTAssertNil(map.resolvedOpenStringMIDI)
+        XCTAssertNil(render.systems.first?.measures.first?.columns.first?.melodyMIDI)
+    }
+
+    func testSourceSearchEncodesUserInputAndFiltersInstruments() throws {
+        let source = try XCTUnwrap(ScoreSource.all.first { $0.id == "mutopia" })
+        let url = source.searchURL(query: "Bach & Handel #1", instrument: .piano)
+        let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first?.value
+        XCTAssertEqual(query, "site:mutopiaproject.org Bach & Handel #1 Piano")
+        XCTAssertTrue(source.supports(.flute))
+        XCTAssertFalse(ScoreSource.all.first { $0.id == "classtab" }!.supports(.piano))
+        XCTAssertEqual(source.searchURL(query: "  ", instrument: nil).host, "www.mutopiaproject.org")
+    }
+
+    func testMultipleInstrumentDetectionAndUnknownNotation() {
+        XCTAssertEqual(Set(Instrument.detectAll(inText: "Piano and voice")), [.piano, .voice])
+        XCTAssertEqual(Instrument.detectAll(inText: "Bass guitar"), [.bass])
+        XCTAssertNil(Instrument.detect(inText: "Sonata in C"))
+        XCTAssertEqual(Instrument.fromMIDI(program: 33, percussion: false), .bass)
+        XCTAssertEqual(Instrument.fromMIDI(program: 0, percussion: true), .drums)
+    }
+
 }

@@ -1,0 +1,18 @@
+:root { color-scheme: light; font: 14px -apple-system, BlinkMacSystemFont, sans-serif; color: #231c18; background: #fdfbf7; }
+* { box-sizing: border-box; }
+body { margin: 0; height: 100dvh; display: flex; flex-direction: column; }
+#status { padding: 12px 18px; color: #60564f; }
+#status:empty { display: none; }
+#score-scroll { flex: 1; min-height: 0; overflow: auto; }
+#score { padding: 8px 16px; }
+.at-cursor-bar { background: rgba(219,104,104,.10); }
+.at-cursor-beat { background: rgba(219,104,104,.65); width: 3px; }
+.at-selection div { background: rgba(219,104,104,.18); }
+.at-highlight * { fill: #c24d4f; stroke: #c24d4f; }
+
+@media (prefers-color-scheme: dark) {
+    :root { color-scheme: dark; color: #f4ebe2; background: #000; }
+    #status { color: #b6a99d; }
+    .at-cursor-beat { background: rgba(240,126,121,.65); }
+    .at-highlight * { fill: #f07e79; stroke: #f07e79; }
+}

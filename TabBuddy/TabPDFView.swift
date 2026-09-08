@@ -6,6 +6,8 @@ struct TabPDFView: View {
     @Binding var scrollViewProxy: UIScrollView?
     @State private var pdfDocument: PDFDocument? = nil
     @State private var isLoading = true
+    @State private var loadError: String?
+    @State private var loadAttempt = 0
     @State private var isLightBackground = false
     @Environment(\.colorScheme) private var colorScheme
 
@@ -30,38 +32,57 @@ struct TabPDFView: View {
                 ProgressView("Loading PDF...")
                     .progressViewStyle(CircularProgressViewStyle())
             } else {
-                Text("Couldn't load this PDF. Check that the file is available in iCloud.")
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding()
+                VStack(spacing: 12) {
+                    Text(loadError ?? "This file could not be read as a PDF.")
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    Button("Retry") { loadAttempt += 1 }
+                }.padding()
             }
         }
-        .onAppear {
-            loadPDF()
+        .task(id: "\(url.absoluteString)#\(loadAttempt)#\(colorScheme)") {
+            await loadPDF()
         }
     }
 
-    private func loadPDF() {
-        DispatchQueue.global(qos: .userInitiated).async {
-            // Best-effort: needed for bookmark-scoped (ad-hoc) files. Library
-            // files resolve under the library root, whose scope is already
-            // held — for those this returns false, which is fine.
-            _ = url.startAccessingSecurityScopedResource()
-
-            // Coordinated read: an iCloud file that hasn't been downloaded is
-            // just a placeholder — coordination triggers the download and
-            // waits for the real file.
-            var document: PDFDocument? = nil
-            NSFileCoordinator().coordinate(readingItemAt: url, options: [], error: nil) { readURL in
-                document = PDFDocument(url: readURL)
+    private func loadPDF() async {
+        isLoading = true
+        loadError = nil
+        pdfDocument = nil
+        let source = url
+        let inspectBackground = colorScheme == .dark
+        let access = PDFReadCoordinator()
+        let work = Task.detached(priority: .userInitiated) {
+            var error: NSError?
+            var data: Data?
+            var readError: Error?
+            access.coordinator.coordinate(readingItemAt: source, options: .withoutChanges, error: &error) { readableURL in
+                do {
+                    try Task.checkCancellation()
+                    data = try Data(contentsOf: readableURL)
+                } catch { readError = error }
             }
-            let isLight = document.map { Self.hasLightBackground($0) } ?? false
-
-            DispatchQueue.main.async {
-                self.pdfDocument = document
-                self.isLightBackground = isLight
-                self.isLoading = false
+            try Task.checkCancellation()
+            if let error { throw error }
+            if let readError { throw readError }
+            guard let data, let document = PDFDocument(data: data) else { throw CocoaError(.fileReadCorruptFile) }
+            // The document owns the bytes after coordination ends; PDFKit can lazily
+            // render pages without depending on a provider URL or an expired lease.
+            return LoadedPDF(document: document, isLight: inspectBackground && Self.hasLightBackground(document))
+        }
+        do {
+            let loaded = try await withTaskCancellationHandler { try await work.value } onCancel: {
+                access.coordinator.cancel()
+                work.cancel()
             }
+            guard !Task.isCancelled else { return }
+            pdfDocument = loaded.document
+            isLightBackground = loaded.isLight
+            isLoading = false
+        } catch {
+            guard !Task.isCancelled else { return }
+            loadError = error.localizedDescription
+            isLoading = false
         }
     }
 
@@ -138,8 +159,20 @@ private struct InternalPDFView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: PDFView, context: Context) {
+        if uiView.document !== document { uiView.document = document }
         if forceWhiteBackground {
             uiView.backgroundColor = .white
         }
     }
+}
+
+/// The worker owns document creation, then transfers exclusive use to the UI.
+private struct LoadedPDF: @unchecked Sendable {
+    let document: PDFDocument
+    let isLight: Bool
+}
+
+/// Only cancellation crosses actors while the worker coordinates the read.
+private final class PDFReadCoordinator: @unchecked Sendable {
+    let coordinator = NSFileCoordinator()
 }

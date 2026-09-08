@@ -23,7 +23,19 @@ struct TabParser {
         let lines = normalized.components(separatedBy: "\n").map(normalizeDialect)
         let systemGroups = detectSystems(lines: lines)
         let firstTabLine = systemGroups.first?.tabLineIndices.first ?? lines.count
-        let metadata = parseMetadata(lines: lines, firstTabContentLine: firstTabLine)
+        var metadata = parseMetadata(lines: lines, firstTabContentLine: firstTabLine)
+        if metadata.tuning == nil || metadata.tuning?.caseInsensitiveCompare("Standard") == .orderedSame,
+           let group = systemGroups.first {
+            let labels = group.tabLineIndices.compactMap { index -> String? in
+                let line = lines[index].trimmingCharacters(in: .whitespaces)
+                guard let range = line.range(of: #"^[A-Ga-g][#b]?(?=\s*[|:\-])"#, options: .regularExpression) else { return nil }
+                return String(line[range])
+            }
+            if labels.count == group.tabLineIndices.count, labels.count >= 4 {
+                metadata.tuning = labels.reversed().joined(separator: " ")
+            }
+        }
+        if let tuning = metadata.tuning { metadata.tuning = GuitarTuning.displayName(for: tuning) }
 
         var globalMeasureNumber = 1
         var systems: [MeasureSystem] = []
@@ -56,6 +68,7 @@ struct TabParser {
             tuning: metadata.tuning,
             systems: systems
         )
+        map.detectedStringCount = systemGroups.map { $0.tabLineIndices.count }.max()
         map.title = metadata.title
         map.artist = metadata.artist
         map.comments = metadata.comments
@@ -118,7 +131,7 @@ struct TabParser {
 
             // Tuning
             if meta.tuning == nil && lower.contains("tuning") {
-                if lower.contains("standard") {
+                if lower.trimmingCharacters(in: .whitespaces) == "standard tuning" {
                     meta.tuning = "Standard"
                 } else {
                     // Find the colon specifically after "tuning"
@@ -445,11 +458,11 @@ struct TabParser {
             defer { currentTabLines = []; contextAbove = [] }
 
             // Trim divider lines glued to the edges of an oversized group
-            // (a real guitar system has at most 6 strings).
-            while currentTabLines.count > 6, let f = currentTabLines.first, isDecoration(f) {
+            // without imposing a particular instrument string count.
+            while currentTabLines.count > 1, let f = currentTabLines.first, isDecoration(f) {
                 currentTabLines.removeFirst()
             }
-            while currentTabLines.count > 6, let l = currentTabLines.last, isDecoration(l) {
+            while currentTabLines.count > 1, let l = currentTabLines.last, isDecoration(l) {
                 currentTabLines.removeLast()
             }
             // A lone decoration line is a separator, not a one-string system.
@@ -1334,7 +1347,7 @@ struct TabParser {
                 : 0.0
 
             // Read fret number from each string at this column
-            var frets: [Int?] = Array(repeating: nil, count: 6)
+            var frets: [Int?] = Array(repeating: nil, count: tabLineIndices.count)
             for (stringIdx, lineIdx) in stringOrder {
                 let chars = Array(lines[lineIdx])
                 let mask = masks[lineIdx] ?? []
@@ -1398,63 +1411,9 @@ struct TabParser {
         tabLineIndices: [Int],
         lines: [String]
     ) -> [(stringIndex: Int, lineIndex: Int)] {
-        // Standard tuning order from top to bottom: e(0), B(1), G(2), D(3), A(4), E(5)
-        // Case-sensitive canonical names
-        let standardNames: [Character] = ["e", "B", "G", "D", "A", "E"]
-        // Case-insensitive order for matching when tab uses uniform case
-        let standardNamesLower: [Character] = ["e", "b", "g", "d", "a", "e"]
-
-        // Extract the label character for each tab line
-        var labels: [(char: Character, lineIdx: Int)] = []
-        for lineIdx in tabLineIndices {
-            let line = lines[lineIdx].trimmingCharacters(in: .whitespaces)
-            guard var firstChar = line.first else { continue }
-            // German notation: H is the B string
-            if firstChar == "H" { firstChar = "B" }
-            if firstChar == "h" { firstChar = "b" }
-            labels.append((firstChar, lineIdx))
-        }
-
-        // First try exact case-sensitive matching
-        var result: [(Int, Int)] = []
-        var usedIndices = Set<Int>()
-        var allMatched = true
-
-        for (char, lineIdx) in labels {
-            // Find the first unused match in standardNames
-            if let idx = standardNames.indices.first(where: {
-                standardNames[$0] == char && !usedIndices.contains($0)
-            }) {
-                result.append((idx, lineIdx))
-                usedIndices.insert(idx)
-            } else {
-                allMatched = false
-                break
-            }
-        }
-
-        // If exact matching failed (e.g., all-uppercase E,B,G,D,A,E), try
-        // case-insensitive matching with positional disambiguation
-        if !allMatched {
-            result = []
-            usedIndices = []
-
-            for (char, lineIdx) in labels {
-                let lc = Character(char.lowercased())
-                if let idx = standardNamesLower.indices.first(where: {
-                    standardNamesLower[$0] == lc && !usedIndices.contains($0)
-                }) {
-                    result.append((idx, lineIdx))
-                    usedIndices.insert(idx)
-                } else {
-                    // Fallback: assign by position (top = high string)
-                    let posIdx = labels.firstIndex(where: { $0.lineIdx == lineIdx }) ?? 0
-                    result.append((min(posIdx, 5), lineIdx))
-                }
-            }
-        }
-
-        return result
+        // Physical row order is authoritative for bass, reentrant tunings,
+        // repeated pitches, and extended-range instruments alike.
+        return tabLineIndices.enumerated().map { ($0.offset, $0.element) }
     }
 
     // MARK: - Beat Estimation

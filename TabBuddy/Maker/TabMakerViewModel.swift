@@ -310,10 +310,10 @@ final class TabMakerViewModel: ObservableObject {
 
         playbackCoordinator.onNoteReached = { [weak self] noteEvents in
             guard let self else { return }
-            var mergedFrets: [Int?] = Array(repeating: nil, count: 6)
+            var mergedFrets: [Int?] = Array(repeating: nil, count: self.cachedTuningMIDI.count)
             for event in noteEvents {
                 for (i, fret) in event.frets.enumerated() {
-                    if fret != nil { mergedFrets[i] = fret }
+                    if fret != nil && mergedFrets.indices.contains(i) { mergedFrets[i] = fret }
                 }
             }
             self.notePlayer.playNotes(mergedFrets, tuningMIDI: self.cachedTuningMIDI)
