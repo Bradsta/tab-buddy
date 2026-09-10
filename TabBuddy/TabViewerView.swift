@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import SwiftData
 import UniformTypeIdentifiers
 import QuartzCore
 
@@ -13,12 +14,39 @@ enum ViewerRenderMode: String { case original, canonical }
 /// For text tabs: the drawn native player vs. the raw original monospaced text.
 enum TextViewMode: String { case player, original }
 
+/// Keep database work out of reader gestures. Pending writes outlive a popped
+/// viewer, coalesce on the owning context, and flush when the app leaves active use.
+@MainActor
+enum ReaderPersistence {
+    private static var pendingSaves: [ObjectIdentifier: Task<Void, Never>] = [:]
+
+    static func scheduleSave(_ context: ModelContext) {
+        let key = ObjectIdentifier(context)
+        pendingSaves[key]?.cancel()
+        pendingSaves[key] = Task {
+            do { try await Task.sleep(for: .milliseconds(500)) } catch { return }
+            flush(context)
+        }
+    }
+
+    static func flush(_ context: ModelContext) {
+        pendingSaves.removeValue(forKey: ObjectIdentifier(context))?.cancel()
+        guard context.hasChanges else { return }
+        do { try context.save() }
+        catch { LibraryManager.shared.lastError = "Could not save reading preferences: \(error.localizedDescription)" }
+    }
+}
+
 struct TabViewerView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.undoManager) private var undoManager
 
     /// Global preference for which representation to show (per-user, sticky).
     @State private var renderMode: ViewerRenderMode = .original
+    @State private var hasShownPlayer = false
+    @State private var preparedRenderModel: TabRenderModel = .empty
+    @State private var canonicalLoadTask: Task<Void, Never>?
+    @State private var canonicalLoadedKey: String?
     /// Text-tab display, remembered per song. Defaults to the raw original text;
     /// the user can switch a given song to the drawn Tab Player and it sticks.
     private var textMode: TextViewMode {
@@ -67,6 +95,9 @@ struct TabViewerView: View {
     @State private var fileAccessError: String?
     @State private var fileAccessTask: Task<Void, Never>?
     @State private var textParseTask: Task<Void, Never>?
+    @State private var midiLoadTask: Task<Void, Never>?
+    @State private var pairedMIDI: MIDITempoData?
+    @State private var isVisible = false
     @State private var textLoadGeneration = UUID()
 
     // MARK: - Playback state
@@ -169,6 +200,8 @@ struct TabViewerView: View {
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showDetails) { if let file { ScoreDetailsView(file: file) } }
         .onAppear {
+            isVisible = true
+            if textMode == .player { hasShownPlayer = true }
             // restore saved scroll speed for this file
             if let saved = file?.scrollSpeed {
                 scrollSpeed = CGFloat(saved)
@@ -204,6 +237,12 @@ struct TabViewerView: View {
                 try? context.save()
             }
         }
+        .onChange(of: usingDrawnPlayer) { _, _ in
+            stopAutoScroll()
+            playbackCoordinator.pause()
+            metronome.stop()
+            notePlayer.stop()
+        }
         .onChange(of: renderMode) { mode in
             if mode == .canonical { loadCanonicalText() }
         }
@@ -213,9 +252,12 @@ struct TabViewerView: View {
             if isPDF { loadCanonicalMap() }
         }
         .onDisappear {
+            isVisible = false
             playCountTask?.cancel()
             fileAccessTask?.cancel()
+            canonicalLoadTask?.cancel()
             textParseTask?.cancel()
+            midiLoadTask?.cancel()
             textLoadGeneration = UUID()
             fileLease?.close()
             fileLease = nil
@@ -226,11 +268,15 @@ struct TabViewerView: View {
             notePlayer.stop()
             lastScrolledSystem = -1
             // persist scrollSpeed, loop markers, and BPM on exit
-            file?.scrollSpeed = Double(scrollSpeed)
-            file?.loopStartY = loopStartY.map { Double($0) }
-            file?.loopEndY = loopEndY.map { Double($0) }
-            file?.userBPM = userBPM
-            try? context.save()
+            if let file, file.modelContext != nil, !file.isDeleted {
+                if file.scrollSpeed != Double(scrollSpeed) { file.scrollSpeed = Double(scrollSpeed) }
+                let start = loopStartY.map { Double($0) }
+                let end = loopEndY.map { Double($0) }
+                if file.loopStartY != start { file.loopStartY = start }
+                if file.loopEndY != end { file.loopEndY = end }
+                if file.userBPM != userBPM { file.userBPM = userBPM }
+                ReaderPersistence.scheduleSave(context)
+            }
             // clear loop on coordinator for safety
             coordinator.loopStartY = nil
             coordinator.loopEndY = nil
@@ -275,7 +321,7 @@ struct TabViewerView: View {
     
     private func startAutoScroll() {
         stopAutoScroll()
-        guard scrollSpeed > 0 else { return }
+        guard isVisible, scrollSpeed > 0, !usingDrawnPlayer else { return }
         isAutoScrolling = true
 
         coordinator.scrollViewProxy = scrollViewProxy
@@ -375,8 +421,9 @@ struct TabViewerView: View {
         Binding(
             get: { usingDrawnPlayer ? 0 : 1 },
             set: { idx in
+                if idx == 0 { hasShownPlayer = true }
                 file?.preferredTextMode = (idx == 0 ? TextViewMode.player : .original).rawValue
-                try? context.save()
+                ReaderPersistence.scheduleSave(context)
             }
         )
     }
@@ -420,8 +467,7 @@ struct TabViewerView: View {
                 .lineLimit(2)
             Spacer(minLength: 4)
             Button("Review") {
-                file?.preferredTextMode = TextViewMode.player.rawValue
-                try? context.save()
+                viewSwitchSelection.wrappedValue = 0
             }
             .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(DS.accentStrong)
@@ -569,16 +615,30 @@ struct TabViewerView: View {
                 } else {
                     Text(textContent).padding()
                 }
-            } else if usingDrawnPlayer, let map = measureMap {
-                // The redesigned native Tab Player, drawn from the MeasureMap.
-                TabPlayerView(map: map,
-                              file: file,
-                              subtitle: subtitleText,
-                              coordinator: playbackCoordinator,
-                              metronome: metronome,
-                              notePlayer: notePlayer,
-                              userBPM: $userBPM)
-            } else if isPDF, renderMode == .canonical, file?.hasCanonical == true, let text = canonicalText {
+            } else {
+                ZStack {
+                    originalBody
+                        .opacity(usingDrawnPlayer ? 0 : 1)
+                        .allowsHitTesting(!usingDrawnPlayer)
+                        .accessibilityHidden(usingDrawnPlayer)
+                    if let map = measureMap, hasShownPlayer || usingDrawnPlayer {
+                        TabPlayerView(map: map, file: file, subtitle: subtitleText,
+                                      coordinator: playbackCoordinator, metronome: metronome,
+                                      notePlayer: notePlayer, userBPM: $userBPM,
+                                      preparedModel: preparedRenderModel, isActive: usingDrawnPlayer)
+                            .opacity(usingDrawnPlayer ? 1 : 0)
+                            .allowsHitTesting(usingDrawnPlayer)
+                            .accessibilityHidden(!usingDrawnPlayer)
+                    }
+                }
+                // Animate the segmented control, not two full score surfaces.
+                .transaction { $0.animation = nil }
+            }
+        }
+
+        @ViewBuilder
+        private var originalBody: some View {
+            if isPDF, renderMode == .canonical, file?.hasCanonical == true, let text = canonicalText {
                 // PDF → standardized TabBuddy ASCII rendering (read-only).
                 TabText(fontSize: $fontSize,
                         content: text,
@@ -674,20 +734,7 @@ struct TabViewerView: View {
             parseTextTab()
         }
 
-        // Try to find paired MIDI for auto-BPM
-        if let fileURL = resolvedFileURL {
-            if let midiURL = MIDITempoExtractor.findPairedMIDI(for: fileURL),
-               let tempoData = MIDITempoExtractor.extract(from: midiURL) {
-                if file?.userBPM == nil {
-                    userBPM = tempoData.initialBPM
-                    playbackCoordinator.bpm = tempoData.initialBPM
-                }
-                if measureMap?.timeSignature == nil,
-                   let ts = tempoData.timeSignature {
-                    measureMap?.timeSignature = ts
-                }
-            }
-        }
+        loadPairedMIDI()
 
         // Beat callback → metronome click
         playbackCoordinator.onBeat = { [weak metronome] beatInMeasure, beatsPerMeasure in
@@ -759,32 +806,61 @@ struct TabViewerView: View {
     }
 
     /// Load + cache the canonical's ASCII rendering from the stored MusicXML.
-    private func loadCanonicalText() {
-        guard let file, let fname = file.canonicalFilename,
-              let data = CanonicalStore.read(filename: fname),
-              let canonical = MusicXMLCodec.decode(data) else {
-            canonicalText = nil
-            return
+    private func loadCanonicalText() { loadCanonicalPresentation() }
+
+    private func loadCanonicalMap() { loadCanonicalPresentation() }
+
+    private func loadPairedMIDI() {
+        midiLoadTask?.cancel()
+        guard let file else { return }
+        midiLoadTask = Task {
+            // The worker retains its own security scope even if the viewer closes.
+            guard let lease = try? await LibraryManager.shared.acquireFile(file) else { return }
+            guard !Task.isCancelled else { lease.close(); return }
+            let work = Task.detached(priority: .utility) {
+                defer { lease.close() }
+                guard !Task.isCancelled,
+                      let url = MIDITempoExtractor.findPairedMIDI(for: lease.url),
+                      !Task.isCancelled else { return nil as MIDITempoData? }
+                return MIDITempoExtractor.extract(from: url)
+            }
+            let result = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
+            guard !Task.isCancelled, let result else { return }
+            pairedMIDI = result
+            if file.userBPM == nil {
+                userBPM = result.initialBPM
+                playbackCoordinator.bpm = result.initialBPM
+            }
+            if measureMap?.timeSignature == nil { measureMap?.timeSignature = result.timeSignature }
         }
-        canonicalText = CanonicalAdapters.asciiTab(from: canonical)
     }
 
-    /// For PDFs: build the playback/player MeasureMap from the stored
-    /// canonical (produced by spatial TAB or notation extraction). This is
-    /// what lets a PDF open in the drawn Tab Player.
-    private func loadCanonicalMap() {
-        guard let file, file.hasCanonical, let fname = file.canonicalFilename,
-              let data = CanonicalStore.read(filename: fname),
-              let canonical = MusicXMLCodec.decode(data),
-              !canonical.allNotes.isEmpty else { return }
-        let map = CanonicalAdapters.measureMap(from: canonical)
-        guard !map.systems.isEmpty else { return }
-        measureMap = map
-        playbackCoordinator.measureMap = map
-
-        if file.userBPM == nil, let bpm = canonical.bpm {
-            userBPM = bpm
-            playbackCoordinator.bpm = bpm
+    private func loadCanonicalPresentation() {
+        guard let file, file.hasCanonical, let filename = file.canonicalFilename else { return }
+        let key = "\(filename):\(file.canonicalVersion)"
+        guard canonicalLoadedKey != key else { return }
+        canonicalLoadTask?.cancel()
+        canonicalLoadTask = Task {
+            let work = Task.detached(priority: .userInitiated) { () -> (String, MeasureMap, TabRenderModel, Double?)? in
+                guard let data = CanonicalStore.read(filename: filename),
+                      let canonical = MusicXMLCodec.decode(data) else { return nil }
+                let map = CanonicalAdapters.measureMap(from: canonical)
+                return (CanonicalAdapters.asciiTab(from: canonical), map,
+                        TabRenderModelBuilder.build(from: map), canonical.bpm)
+            }
+            let result = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
+            guard !Task.isCancelled, let result else { return }
+            canonicalLoadedKey = key
+            canonicalText = result.0
+            if isPDF && !result.1.systems.isEmpty {
+                preparedRenderModel = result.2
+                measureMap = result.1
+                playbackCoordinator.measureMap = result.1
+                if file.userBPM == nil, let bpm = pairedMIDI?.initialBPM ?? result.3 {
+                    userBPM = bpm
+                    playbackCoordinator.bpm = bpm
+                }
+            }
         }
     }
 
@@ -797,20 +873,23 @@ struct TabViewerView: View {
             let work = Task.detached(priority: .userInitiated) {
                 let parsed = TabParser.parse(text)
                 let inference = FileItem.inferredMetadata(from: title + "\n" + text.components(separatedBy: "\n").prefix(128).joined(separator: "\n"))
-                return (parsed, inference, EmbeddedScoreMetadata.parseHeader(text))
+                return (parsed, inference, EmbeddedScoreMetadata.parseHeader(text), TabRenderModelBuilder.build(from: parsed))
             }
-            let (parsed, inference, metadata) = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
+            let (parsed, inference, metadata, renderModel) = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
             guard !Task.isCancelled, item.modelContext != nil, !item.isDeleted, textContent == text else { return }
-            measureMap = parsed
+            preparedRenderModel = renderModel
+            var map = parsed
+            if map.timeSignature == nil { map.timeSignature = pairedMIDI?.timeSignature }
+            measureMap = map
             playbackCoordinator.measureMap = parsed
-            if item.userBPM == nil, let bpm = parsed.bpm {
+            if item.userBPM == nil, let bpm = pairedMIDI?.initialBPM ?? parsed.bpm {
                 userBPM = bpm
                 playbackCoordinator.bpm = bpm
             }
             item.applyInferredMetadata(inference)
             if let metadata { item.applyEmbeddedMetadata(metadata) }
             if !item.metadataEdited && item.tuning == nil { item.tuning = parsed.tuning }
-            try? context.save()
+            ReaderPersistence.scheduleSave(context)
             CanonicalConverter.shared.convertOnOpen(item, context: context, prebuilt: (parsed, .txtDirect))
         }
     }

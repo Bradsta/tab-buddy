@@ -21,6 +21,8 @@ struct TabPlayerView: View {
     @ObservedObject var metronome: MetronomeEngine
     @ObservedObject var notePlayer: NotePlaybackEngine
     @Binding var userBPM: Double
+    var preparedModel: TabRenderModel? = nil
+    var isActive = true
 
     @Environment(\.modelContext) private var context
     @Environment(\.scenePhase) private var scenePhase
@@ -35,7 +37,8 @@ struct TabPlayerView: View {
     @AppStorage("player.autoScroll") private var autoScrollRaw = AutoScrollMode.smooth.rawValue
 
     // –– Session state ––
-    @State private var model: TabRenderModel = .empty
+    @State private var fallbackModel: TabRenderModel = .empty
+    private var model: TabRenderModel { preparedModel ?? fallbackModel }
     @State private var originalBPM: Double = 120
 
     // Loop (global measure indices, inclusive)
@@ -70,9 +73,18 @@ struct TabPlayerView: View {
         }
         .onChange(of: scenePhase) { if $0 != .active { smoothSpeed = 0 } }
         .onDisappear { smoothSpeed = 0 }
-        .onAppear { configure() }
-        .onChange(of: map.measureCount) { _ in
-            model = TabRenderModelBuilder.build(from: map)
+        .onAppear { if isActive { configure() } }
+        .onChange(of: isActive) { _, active in
+            if active { configure() } else { smoothSpeed = 0 }
+        }
+        .task(id: map.measureCount) {
+            if preparedModel == nil {
+                let snapshot = map
+                let built = await Task.detached(priority: .userInitiated) {
+                    TabRenderModelBuilder.build(from: snapshot)
+                }.value
+                if !Task.isCancelled { fallbackModel = built }
+            }
         }
         .onChange(of: userBPM) { coordinator.bpm = $0 }
     }
@@ -105,7 +117,6 @@ struct TabPlayerView: View {
     // MARK: - Setup
 
     private func configure() {
-        model = TabRenderModelBuilder.build(from: map)
         originalBPM = file?.referenceBPM ?? map.bpm ?? userBPM
         if originalBPM <= 0 { originalBPM = 120 }
         if let s = file?.loopStartMeasure, let e = file?.loopEndMeasure {
@@ -165,7 +176,7 @@ struct TabPlayerView: View {
                     .onChange(of: geo.size.height) { viewportHeight = $0 }
             })
             .onChange(of: currentSystemIndex) { sys in
-                guard autoScroll != .off, autoScroll != .smooth, coordinator.isPlaying else { return }
+                guard isActive, autoScroll != .off, autoScroll != .smooth, coordinator.isPlaying else { return }
                 let (target, anchor) = autoScrollTarget(currentSystem: sys, scale: scale)
                 // Don't re-issue the same scroll — this is what keeps a loop that
                 // fits on screen from shifting back and forth every pass.

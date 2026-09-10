@@ -31,6 +31,18 @@ final class TabRenderModelTests: XCTestCase {
     E|--------------|--------------|
     """
 
+    func testLongScoreLayoutPreservesColumnsAndPitches() {
+        var map = TabParser.parse(sample)
+        let original = TabRenderModelBuilder.build(from: map)
+        map.systems = Array(repeating: map.systems, count: 500).flatMap { $0 }
+        let start = ContinuousClock.now
+        let large = TabRenderModelBuilder.build(from: map)
+        print("Long-score layout: \(large.totalMeasures) measures in \(start.duration(to: .now))")
+        XCTAssertEqual(large.totalMeasures, original.totalMeasures * 500)
+        XCTAssertEqual(large.stringLabels, original.stringLabels)
+        XCTAssertEqual(large.systems.last?.measures.last?.columns, original.systems.last?.measures.last?.columns)
+    }
+
     private func model(_ text: String) -> TabRenderModel {
         TabRenderModelBuilder.build(from: TabParser.parse(text))
     }

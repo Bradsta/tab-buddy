@@ -22,23 +22,24 @@ final class NotePlaybackEngine: ObservableObject {
 
     // MARK: - Audio engine
 
-    private let engine = AVAudioEngine()
+    private let makeEngine: () -> AVAudioEngine
+    private lazy var engine = makeEngine()
     /// One voice per guitar string (index 0 = high E … 5 = low E). A new note
     /// interrupts only its own string's voice, so the other strings keep
     /// ringing — chords and arpeggios sustain like a real guitar instead of
     /// the old single-voice monophonic playback.
-    private var stringNodes: [AVAudioPlayerNode] = [AVAudioPlayerNode()]
+    private lazy var stringNodes: [AVAudioPlayerNode] = [AVAudioPlayerNode()]
     /// Sums the string voices before the shared reverb (an effect node
     /// accepts only one input).
-    private let stringMixer = AVAudioMixerNode()
+    private lazy var stringMixer = AVAudioMixerNode()
     /// A small room reverb gives the dry plucked-string synth some natural space
     /// and a soft tail (which keeps ringing after a note is interrupted), which
     /// is most of the perceived quality jump over the bare Karplus-Strong sound.
-    private let reverb = AVAudioUnitReverb()
+    private lazy var reverb = AVAudioUnitReverb()
 
     private var engineConfigured = false
     private let sampleRate: Double = 44100
-    private let format: AVAudioFormat
+    private lazy var format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
 
     /// Duration of each synthesized note buffer in seconds.
     /// Intentionally long — each note rings until the next one fires
@@ -61,8 +62,8 @@ final class NotePlaybackEngine: ObservableObject {
 
     // MARK: - Init
 
-    init() {
-        format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
+    init(makeEngine: @escaping () -> AVAudioEngine = { AVAudioEngine() }) {
+        self.makeEngine = makeEngine
     }
 
     // MARK: - Setup
@@ -122,6 +123,7 @@ final class NotePlaybackEngine: ObservableObject {
     }
 
     func stop() {
+        guard engineConfigured else { return }
         for node in stringNodes { node.stop() }
         if engine.isRunning {
             engine.stop()
@@ -130,7 +132,7 @@ final class NotePlaybackEngine: ObservableObject {
 
     /// Immediately silence any playing notes (used on seek/stop).
     func stopNotes() {
-        guard engine.isRunning else { return }
+        guard engineConfigured, engine.isRunning else { return }
         for node in stringNodes {
             node.stop()
             node.play()  // re-arm for next schedule
@@ -142,7 +144,7 @@ final class NotePlaybackEngine: ObservableObject {
     /// Play a single MIDI note directly, bypassing fret-to-MIDI conversion.
     /// Used by the tab maker for instant audio feedback during note placement.
     func playMIDI(_ midi: Int) {
-        guard engine.isRunning else { return }
+        guard engineConfigured, engine.isRunning else { return }
         guard let buffer = noteCache[midi] else { return }
 
         let node = stringNodes[0]
@@ -168,7 +170,7 @@ final class NotePlaybackEngine: ObservableObject {
                                                                  qos: .userInteractive)
 
     func playNotes(_ frets: [Int?], tuningMIDI: [Int]? = nil) {
-        guard isEnabled, engine.isRunning else { return }
+        guard isEnabled, engineConfigured, engine.isRunning else { return }
 
         guard let openStrings = tuningMIDI ?? (frets.count == 6 ? Self.standardTuningMIDI : nil) else { return }
         if stringNodes.count < frets.count {

@@ -18,8 +18,9 @@ final class MetronomeEngine: ObservableObject {
 
     // MARK: - Audio engine
 
-    private let engine = AVAudioEngine()
-    private let playerNode = AVAudioPlayerNode()
+    private let makeEngine: () -> AVAudioEngine
+    private lazy var engine = makeEngine()
+    private lazy var playerNode = AVAudioPlayerNode()
     private var engineConfigured = false
 
     /// Pre-rendered click buffers (accent + normal)
@@ -28,19 +29,19 @@ final class MetronomeEngine: ObservableObject {
 
     /// Audio format for click synthesis
     private let sampleRate: Double = 44100
-    private let format: AVAudioFormat
+    private lazy var format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
 
     // MARK: - Init
 
-    init() {
-        format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
-        accentBuffer = synthesizeClick(frequency: 1200, duration: 0.03, amplitude: 0.8)
-        normalBuffer = synthesizeClick(frequency: 800, duration: 0.025, amplitude: 0.5)
+    init(makeEngine: @escaping () -> AVAudioEngine = { AVAudioEngine() }) {
+        self.makeEngine = makeEngine
     }
 
     // MARK: - Setup
 
     private func setupEngine() {
+        accentBuffer = synthesizeClick(frequency: 1200, duration: 0.03, amplitude: 0.8)
+        normalBuffer = synthesizeClick(frequency: 800, duration: 0.025, amplitude: 0.5)
         engine.attach(playerNode)
         engine.connect(playerNode, to: engine.mainMixerNode, format: format)
     }
@@ -70,6 +71,7 @@ final class MetronomeEngine: ObservableObject {
     }
 
     func stop() {
+        guard engineConfigured else { return }
         playerNode.stop()
         if engine.isRunning {
             engine.stop()
@@ -83,7 +85,7 @@ final class MetronomeEngine: ObservableObject {
     ///   - beatInMeasure: 0-based beat index within the measure
     ///   - beatsPerMeasure: total beats in the measure
     func playClick(beatInMeasure: Int, beatsPerMeasure: Int, force: Bool = false) {
-        guard (isEnabled || force), engine.isRunning else { return }
+        guard (isEnabled || force), engineConfigured, engine.isRunning else { return }
 
         let buffer = (beatInMeasure == 0) ? accentBuffer : normalBuffer
         guard let buf = buffer else { return }

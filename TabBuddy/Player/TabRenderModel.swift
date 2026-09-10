@@ -91,13 +91,16 @@ enum TabRenderModelBuilder {
     static func build(from map: MeasureMap) -> TabRenderModel {
         var systems: [TabSystemLayout] = []
         var globalIndex = 0
+        let stringCount = map.stringCount
+        let tuning = map.resolvedOpenStringMIDI
+        let capo = map.capoSemitones ?? 0
 
         for (sysIdx, sys) in map.systems.enumerated() {
             var measures: [TabMeasureLayout] = []
             let firstNumber = sys.measures.first?.measureNumber ?? (globalIndex + 1)
 
             for measure in sys.measures {
-                let columns = columns(for: measure, map: map)
+                let columns = columns(for: measure, stringCount: stringCount, tuning: tuning, capo: capo)
                 measures.append(TabMeasureLayout(
                     globalIndex: globalIndex,
                     number: measure.measureNumber,
@@ -146,25 +149,25 @@ enum TabRenderModelBuilder {
     }
 
     /// Convert a measure's `NoteEvent`s into ascending note columns.
-    private static func columns(for measure: Measure, map: MeasureMap) -> [TabColumnLayout] {
+    private static func columns(for measure: Measure, stringCount: Int, tuning: [Int]?, capo: Int) -> [TabColumnLayout] {
         guard let notes = measure.notes, !notes.isEmpty else { return [] }
         return notes
             .sorted { $0.positionInMeasure < $1.positionInMeasure }
             .map { note in
                 var frets = note.frets
-                if frets.count < map.stringCount {
+                if frets.count < stringCount {
                     frets.append(contentsOf:
-                        Array(repeating: nil, count: map.stringCount - frets.count))
+                        Array(repeating: nil, count: stringCount - frets.count))
                 }
                 let duration = note.durationInBeats.map { RhythmDuration.nearest(toBeats: $0) }
                 return TabColumnLayout(
                     position: min(1, max(0, note.positionInMeasure)),
-                    frets: Array(frets.prefix(map.stringCount)),
+                    frets: Array(frets.prefix(stringCount)),
                     duration: duration,
-                    melodyMIDI: map.resolvedOpenStringMIDI.flatMap { tuning in
+                    melodyMIDI: tuning.flatMap { tuning in
                         frets.enumerated().compactMap { index, fret -> Int? in
                             guard let fret, tuning.indices.contains(index) else { return nil }
-                            return tuning[index] + fret + (map.capoSemitones ?? 0)
+                            return tuning[index] + fret + capo
                         }.max()
                     }
                 )

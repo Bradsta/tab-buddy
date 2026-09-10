@@ -448,3 +448,13 @@ Extracted LibraryBrowserIndex into its own source file. Fixed a same-revision as
 ## 2026-09-07 — Remove non-adjustable tuning/capo menu section
 
 Removed the read-only Tuning & capo sections from native and Guitar Pro player display menus at user request. Descriptive metadata editing and score-defined playback pitches remain supported. Signed device build passed after the menu removal.
+
+## 2026-09-09 — Responsive Original/TabBuddy switching
+
+Retain reader surfaces within the open viewer instead of recreating them on each mode change. Prepare and cache render models and decoded canonical presentation off-main, defer mode-preference saves, and pause inactive playback/scrolling. Resolve tuning and string count once per render build instead of repeatedly scanning the score for each note. Added a 2,000-measure regression verifying columns/pitches after expansion. Validation: all 43 focused library/layout tests passed; 2,000-measure layout took ~23 ms on the simulator worker. Signed Release build passed. Device switching latency is not yet measured.
+
+## 2026-09-09 — Reader navigation and remaining switching costs
+
+Preserved the pending reader-cache work and addressed further synchronous work in the navigation paths. Audio engines, nodes, reverb, formats, and click buffers now initialize only on audio start; stopping an unused engine does no audio work. Open/close/mode saves coalesce after 500 ms and outlive the viewer, with an inactivity flush. Real SwiftData save notifications update only changed library snapshot rows for recency and metadata edits; reader-only settings retain cached queries. Membership and instrument changes keep the full reconciliation path. Sibling MIDI probing runs on a cancellable worker holding its own file-access lease. Text controls avoid assigning unchanged fonts or reading the UIKit text back for comparison, prepared render models avoid redundant state copies/comparisons, and only the segmented control animates during a surface switch. Delayed scroll callbacks reject closed viewers.
+
+Validation: all 46 focused library/render simulator tests passed. New regressions cover no audio allocation during inactive reader calls, coalesced saves and immediate inactivity persistence, and actual SwiftData save notifications retaining cached queries while recents/search/tags/favorites update. Existing import, migration, offline-copy, and external-folder PDF tests passed in the same run. Signed Release build passed with the existing registered identifiers and was installed on Hunter’s iPad at the user's request. No live iPad navigation timings or two-device iCloud verification are claimed.

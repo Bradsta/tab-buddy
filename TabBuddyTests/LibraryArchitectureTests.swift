@@ -2,10 +2,116 @@ import XCTest
 import SwiftData
 import SwiftUI
 import PDFKit
+import AVFoundation
 @testable import TabBuddy
 
 final class LibraryArchitectureTests: XCTestCase {
     private var temporaryRoot: URL!
+
+    @MainActor
+    func testReaderLifecycleDoesNotAllocateAudio() {
+        var allocations = 0
+        let notes = NotePlaybackEngine(makeEngine: { allocations += 1; return AVAudioEngine() })
+        let metronome = MetronomeEngine(makeEngine: { allocations += 1; return AVAudioEngine() })
+        for _ in 0..<20 {
+            notes.stop()
+            notes.stopNotes()
+            notes.playMIDI(60)
+            notes.isEnabled = true
+            notes.playNotes([0, nil, nil, nil, nil, nil])
+            metronome.stop()
+            metronome.playClick(beatInMeasure: 0, beatsPerMeasure: 4, force: true)
+        }
+        XCTAssertEqual(allocations, 0, "Opening, switching, and closing a reader must not initialize audio")
+    }
+
+    @MainActor
+    func testReaderSavesCoalesceAndFlushOnInactivity() async throws {
+        let schema = Schema([FileItem.self])
+        let config = ModelConfiguration(schema: schema, url: temporaryRoot.appendingPathComponent("Reader.store"), cloudKitDatabase: .none)
+        let container = try ModelContainer(for: schema, configurations: [config])
+        let context = container.mainContext
+        context.autosaveEnabled = false
+        let item = FileItem(bookmark: Data(), filename: "song.txt")
+        context.insert(item)
+        try context.save()
+        defer { ReaderPersistence.flush(context) }
+        var saves = 0
+        let subscription = NotificationCenter.default.publisher(for: ModelContext.didSave).sink { notification in
+            if notification.object as? ModelContext === context { saves += 1 }
+        }
+        defer { subscription.cancel() }
+        for _ in 0..<10 {
+            item.preferredTextMode = TextViewMode.player.rawValue
+            ReaderPersistence.scheduleSave(context)
+        }
+        item.scrollSpeed = 8
+        ReaderPersistence.scheduleSave(context)
+        XCTAssertEqual(saves, 0, "The gesture must return without synchronously saving")
+        try await Task.sleep(for: .milliseconds(700))
+        XCTAssertEqual(saves, 1)
+        let reloaded = try XCTUnwrap(ModelContext(container).fetch(FetchDescriptor<FileItem>()).first)
+        XCTAssertEqual(reloaded.preferredTextMode, TextViewMode.player.rawValue)
+        XCTAssertEqual(reloaded.scrollSpeed, 8)
+
+        item.preferredTextMode = TextViewMode.original.rawValue
+        ReaderPersistence.scheduleSave(context)
+        ReaderPersistence.flush(context)
+        XCTAssertEqual(saves, 2, "Inactivity must save immediately even during the delay")
+        try await Task.sleep(for: .milliseconds(600))
+        XCTAssertEqual(saves, 2, "The cancelled delayed save must not run again")
+        XCTAssertEqual(try ModelContext(container).fetch(FetchDescriptor<FileItem>()).first?.preferredTextMode,
+                       TextViewMode.original.rawValue)
+    }
+
+    @MainActor
+    func testBrowserIndexAppliesRealSaveNotificationsWithoutFullRebuild() async throws {
+        let schema = Schema([FileItem.self])
+        let container = try ModelContainer(for: schema, configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)])
+        let context = container.mainContext
+        context.autosaveEnabled = false
+        let files = (0..<1_000).map { FileItem(bookmark: Data(), filename: "\($0).txt") }
+        for file in files { context.insert(file) }
+        try context.save()
+        let index = LibraryBrowserIndex()
+        await index.rebuild(files, libraryID: nil)
+        let revision = index.revision
+        var notification: Notification?
+        let subscription = NotificationCenter.default.publisher(for: ModelContext.didSave).sink { saved in
+            if saved.object as? ModelContext === context { notification = saved }
+        }
+        defer { subscription.cancel() }
+        let item = files[500]
+        item.preferredTextMode = TextViewMode.player.rawValue
+        item.scrollSpeed = 8
+        try context.save()
+        XCTAssertTrue(index.applySavedChanges(try XCTUnwrap(notification), context: context, libraryID: nil))
+        XCTAssertEqual(index.revision, revision, "Reader-only settings must not invalidate the library query")
+
+        item.lastOpenedAt = .now
+        item.playCount = 2
+        try context.save()
+        XCTAssertTrue(index.applySavedChanges(try XCTUnwrap(notification), context: context, libraryID: nil))
+        await index.filter(.init(sort: "mostPlayed", revision: index.revision))
+        XCTAssertEqual(index.visible.first?.id, item.id)
+        XCTAssertEqual(index.recent.first?.id, item.id)
+
+        item.composer = "Bach"
+        item.customTitle = "Updated title"
+        item.tags = ["practice"]
+        item.isFavorite = true
+        try context.save()
+        XCTAssertTrue(index.applySavedChanges(try XCTUnwrap(notification), context: context, libraryID: nil))
+        await index.filter(.init(search: "Bach", tag: "practice", favorites: true, revision: index.revision))
+        XCTAssertEqual(index.visible.map(\.id), [item.id])
+
+        context.delete(item)
+        try context.save()
+        XCTAssertFalse(index.applySavedChanges(try XCTUnwrap(notification), context: context, libraryID: nil),
+                       "Membership changes must still schedule full reconciliation")
+        XCTAssertFalse(index.applySavedChanges(Notification(name: ModelContext.didSave), context: context, libraryID: nil),
+                       "Unknown payloads must not leave stale catalog rows")
+    }
 
     override func setUpWithError() throws {
         temporaryRoot = FileManager.default.temporaryDirectory

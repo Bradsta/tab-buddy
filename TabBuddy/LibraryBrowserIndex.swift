@@ -4,7 +4,7 @@ import SwiftData
 /// Value snapshots keep filtering/sorting independent of SwiftData and the UI actor.
 @MainActor
 final class LibraryBrowserIndex: ObservableObject {
-    struct Row: Sendable {
+    struct Row: Equatable, Sendable {
         let id: UUID
         let name: String
         let search: String
@@ -43,9 +43,60 @@ final class LibraryBrowserIndex: ObservableObject {
     private var queryGeneration = UUID()
     @Published private(set) var hasSnapshot = false
     private var models: [UUID: FileItem] = [:]
+    private var rowOffsets: [PersistentIdentifier: Int] = [:]
+    private var isRebuilding = false
     private var rebuildTask: Task<Void, Never>?
     private var pendingRebuild: ([FileItem], UUID?)?
     private var generation = UUID()
+
+    /// A practice preference save should not re-read tens of thousands of songs.
+    /// Membership changes and unknown notification payloads use the full rebuild.
+    func applySavedChanges(_ notification: Notification, context: ModelContext, libraryID: UUID?) -> Bool {
+        guard hasSnapshot, !isRebuilding, rebuildTask == nil, pendingRebuild == nil else { return false }
+        func value(_ key: ModelContext.NotificationKey) -> Any? {
+            notification.userInfo?[key] ?? notification.userInfo?[key.rawValue]
+        }
+        if let invalidated = value(.invalidatedAllIdentifiers), (invalidated as? Bool) != false { return false }
+        let keys: [ModelContext.NotificationKey] = [.insertedIdentifiers, .updatedIdentifiers, .deletedIdentifiers]
+        guard keys.contains(where: { value($0) != nil }) else { return false }
+        func identifiers(_ key: ModelContext.NotificationKey) -> Set<PersistentIdentifier>? {
+            guard let raw = value(key) else { return [] }
+            if let ids = raw as? Set<PersistentIdentifier> { return ids }
+            if let ids = raw as? [PersistentIdentifier] { return Set(ids) }
+            return nil
+        }
+        guard let inserted = identifiers(.insertedIdentifiers), inserted.isEmpty,
+              let deleted = identifiers(.deletedIdentifiers), deleted.isEmpty,
+              let updated = identifiers(.updatedIdentifiers) else { return false }
+        var replacements: [(Int, Row)] = []
+        for id in updated {
+            guard let item = context.model(for: id) as? FileItem else { continue }
+            let included = item.libraryID == nil || item.libraryID == libraryID
+            guard let offset = rowOffsets[id] else {
+                if included { return false }
+                continue
+            }
+            guard included, !item.isDeleted else { return false }
+            let row = Self.snapshot(item)
+            // Instrument membership is built during the full catalog pass.
+            guard row.instruments == rows[offset].instruments else { return false }
+            if row != rows[offset] { replacements.append((offset, row)) }
+        }
+        if !replacements.isEmpty {
+            for (offset, row) in replacements { rows[offset] = row }
+            revision += 1
+        }
+        return true
+    }
+
+    private static func snapshot(_ item: FileItem) -> Row {
+        let text = [item.filename, item.folderName, item.customTitle ?? "", item.foreword ?? "",
+                    item.searchableMetadata, item.tuning ?? "", item.displayTuning, item.tags.joined(separator: "\n")].joined(separator: "\n")
+        return Row(id: item.id, name: item.displayTitle.lowercased(), search: text,
+                   tags: Set(item.tags), instruments: Set(item.instrumentKinds.map(\.rawValue)), favorite: item.isFavorite,
+                   opened: item.lastOpenedAt, imported: item.importedAt, playCount: item.playCount,
+                   path: item.effectiveRelativePath ?? "")
+    }
 
     // Coalesce changes without repeatedly cancelling a large snapshot halfway through.
     func scheduleRebuild(_ files: [FileItem], libraryID: UUID?) {
@@ -69,29 +120,28 @@ final class LibraryBrowserIndex: ObservableObject {
         rebuildTask = nil
         pendingRebuild = nil
         completedRequest = nil
-        rows = []; models = [:]; libraryFiles = []
+        rows = []; models = [:]; rowOffsets = [:]; libraryFiles = []
         visible = []; folders = []; folderMembers = [:]; recent = []; instruments = []
         revision += 1
     }
 
     func rebuild(_ files: [FileItem], libraryID: UUID?) async {
+        isRebuilding = true
+        defer { isRebuilding = false }
         // Coalesce saves during batch imports. Model access remains on its owning actor.
         do { try await Task.sleep(for: .milliseconds(200)) } catch { return }
         var snapshots: [Row] = []
         var byID: [UUID: FileItem] = [:]
+        var offsets: [PersistentIdentifier: Int] = [:]
         var library: [FileItem] = []
         var kinds = Set<String>()
         for (index, item) in files.enumerated() {
             guard !Task.isCancelled else { return }
             if item.modelContext != nil && !item.isDeleted && (item.libraryID == nil || item.libraryID == libraryID) {
-                let instruments = Set(item.instrumentKinds.map(\.rawValue))
-                kinds.formUnion(instruments)
-                let text = [item.filename, item.folderName, item.customTitle ?? "", item.foreword ?? "",
-                            item.searchableMetadata, item.tuning ?? "", item.displayTuning, item.tags.joined(separator: "\n")].joined(separator: "\n")
-                snapshots.append(Row(id: item.id, name: item.displayTitle.lowercased(), search: text,
-                                     tags: Set(item.tags), instruments: instruments, favorite: item.isFavorite,
-                                     opened: item.lastOpenedAt, imported: item.importedAt, playCount: item.playCount,
-                                     path: item.effectiveRelativePath ?? ""))
+                let row = Self.snapshot(item)
+                kinds.formUnion(row.instruments)
+                offsets[item.persistentModelID] = snapshots.count
+                snapshots.append(row)
                 byID[item.id] = item
                 library.append(item)
             }
@@ -100,7 +150,7 @@ final class LibraryBrowserIndex: ObservableObject {
             }
         }
         guard !Task.isCancelled else { return }
-        rows = snapshots; models = byID; libraryFiles = library
+        rows = snapshots; models = byID; rowOffsets = offsets; libraryFiles = library
         instruments = Instrument.allCases.filter { kinds.contains($0.rawValue) }
         hasSnapshot = true
         revision += 1

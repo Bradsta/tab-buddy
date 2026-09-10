@@ -264,7 +264,7 @@ struct FileBrowserView: View {
         // Recency updates on open; playCount is incremented by the viewer only
         // after the tab has stayed open a few seconds (see TabViewerView).
         file.lastOpenedAt = Date()
-        try? context.save()
+        ReaderPersistence.scheduleSave(context)
 
         // Backfill the content fingerprint lazily — scanning no longer hashes
         // (it would force-download every iCloud file); the file is about to be
@@ -706,7 +706,9 @@ struct FileBrowserView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { notification in
                 guard let savedContext = notification.object as? ModelContext, savedContext === context else { return }
-                catalogRevision += 1
+                if !browserIndex.applySavedChanges(notification, context: context, libraryID: libraryManager.activeLibraryID) {
+                    catalogRevision += 1
+                }
             }
 
             .onReceive(NotificationCenter.default.publisher(for: .NSUbiquityIdentityDidChange)) { _ in

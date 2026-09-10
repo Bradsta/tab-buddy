@@ -15,6 +15,7 @@ enum ImportKind { case file, folder }
 struct ContentView: View {
     // Inject a write-capable context
     @Environment(\.modelContext) private var context
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var didBootstrap = false
 
@@ -65,6 +66,9 @@ struct ContentView: View {
             LibraryManager.shared.importPendingSharedFiles(context: context)
             TagIndexer.rebuild(in: context)
             backfillFolderNames()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { ReaderPersistence.flush(context) }
         }
     }
 

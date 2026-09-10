@@ -28,6 +28,7 @@ struct TabText: UIViewRepresentable {
         textView.isSelectable = false
         textView.isScrollEnabled = true
         textView.text = content
+        context.coordinator.content = content
         textView.font = UIFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
 
         // Add highlight overlay as subview (frame managed by overlay itself)
@@ -51,9 +52,15 @@ struct TabText: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: UITextView, context: Context) {
-        uiView.font = UIFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
+        // Setting an unchanged font still invalidates TextKit layout for the
+        // entire document when the reader's controls or active surface change.
+        if uiView.font?.pointSize != fontSize {
+            uiView.font = UIFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
+        }
+        context.coordinator.onTapAtCharacter = onTapAtCharacter
 
-        if uiView.text != content {
+        if context.coordinator.content != content {
+            context.coordinator.content = content
             uiView.text = content
 
             // Adjust font size after updating content
@@ -71,6 +78,7 @@ struct TabText: UIViewRepresentable {
     }
 
     final class Coordinator: NSObject {
+        var content: String?
         var onTapAtCharacter: ((Int) -> Void)?
 
         init(onTapAtCharacter: ((Int) -> Void)?) {
