@@ -36,6 +36,11 @@ See [PROJECT.md](PROJECT.md) for the current feature inventory, product intent, 
 - **Zoom and pan**: Smooth scaling and navigation
 - **Reading progress**: Tracks last opened time and reading position
 
+### 🎓 Tutor and Practice
+- **Tutor**: guitar and piano lessons on a fixed path with optional side branches, spaced-repetition reviews, ear and fretboard games, and a glossary
+- **Practice a library song**: TabBuddy listens through the microphone, compares what you play with the score, and reviews accuracy and tempo
+- **Offline and on device**: no account, network, or MIDI cable needed
+
 ### 💾 Data Persistence
 - **SwiftData integration**: Modern Core Data replacement for reliable storage
 - **File metadata**: Stores import dates, scroll speeds, and user preferences
@@ -94,6 +99,46 @@ The library instrument filter lists only instruments present in the current libr
 PDFs and text start in their original form; Guitar Pro starts with the notation stored in the file. Piano parts remain staff notation. Use the player settings to choose another supported display. For a PDF, **Create guitar arrangement** is an explicit, best-effort conversion that preserves the source.
 
 Bass, ukulele, and extended-range guitar tabs retain their string counts. Smooth scrolling works for original scores; precise measure following requires parsed tabs or a supported structured score. General MusicXML and MuseScore import are not yet available.
+
+### Tutor
+Tap **Tutor** (graduation cap) in the library toolbar. Choose **Guitar** or **Piano** at the top of the sidebar (iPad) or home screen (iPhone). The tutor is written for an acoustic guitar or an acoustic/digital piano played into the device microphone.
+
+- **Path**: stages 0–8 unlock in order. **Continue** opens the next lesson. Side branches such as Rhythm reading, Fingerstyle basics, Blues shuffle, Reading the grand staff, and Pedal basics open after a named lesson. They are optional and never block the path. Tap a locked lesson to see what unlocks it.
+- **Lessons**: steps include reading with diagrams, listening demos, playing exercises the microphone checks, quizzes, and short song excerpts. Use ← / → to move between steps, Space to start or stop listening, and 1–4 to answer. Without microphone access, choose **Skip for now** on playing steps; quizzes still work.
+- **Reviews**: finished lessons add review cards. **Reviews** shows what is due. Grade facts yourself (Again / Hard / Good / Easy); multiple-choice and play cards are graded for you.
+- **Games**: Fretboard Hunt / Key Hunt, Chord Change Sprint, Interval Duel, Name That Quality, Rhythm Tapper, Scale Runner, and Note Rush. Each keeps a personal best; there are no streaks.
+- **Songs you know**: library songs whose chord symbols use chords you have learned. Tap one to open it in the reader. Chords are read from converted scores and from text tabs already on the device; Guitar Pro chord names are not read yet.
+- **Tutor settings**: instrument, a daily goal in minutes, and **Reset progress** for one instrument. Reset keeps calibration and your practice takes.
+
+TabBuddy checks which pitches sound, not which string or fret you used. When it cannot tell, it shows a gray "not sure" and does not count it against you. All app sound stops while it listens, so follow the on-screen count-in and beat pulse.
+
+### Calibrating the microphone
+Open **Tutor → Calibration** before your first playing lesson, and again after changing headphones or an audio interface. Calibration is saved separately for each audio route.
+1. Allow microphone access.
+2. Check the input level. On iPad, stand it on a music stand within about 1 m of the guitar, with the top edge (where the microphones are) toward the sound hole. For piano, put it on the music desk with the top edge toward the strings or open lid. Keep the case and your hands off that edge, and turn off fans, music, or the TV.
+3. Play the check note (open low E, or middle C) and confirm the detected note.
+4. Run latency calibration: play along with 8 clicks, or use the silent visual pulses if you prefer no sound.
+
+### Practicing a library song
+Open a song and tap the **Practice** tool (waveform and microphone) in the bottom transport.
+- **Available** for text tabs with readable tuning, PDFs after **Create guitar arrangement**, Guitar Pro files (the selected track), and any score with a MIDI file of the same name beside it. Otherwise the tool explains why it cannot listen.
+- Set the **range** (defaults to your loop or the current system), **speed** (25–150%), and **instrument**.
+- **Wait** mode waits on each note or chord until it hears it; → skips one. **Play-along** moves the cursor at your speed after a visual count-in. Space starts or stops a take; Escape leaves practice.
+- During a take, heard notes turn green. Nothing turns red while you play.
+- After the take, the **review** shows:
+  - each expected note: hit, partial, wrong pitch with what you played, missed, or not sure
+  - early/late timing
+  - a **tempo ribbon** of your actual BPM per measure; tap a section to loop it
+  - accuracy and weakest measures
+  - playback of your recording
+  - **suggestions** such as "loop measures 9–12 at 80%", which set the loop and speed in the reader
+- If TabBuddy could not hear a take clearly, the review says so instead of scoring it. Leaving practice mid-take keeps takes longer than 3 seconds for review next time.
+- **Past takes** lists earlier attempts with a per-measure accuracy history. Only the 10 newest takes per song keep audio.
+
+Results come from on-device listening tuned on synthetic recordings. Accuracy with your instrument and room may vary, and "not sure" marks are expected.
+
+### Privacy
+Microphone audio is processed on the device and never uploaded. Practice recordings and tutor progress are kept in the app's local storage, not in iCloud or library backups. Deleting a take removes its recording.
 
 ### Organizing with Tags
 1. Long-press on any file to edit tags

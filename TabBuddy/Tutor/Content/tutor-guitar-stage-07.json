@@ -1,0 +1,1369 @@
+{
+  "id": "guitar.s7",
+  "instrument": "guitar",
+  "order": 7,
+  "title": "Fretboard system",
+  "summary": "Barre chords, every note on every string, the five movable chord forms, and triads and inversions on string sets.",
+  "lessons": [
+    {
+      "id": "guitar.s7.l1",
+      "title": "Barre chords: the E form",
+      "summary": "Turn the open E and Em fingerings into movable barre chords rooted on string 6.",
+      "minutes": 15,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Your finger as a nut",
+          "body": "A **barre** is one finger laid flat across several strings. In a **barre chord**, finger 1 barres a whole fret and acts like a movable nut. The other fingers make an open-chord fingering above it.\n\nTake the open **E** chord, refinger it with fingers 2, 3, and 4, and slide it up one fret. Barre fret 1 with finger 1. Every note is now a half step higher: E becomes **F**.\n\n- Finger 1: barre all six strings at fret 1.\n- Finger 3: string 5, fret 3.\n- Finger 4: string 4, fret 3.\n- Finger 2: string 3, fret 2.\n\nThis is the **E-form barre**. Its root is on **string 6**, under the barre.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:1",
+              "5:3",
+              "4:3",
+              "3:2",
+              "2:1",
+              "1:1"
+            ],
+            "chord": "F",
+            "labels": "intervals",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "F, E-form barre at fret 1."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Making the barre ring",
+          "body": "Barre chords take weeks to sound clean. That is normal.\n\n- Put the barre right behind the fret, and roll finger 1 slightly onto its bony outer edge.\n- Thumb low behind the neck, roughly behind finger 2. Pull back gently with the arm instead of squeezing with the thumb.\n- Only strings 6, 2, and 1 depend on the barre in the major form; the other fingers cover the rest. Check those three first.\n- Fret 1 is the hardest spot. Practice at fret 5 first, where the string tension is lower."
+        },
+        {
+          "type": "explain",
+          "title": "Naming barre chords",
+          "body": "The chord is named after the note under the barre on string 6. You learned those notes in Stage 1:\n\n| Fret | 1 | 3 | 5 | 7 | 8 | 10 |\n|---|---|---|---|---|---|---|\n| Chord | F | G | A | B | C | D |\n\nFor **minor**, use the Em fingering instead: lift finger 2, so the barre plays string 3 as the minor third. F at fret 1 becomes **Fm**; at fret 3, **Gm**.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:3",
+              "5:5",
+              "4:5",
+              "3:3",
+              "2:3",
+              "1:3"
+            ],
+            "chord": "Gm",
+            "labels": "intervals",
+            "fretRange": [
+              1,
+              6
+            ],
+            "caption": "Gm, E-form minor barre at fret 3."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "F, Fm, G, Gm",
+          "caption": "E-form major and minor at frets 1 and 3.",
+          "playback": {
+            "notes": [
+              [
+                "F2",
+                "C3",
+                "F3",
+                "A3",
+                "C4",
+                "F4"
+              ],
+              [
+                "F2",
+                "C3",
+                "F3",
+                "Ab3",
+                "C4",
+                "F4"
+              ],
+              [
+                "G2",
+                "D3",
+                "G3",
+                "B3",
+                "D4",
+                "G4"
+              ],
+              [
+                "G2",
+                "D3",
+                "G3",
+                "Bb3",
+                "D4",
+                "G4"
+              ]
+            ],
+            "bpm": 40,
+            "style": "strum"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "E-form barre chords: F (fret 1), G (fret 3), A (fret 5), then Am (fret 5, minor form).",
+            "chords": [
+              "F",
+              "G",
+              "A",
+              "Am"
+            ],
+            "passAccuracy": 0.75,
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:3",
+                "5:5",
+                "4:5",
+                "3:4",
+                "2:3",
+                "1:3"
+              ],
+              "chord": "G",
+              "labels": "fingers",
+              "fretRange": [
+                1,
+                6
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Pick each string slowly to find the dead one; usually it is string 3 or 2 under a knuckle crease. Shift the barre slightly up or down.",
+            "The app grades pitch only, so an open G also counts. Use the barre on purpose; it is what makes the fingering movable.",
+            "Rest between tries. Squeezing harder rarely helps; better placement does."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "E-form barre",
+          "questions": [
+            {
+              "prompt": "Where is the root of an E-form barre chord?",
+              "choices": [
+                "String 6, under the barre",
+                "String 5",
+                "String 1 only"
+              ],
+              "answerIndex": 0,
+              "explanation": "Strings 6 and 1 are both the root, and string 4 an octave above string 6."
+            },
+            {
+              "prompt": "E-form major barre at fret 5. What chord?",
+              "choices": [
+                "A",
+                "G",
+                "B"
+              ],
+              "answerIndex": 0,
+              "explanation": "String 6, fret 5 is A."
+            },
+            {
+              "prompt": "E-form minor barre at fret 7. What chord?",
+              "choices": [
+                "Bm",
+                "Am",
+                "Cm"
+              ],
+              "answerIndex": 0,
+              "explanation": "String 6, fret 7 is B."
+            },
+            {
+              "prompt": "How do you turn the E-form major into minor?",
+              "choices": [
+                "Lift finger 2 (the third on string 3)",
+                "Lift finger 1",
+                "Move the barre up one fret"
+              ],
+              "answerIndex": 0,
+              "explanation": "With finger 2 off, the barre plays string 3 a half step lower: the minor third."
+            },
+            {
+              "prompt": "Which chord is an E-form barre at fret 8?",
+              "choices": [
+                "C",
+                "D",
+                "Bb"
+              ],
+              "answerIndex": 0,
+              "explanation": "String 6: C at fret 8."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s7.l1.r1",
+          "kind": "playChord",
+          "prompt": "Play F as an E-form barre at fret 1.",
+          "answer": "F",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:1",
+              "5:3",
+              "4:3",
+              "3:2",
+              "2:1",
+              "1:1"
+            ],
+            "chord": "F",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "id": "guitar.s7.l1.r2",
+          "kind": "fact",
+          "prompt": "E-form major barre at fret 10?",
+          "answer": "D"
+        }
+      ],
+      "glossaryTerms": [
+        "barre",
+        "barre chord",
+        "E-form barre",
+        "movable chord form"
+      ]
+    },
+    {
+      "id": "guitar.s7.l2",
+      "title": "Barre chords: the A form",
+      "summary": "Move the A and Am fingerings up the neck with a barre, rooted on string 5.",
+      "minutes": 14,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "The A-form barre",
+          "body": "Do the same with the open **A** chord. Barre finger 1 across strings 5 to 1 and put the A fingering two frets higher.\n\n**Bb** at fret 1: finger 1 barres strings 5–1 at fret 1; strings 4, 3, 2 at fret 3. Many players flatten finger 3 across all three strings at fret 3; others use fingers 2, 3, 4. Do not strum string 6.\n\nThe root is on **string 5**, under the barre.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:1",
+              "4:3",
+              "3:3",
+              "2:3",
+              "1:1"
+            ],
+            "chord": "Bb",
+            "labels": "intervals",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "Bb, A-form barre at fret 1."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "A-form minor",
+          "body": "From the **Am** fingering: barre strings 5–1, finger 3 on string 4, finger 4 on string 3 (two frets up), finger 2 on string 2 (one fret up).\n\n**Bm** at fret 2: strings 5 and 1 on the barre at fret 2; string 4 fret 4; string 3 fret 4; string 2 fret 3. This is the chord that appears as vi in D major and ii in A major, so you will use it a lot.\n\n| Fret on string 5 | 1 | 2 | 3 | 5 | 7 |\n|---|---|---|---|---|---|\n| Chord | Bb | B | C | D | E |",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:2",
+              "4:4",
+              "3:4",
+              "2:3",
+              "1:2"
+            ],
+            "chord": "Bm",
+            "labels": "intervals",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "Bm, A-form minor barre at fret 2."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "I–vi–IV–V in D",
+          "caption": "D, Bm, G, A. Bm is the A-form barre at fret 2.",
+          "playback": {
+            "chords": [
+              "D",
+              "Bm",
+              "G",
+              "A"
+            ],
+            "bpm": 50,
+            "style": "strum"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "A-form barre chords: Bm (fret 2), C (fret 3), Cm (fret 3), D (fret 5).",
+            "chords": [
+              "Bm",
+              "C",
+              "Cm",
+              "D"
+            ],
+            "passAccuracy": 0.75,
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "5:3",
+                "4:5",
+                "3:5",
+                "2:5",
+                "1:3"
+              ],
+              "chord": "C",
+              "labels": "fingers",
+              "fretRange": [
+                1,
+                6
+              ]
+            }
+          },
+          "mistakeTips": [
+            "The barre only needs to press strings 5 and 1 hard; the other fingers cover the middle.",
+            "Mute string 6 with the tip of finger 1 touching it.",
+            "If the high E is dead in the major form, lift finger 3's knuckle or use fingers 2-3-4."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "I–vi in D: D to Bm and back for one minute.",
+            "chords": [
+              "D",
+              "Bm"
+            ],
+            "durationSec": 60,
+            "key": "D major",
+            "passAccuracy": 0.6
+          },
+          "mistakeTips": [
+            "Place the barre first, then the other fingers.",
+            "Aim for a clean strum over speed. Barre changes take longer to settle."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "A-form barre",
+          "questions": [
+            {
+              "prompt": "Where is the root of an A-form barre chord?",
+              "choices": [
+                "String 5",
+                "String 6",
+                "String 4"
+              ],
+              "answerIndex": 0,
+              "explanation": "Under the barre on string 5."
+            },
+            {
+              "prompt": "A-form major at fret 3. What chord?",
+              "choices": [
+                "C",
+                "D",
+                "Bb"
+              ],
+              "answerIndex": 0,
+              "explanation": "String 5, fret 3 is C."
+            },
+            {
+              "prompt": "A-form minor at fret 7. What chord?",
+              "choices": [
+                "Em",
+                "Dm",
+                "F#m"
+              ],
+              "answerIndex": 0,
+              "explanation": "String 5, fret 7 is E."
+            },
+            {
+              "prompt": "You need F#m. Which barre?",
+              "choices": [
+                "E-form minor at fret 2",
+                "A-form minor at fret 2",
+                "E-form minor at fret 4"
+              ],
+              "answerIndex": 0,
+              "explanation": "F# is at fret 2 on string 6."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s7.l2.r1",
+          "kind": "playChord",
+          "prompt": "Play Bm.",
+          "answer": "Bm",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:2",
+              "4:4",
+              "3:4",
+              "2:3",
+              "1:2"
+            ],
+            "chord": "Bm",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "id": "guitar.s7.l2.r2",
+          "kind": "fact",
+          "prompt": "A-form major barre at fret 5?",
+          "answer": "D"
+        },
+        {
+          "id": "guitar.s7.l2.r3",
+          "kind": "fact",
+          "prompt": "Two ways to play C as a barre chord?",
+          "answer": "A-form at fret 3 or E-form at fret 8."
+        }
+      ],
+      "glossaryTerms": [
+        "A-form barre",
+        "barre chord",
+        "movable chord form"
+      ]
+    },
+    {
+      "id": "guitar.s7.l3",
+      "title": "Every note on every string",
+      "summary": "Use octave patterns to find any note on strings 4, 3, 2, and 1 from the root strings you already know.",
+      "minutes": 14,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Octave patterns across the neck",
+          "body": "You know strings 6 and 5. Octave patterns carry that knowledge to the other strings:\n\n- **String 6 → string 4** and **string 5 → string 3**: two strings up, **two** frets up.\n- **String 4 → string 2** and **string 3 → string 1**: two strings up, **three** frets up. The pattern shifts because the B string is tuned a major 3rd above G instead of a 4th.\n- **String 6 and string 1** are both E: the same fret gives the same note name, two octaves apart.\n\nExample for C: string 5 fret 3 → string 3 fret 5 → string 1 fret 8. And string 6 fret 8 → string 4 fret 10 → string 2 fret 13. (String 2 fret 1 is also C, one octave lower.)",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:3",
+              "3:5",
+              "1:8",
+              "6:8",
+              "4:10",
+              "2:1"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              12
+            ],
+            "caption": "C on every string."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Landmarks on the other strings",
+          "body": "Natural notes on the remaining strings (frets 0–12):\n\n- **String 4 (D):** D 0, E 2, F 3, G 5, A 7, B 9, C 10, D 12\n- **String 3 (G):** G 0, A 2, B 4, C 5, D 7, E 9, F 10, G 12\n- **String 2 (B):** B 0, C 1, D 3, E 5, F 6, G 8, A 10, B 12\n- **String 1 (E):** same as string 6\n\nYou do not need to memorize these as lists. Use octave patterns and the fact that frets 5 and 7 match the next string up (fret 4 onto the B string)."
+        },
+        {
+          "type": "demo",
+          "title": "C in three octaves",
+          "caption": "C3, C4, and C5.",
+          "playback": {
+            "notes": [
+              [
+                "C3"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "C5"
+              ]
+            ],
+            "bpm": 60
+          },
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:3",
+              "3:5",
+              "1:8"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "findAllNotes",
+            "prompt": "Fretboard Hunt: play C in every octave you can find within 60 seconds. Try to use a different string each time.",
+            "pitchClass": "C",
+            "durationSec": 60,
+            "passAccuracy": 0.67
+          },
+          "mistakeTips": [
+            "C3: string 5 fret 3 or string 6 fret 8.",
+            "C4: string 3 fret 5, string 2 fret 1, or string 4 fret 10.",
+            "C5: string 1 fret 8."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "findAllNotes",
+            "prompt": "Fretboard Hunt: every F# within 60 seconds.",
+            "pitchClass": "F#",
+            "durationSec": 60,
+            "passAccuracy": 0.67
+          },
+          "mistakeTips": [
+            "F#2: string 6 fret 2. F#3: string 4 fret 4, or string 5 fret 9.",
+            "F#4: string 1 fret 2, or string 2 fret 7.",
+            "Use the octave patterns: string 6 fret 2 → string 4 fret 4."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Notes on all strings",
+          "generator": {
+            "kind": "noteOnFretboard",
+            "params": {
+              "strings": "1,2,3,4,5,6",
+              "fretMin": "0",
+              "fretMax": "12"
+            }
+          },
+          "count": 10
+        },
+        {
+          "type": "quiz",
+          "title": "Octave patterns",
+          "questions": [
+            {
+              "prompt": "A on string 3, fret 2. Where is the A an octave higher on string 1?",
+              "choices": [
+                "Fret 5",
+                "Fret 4",
+                "Fret 7"
+              ],
+              "answerIndex": 0,
+              "explanation": "From string 3 to string 1: two strings up, three frets up."
+            },
+            {
+              "prompt": "What note is at string 2, fret 8?",
+              "choices": [
+                "G",
+                "F",
+                "A"
+              ],
+              "answerIndex": 0,
+              "explanation": "B C D E F G: B 0, C 1, D 3, E 5, F 6, G 8."
+            },
+            {
+              "prompt": "What note is at string 4, fret 9?",
+              "choices": [
+                "B",
+                "A",
+                "C"
+              ],
+              "answerIndex": 0,
+              "explanation": "D 0, E 2, F 3, G 5, A 7, B 9."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s7.l3.r1",
+          "kind": "fact",
+          "prompt": "Octave pattern from string 4 to string 2?",
+          "answer": "Two strings up, three frets up."
+        },
+        {
+          "id": "guitar.s7.l3.r2",
+          "kind": "noteName",
+          "prompt": "Name this note.",
+          "answer": "E",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "3:9"
+            ],
+            "labels": "none",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "id": "guitar.s7.l3.r3",
+          "kind": "noteName",
+          "prompt": "Name this note.",
+          "answer": "F",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "2:6"
+            ],
+            "labels": "none",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        }
+      ],
+      "glossaryTerms": [
+        "octave",
+        "position"
+      ]
+    },
+    {
+      "id": "guitar.s7.l4",
+      "title": "Five movable chord forms",
+      "summary": "Play C major in five places up the neck using the C, A, G, E, and D forms, and see how they link.",
+      "minutes": 15,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Every open chord is a movable form",
+          "body": "The barre chords you learned are the E and A open fingerings moved up the neck. The same works for C, G, and D. Together these are the **five movable chord forms**, often called the **CAGED** system after their order.\n\nFor any chord, the five forms appear up the neck in the order **C → A → G → E → D**, then repeat. Each form overlaps the next: the top of one is the bottom of the next.\n\nHere is **C major** in all five forms."
+        },
+        {
+          "type": "explain",
+          "title": "C form and A form",
+          "body": "**C form** (open position): the C chord you know. Root on string 5 fret 3 and string 2 fret 1.\n\n**A form** (fret 3): the A-form barre. Root on string 5 fret 3 and string 3 fret 5.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:3",
+              "4:5",
+              "3:5",
+              "2:5",
+              "1:3"
+            ],
+            "chord": "C",
+            "labels": "intervals",
+            "fretRange": [
+              2,
+              6
+            ],
+            "caption": "C major, A form at fret 3."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "G form",
+          "body": "**G form** (frets 5–8): the open G fingering moved up. Root on string 6 fret 8, string 3 fret 5, and string 1 fret 8.\n\nThe full six-string version is a big stretch; players usually use just part of it, such as strings 4, 3, 2 at fret 5 plus string 1 at fret 8.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:8",
+              "5:7",
+              "4:5",
+              "3:5",
+              "2:5",
+              "1:8"
+            ],
+            "chord": "C",
+            "labels": "intervals",
+            "fretRange": [
+              4,
+              9
+            ],
+            "caption": "C major, G form (frets 5 to 8)."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "E form and D form",
+          "body": "**E form** (fret 8): the E-form barre. Root on string 6 fret 8, string 4 fret 10, string 1 fret 8.\n\n**D form** (frets 10–13): the open D fingering moved up, strings 4 to 1. Root on string 4 fret 10 and string 2 fret 13.\n\nAfter the D form comes the C form again, at fret 12. The cycle repeats.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:8",
+              "5:10",
+              "4:10",
+              "3:9",
+              "2:8",
+              "1:8"
+            ],
+            "chord": "C",
+            "labels": "intervals",
+            "fretRange": [
+              7,
+              11
+            ],
+            "caption": "C major, E form at fret 8."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Using the forms",
+          "body": "Any major chord works the same way. Find its root in one form and the others follow in order. For **G major**: E form at fret 3, D form at fret 5, C form at fret 7, A form at fret 10, G form at fret 12 (and open).\n\nWhy it helps:\n\n- You can play a chord in the part of the neck where you already are.\n- Each form contains the chord's arpeggio, and the matching scale fits around it. Stage 8 builds solos on this.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "4:10",
+              "3:12",
+              "2:13",
+              "1:12"
+            ],
+            "chord": "C",
+            "labels": "intervals",
+            "fretRange": [
+              9,
+              14
+            ],
+            "caption": "C major, D form (frets 10 to 13)."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "C major up the neck",
+          "caption": "The same chord in the C, A, G, E, and D forms.",
+          "playback": {
+            "notes": [
+              [
+                "C3",
+                "E3",
+                "G3",
+                "C4",
+                "E4"
+              ],
+              [
+                "C3",
+                "G3",
+                "C4",
+                "E4",
+                "G4"
+              ],
+              [
+                "C3",
+                "E3",
+                "G3",
+                "C4",
+                "E4",
+                "C5"
+              ],
+              [
+                "C3",
+                "G3",
+                "C4",
+                "E4",
+                "G4",
+                "C5"
+              ],
+              [
+                "C4",
+                "G4",
+                "C5",
+                "E5"
+              ]
+            ],
+            "bpm": 40,
+            "style": "strum"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Arpeggio the A form (fret 3) and then the E form (fret 8) of C: play each string low to high.",
+            "notes": [
+              "C3",
+              "G3",
+              "C4",
+              "E4",
+              "G4",
+              "C3",
+              "G3",
+              "C4",
+              "E4",
+              "G4",
+              "C5"
+            ],
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "5:3",
+                "4:5",
+                "3:5",
+                "2:5",
+                "1:3",
+                "6:8",
+                "5:10",
+                "4:10",
+                "3:9",
+                "2:8",
+                "1:8"
+              ],
+              "labels": "noteNames",
+              "fretRange": [
+                2,
+                11
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Hold the whole chord while you pick each string, so the notes ring together.",
+            "A form starts on string 5, E form on string 6.",
+            "Say chord tones as you go: root, 5th, root, 3rd, 5th."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "D form of C (frets 10–13): play strings 4 to 1.",
+            "notes": [
+              "C4",
+              "G4",
+              "C5",
+              "E5"
+            ],
+            "bpm": 60,
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "4:10",
+                "3:12",
+                "2:13",
+                "1:12"
+              ],
+              "chord": "C",
+              "labels": "noteNames",
+              "fretRange": [
+                9,
+                14
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Finger 1 on string 4 fret 10 takes the place of the open D string; the other fingers make the open D fingering ten frets higher (frets 12, 13, 12).",
+            "Past fret 12 the frets are narrow; keep fingertips close to the fret wire."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Chord forms",
+          "questions": [
+            {
+              "prompt": "In what order do the five forms appear going up the neck?",
+              "choices": [
+                "C A G E D",
+                "E A D G C",
+                "A B C D E"
+              ],
+              "answerIndex": 0,
+              "explanation": "C → A → G → E → D, then repeat."
+            },
+            {
+              "prompt": "Which form comes after the E form going up?",
+              "choices": [
+                "D form",
+                "C form",
+                "A form"
+              ],
+              "answerIndex": 0,
+              "explanation": "…G, E, D, then C again."
+            },
+            {
+              "prompt": "G major as an E form is at fret 3. Which form comes next above it?",
+              "choices": [
+                "D form at fret 5",
+                "C form at fret 5",
+                "A form at fret 10"
+              ],
+              "answerIndex": 0,
+              "explanation": "E is followed by D."
+            },
+            {
+              "prompt": "Which two forms are the familiar barre chords?",
+              "choices": [
+                "E and A",
+                "C and G",
+                "D and C"
+              ],
+              "answerIndex": 0,
+              "explanation": "E form (root on 6) and A form (root on 5)."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s7.l4.r1",
+          "kind": "fact",
+          "prompt": "Order of the five movable chord forms up the neck?",
+          "answer": "C A G E D (then repeat)."
+        },
+        {
+          "id": "guitar.s7.l4.r2",
+          "kind": "fact",
+          "prompt": "C major as an A form is at which fret? As an E form?",
+          "answer": "A form at fret 3; E form at fret 8."
+        }
+      ],
+      "glossaryTerms": [
+        "five movable chord forms",
+        "movable chord form",
+        "E-form barre",
+        "A-form barre"
+      ]
+    },
+    {
+      "id": "guitar.s7.l5",
+      "title": "Triads on string sets and inversions",
+      "summary": "Play three-note triads on adjacent strings, and hear root position, first inversion, and second inversion.",
+      "minutes": 15,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Inversions",
+          "body": "A triad has three notes, so any of them can be at the bottom:\n\n- **Root position**: root lowest. C E G.\n- **First inversion**: third lowest. E G C. Written **C/E**.\n- **Second inversion**: fifth lowest. G C E. Written **C/G**.\n\nA symbol with a slash is a **slash chord**: the chord, then the bass note. Inversions sound like the same chord with a different weight. Root position is the most solid; inversions sound lighter and are useful for smooth bass lines."
+        },
+        {
+          "type": "explain",
+          "title": "Triads on strings 3, 2, 1",
+          "body": "A **string set** is a group of adjacent strings. On strings 3-2-1, the three inversions of C climb the neck:\n\n| Voicing | Frets (3, 2, 1) | Notes |\n|---|---|---|\n| second inversion | 0, 1, 0 | G C E |\n| root position | 5, 5, 3 | C E G |\n| first inversion | 9, 8, 8 | E G C |\n| second inversion | 12, 13, 12 | G C E |\n\nThese small voicings cut through a band or a second guitar and are easy to move.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "3:5",
+              "2:5",
+              "1:3"
+            ],
+            "chord": "C",
+            "labels": "intervals",
+            "fretRange": [
+              2,
+              7
+            ],
+            "caption": "C root position on strings 3-2-1."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Triads on strings 4, 3, 2",
+          "body": "The same idea one string set lower:\n\n| Voicing | Frets (4, 3, 2) | Notes |\n|---|---|---|\n| first inversion | 2, 0, 1 | E G C |\n| second inversion | 5, 5, 5 | G C E |\n| root position | 10, 9, 8 | C E G |\n\nNotice how each voicing sits inside one of the five chord forms. Triads are the chord forms trimmed to three strings.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "4:5",
+              "3:5",
+              "2:5"
+            ],
+            "chord": "C/G",
+            "labels": "intervals",
+            "fretRange": [
+              3,
+              7
+            ],
+            "caption": "C/G on strings 4-3-2."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Three inversions of C",
+          "caption": "Root position, first inversion, second inversion.",
+          "playback": {
+            "notes": [
+              [
+                "C4",
+                "E4",
+                "G4"
+              ],
+              [
+                "E4",
+                "G4",
+                "C5"
+              ],
+              [
+                "G4",
+                "C5",
+                "E5"
+              ]
+            ],
+            "bpm": 40,
+            "style": "block"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Strings 3-2-1: play C root position (frets 5, 5, 3), first inversion (9, 8, 8), then second inversion (12, 13, 12), one note at a time.",
+            "notes": [
+              "C4",
+              "E4",
+              "G4",
+              "E4",
+              "G4",
+              "C5",
+              "G4",
+              "C5",
+              "E5"
+            ],
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "3:5",
+                "2:5",
+                "1:3",
+                "3:9",
+                "2:8",
+                "1:8",
+                "3:12",
+                "2:13",
+                "1:12"
+              ],
+              "labels": "noteNames",
+              "fretRange": [
+                2,
+                14
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Root position: finger 3 and 4 at fret 5 on strings 3 and 2, finger 1 at fret 3 on string 1. Or barre fret 5 lightly.",
+            "First inversion: strings 2 and 1 at fret 8 (finger 1 barre), string 3 at fret 9 (finger 2).",
+            "Second inversion: strings 3 and 1 at fret 12, string 2 at fret 13."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Play G major three ways on strings 3-2-1: frets 4-3-3 (G/B), 7-8-7 (G/D), 12-12-10 (G).",
+            "chords": [
+              "G/B",
+              "G/D",
+              "G"
+            ],
+            "passAccuracy": 0.67,
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "3:4",
+                "2:3",
+                "1:3"
+              ],
+              "chord": "G/B",
+              "labels": "intervals",
+              "fretRange": [
+                2,
+                6
+              ]
+            }
+          },
+          "mistakeTips": [
+            "G/B: B on string 3 fret 4, D on string 2 fret 3, G on string 1 fret 3.",
+            "G/D: D on string 3 fret 7, G on string 2 fret 8, B on string 1 fret 7.",
+            "G: G on string 3 fret 12, B on string 2 fret 12, D on string 1 fret 10."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Inversions",
+          "questions": [
+            {
+              "prompt": "What is the lowest note of C/E?",
+              "choices": [
+                "C",
+                "E",
+                "G"
+              ],
+              "answerIndex": 1,
+              "explanation": "The note after the slash is the bass."
+            },
+            {
+              "prompt": "A C chord with G in the bass is in…",
+              "choices": [
+                "Root position",
+                "First inversion",
+                "Second inversion"
+              ],
+              "answerIndex": 2,
+              "explanation": "The fifth in the bass = second inversion."
+            },
+            {
+              "prompt": "Which inversion puts the third in the bass?",
+              "choices": [
+                "First",
+                "Second",
+                "Root position"
+              ],
+              "answerIndex": 0,
+              "explanation": "First inversion."
+            },
+            {
+              "prompt": "Listen. Root position or an inversion?",
+              "choices": [
+                "Root position",
+                "Inversion"
+              ],
+              "answerIndex": 1,
+              "explanation": "That was C/G: G is the lowest note.",
+              "playback": {
+                "notes": [
+                  [
+                    "G3",
+                    "C4",
+                    "E4"
+                  ]
+                ],
+                "style": "block"
+              }
+            },
+            {
+              "prompt": "Listen. Root position or an inversion?",
+              "choices": [
+                "Root position",
+                "Inversion"
+              ],
+              "answerIndex": 0,
+              "explanation": "That was G B D with G lowest.",
+              "playback": {
+                "notes": [
+                  [
+                    "G3",
+                    "B3",
+                    "D4"
+                  ]
+                ],
+                "style": "block"
+              }
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s7.l5.r1",
+          "kind": "fact",
+          "prompt": "Spell C in first inversion and give its symbol.",
+          "answer": "E G C; C/E."
+        },
+        {
+          "id": "guitar.s7.l5.r2",
+          "kind": "fact",
+          "prompt": "C root position on strings 3-2-1: which frets?",
+          "answer": "5, 5, 3."
+        }
+      ],
+      "glossaryTerms": [
+        "inversion",
+        "root position",
+        "first inversion",
+        "second inversion",
+        "slash chord",
+        "string set"
+      ]
+    },
+    {
+      "id": "guitar.s7.l6",
+      "title": "Fretboard review: House of the Rising Sun",
+      "summary": "Review barre chords, chord forms, and inversions, then play the full traditional progression with a real F.",
+      "minutes": 15,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "What you know now",
+          "body": "- **E-form** barre: root on string 6. **A-form** barre: root on string 5.\n- Octave patterns find any note on any string.\n- Five movable chord forms, **C A G E D**, cover the neck for any chord.\n- Triads on string sets, and inversions: root position, first (3rd in bass), second (5th in bass)."
+        },
+        {
+          "type": "quiz",
+          "title": "Fretboard review",
+          "questions": [
+            {
+              "prompt": "E-form minor barre at fret 5?",
+              "choices": [
+                "Am",
+                "Dm",
+                "Em"
+              ],
+              "answerIndex": 0,
+              "explanation": "String 6, fret 5 is A."
+            },
+            {
+              "prompt": "A-form major at fret 7?",
+              "choices": [
+                "E",
+                "D",
+                "F#"
+              ],
+              "answerIndex": 0,
+              "explanation": "String 5, fret 7 is E."
+            },
+            {
+              "prompt": "Which is a first-inversion D chord?",
+              "choices": [
+                "D/F#",
+                "D/A",
+                "D"
+              ],
+              "answerIndex": 0,
+              "explanation": "The third of D is F#."
+            },
+            {
+              "prompt": "What note is at string 3, fret 10?",
+              "choices": [
+                "F",
+                "E",
+                "G"
+              ],
+              "answerIndex": 0,
+              "explanation": "G 0, A 2, B 4, C 5, D 7, E 9, F 10."
+            },
+            {
+              "prompt": "C major as a G form sits around which frets?",
+              "choices": [
+                "5 to 8",
+                "8 to 10",
+                "0 to 3"
+              ],
+              "answerIndex": 0,
+              "explanation": "Order C (open), A (3), G (5–8), E (8), D (10)."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Notes on all strings",
+          "generator": {
+            "kind": "noteOnFretboard",
+            "params": {
+              "strings": "1,2,3,4,5,6",
+              "fretMin": "0",
+              "fretMax": "12"
+            }
+          },
+          "count": 6
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "Barre warm-up: Am to F (E-form barre at fret 1) and back, one minute.",
+            "chords": [
+              "Am",
+              "F"
+            ],
+            "durationSec": 60,
+            "passAccuracy": 0.6
+          },
+          "mistakeTips": [
+            "Every finger moves. Land the barre and finger 3 (string 5, fret 3) first, then the rest.",
+            "If fret 1 is too hard today, play the change with Fmaj7 and come back to it tomorrow."
+          ]
+        },
+        {
+          "type": "explain",
+          "title": "House of the Rising Sun",
+          "body": "The full traditional progression, 16 measures in 3/4, one chord per measure:\n\n**Am C D F | Am C E E | Am C D F | Am E Am E**\n\nUse the E-form barre for F. Strum three downstrokes per measure, or use the arpeggio pattern from the Fingerstyle branch."
+        },
+        {
+          "type": "song",
+          "title": "House of the Rising Sun (traditional), chords",
+          "caption": "Three strums per measure. F is a full barre chord this time.",
+          "chords": [
+            "Am",
+            "Am",
+            "Am",
+            "C",
+            "C",
+            "C",
+            "D",
+            "D",
+            "D",
+            "F",
+            "F",
+            "F",
+            "Am",
+            "Am",
+            "Am",
+            "C",
+            "C",
+            "C",
+            "E",
+            "E",
+            "E",
+            "E",
+            "E",
+            "E",
+            "Am",
+            "Am",
+            "Am",
+            "C",
+            "C",
+            "C",
+            "D",
+            "D",
+            "D",
+            "F",
+            "F",
+            "F",
+            "Am",
+            "Am",
+            "Am",
+            "E",
+            "E",
+            "E",
+            "Am",
+            "Am",
+            "Am",
+            "E",
+            "E",
+            "E"
+          ],
+          "rhythm": "q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q",
+          "bpm": 90,
+          "beatsPerMeasure": 3
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s7.l6.r1",
+          "kind": "fact",
+          "prompt": "Full House of the Rising Sun progression?",
+          "answer": "Am C D F | Am C E E | Am C D F | Am E Am E"
+        }
+      ],
+      "glossaryTerms": [
+        "barre chord",
+        "five movable chord forms",
+        "inversion"
+      ]
+    }
+  ],
+  "branches": []
+}

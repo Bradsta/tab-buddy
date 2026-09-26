@@ -1,0 +1,932 @@
+{
+  "id": "piano.s2",
+  "instrument": "piano",
+  "order": 2,
+  "title": "Pulse and rhythm",
+  "summary": "Keep a steady beat, count note values, and play in 4/4 and 3/4 time.",
+  "lessons": [
+    {
+      "id": "piano.s2.l1",
+      "title": "Beat, tempo, and counting",
+      "summary": "Feel a steady beat, read tempo in BPM, and count bars of four.",
+      "minutes": 9,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "The beat",
+          "body": "The **beat** (or **pulse**) is the steady tick you tap your foot to. **Tempo** is how fast the beats go, measured in **beats per minute (BPM)**: 60 BPM is one beat per second.\n\nBeats are grouped into **measures** (also called **bars**), separated by **bar lines**. A **time signature** such as **4/4** says how many beats are in each measure (top number: 4) and which note gets one beat (bottom number: 4 = the quarter note).\n\nIn 4/4, count out loud: **1 2 3 4, 1 2 3 4**. Beat 1 of each measure is the strongest.",
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "q q q q q q q q",
+            "labels": "none",
+            "caption": "Two measures of 4/4: count 1 2 3 4 | 1 2 3 4"
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Following the visual beat",
+          "body": "When the app listens, its sound is muted. You will see a **visual count-in** (one measure of pulses before you start) and a beat marker that pulses on every beat. Watch it the way you would watch a conductor.\n\nTo practice with sound, use a metronome app on another device at low volume, or tap your foot. The goal is to play **with** the beat, not after it."
+        },
+        {
+          "type": "demo",
+          "title": "Quarter notes at 60 BPM",
+          "caption": "Eight quarter notes on middle C, one per beat.",
+          "playback": {
+            "notes": [
+              [
+                "C4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "C4"
+              ]
+            ],
+            "rhythm": "q q q q q q q q",
+            "bpm": 60
+          },
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "q q q q q q q q",
+            "labels": "none"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Play middle C once on every beat for two measures of 4/4. Count 1 2 3 4 out loud.",
+            "notes": [
+              "C4",
+              "C4",
+              "C4",
+              "C4",
+              "C4",
+              "C4",
+              "C4",
+              "C4"
+            ],
+            "rhythm": "q q q q q q q q",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ]
+          },
+          "mistakeTips": [
+            "Start on the first beat after the count-in, not during it.",
+            "Keep counting even if one note is late; do not stop to fix it.",
+            "Rushing is common. Let each beat arrive before you play."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "What does 60 BPM mean?",
+              "choices": [
+                "One beat per second",
+                "Sixty measures per minute",
+                "Sixty notes per measure",
+                "One beat per minute"
+              ],
+              "answerIndex": 0,
+              "explanation": "BPM = beats per minute; 60 per minute is one per second."
+            },
+            {
+              "prompt": "In 4/4 time, how many beats are in each measure?",
+              "choices": [
+                "4",
+                "2",
+                "3",
+                "8"
+              ],
+              "answerIndex": 0,
+              "explanation": "The top number of the time signature gives the beats per measure."
+            },
+            {
+              "prompt": "Which beat is usually strongest in 4/4?",
+              "choices": [
+                "Beat 1",
+                "Beat 2",
+                "Beat 3",
+                "Beat 4"
+              ],
+              "answerIndex": 0,
+              "explanation": "The downbeat, beat 1, starts each measure and carries the most weight."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s2.l1.r1",
+          "kind": "fact",
+          "prompt": "What does the top number of a time signature tell you?",
+          "answer": "How many beats are in each measure."
+        }
+      ],
+      "glossaryTerms": [
+        "Beat",
+        "Tempo",
+        "BPM",
+        "Measure",
+        "Bar line",
+        "Time signature",
+        "Count-in",
+        "Downbeat",
+        "Metronome"
+      ]
+    },
+    {
+      "id": "piano.s2.l2",
+      "title": "Whole, half, and quarter notes",
+      "summary": "Hold notes for four, two, and one beat.",
+      "minutes": 9,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "How long to hold",
+          "body": "- **Quarter note** (♩): 1 beat.\n- **Half note** (𝅗𝅥): 2 beats. Count \"1 2\" while holding.\n- **Whole note** (𝅝): 4 beats, a full measure of 4/4.\n\nKeep the key down for the whole value, then release as the next note begins. The app mainly times when each note **starts**, but holding for the full length trains your counting and makes the music sound connected.",
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "w h h q q q q",
+            "labels": "none",
+            "caption": "whole | half half | four quarters"
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Hear the difference",
+          "caption": "One whole note, two half notes, four quarter notes, all on middle C.",
+          "playback": {
+            "notes": [
+              [
+                "C4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "C4"
+              ]
+            ],
+            "rhythm": "w h h q q q q",
+            "bpm": 72
+          },
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "w h h q q q q",
+            "labels": "none"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Play this rhythm on middle C: half, half, quarter, quarter, half, whole. Count every beat out loud.",
+            "notes": [
+              "C4",
+              "C4",
+              "C4",
+              "C4",
+              "C4",
+              "C4"
+            ],
+            "rhythm": "h h q q h w",
+            "bpm": 66,
+            "tempoSteps": [
+              66,
+              76,
+              88
+            ]
+          },
+          "mistakeTips": [
+            "A half note lasts two beats: play on 1, hold through 2.",
+            "Count through the whole note: 1 2 3 4.",
+            "Watch the beat marker rather than your hands."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Count the beats",
+          "generator": {
+            "kind": "rhythmCount",
+            "params": {
+              "tokens": "w,h,q"
+            }
+          },
+          "count": 5
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "How many quarter notes last as long as one whole note?",
+              "choices": [
+                "4",
+                "2",
+                "3",
+                "8"
+              ],
+              "answerIndex": 0,
+              "explanation": "A whole note is 4 beats; each quarter note is 1."
+            },
+            {
+              "prompt": "How many beats does a half note get in 4/4?",
+              "choices": [
+                "2",
+                "1",
+                "4",
+                "3"
+              ],
+              "answerIndex": 0,
+              "explanation": "A half note is half of a whole note: 2 beats."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s2.l2.r1",
+          "kind": "fact",
+          "prompt": "Beats in a whole, half, and quarter note (4/4)?",
+          "answer": "4, 2, and 1."
+        }
+      ],
+      "glossaryTerms": [
+        "Quarter note",
+        "Half note",
+        "Whole note",
+        "Note value"
+      ]
+    },
+    {
+      "id": "piano.s2.l3",
+      "title": "Eighth notes and rests",
+      "summary": "Split the beat in two, and count silences.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Eighth notes",
+          "body": "An **eighth note** lasts half a beat, so two fit in one beat. Count them with \"and\": **1 & 2 & 3 & 4 &**. The numbers fall on the beat; the \"&\" falls exactly halfway between.\n\nSingle eighth notes have a flag; groups are joined by a **beam**.",
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "e e e e e e e e",
+            "labels": "none",
+            "caption": "1 & 2 & 3 & 4 &"
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Rests",
+          "body": "A **rest** is a measured silence. Each note value has a matching rest: **whole rest** (4 beats in 4/4), **half rest** (2), **quarter rest** (1), **eighth rest** (½).\n\nLift your finger off the key during a rest so the sound stops, and keep counting through it. Rests are part of the rhythm, not a pause in it.",
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "q qr q qr h hr",
+            "labels": "none",
+            "caption": "play, rest, play, rest | half note, half rest"
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Quarters, then eighths",
+          "caption": "Four quarter notes, then eight eighth notes, on G4.",
+          "playback": {
+            "notes": [
+              [
+                "G4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "G4"
+              ]
+            ],
+            "rhythm": "q q q q e e e e e e e e",
+            "bpm": 66
+          },
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "q q q q e e e e e e e e",
+            "labels": "none"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Play four quarter notes, then eight eighth notes, on G4. Count \"1 2 3 4 | 1 & 2 & 3 & 4 &\".",
+            "notes": [
+              "G4",
+              "G4",
+              "G4",
+              "G4",
+              "G4",
+              "G4",
+              "G4",
+              "G4",
+              "G4",
+              "G4",
+              "G4",
+              "G4"
+            ],
+            "rhythm": "q q q q e e e e e e e e",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              70,
+              80
+            ]
+          },
+          "mistakeTips": [
+            "Eighth notes are exactly twice as fast as quarters: do not rush them.",
+            "Say \"and\" out loud between beats.",
+            "Use fingers 2 and 3 alternately on the same key if one finger feels stiff."
+          ]
+        },
+        {
+          "type": "song",
+          "title": "Rest Stop (original)",
+          "caption": "Lift the finger during each rest and keep counting. The app only checks the notes, but the rests keep your place.",
+          "notes": [
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [],
+            [
+              "C4"
+            ],
+            [
+              "E4"
+            ],
+            [],
+            [
+              "E4"
+            ],
+            [],
+            [
+              "G4"
+            ],
+            [],
+            [
+              "G4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "C4"
+            ],
+            [],
+            [
+              "C4"
+            ]
+          ],
+          "rhythm": "q q qr q q qr q qr h hr e e e e q qr w",
+          "bpm": 72
+        },
+        {
+          "type": "quiz",
+          "title": "Count notes and rests",
+          "generator": {
+            "kind": "rhythmCount",
+            "params": {
+              "tokens": "h,q,e,qr,hr"
+            }
+          },
+          "count": 5
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s2.l3.r1",
+          "kind": "fact",
+          "prompt": "How do you count four beats of eighth notes?",
+          "answer": "1 & 2 & 3 & 4 &"
+        },
+        {
+          "id": "piano.s2.l3.r2",
+          "kind": "fact",
+          "prompt": "How many beats is a half rest in 4/4?",
+          "answer": "2"
+        }
+      ],
+      "glossaryTerms": [
+        "Eighth note",
+        "Rest",
+        "Beam"
+      ]
+    },
+    {
+      "id": "piano.s2.l4",
+      "title": "Dotted notes and 3/4 time",
+      "summary": "Add half a note's value with a dot, and count in threes.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "The dot",
+          "body": "A **dot** after a note adds half of that note's value.\n\n- **Dotted half note** = 2 + 1 = **3 beats**.\n- **Dotted quarter note** = 1 + ½ = **1½ beats**, usually followed by an eighth note to complete two beats. Count it \"1 (2) &\": play on 1, hold through 2, play the eighth on the \"&\" of 2.",
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "q. e h",
+            "labels": "none",
+            "caption": "dotted quarter + eighth, then a half note"
+          }
+        },
+        {
+          "type": "explain",
+          "title": "3/4 time",
+          "body": "In **3/4 time** there are **three** quarter-note beats per measure. Count **1 2 3, 1 2 3**, with a stronger beat 1. Waltzes and minuets are in 3/4.\n\nA dotted half note fills a whole measure of 3/4.",
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "q q q h q h.",
+            "labels": "none",
+            "caption": "1 2 3 | 1 (2) 3 | 1 (2 3)"
+          }
+        },
+        {
+          "type": "demo",
+          "title": "A measure of 3/4, then a dotted half",
+          "caption": "Three quarters, half + quarter, then a dotted half: \"1 2 3 | 1 2 3 | 1 2 3\".",
+          "playback": {
+            "notes": [
+              [
+                "C4"
+              ],
+              [
+                "E4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "E4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "C4"
+              ]
+            ],
+            "rhythm": "q q q h q h.",
+            "bpm": 80
+          },
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "q q q h q h.",
+            "labels": "none"
+          }
+        },
+        {
+          "type": "song",
+          "title": "Little Waltz (original)",
+          "caption": "3/4 time: count 1 2 3. Hold each dotted half for three full beats.",
+          "notes": [
+            [
+              "C4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C4"
+            ]
+          ],
+          "rhythm": "q q q h q q q q h. q q q h q q q q h.",
+          "bpm": 88,
+          "beatsPerMeasure": 3
+        },
+        {
+          "type": "song",
+          "title": "Ode to Joy (Beethoven), opening phrase",
+          "caption": "Watch the dotted quarter in the last measure: E4 on 1, hold through 2, D4 on the \"&\" of 2, then a half note.",
+          "notes": [
+            [
+              "E4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "D4"
+            ]
+          ],
+          "rhythm": "q q q q q q q q q q q q q. e h",
+          "bpm": 80
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "How many beats does a dotted half note get?",
+              "choices": [
+                "3",
+                "2",
+                "4",
+                "2½"
+              ],
+              "answerIndex": 0,
+              "explanation": "A dot adds half the value: 2 + 1 = 3."
+            },
+            {
+              "prompt": "How many beats does a dotted quarter note get?",
+              "choices": [
+                "1½",
+                "1",
+                "2",
+                "3"
+              ],
+              "answerIndex": 0,
+              "explanation": "1 + ½ = 1½ beats."
+            },
+            {
+              "prompt": "In 3/4 time, how many quarter-note beats are in a measure?",
+              "choices": [
+                "3",
+                "4",
+                "2",
+                "6"
+              ],
+              "answerIndex": 0,
+              "explanation": "The top number, 3, gives the beats per measure."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s2.l4.r1",
+          "kind": "fact",
+          "prompt": "What does a dot after a note do?",
+          "answer": "Adds half of the note's value."
+        },
+        {
+          "id": "piano.s2.l4.r2",
+          "kind": "fact",
+          "prompt": "How do you count 3/4 time?",
+          "answer": "1 2 3, with beat 1 strongest."
+        }
+      ],
+      "glossaryTerms": [
+        "Dotted note",
+        "Time signature",
+        "Waltz"
+      ]
+    },
+    {
+      "id": "piano.s2.l5",
+      "title": "Stage 2 review: Twinkle, Twinkle",
+      "summary": "Count rhythms, then play a complete song in time.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "quiz",
+          "title": "Stage 2 check: rhythm",
+          "generator": {
+            "kind": "rhythmCount",
+            "params": {
+              "tokens": "w,h.,h,q.,q,e,qr,hr"
+            }
+          },
+          "count": 8
+        },
+        {
+          "type": "quiz",
+          "title": "Stage 2 check: terms",
+          "questions": [
+            {
+              "prompt": "Tempo is…",
+              "choices": [
+                "How fast the beats go",
+                "How loud the music is",
+                "How many notes are in a chord",
+                "The lowest note"
+              ],
+              "answerIndex": 0,
+              "explanation": "Tempo is measured in beats per minute."
+            },
+            {
+              "prompt": "Which lasts longest?",
+              "choices": [
+                "Whole note",
+                "Dotted half note",
+                "Half note",
+                "Dotted quarter note"
+              ],
+              "answerIndex": 0,
+              "explanation": "Whole = 4, dotted half = 3, half = 2, dotted quarter = 1½."
+            },
+            {
+              "prompt": "What should you do during a rest?",
+              "choices": [
+                "Lift the finger and keep counting",
+                "Hold the previous note",
+                "Stop counting",
+                "Play the next note early"
+              ],
+              "answerIndex": 0,
+              "explanation": "A rest is silence of a set length, counted like a note."
+            }
+          ]
+        },
+        {
+          "type": "song",
+          "title": "Twinkle, Twinkle, Little Star (traditional)",
+          "caption": "Every measure is four beats. Each phrase ends on a half note: hold it for two beats before the next phrase. Right hand.",
+          "notes": [
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C4"
+            ]
+          ],
+          "rhythm": "q q q q q q h q q q q q q h q q q q q q h q q q q q q h q q q q q q h q q q q q q h",
+          "bpm": 88
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s2.l5.r1",
+          "kind": "fact",
+          "prompt": "What is the tempo 120 BPM in beats per second?",
+          "answer": "2 beats per second."
+        }
+      ],
+      "glossaryTerms": [
+        "Phrase"
+      ]
+    }
+  ]
+}

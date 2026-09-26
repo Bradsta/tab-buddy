@@ -567,6 +567,11 @@ struct FileBrowserView: View {
                 } label: { Label("Tuner", systemImage: "tuningfork") }
             }
             if editMode?.wrappedValue != .active {
+                Button {
+                    path.append(.tutor)
+                } label: { Label("Tutor", systemImage: "graduationcap") }
+            }
+            if editMode?.wrappedValue != .active {
                 importMenu
             }
             if editMode?.wrappedValue != .active {

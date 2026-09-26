@@ -1,0 +1,1699 @@
+{
+  "id": "guitar.s2",
+  "instrument": "guitar",
+  "order": 2,
+  "title": "Pulse and rhythm",
+  "summary": "Beats, measures, time signatures, note values, rests, and dotted rhythms, picked in time with a visual pulse.",
+  "lessons": [
+    {
+      "id": "guitar.s2.l1",
+      "title": "The beat and tempo",
+      "summary": "Feel a steady beat, learn what BPM means, and pick in time with the visual pulse.",
+      "minutes": 8,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "The beat",
+          "body": "Almost all music sits on a steady **beat**: the pulse you tap your foot to. Playing in time means your notes line up with that pulse.\n\n**Tempo** is how fast the beat goes, measured in **BPM** (beats per minute). At 60 BPM there is one beat per second. At 120 BPM there are two.\n\nA **metronome** marks the beat for you. In graded exercises the app's sound is off while it listens, so the beat is shown as a **pulsing marker** and a **visual count-in**. Watch it the way you would listen to a click.",
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "q q q q",
+            "caption": "Four even beats."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "How to practice with a pulse",
+          "body": "- Tap your foot or nod on every beat before you play. Your body keeps time better than your eyes alone.\n- Count out loud: \"1, 2, 3, 4\".\n- Play **with** the pulse, not after it. If you wait to see the flash and then react, you will always be a little late. Anticipate it.\n- Slow and steady beats fast and uneven. Speed comes later."
+        },
+        {
+          "type": "demo",
+          "title": "Quarter notes at 60 BPM",
+          "caption": "Eight notes on the open low E string, one per beat.",
+          "playback": {
+            "notes": [
+              [
+                "E2"
+              ],
+              [
+                "E2"
+              ],
+              [
+                "E2"
+              ],
+              [
+                "E2"
+              ],
+              [
+                "E2"
+              ],
+              [
+                "E2"
+              ],
+              [
+                "E2"
+              ],
+              [
+                "E2"
+              ]
+            ],
+            "rhythm": "q q q q q q q q",
+            "bpm": 60
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Pick the open low E string once per beat, eight times. Watch the pulse and count \"1, 2, 3, 4\" out loud.",
+            "notes": [
+              "E2",
+              "E2",
+              "E2",
+              "E2",
+              "E2",
+              "E2",
+              "E2",
+              "E2"
+            ],
+            "rhythm": "q q q q q q q q",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              70,
+              80
+            ],
+            "diagram": {
+              "kind": "rhythm",
+              "rhythm": "q q q q"
+            }
+          },
+          "mistakeTips": [
+            "Tap your foot through the count-in so you are already moving when the first beat arrives.",
+            "Pick with a small, relaxed motion from the wrist. Big motions are harder to time.",
+            "If you are always late, try to land the note exactly as the marker flashes, not after it."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Tempo check",
+          "questions": [
+            {
+              "prompt": "What does BPM stand for?",
+              "choices": [
+                "Beats per minute",
+                "Bars per measure",
+                "Bass pick motion"
+              ],
+              "answerIndex": 0,
+              "explanation": "BPM measures tempo: how many beats happen in one minute."
+            },
+            {
+              "prompt": "Which tempo is faster?",
+              "choices": [
+                "60 BPM",
+                "100 BPM"
+              ],
+              "answerIndex": 1,
+              "explanation": "More beats per minute means a faster tempo."
+            },
+            {
+              "prompt": "At 60 BPM, how long is each beat?",
+              "choices": [
+                "One second",
+                "Half a second",
+                "Two seconds"
+              ],
+              "answerIndex": 0,
+              "explanation": "Sixty beats in sixty seconds: one per second."
+            },
+            {
+              "prompt": "Why is the beat shown visually during graded practice?",
+              "choices": [
+                "The app's sound is off while it listens",
+                "Metronomes are too loud",
+                "It is only a style choice"
+              ],
+              "answerIndex": 0,
+              "explanation": "Output is muted so the app hears only your guitar. The pulse replaces the click."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s2.l1.r1",
+          "kind": "fact",
+          "prompt": "What is tempo, and what unit measures it?",
+          "answer": "How fast the beat goes; beats per minute (BPM)."
+        }
+      ],
+      "glossaryTerms": [
+        "beat",
+        "tempo",
+        "BPM",
+        "metronome"
+      ]
+    },
+    {
+      "id": "guitar.s2.l2",
+      "title": "Measures and time signatures",
+      "summary": "Group beats into measures, read 4/4 and 3/4, and feel the strong first beat.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Measures and bar lines",
+          "body": "Beats are grouped into **measures** (also called **bars**), separated by **bar lines**. Grouping makes music easier to read and feel, the same way words are grouped into sentences.\n\nThe first beat of each measure is the **downbeat**. It usually feels strongest. Songs often change chords on the downbeat."
+        },
+        {
+          "type": "explain",
+          "title": "Time signatures",
+          "body": "The **time signature** is two stacked numbers at the start of the music.\n\n- **Top number:** how many beats are in each measure.\n- **Bottom number:** which note value counts as one beat. A 4 means the quarter note.\n\n**4/4** – four quarter-note beats per measure. Count \"**1** 2 3 4\". Most pop, rock, and folk songs use it.\n\n**3/4** – three beats per measure. Count \"**1** 2 3\". This is waltz time; \"Amazing Grace\" and many folk songs use it.",
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "q q q",
+            "caption": "One measure of 3/4."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "4/4 versus 3/4",
+          "caption": "Two measures of 4/4 with a low note on each downbeat, then two measures of 3/4 the same way. Listen for where the low note falls.",
+          "playback": {
+            "notes": [
+              [
+                "E2"
+              ],
+              [
+                "B3"
+              ],
+              [
+                "B3"
+              ],
+              [
+                "B3"
+              ],
+              [
+                "E2"
+              ],
+              [
+                "B3"
+              ],
+              [
+                "B3"
+              ],
+              [
+                "B3"
+              ],
+              [
+                "E2"
+              ],
+              [
+                "B3"
+              ],
+              [
+                "B3"
+              ],
+              [
+                "E2"
+              ],
+              [
+                "B3"
+              ],
+              [
+                "B3"
+              ]
+            ],
+            "rhythm": "q q q q q q q q q q q q q q",
+            "bpm": 80
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "3/4 pattern: on beat 1 pick the open low E, on beats 2 and 3 pick the open B string. Four measures.",
+            "notes": [
+              "E2",
+              "B3",
+              "B3",
+              "E2",
+              "B3",
+              "B3",
+              "E2",
+              "B3",
+              "B3",
+              "E2",
+              "B3",
+              "B3"
+            ],
+            "rhythm": "q q q q q q q q q q q q",
+            "bpm": 70,
+            "tempoSteps": [
+              70,
+              85,
+              100
+            ],
+            "diagram": {
+              "kind": "rhythm",
+              "rhythm": "q q q"
+            }
+          },
+          "mistakeTips": [
+            "Count \"1 2 3\" out loud and make the 1 a little louder.",
+            "Keep the picking hand moving between strings with a small motion; the low E is only four strings away from B.",
+            "If you lose count, stop on the next downbeat and restart the count."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Time signatures",
+          "questions": [
+            {
+              "prompt": "In 4/4, how many beats are in a measure?",
+              "choices": [
+                "2",
+                "3",
+                "4"
+              ],
+              "answerIndex": 2,
+              "explanation": "The top number is beats per measure."
+            },
+            {
+              "prompt": "In 3/4, what does the 4 on the bottom mean?",
+              "choices": [
+                "The quarter note gets one beat",
+                "There are four measures",
+                "Play four notes"
+              ],
+              "answerIndex": 0,
+              "explanation": "The bottom number names the note value that counts as one beat. 4 = quarter note."
+            },
+            {
+              "prompt": "What is the first beat of a measure called?",
+              "choices": [
+                "The downbeat",
+                "The upbeat",
+                "The bar line"
+              ],
+              "answerIndex": 0,
+              "explanation": "The downbeat is beat 1; it usually feels strongest."
+            },
+            {
+              "prompt": "Which count fits 3/4?",
+              "choices": [
+                "1 2 3, 1 2 3",
+                "1 2 3 4, 1 2 3 4",
+                "1 2, 1 2"
+              ],
+              "answerIndex": 0,
+              "explanation": "Three beats per measure."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s2.l2.r1",
+          "kind": "fact",
+          "prompt": "What do the top and bottom numbers of a time signature mean?",
+          "answer": "Top: beats per measure. Bottom: the note value that gets one beat (4 = quarter note)."
+        }
+      ],
+      "glossaryTerms": [
+        "measure",
+        "bar line",
+        "time signature",
+        "downbeat"
+      ]
+    },
+    {
+      "id": "guitar.s2.l3",
+      "title": "Note lengths and rests",
+      "summary": "Read whole, half, and quarter notes and their rests, and hold notes for their full length.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Note values",
+          "body": "In 4/4 time:\n\n| Note | Beats | Count |\n|---|---|---|\n| **Whole note** | 4 | 1 2 3 4 |\n| **Half note** | 2 | 1 2 |\n| **Quarter note** | 1 | 1 |\n\nEach value is half of the one above it. Two half notes fill the same time as one whole note; four quarter notes fill the same time as one whole note.\n\nWhen you play a long note, keep your finger down and let the string ring for the full count. The app mainly checks when each note starts, but ringing notes are what make music sound connected.",
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "w h h q q q q",
+            "caption": "Whole, two halves, four quarters: three measures of 4/4."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Rests",
+          "body": "A **rest** is a counted silence. Every note value has a matching rest: whole rest (4 beats), half rest (2), quarter rest (1).\n\nTo make a rest silent on guitar, stop the string: lightly touch it with the side of your picking hand, or ease the pressure of your fretting finger without lifting it off the string.\n\nKeep counting through rests. Most timing mistakes happen right after a rest, because the count stops in the player's head.",
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "q qr q qr h hr",
+            "caption": "Quarter notes and rests."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Long and short",
+          "caption": "Open A string: a whole note, two half notes, then four quarter notes.",
+          "playback": {
+            "notes": [
+              [
+                "A2"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "A2"
+              ]
+            ],
+            "rhythm": "w h h q q q q",
+            "bpm": 70
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Open A string: one whole note, two half notes, four quarter notes, then a whole note. Count every beat.",
+            "notes": [
+              "A2",
+              "A2",
+              "A2",
+              "A2",
+              "A2",
+              "A2",
+              "A2",
+              "A2"
+            ],
+            "rhythm": "w h h q q q q w",
+            "bpm": 70,
+            "tempoSteps": [
+              70,
+              80,
+              90
+            ],
+            "diagram": {
+              "kind": "rhythm",
+              "rhythm": "w h h q q q q w"
+            }
+          },
+          "mistakeTips": [
+            "For a whole note, pick once and count \"1 2 3 4\" while it rings.",
+            "The next note starts right after the last count, on the next \"1\".",
+            "If you rush the long notes, count \"1 and 2 and 3 and 4 and\" to fill the space."
+          ]
+        },
+        {
+          "type": "song",
+          "title": "Rest Stop",
+          "caption": "An original rest drill on open strings. Every rest must be silent: stop the string with your picking hand.",
+          "notes": [
+            [
+              "E2"
+            ],
+            [
+              "E2"
+            ],
+            [],
+            [
+              "A2"
+            ],
+            [
+              "A2"
+            ],
+            [],
+            [
+              "D3"
+            ],
+            [],
+            [
+              "D3"
+            ],
+            [
+              "A2"
+            ],
+            [],
+            [
+              "E2"
+            ],
+            []
+          ],
+          "rhythm": "q q hr q q hr h hr q q hr w wr",
+          "bpm": 70
+        },
+        {
+          "type": "quiz",
+          "title": "Note values",
+          "questions": [
+            {
+              "prompt": "How many beats does a half note last in 4/4?",
+              "choices": [
+                "1",
+                "2",
+                "4"
+              ],
+              "answerIndex": 1,
+              "explanation": "Half of a whole note (4 beats) is 2 beats."
+            },
+            {
+              "prompt": "How many quarter notes fill the same time as one whole note?",
+              "choices": [
+                "2",
+                "4",
+                "8"
+              ],
+              "answerIndex": 1,
+              "explanation": "A whole note is 4 beats; each quarter is 1."
+            },
+            {
+              "prompt": "What is a rest?",
+              "choices": [
+                "A counted silence",
+                "A pause of any length you like",
+                "A very soft note"
+              ],
+              "answerIndex": 0,
+              "explanation": "A rest has an exact length, just like a note."
+            },
+            {
+              "prompt": "How many beats is a half note plus two quarter notes?",
+              "choices": [
+                "3",
+                "4",
+                "5"
+              ],
+              "answerIndex": 1,
+              "explanation": "2 + 1 + 1 = 4: one full measure of 4/4."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Count the rhythm",
+          "generator": {
+            "kind": "rhythmCount",
+            "params": {
+              "values": "w,h,q",
+              "rests": "true",
+              "timeSignature": "4/4"
+            }
+          },
+          "count": 4
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s2.l3.r1",
+          "kind": "fact",
+          "prompt": "Beats in a whole, half, and quarter note (4/4)?",
+          "answer": "4, 2, and 1."
+        },
+        {
+          "id": "guitar.s2.l3.r2",
+          "kind": "fact",
+          "prompt": "How do you silence a string for a rest?",
+          "answer": "Touch it lightly with the picking hand, or ease the fretting finger's pressure without lifting off."
+        }
+      ],
+      "glossaryTerms": [
+        "whole note",
+        "half note",
+        "quarter note",
+        "rest"
+      ]
+    },
+    {
+      "id": "guitar.s2.l4",
+      "title": "Eighth notes and down-up picking",
+      "summary": "Split each beat in two, count \"1 & 2 &\", and use alternate picking.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Eighth notes",
+          "body": "An **eighth note** lasts half a beat in 4/4. Two of them fill one beat.\n\nCount them as **\"1 & 2 & 3 & 4 &\"** (say \"one and two and\"). The numbers are on the beat; each \"&\" is exactly halfway to the next beat.\n\nEighth notes are often joined by a beam across their stems, in pairs or groups of four.",
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "e e e e e e e e",
+            "caption": "Eight eighth notes: 1 & 2 & 3 & 4 &"
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Alternate picking",
+          "body": "Pick **down** on the numbers and **up** on the \"&\"s. This is **alternate picking**: a **downstroke** (toward the floor) followed by an **upstroke** (toward the ceiling).\n\nYour hand then works like a pendulum: down on each beat, up between beats. It stays in that rhythm even when you play quarter notes: the hand still moves up between beats, it just misses the string.\n\nHold the pick between the thumb and the side of the index finger, with only a small tip showing."
+        },
+        {
+          "type": "demo",
+          "title": "Quarters, then eighths",
+          "caption": "Four quarter notes, then eight eighth notes, on the open D string at 70 BPM.",
+          "playback": {
+            "notes": [
+              [
+                "D3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "D3"
+              ]
+            ],
+            "rhythm": "q q q q e e e e e e e e",
+            "bpm": 70
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Open D string: two measures of eighth notes. Down on the numbers, up on the \"&\". Count out loud.",
+            "notes": [
+              "D3",
+              "D3",
+              "D3",
+              "D3",
+              "D3",
+              "D3",
+              "D3",
+              "D3",
+              "D3",
+              "D3",
+              "D3",
+              "D3",
+              "D3",
+              "D3",
+              "D3",
+              "D3"
+            ],
+            "rhythm": "e e e e e e e e e e e e e e e e",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              70,
+              80,
+              90
+            ],
+            "diagram": {
+              "kind": "rhythm",
+              "rhythm": "e e e e e e e e"
+            }
+          },
+          "mistakeTips": [
+            "Keep the down-up motion small and even; the upstroke should sound as clear as the downstroke.",
+            "If the notes bunch up, slow down and say \"1 & 2 &\" louder.",
+            "Relax the picking hand. Tension makes eighth notes uneven."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Mix: q q e e q on the open G string, twice. Count \"1, 2, 3 &, 4\".",
+            "notes": [
+              "G3",
+              "G3",
+              "G3",
+              "G3",
+              "G3",
+              "G3",
+              "G3",
+              "G3",
+              "G3",
+              "G3"
+            ],
+            "rhythm": "q q e e q q q e e q",
+            "bpm": 70,
+            "tempoSteps": [
+              70,
+              80,
+              90
+            ],
+            "diagram": {
+              "kind": "rhythm",
+              "rhythm": "q q e e q"
+            }
+          },
+          "mistakeTips": [
+            "The two eighth notes share beat 3: down on \"3\", up on \"&\".",
+            "Keep the hand moving on beats 1, 2, and 4 even though you play only downstrokes there."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Eighth notes",
+          "questions": [
+            {
+              "prompt": "How many eighth notes fill one beat in 4/4?",
+              "choices": [
+                "1",
+                "2",
+                "4"
+              ],
+              "answerIndex": 1,
+              "explanation": "An eighth note is half a beat."
+            },
+            {
+              "prompt": "In alternate picking, which stroke falls on the \"&\"?",
+              "choices": [
+                "Downstroke",
+                "Upstroke"
+              ],
+              "answerIndex": 1,
+              "explanation": "Down on the beat, up on the \"&\"."
+            },
+            {
+              "prompt": "What is the count for a measure of eighth notes in 4/4?",
+              "choices": [
+                "1 & 2 & 3 & 4 &",
+                "1 2 3 4 5 6 7 8",
+                "1 e & a"
+              ],
+              "answerIndex": 0,
+              "explanation": "Numbers on the beats, \"&\" halfway between."
+            },
+            {
+              "prompt": "How many beats are in: q e e h ?",
+              "choices": [
+                "3",
+                "4",
+                "5"
+              ],
+              "answerIndex": 1,
+              "explanation": "1 + ½ + ½ + 2 = 4."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Count the rhythm",
+          "generator": {
+            "kind": "rhythmCount",
+            "params": {
+              "values": "h,q,e",
+              "rests": "true",
+              "timeSignature": "4/4"
+            }
+          },
+          "count": 4
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s2.l4.r1",
+          "kind": "fact",
+          "prompt": "How do you count a measure of eighth notes, and which strokes do you use?",
+          "answer": "\"1 & 2 & 3 & 4 &\"; down on numbers, up on \"&\"."
+        }
+      ],
+      "glossaryTerms": [
+        "eighth note",
+        "downstroke",
+        "upstroke",
+        "alternate picking"
+      ]
+    },
+    {
+      "id": "guitar.s2.l5",
+      "title": "Dotted notes and ties",
+      "summary": "Read dotted half and dotted quarter notes and hold notes across ties.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Dots add half",
+          "body": "A **dot** after a note adds half of that note's length:\n\n- **Dotted half** = 2 + 1 = **3 beats**. It fills a whole measure of 3/4.\n- **Dotted quarter** = 1 + ½ = **1½ beats**. It is almost always followed by an eighth note to complete two beats.\n\nCount a dotted quarter and eighth as \"1 & 2 &\": pick on \"1\", hold through \"& 2\", and pick again on the last \"&\".",
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "q. e q. e",
+            "caption": "Dotted quarter + eighth, twice."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Ties",
+          "body": "A **tie** is a curved line joining two notes of the same pitch. Play the first note and hold it through the second; do not pick again.\n\nTies let a note last across a bar line, or make lengths that no single note value can show. A half note tied to a quarter note lasts 3 beats, the same as a dotted half."
+        },
+        {
+          "type": "demo",
+          "title": "Dotted rhythms",
+          "caption": "Open G string: dotted quarter + eighth, twice, then a half note and two quarters.",
+          "playback": {
+            "notes": [
+              [
+                "G3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "G3"
+              ]
+            ],
+            "rhythm": "q. e q. e h q q",
+            "bpm": 70
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Open G string: q. e q. e, then a whole note; play it twice. Count \"1 & 2 &, 3 & 4 &, 1 2 3 4\" and pick on 1, the \"&\" of 2, 3, the \"&\" of 4, and the next 1.",
+            "notes": [
+              "G3",
+              "G3",
+              "G3",
+              "G3",
+              "G3",
+              "G3",
+              "G3",
+              "G3",
+              "G3",
+              "G3"
+            ],
+            "rhythm": "q. e q. e w q. e q. e w",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              70,
+              80
+            ],
+            "diagram": {
+              "kind": "rhythm",
+              "rhythm": "q. e q. e"
+            }
+          },
+          "mistakeTips": [
+            "The eighth note after the dot is short; it falls on the \"&\" of the beat.",
+            "Use a downstroke for the dotted quarter and an upstroke for the eighth note, the same as alternate picking.",
+            "Say the counts out loud. Dotted rhythms are easy to rush."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "3/4 time: open low E as a dotted half (3 beats), then three quarter notes on the open B string. Four measures.",
+            "notes": [
+              "E2",
+              "B3",
+              "B3",
+              "B3",
+              "E2",
+              "B3",
+              "B3",
+              "B3"
+            ],
+            "rhythm": "h. q q q h. q q q",
+            "bpm": 80,
+            "tempoSteps": [
+              80,
+              90,
+              100
+            ]
+          },
+          "mistakeTips": [
+            "Let the low E ring for all three beats: \"1 2 3\".",
+            "Then three even quarters: \"1 2 3\"."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Dots and ties",
+          "questions": [
+            {
+              "prompt": "How long is a dotted half note?",
+              "choices": [
+                "2 beats",
+                "3 beats",
+                "4 beats"
+              ],
+              "answerIndex": 1,
+              "explanation": "2 + half of 2 (1) = 3 beats."
+            },
+            {
+              "prompt": "How long is a dotted quarter note?",
+              "choices": [
+                "1 beat",
+                "1½ beats",
+                "2 beats"
+              ],
+              "answerIndex": 1,
+              "explanation": "1 + half of 1 (½) = 1½ beats."
+            },
+            {
+              "prompt": "A half note is tied to a quarter note of the same pitch. How do you play it?",
+              "choices": [
+                "Pick once and hold 3 beats",
+                "Pick twice",
+                "Play only the half note"
+              ],
+              "answerIndex": 0,
+              "explanation": "A tie joins the lengths. Pick once."
+            },
+            {
+              "prompt": "What usually follows a dotted quarter note?",
+              "choices": [
+                "An eighth note",
+                "A whole note",
+                "A half rest"
+              ],
+              "answerIndex": 0,
+              "explanation": "1½ + ½ = 2 beats, a tidy pair."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s2.l5.r1",
+          "kind": "fact",
+          "prompt": "What does a dot after a note do?",
+          "answer": "Adds half the note's length (dotted half = 3 beats, dotted quarter = 1½)."
+        },
+        {
+          "id": "guitar.s2.l5.r2",
+          "kind": "fact",
+          "prompt": "What is a tie?",
+          "answer": "A curve joining two notes of the same pitch; play once and hold for both lengths."
+        }
+      ],
+      "glossaryTerms": [
+        "dotted note",
+        "tie",
+        "half note",
+        "quarter note"
+      ]
+    },
+    {
+      "id": "guitar.s2.l6",
+      "title": "Rhythm review: Jingle Bells",
+      "summary": "Review beats, measures, note values, and dotted rhythms, then play the Jingle Bells chorus.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "What you know now",
+          "body": "- **Tempo** is beats per minute; count and move with the pulse.\n- **4/4** has four quarter-note beats per measure, **3/4** has three.\n- Whole = 4 beats, half = 2, quarter = 1, eighth = ½. Rests have the same lengths.\n- A **dot** adds half the length; a **tie** joins two notes into one longer note.\n- **Alternate picking:** down on the beat, up on the \"&\"."
+        },
+        {
+          "type": "quiz",
+          "title": "Rhythm review",
+          "questions": [
+            {
+              "prompt": "How many beats are in: h q. e ?",
+              "choices": [
+                "3",
+                "4",
+                "3½"
+              ],
+              "answerIndex": 1,
+              "explanation": "2 + 1½ + ½ = 4."
+            },
+            {
+              "prompt": "In 3/4, which single note fills a whole measure?",
+              "choices": [
+                "Whole note",
+                "Dotted half note",
+                "Half note"
+              ],
+              "answerIndex": 1,
+              "explanation": "A dotted half is 3 beats."
+            },
+            {
+              "prompt": "You see a quarter rest on beat 2. What do you do?",
+              "choices": [
+                "Stay silent for one beat, then continue",
+                "Hold the previous note",
+                "Skip to the next measure"
+              ],
+              "answerIndex": 0,
+              "explanation": "A rest is a counted silence. Stop the string and keep counting."
+            },
+            {
+              "prompt": "At 120 BPM, how many beats happen in one second?",
+              "choices": [
+                "1",
+                "2",
+                "4"
+              ],
+              "answerIndex": 1,
+              "explanation": "120 beats in 60 seconds = 2 per second."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Count the rhythm",
+          "generator": {
+            "kind": "rhythmCount",
+            "params": {
+              "values": "w,h.,h,q.,q,e",
+              "rests": "true",
+              "timeSignature": "4/4,3/4"
+            }
+          },
+          "count": 5
+        },
+        {
+          "type": "explain",
+          "title": "Jingle Bells chorus",
+          "body": "\"Jingle Bells\" (James Lord Pierpont, 1857) is in the public domain. The chorus uses whole, half, quarter, dotted quarter, and eighth notes. All five pitches are on the A string, which you learned in Stage 1:\n\n**C** fret 3, **D** fret 5, **E** fret 7, **F** fret 8, **G** fret 10.\n\nRhythm, measure by measure: q q h | q q h | q q q. e | w | q q q. e | q q q e e | q q q q | h h.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:3",
+              "5:5",
+              "5:7",
+              "5:8",
+              "5:10"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "type": "song",
+          "title": "Jingle Bells, chorus (Pierpont)",
+          "caption": "Start at 90 BPM. Hold the whole note in measure 4 for all four beats.",
+          "notes": [
+            [
+              "E3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "F3"
+            ],
+            [
+              "F3"
+            ],
+            [
+              "F3"
+            ],
+            [
+              "F3"
+            ],
+            [
+              "F3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "G3"
+            ]
+          ],
+          "rhythm": "q q h q q h q q q. e w q q q. e q q q e e q q q q h h",
+          "bpm": 90
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s2.l6.r1",
+          "kind": "fact",
+          "prompt": "Beats in: q. e ?",
+          "answer": "2"
+        }
+      ],
+      "glossaryTerms": [
+        "dotted note",
+        "eighth note",
+        "measure",
+        "time signature"
+      ]
+    }
+  ],
+  "branches": [
+    {
+      "id": "guitar.b.rhythm",
+      "title": "Rhythm reading",
+      "summary": "Sixteenth notes, syncopation, triplets, and swing. Optional; it does not block the main path.",
+      "unlocksAfter": "guitar.s2.l6",
+      "lessons": [
+        {
+          "id": "guitar.b.rhythm.l1",
+          "title": "Sixteenth notes",
+          "summary": "Split the beat into four, count \"1 e & a\", and keep alternate picking going.",
+          "minutes": 10,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "Four per beat",
+              "body": "A **sixteenth note** lasts a quarter of a beat in 4/4. Four fill one beat.\n\nCount them **\"1 e & a, 2 e & a…\"** (say \"one ee and uh\"). The number and \"&\" are where your eighth notes used to be; \"e\" and \"a\" are the new in-between spots.\n\nPick down-up-down-up: downstrokes on the number and \"&\", upstrokes on \"e\" and \"a\".",
+              "diagram": {
+                "kind": "rhythm",
+                "rhythm": "s s s s s s s s e e q",
+                "caption": "1 e & a 2 e & a 3 & 4"
+              }
+            },
+            {
+              "type": "demo",
+              "title": "Eighths, then sixteenths",
+              "caption": "Open A string: four eighth notes, then eight sixteenth notes, at 60 BPM.",
+              "playback": {
+                "notes": [
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ]
+                ],
+                "rhythm": "e e e e s s s s s s s s",
+                "bpm": 60
+              }
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "playSequence",
+                "prompt": "Open A string: one beat of four sixteenths, then a quarter note; repeat four times.",
+                "notes": [
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2"
+                ],
+                "rhythm": "s s s s q s s s s q s s s s q s s s s q",
+                "bpm": 50,
+                "tempoSteps": [
+                  50,
+                  60,
+                  70
+                ]
+              },
+              "mistakeTips": [
+                "Say \"1 e & a 2\" and land the quarter note on \"2\".",
+                "Keep the picking motion very small; sixteenths need economy.",
+                "Slow down until every note is even. Evenness first, speed second."
+              ]
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "playSequence",
+                "prompt": "Gallop: one eighth and two sixteenths (e s s) on each beat, open D string, two measures.",
+                "notes": [
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3",
+                  "D3"
+                ],
+                "rhythm": "e s s e s s e s s e s s e s s e s s e s s e s s",
+                "bpm": 60,
+                "tempoSteps": [
+                  60,
+                  70,
+                  80
+                ]
+              },
+              "mistakeTips": [
+                "Count \"1 & a, 2 & a\": the eighth is on the number, the sixteenths on \"&\" and \"a\".",
+                "Pick down, down-up on each beat."
+              ]
+            },
+            {
+              "type": "quiz",
+              "title": "Sixteenths",
+              "questions": [
+                {
+                  "prompt": "How many sixteenth notes fill one beat in 4/4?",
+                  "choices": [
+                    "2",
+                    "4",
+                    "8"
+                  ],
+                  "answerIndex": 1,
+                  "explanation": "A sixteenth is a quarter of a beat."
+                },
+                {
+                  "prompt": "How do you count sixteenths?",
+                  "choices": [
+                    "1 e & a",
+                    "1 & 2 &",
+                    "1 trip let"
+                  ],
+                  "answerIndex": 0,
+                  "explanation": "Number, e, &, a."
+                },
+                {
+                  "prompt": "How many beats is: e s s ?",
+                  "choices": [
+                    "1",
+                    "1½",
+                    "2"
+                  ],
+                  "answerIndex": 0,
+                  "explanation": "½ + ¼ + ¼ = 1."
+                }
+              ]
+            },
+            {
+              "type": "quiz",
+              "title": "Count the rhythm",
+              "generator": {
+                "kind": "rhythmCount",
+                "params": {
+                  "values": "q,e,s",
+                  "rests": "false",
+                  "timeSignature": "4/4"
+                }
+              },
+              "count": 4
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "guitar.b.rhythm.l1.r1",
+              "kind": "fact",
+              "prompt": "Count a beat of sixteenth notes.",
+              "answer": "1 e & a"
+            }
+          ],
+          "glossaryTerms": [
+            "sixteenth note",
+            "alternate picking"
+          ]
+        },
+        {
+          "id": "guitar.b.rhythm.l2",
+          "title": "Syncopation and off-beats",
+          "summary": "Play notes that start between the beats and hold across them.",
+          "minutes": 10,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "Off the beat",
+              "body": "**Syncopation** means putting notes, or accents, between the main beats. It makes a rhythm feel pushed forward.\n\nA common figure: **e q e** – an eighth, a quarter, and an eighth. Count \"**1 & – 2 &**\": pick on \"1\", pick on \"&\" and hold through \"2\", pick on the next \"&\".\n\nKeep your picking hand moving down-up the whole time. Syncopated notes fall on upstrokes; when the hand passes the strings without playing, just miss them.",
+              "diagram": {
+                "kind": "rhythm",
+                "rhythm": "e q e q q",
+                "caption": "1 &(hold 2) & 3 4"
+              }
+            },
+            {
+              "type": "demo",
+              "title": "Syncopated measure",
+              "caption": "Open low E: e q e q q, twice.",
+              "playback": {
+                "notes": [
+                  [
+                    "E2"
+                  ],
+                  [
+                    "E2"
+                  ],
+                  [
+                    "E2"
+                  ],
+                  [
+                    "E2"
+                  ],
+                  [
+                    "E2"
+                  ],
+                  [
+                    "E2"
+                  ],
+                  [
+                    "E2"
+                  ],
+                  [
+                    "E2"
+                  ],
+                  [
+                    "E2"
+                  ],
+                  [
+                    "E2"
+                  ]
+                ],
+                "rhythm": "e q e q q e q e q q",
+                "bpm": 70
+              }
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "playSequence",
+                "prompt": "Open low E: e q e q q, four times. Count \"1 & (2) & 3 4\".",
+                "notes": [
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2",
+                  "E2"
+                ],
+                "rhythm": "e q e q q e q e q q e q e q q e q e q q",
+                "bpm": 60,
+                "tempoSteps": [
+                  60,
+                  70,
+                  80
+                ]
+              },
+              "mistakeTips": [
+                "The quarter note starts on \"1 &\", so it rings through beat 2.",
+                "Say the \"2\" in your head even though you do not pick on it.",
+                "Use down, up, (miss), up, down, down: the hand never stops."
+              ]
+            },
+            {
+              "type": "quiz",
+              "title": "Syncopation",
+              "questions": [
+                {
+                  "prompt": "In \"e q e q q\", which counts get a new note?",
+                  "choices": [
+                    "1, &, &, 3, 4",
+                    "1, 2, 3, 4",
+                    "1, &, 2, &, 3"
+                  ],
+                  "answerIndex": 0,
+                  "explanation": "e on 1, q on 1&, e on 2&, then quarters on 3 and 4."
+                },
+                {
+                  "prompt": "What is syncopation?",
+                  "choices": [
+                    "Placing notes or accents between the main beats",
+                    "Playing faster",
+                    "Playing only on beat 1"
+                  ],
+                  "answerIndex": 0,
+                  "explanation": "It shifts emphasis off the beat."
+                }
+              ]
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "guitar.b.rhythm.l2.r1",
+              "kind": "fact",
+              "prompt": "What is syncopation?",
+              "answer": "Notes or accents placed between the main beats."
+            }
+          ],
+          "glossaryTerms": [
+            "syncopation",
+            "tie"
+          ]
+        },
+        {
+          "id": "guitar.b.rhythm.l3",
+          "title": "Triplets and swing",
+          "summary": "Fit three notes into one beat, and hear how swing comes from the triplet.",
+          "minutes": 12,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "Triplets",
+              "body": "A **triplet** fits three equal notes into the space normally taken by two. Eighth-note triplets put three notes on one beat. Count them \"**1**-trip-let, **2**-trip-let\".\n\nThey are written with a small 3 over the group.",
+              "diagram": {
+                "kind": "rhythm",
+                "rhythm": "te te te te te te q q",
+                "caption": "Two beats of triplets, then two quarters."
+              }
+            },
+            {
+              "type": "explain",
+              "title": "Swing",
+              "body": "In **swing**, pairs of eighth notes are played long-short instead of even. The long note takes the first two parts of a triplet and the short note takes the third: \"**1**–(trip)–let, **2**–(trip)–let\".\n\nBlues, jazz, and shuffle rhythms use this feel. The Blues shuffle branch after Stage 6 builds on it."
+            },
+            {
+              "type": "demo",
+              "title": "Straight, triplet, swing",
+              "caption": "Open G string: four straight eighths, six triplet eighths, then four swung eighths.",
+              "playback": {
+                "notes": [
+                  [
+                    "G3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "G3"
+                  ]
+                ],
+                "rhythm": "e e e e te te te te te te tq te tq te",
+                "bpm": 70
+              }
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "playSequence",
+                "prompt": "Open G string: triplets for one measure, then quarters for one measure. Count \"1-trip-let 2-trip-let…\".",
+                "notes": [
+                  "G3",
+                  "G3",
+                  "G3",
+                  "G3",
+                  "G3",
+                  "G3",
+                  "G3",
+                  "G3",
+                  "G3",
+                  "G3",
+                  "G3",
+                  "G3",
+                  "G3",
+                  "G3",
+                  "G3",
+                  "G3"
+                ],
+                "rhythm": "te te te te te te te te te te te te q q q q",
+                "bpm": 60,
+                "tempoSteps": [
+                  60,
+                  70,
+                  80
+                ]
+              },
+              "mistakeTips": [
+                "With alternate picking, triplets start the beat with a downstroke, then an upstroke on the next beat. That is normal.",
+                "Some players prefer down-up-down on every beat. Either works if the notes are even.",
+                "Accent the first note of each group so the beat stays clear."
+              ]
+            },
+            {
+              "type": "song",
+              "title": "Triplet Etude",
+              "caption": "An original etude on open strings and the A string. Keep the rests silent.",
+              "notes": [
+                [
+                  "A2"
+                ],
+                [
+                  "A2"
+                ],
+                [
+                  "A2"
+                ],
+                [
+                  "D3"
+                ],
+                [
+                  "D3"
+                ],
+                [
+                  "D3"
+                ],
+                [
+                  "E3"
+                ],
+                [],
+                [
+                  "A2"
+                ],
+                [
+                  "A2"
+                ],
+                [
+                  "A2"
+                ],
+                [
+                  "D3"
+                ],
+                [
+                  "D3"
+                ],
+                [
+                  "D3"
+                ],
+                [
+                  "A2"
+                ]
+              ],
+              "rhythm": "te te te te te te q qr te te te te te te h",
+              "bpm": 66
+            },
+            {
+              "type": "quiz",
+              "title": "Triplets",
+              "questions": [
+                {
+                  "prompt": "How many eighth-note triplets fill one beat?",
+                  "choices": [
+                    "2",
+                    "3",
+                    "4"
+                  ],
+                  "answerIndex": 1,
+                  "explanation": "Three in the space of two eighths."
+                },
+                {
+                  "prompt": "How is a swung pair of eighth notes played?",
+                  "choices": [
+                    "Long-short",
+                    "Short-long",
+                    "Even"
+                  ],
+                  "answerIndex": 0,
+                  "explanation": "The first note takes two thirds of the beat, the second takes one third."
+                }
+              ]
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "guitar.b.rhythm.l3.r1",
+              "kind": "fact",
+              "prompt": "What is a triplet?",
+              "answer": "Three equal notes in the time of two."
+            }
+          ],
+          "glossaryTerms": [
+            "triplet",
+            "swing"
+          ]
+        }
+      ]
+    }
+  ]
+}

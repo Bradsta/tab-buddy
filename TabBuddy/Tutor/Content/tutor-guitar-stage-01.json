@@ -1,0 +1,1426 @@
+{
+  "id": "guitar.s1",
+  "instrument": "guitar",
+  "order": 1,
+  "title": "The musical alphabet",
+  "summary": "Twelve notes, half and whole steps, sharps and flats, octaves, and every note on the two root strings up to fret 12.",
+  "lessons": [
+    {
+      "id": "guitar.s1.l1",
+      "title": "Seven letters, twelve notes",
+      "summary": "Learn the musical alphabet, half steps, and whole steps, and walk up the low E string one fret at a time.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "The musical alphabet",
+          "body": "Music uses only seven letter names: **A B C D E F G**. After G it starts again at A. These seven are the **natural notes**.\n\nBut there are **twelve** different notes before the pattern repeats. The five extra notes sit *between* some of the letters and are named with **sharps** (#) and **flats** (b). You will learn those names in the next lesson.\n\nHere is the full set of twelve, using sharps:\n\n**A – A# – B – C – C# – D – D# – E – F – F# – G – G#** – then A again."
+        },
+        {
+          "type": "explain",
+          "title": "Half steps and whole steps",
+          "body": "The distance from one fret to the very next fret is a **half step**. It is the smallest step in Western music.\n\nTwo half steps make a **whole step**: two frets.\n\nMost neighboring letters are a whole step apart, with a sharp/flat note between them. Two pairs are different: **E–F** and **B–C** are only a half step apart. There is no note between them.\n\nOn the low E string: open is E, fret 1 is F (a half step), fret 3 is G (a whole step above F).",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "6:1",
+              "6:2",
+              "6:3",
+              "6:4",
+              "6:5",
+              "6:6",
+              "6:7",
+              "6:8",
+              "6:9",
+              "6:10",
+              "6:11",
+              "6:12"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              12
+            ],
+            "caption": "Every note on the low E string, frets 0 to 12."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Twelve half steps",
+          "caption": "Low E string, fret 0 to fret 12, one fret at a time. That is all twelve notes, landing on E again at fret 12.",
+          "playback": {
+            "notes": [
+              [
+                "E2"
+              ],
+              [
+                "F2"
+              ],
+              [
+                "F#2"
+              ],
+              [
+                "G2"
+              ],
+              [
+                "G#2"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "A#2"
+              ],
+              [
+                "B2"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "C#3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "D#3"
+              ],
+              [
+                "E3"
+              ]
+            ],
+            "bpm": 90,
+            "style": "sequence"
+          },
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "6:1",
+              "6:2",
+              "6:3",
+              "6:4",
+              "6:5",
+              "6:6",
+              "6:7",
+              "6:8",
+              "6:9",
+              "6:10",
+              "6:11",
+              "6:12"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Walk up the low E string from the open string to fret 12, one fret at a time. Say each name as you play it.",
+            "notes": [
+              "E2",
+              "F2",
+              "F#2",
+              "G2",
+              "G#2",
+              "A2",
+              "A#2",
+              "B2",
+              "C3",
+              "C#3",
+              "D3",
+              "D#3",
+              "E3"
+            ],
+            "passAccuracy": 0.85,
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:0",
+                "6:1",
+                "6:2",
+                "6:3",
+                "6:4",
+                "6:5",
+                "6:6",
+                "6:7",
+                "6:8",
+                "6:9",
+                "6:10",
+                "6:11",
+                "6:12"
+              ],
+              "labels": "noteNames",
+              "fretRange": [
+                0,
+                12
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Use one finger per fret in each area of the neck: index on the first fret of the group, middle on the next, and so on.",
+            "Lift the old finger as the new one presses so only one note rings.",
+            "Press just behind the fret. Past fret 7, the frets get closer together, so your fingers need less stretch."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Steps check",
+          "questions": [
+            {
+              "prompt": "How many different notes are there before the pattern repeats?",
+              "choices": [
+                "7",
+                "12",
+                "8",
+                "10"
+              ],
+              "answerIndex": 1,
+              "explanation": "Seven letter names, but twelve notes counting the sharps and flats between them."
+            },
+            {
+              "prompt": "How many frets is a whole step?",
+              "choices": [
+                "1",
+                "2",
+                "3"
+              ],
+              "answerIndex": 1,
+              "explanation": "A half step is one fret, so a whole step is two."
+            },
+            {
+              "prompt": "Which pair of letters is only a half step apart?",
+              "choices": [
+                "E and F",
+                "F and G",
+                "C and D",
+                "A and B"
+              ],
+              "answerIndex": 0,
+              "explanation": "E–F and B–C are the two natural half steps. All other neighboring letters are a whole step apart."
+            },
+            {
+              "prompt": "What note comes one half step above B?",
+              "choices": [
+                "B#",
+                "C",
+                "C#"
+              ],
+              "answerIndex": 1,
+              "explanation": "B to C is a natural half step. (B# is another name for the same pitch, but C is the usual name.)"
+            },
+            {
+              "prompt": "On the low E string, what note is at fret 3?",
+              "choices": [
+                "F",
+                "F#",
+                "G",
+                "G#"
+              ],
+              "answerIndex": 2,
+              "explanation": "E (0), F (1), F# (2), G (3)."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s1.l1.r1",
+          "kind": "fact",
+          "prompt": "Which two pairs of natural notes are only a half step apart?",
+          "answer": "E–F and B–C."
+        },
+        {
+          "id": "guitar.s1.l1.r2",
+          "kind": "fact",
+          "prompt": "How many frets in a half step? In a whole step?",
+          "answer": "One fret; two frets."
+        }
+      ],
+      "glossaryTerms": [
+        "musical alphabet",
+        "natural note",
+        "half step",
+        "whole step",
+        "chromatic scale"
+      ]
+    },
+    {
+      "id": "guitar.s1.l2",
+      "title": "Sharps, flats, and two names for one note",
+      "summary": "Name the in-between notes with sharps and flats, and see why F# and Gb are the same pitch.",
+      "minutes": 8,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Sharps and flats",
+          "body": "A **sharp** (#) raises a note by one half step: one fret toward the body.\n\nA **flat** (b) lowers a note by one half step: one fret toward the headstock.\n\nSo the note at fret 2 of the low E string can be called **F#** (one fret above F) or **Gb** (one fret below G). Two names for the same pitch are called **enharmonic** names.\n\nA **natural sign** (♮) cancels a sharp or flat. Sharps, flats, and naturals are all called **accidentals**.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:1",
+              "6:2",
+              "6:3"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              5
+            ],
+            "caption": "F, F# (also called Gb), G."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Which name do you use?",
+          "body": "Both names are correct for the sound. Which one is written depends on the key and the chord, which you will learn in Stages 4 and 5. For now, a simple habit: use sharps when you are moving up and flats when you are moving down.\n\n| Fret on low E | Sharp name | Flat name |\n|---|---|---|\n| 2 | F# | Gb |\n| 4 | G# | Ab |\n| 6 | A# | Bb |\n| 9 | C# | Db |\n| 11 | D# | Eb |\n\nE and B have no sharp between them and the next letter. E# is another name for F, and B# is another name for C, but you will rarely see them."
+        },
+        {
+          "type": "demo",
+          "title": "One pitch, two names",
+          "caption": "F# on the low E string at fret 2. It is the same sound whether you call it F# or Gb.",
+          "playback": {
+            "notes": [
+              [
+                "F2"
+              ],
+              [
+                "F#2"
+              ],
+              [
+                "G2"
+              ],
+              [
+                "F#2"
+              ]
+            ],
+            "bpm": 60
+          },
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:1",
+              "6:2",
+              "6:3"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              5
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playNote",
+            "prompt": "Play these notes on the low E string: F#, Bb, C#, Eb.",
+            "notes": [
+              "F#2",
+              "Bb2",
+              "C#3",
+              "Eb3"
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:2",
+                "6:6",
+                "6:9",
+                "6:11"
+              ],
+              "labels": "none",
+              "fretRange": [
+                0,
+                12
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Bb is one fret below B. B is at fret 7, so Bb is at fret 6.",
+            "C# is one fret above C. C is at fret 8, so C# is at fret 9.",
+            "Eb is one fret below E. The E at fret 12 means Eb is at fret 11."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Accidentals",
+          "questions": [
+            {
+              "prompt": "What does a sharp do?",
+              "choices": [
+                "Raises a note one half step",
+                "Lowers a note one half step",
+                "Raises a note one whole step"
+              ],
+              "answerIndex": 0,
+              "explanation": "Sharp = up one fret. Flat = down one fret."
+            },
+            {
+              "prompt": "Which note is enharmonic with Db?",
+              "choices": [
+                "D#",
+                "C#",
+                "C",
+                "Eb"
+              ],
+              "answerIndex": 1,
+              "explanation": "Db is one half step below D, which is one half step above C: C#."
+            },
+            {
+              "prompt": "What is another name for A#?",
+              "choices": [
+                "Bb",
+                "Ab",
+                "B",
+                "Cb"
+              ],
+              "answerIndex": 0,
+              "explanation": "A# is one fret above A and one fret below B, so it is also Bb."
+            },
+            {
+              "prompt": "Which of these has no sharp note between it and the next letter?",
+              "choices": [
+                "E",
+                "F",
+                "G",
+                "A"
+              ],
+              "answerIndex": 0,
+              "explanation": "E–F and B–C are half steps, so there is no note between them."
+            },
+            {
+              "prompt": "What does a natural sign do?",
+              "choices": [
+                "Cancels a sharp or flat",
+                "Raises a note",
+                "Marks a rest"
+              ],
+              "answerIndex": 0,
+              "explanation": "A natural sign returns a note to its plain letter name."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s1.l2.r1",
+          "kind": "fact",
+          "prompt": "Give the other name for Gb.",
+          "answer": "F#"
+        },
+        {
+          "id": "guitar.s1.l2.r2",
+          "kind": "fact",
+          "prompt": "Give the other name for D#.",
+          "answer": "Eb"
+        },
+        {
+          "id": "guitar.s1.l2.r3",
+          "kind": "fact",
+          "prompt": "What is an enharmonic name?",
+          "answer": "A second name for the same pitch, such as F# and Gb."
+        }
+      ],
+      "glossaryTerms": [
+        "sharp",
+        "flat",
+        "natural sign",
+        "accidental",
+        "enharmonic"
+      ]
+    },
+    {
+      "id": "guitar.s1.l3",
+      "title": "Notes on the low E string",
+      "summary": "Memorize landmark notes on string 6 up to fret 12 and fill in the rest by counting frets.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Why the low E string first",
+          "body": "Strings 6 and 5 are the **root strings**. Most movable chords and scales you will learn start on one of them, and you find their names by the note under your finger. Knowing these two strings well pays off in every later stage."
+        },
+        {
+          "type": "explain",
+          "title": "Landmarks",
+          "body": "Memorize the **natural notes** on the low E string. Everything else is one fret above or below one of them.\n\n| Fret | 0 | 1 | 3 | 5 | 7 | 8 | 10 | 12 |\n|---|---|---|---|---|---|---|---|---|\n| Note | E | F | G | A | B | C | D | E |\n\nMost guitars have dots at frets 3, 5, 7, 9, and 12. Use them: **G at the first dot (3), A at the second (5), B at the third (7)**, and E again at the double dot (12).\n\nNotice fret 7 to fret 8 is B to C, and fret 0 to fret 1 is E to F: the two natural half steps.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "6:1",
+              "6:3",
+              "6:5",
+              "6:7",
+              "6:8",
+              "6:10",
+              "6:12"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Landmarks on string 6",
+          "caption": "E, G, A, B, C, D, E at frets 0, 3, 5, 7, 8, 10, 12.",
+          "playback": {
+            "notes": [
+              [
+                "E2"
+              ],
+              [
+                "G2"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "B2"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "E3"
+              ]
+            ],
+            "bpm": 70
+          },
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "6:3",
+              "6:5",
+              "6:7",
+              "6:8",
+              "6:10",
+              "6:12"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playNote",
+            "prompt": "On the low E string, play G, A, C, D, and B. The app moves on after each correct note.",
+            "notes": [
+              "G2",
+              "A2",
+              "C3",
+              "D3",
+              "B2"
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:0"
+              ],
+              "labels": "noteNames",
+              "fretRange": [
+                0,
+                12
+              ],
+              "caption": "Start from open E and count up."
+            }
+          },
+          "mistakeTips": [
+            "G is at the first dot (fret 3), A at the second (fret 5), B at the third (fret 7).",
+            "C is one fret above B: fret 8. D is two frets above C: fret 10.",
+            "The app grades pitch only. The open A string also sounds A2, but try to find it on string 6 at fret 5."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Landmark run: play E, G, A, B, C, D, E up the low E string, then come back down.",
+            "notes": [
+              "E2",
+              "G2",
+              "A2",
+              "B2",
+              "C3",
+              "D3",
+              "E3",
+              "D3",
+              "C3",
+              "B2",
+              "A2",
+              "G2",
+              "E2"
+            ],
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:0",
+                "6:3",
+                "6:5",
+                "6:7",
+                "6:8",
+                "6:10",
+                "6:12"
+              ],
+              "labels": "noteNames",
+              "fretRange": [
+                0,
+                12
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Frets 0, 3, 5, 7, 8, 10, 12. Say each name as you land on it.",
+            "Shift the whole hand, leading with the finger you will use. Keep the thumb relaxed so it can slide.",
+            "Look at the fret dots, not at your finger, when you shift."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Name the note on string 6",
+          "generator": {
+            "kind": "noteOnFretboard",
+            "params": {
+              "strings": "6",
+              "fretMin": "0",
+              "fretMax": "12"
+            }
+          },
+          "count": 8
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s1.l3.r1",
+          "kind": "noteName",
+          "prompt": "Name this note.",
+          "answer": "G",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:3"
+            ],
+            "labels": "none",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "id": "guitar.s1.l3.r2",
+          "kind": "noteName",
+          "prompt": "Name this note.",
+          "answer": "C",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:8"
+            ],
+            "labels": "none",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "id": "guitar.s1.l3.r3",
+          "kind": "noteName",
+          "prompt": "Name this note.",
+          "answer": "A",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:5"
+            ],
+            "labels": "none",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "id": "guitar.s1.l3.r4",
+          "kind": "playNote",
+          "prompt": "Play D on the low E string.",
+          "answer": "D3 (string 6, fret 10)"
+        }
+      ],
+      "glossaryTerms": [
+        "root string",
+        "natural note",
+        "fret"
+      ]
+    },
+    {
+      "id": "guitar.s1.l4",
+      "title": "Notes on the A string",
+      "summary": "Learn landmark notes on string 5 up to fret 12 and connect them to the low E string.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Landmarks on the A string",
+          "body": "The same method works on string 5:\n\n| Fret | 0 | 2 | 3 | 5 | 7 | 8 | 10 | 12 |\n|---|---|---|---|---|---|---|---|---|\n| Note | A | B | C | D | E | F | G | A |\n\nB to C (frets 2 to 3) and E to F (frets 7 to 8) are the two half steps.\n\n**A shortcut between strings:** the note at fret 5 on string 6 is A, the same pitch as the open A string. That is how the strings are tuned. So any note on string 5 is the same pitch as the note five frets higher on string 6.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:0",
+              "5:2",
+              "5:3",
+              "5:5",
+              "5:7",
+              "5:8",
+              "5:10",
+              "5:12"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Landmarks on string 5",
+          "caption": "A, B, C, D, E, F, G, A at frets 0, 2, 3, 5, 7, 8, 10, 12.",
+          "playback": {
+            "notes": [
+              [
+                "A2"
+              ],
+              [
+                "B2"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "F3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "A3"
+              ]
+            ],
+            "bpm": 70
+          },
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:0",
+              "5:2",
+              "5:3",
+              "5:5",
+              "5:7",
+              "5:8",
+              "5:10",
+              "5:12"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playNote",
+            "prompt": "On the A string, play C, E, G, D, and F.",
+            "notes": [
+              "C3",
+              "E3",
+              "G3",
+              "D3",
+              "F3"
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "5:0"
+              ],
+              "labels": "noteNames",
+              "fretRange": [
+                0,
+                12
+              ]
+            }
+          },
+          "mistakeTips": [
+            "C is at fret 3, D at fret 5 (the second dot), E at fret 7 (the third dot).",
+            "F is one fret above E: fret 8. G is two frets above F: fret 10.",
+            "C3 also sits at fret 8 of the low E string. Either is correct for the app."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playNote",
+            "prompt": "Mixed strings: play A on string 6, then B on string 5, then F on string 6, then G on string 5.",
+            "notes": [
+              "A2",
+              "B2",
+              "F2",
+              "G3"
+            ]
+          },
+          "mistakeTips": [
+            "A on string 6: fret 5. B on string 5: fret 2.",
+            "F on string 6 is fret 1. G on string 5 is fret 10."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Name the note on strings 5 and 6",
+          "generator": {
+            "kind": "noteOnFretboard",
+            "params": {
+              "strings": "5,6",
+              "fretMin": "0",
+              "fretMax": "12"
+            }
+          },
+          "count": 10
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s1.l4.r1",
+          "kind": "noteName",
+          "prompt": "Name this note.",
+          "answer": "D",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:5"
+            ],
+            "labels": "none",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "id": "guitar.s1.l4.r2",
+          "kind": "noteName",
+          "prompt": "Name this note.",
+          "answer": "F",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:8"
+            ],
+            "labels": "none",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "id": "guitar.s1.l4.r3",
+          "kind": "noteName",
+          "prompt": "Name this note.",
+          "answer": "B",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:2"
+            ],
+            "labels": "none",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "id": "guitar.s1.l4.r4",
+          "kind": "playNote",
+          "prompt": "Play E on the A string.",
+          "answer": "E3 (string 5, fret 7)"
+        }
+      ],
+      "glossaryTerms": [
+        "root string",
+        "natural note"
+      ]
+    },
+    {
+      "id": "guitar.s1.l5",
+      "title": "Octaves: same name, higher sound",
+      "summary": "Hear and find octaves, learn the octave pattern from the root strings, and compare higher and lower notes.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "What an octave is",
+          "body": "Count twelve half steps up from any note and you land on the **same letter** again. That distance is an **octave**. The higher note vibrates exactly twice as fast, which is why the two sound like the same note at different heights.\n\nThat is why every string repeats at fret 12: open E and fret 12 E are one octave apart.\n\nNotes are often written with an octave number: **E2** is the open low E, **E3** is fret 12 of that string, **E4** is the open high E. The number goes up at each C. Middle C is **C4**. A note's letter without an octave number (just \"C\") is called its **pitch class**.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "6:12"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "type": "explain",
+          "title": "The octave pattern",
+          "body": "You do not have to go up to fret 12. From a note on string 6 or string 5, the octave is **two strings higher and two frets higher**:\n\n- G at string 6, fret 3 → G at string 4, fret 5.\n- C at string 5, fret 3 → C at string 3, fret 5.\n\nUse your index finger on the lower note and your ring finger on the octave. Let the tip of your index finger lean against the string in between so it does not ring. (From strings 4 and 3 the pattern shifts by one fret because of how the B string is tuned. You will meet that in Stage 7.)",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:3",
+              "4:5",
+              "5:3",
+              "3:5"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              7
+            ],
+            "caption": "G2 and G3; C3 and C4."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Octaves",
+          "caption": "G2 then G3, then C3 then C4. Then both notes of each pair together.",
+          "playback": {
+            "notes": [
+              [
+                "G2"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "G2",
+                "G3"
+              ],
+              [
+                "C3",
+                "C4"
+              ]
+            ],
+            "bpm": 60
+          },
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:3",
+              "4:5",
+              "5:3",
+              "3:5"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              7
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Play each note, then its octave: A2 then A3, D3 then D4, G2 then G3.",
+            "notes": [
+              "A2",
+              "A3",
+              "D3",
+              "D4",
+              "G2",
+              "G3"
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:5",
+                "4:7",
+                "5:5",
+                "3:7",
+                "6:3",
+                "4:5"
+              ],
+              "labels": "noteNames",
+              "fretRange": [
+                0,
+                9
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Two strings up, two frets up: A at string 6 fret 5 → string 4 fret 7.",
+            "D at string 5 fret 5 → string 3 fret 7.",
+            "Let the tip of your index finger lean against the string in between so it stays silent."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "findAllNotes",
+            "prompt": "Octave hunt: play G in as many octaves as you can in 40 seconds (G2, G3, G4).",
+            "pitchClass": "G",
+            "durationSec": 40,
+            "passAccuracy": 0.67
+          },
+          "mistakeTips": [
+            "G2: string 6, fret 3.",
+            "G3: open string 3, or string 4 fret 5.",
+            "G4: string 1, fret 3."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Higher, lower, or the same?",
+          "questions": [
+            {
+              "prompt": "Listen. Is the second note higher or lower than the first?",
+              "choices": [
+                "Higher",
+                "Lower",
+                "The same"
+              ],
+              "answerIndex": 0,
+              "explanation": "The second note is G3, higher than D3.",
+              "playback": {
+                "notes": [
+                  [
+                    "D3"
+                  ],
+                  [
+                    "G3"
+                  ]
+                ],
+                "bpm": 50
+              }
+            },
+            {
+              "prompt": "Listen. Is the second note higher or lower than the first?",
+              "choices": [
+                "Higher",
+                "Lower",
+                "The same"
+              ],
+              "answerIndex": 1,
+              "explanation": "The second note is A2, lower than E3.",
+              "playback": {
+                "notes": [
+                  [
+                    "E3"
+                  ],
+                  [
+                    "A2"
+                  ]
+                ],
+                "bpm": 50
+              }
+            },
+            {
+              "prompt": "Listen. Same note or different?",
+              "choices": [
+                "Same",
+                "Different"
+              ],
+              "answerIndex": 0,
+              "explanation": "Both are B3.",
+              "playback": {
+                "notes": [
+                  [
+                    "B3"
+                  ],
+                  [
+                    "B3"
+                  ]
+                ],
+                "bpm": 50
+              }
+            },
+            {
+              "prompt": "Listen. Same note or different?",
+              "choices": [
+                "Same",
+                "Different"
+              ],
+              "answerIndex": 1,
+              "explanation": "The first is C4, the second is C#4: one half step apart.",
+              "playback": {
+                "notes": [
+                  [
+                    "C4"
+                  ],
+                  [
+                    "C#4"
+                  ]
+                ],
+                "bpm": 50
+              }
+            },
+            {
+              "prompt": "Listen. The second note has the same letter name. How far away is it?",
+              "choices": [
+                "One octave higher",
+                "One octave lower",
+                "A half step higher"
+              ],
+              "answerIndex": 0,
+              "explanation": "A3 to A4 is one octave up.",
+              "playback": {
+                "notes": [
+                  [
+                    "A3"
+                  ],
+                  [
+                    "A4"
+                  ]
+                ],
+                "bpm": 50
+              }
+            },
+            {
+              "prompt": "How many half steps are in an octave?",
+              "choices": [
+                "8",
+                "12",
+                "7"
+              ],
+              "answerIndex": 1,
+              "explanation": "Twelve. The name \"octave\" (eight) counts letters: A B C D E F G A."
+            },
+            {
+              "prompt": "You play G at string 6, fret 3. Where is the next G up using the octave pattern?",
+              "choices": [
+                "String 4, fret 5",
+                "String 5, fret 5",
+                "String 4, fret 3"
+              ],
+              "answerIndex": 0,
+              "explanation": "Two strings up, two frets up."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s1.l5.r1",
+          "kind": "fact",
+          "prompt": "Octave pattern from strings 6 and 5?",
+          "answer": "Two strings higher, two frets higher."
+        },
+        {
+          "id": "guitar.s1.l5.r2",
+          "kind": "fact",
+          "prompt": "How many half steps in an octave?",
+          "answer": "Twelve."
+        },
+        {
+          "id": "guitar.s1.l5.r3",
+          "kind": "playNote",
+          "prompt": "Play C3, then the C one octave higher.",
+          "answer": "C3 (string 5 fret 3), then C4 (string 3 fret 5)."
+        }
+      ],
+      "glossaryTerms": [
+        "octave",
+        "scientific pitch notation",
+        "pitch class"
+      ]
+    },
+    {
+      "id": "guitar.s1.l6",
+      "title": "Alphabet review: Ode to Joy",
+      "summary": "Review note names, steps, and octaves, then play Beethoven's Ode to Joy on the A string.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "What you know now",
+          "body": "- Seven letters, twelve notes. **E–F** and **B–C** are half steps; other neighboring letters are whole steps.\n- A **sharp** raises by one fret, a **flat** lowers by one fret; F# and Gb are the same pitch.\n- Landmarks on string 6: **E G A B C D E** at frets 0 3 5 7 8 10 12.\n- Landmarks on string 5: **A B C D E F G A** at frets 0 2 3 5 7 8 10 12.\n- An **octave** is twelve half steps. From strings 6 and 5 it is two strings up, two frets up."
+        },
+        {
+          "type": "quiz",
+          "title": "Alphabet review",
+          "questions": [
+            {
+              "prompt": "What note is a whole step above E?",
+              "choices": [
+                "F",
+                "F#",
+                "G"
+              ],
+              "answerIndex": 1,
+              "explanation": "E to F is a half step; one more half step is F#."
+            },
+            {
+              "prompt": "What note is a whole step below C?",
+              "choices": [
+                "B",
+                "Bb",
+                "A"
+              ],
+              "answerIndex": 1,
+              "explanation": "C to B is a half step; one more half step down is Bb."
+            },
+            {
+              "prompt": "What note is at string 5, fret 10?",
+              "choices": [
+                "F",
+                "G",
+                "A"
+              ],
+              "answerIndex": 1,
+              "explanation": "A B C D E F G at frets 0 2 3 5 7 8 10."
+            },
+            {
+              "prompt": "What note is at string 6, fret 9?",
+              "choices": [
+                "C",
+                "C#",
+                "D"
+              ],
+              "answerIndex": 1,
+              "explanation": "C is at fret 8, so fret 9 is C# (also Db)."
+            },
+            {
+              "prompt": "Which note is the same pitch as string 5, fret 3?",
+              "choices": [
+                "String 6, fret 8",
+                "String 6, fret 3",
+                "String 4, fret 3"
+              ],
+              "answerIndex": 0,
+              "explanation": "Any note on string 5 matches string 6 five frets higher: fret 3 + 5 = fret 8. Both are C3."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Fretboard names",
+          "generator": {
+            "kind": "noteOnFretboard",
+            "params": {
+              "strings": "5,6",
+              "fretMin": "0",
+              "fretMax": "12"
+            }
+          },
+          "count": 10
+        },
+        {
+          "type": "explain",
+          "title": "Ode to Joy on one string",
+          "body": "Beethoven wrote this melody in 1824; it is in the public domain. It uses only five notes, and all of them are on the A string:\n\n- **C** fret 3, **D** fret 5, **E** fret 7, **F** fret 8, **G** fret 10.\n\nShift your hand along the string as the melody moves; the fret dots at 3, 5, 7, and 9 help you count. Each phrase ends with a long note: hold it for two beats.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:3",
+              "5:5",
+              "5:7",
+              "5:8",
+              "5:10"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "type": "song",
+          "title": "Ode to Joy (Beethoven)",
+          "caption": "Two phrases on the A string. Follow the visual pulse. If you miss a note, keep going and catch the next one.",
+          "notes": [
+            [
+              "E3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "F3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "F3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "F3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "F3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "C3"
+            ]
+          ],
+          "rhythm": "q q q q q q q q q q q q q. e h q q q q q q q q q q q q q. e h",
+          "bpm": 80
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s1.l6.r1",
+          "kind": "noteName",
+          "prompt": "Name this note.",
+          "answer": "C#",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:9"
+            ],
+            "labels": "none",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "id": "guitar.s1.l6.r2",
+          "kind": "noteName",
+          "prompt": "Name this note.",
+          "answer": "G",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:10"
+            ],
+            "labels": "none",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        }
+      ],
+      "glossaryTerms": [
+        "musical alphabet",
+        "half step",
+        "whole step",
+        "octave"
+      ]
+    }
+  ],
+  "branches": []
+}

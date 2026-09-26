@@ -1,0 +1,1595 @@
+{
+  "id": "guitar.s8",
+  "instrument": "guitar",
+  "order": 8,
+  "title": "Beyond",
+  "summary": "Seventh chords, arpeggios, chord-tone soloing, modes, secondary dominants, and reading standard notation.",
+  "lessons": [
+    {
+      "id": "guitar.s8.l1",
+      "title": "Seventh chords",
+      "summary": "Add a seventh to triads: major 7th, dominant 7th, minor 7th, and half-diminished chords, and the seven diatonic seventh chords.",
+      "minutes": 15,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Four notes",
+          "body": "A **seventh chord** adds one more third on top of a triad: the seventh. Four common types:\n\n| Type | Formula | Example | Symbol |\n|---|---|---|---|\n| major 7th | 1 3 5 7 | C E G B | Cmaj7 |\n| dominant 7th | 1 3 5 b7 | G B D F | G7 |\n| minor 7th | 1 b3 5 b7 | A C E G | Am7 |\n| half-diminished | 1 b3 b5 b7 | B D F A | Bm7b5 (Bø7) |\n\n\"7\" means a major seventh (11 half steps) only in \"maj7\". A plain \"7\" is always the minor seventh (10 half steps). The **diminished seventh chord** (1 b3 b5 bb7, such as Bdim7 = B D F Ab) also exists; it comes from the harmonic minor."
+        },
+        {
+          "type": "explain",
+          "title": "Diatonic seventh chords",
+          "body": "Stack four notes on each degree of C major:\n\n**Cmaj7 – Dm7 – Em7 – Fmaj7 – G7 – Am7 – Bm7b5**\n\nIn numerals: **Imaj7 – ii7 – iii7 – IVmaj7 – V7 – vi7 – viiø7**. Only V gets a dominant 7th, which is why the chord has that name. The ii7–V7–Imaj7 progression (Dm7–G7–Cmaj7 in C) is the core of jazz harmony.\n\nIn G: Gmaj7 – Am7 – Bm7 – Cmaj7 – D7 – Em7 – F#m7b5.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:3",
+              "4:2",
+              "3:0",
+              "2:0",
+              "1:0"
+            ],
+            "chord": "Cmaj7",
+            "labels": "intervals",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "Cmaj7: lift finger 1 from C."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Open fingerings",
+          "body": "- **Cmaj7**: the C chord with finger 1 lifted (string 2 open = B). Strum 5–1.\n- **Dm7**: finger 2 on string 3 fret 2, finger 1 barres strings 2 and 1 at fret 1. Strum 4–1.\n- **G7**: finger 3 on string 6 fret 3, finger 2 on string 5 fret 2, finger 1 on string 1 fret 1. Strum all six.\n- **Am7**: the Am chord with finger 3 lifted (string 3 open = G). Strum 5–1.\n- **Em7**: finger 2 on string 5 fret 2 only (string 4 open = D). Strum all six.\n- **Bm7b5**: string 5 fret 2, string 4 fret 3, string 3 fret 2, string 2 fret 3. Mute strings 6 and 1.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:3",
+              "5:2",
+              "4:0",
+              "3:0",
+              "2:0",
+              "1:1"
+            ],
+            "chord": "G7",
+            "labels": "intervals",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "G7: root, 3rd, 5th, b7."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Four qualities",
+          "caption": "Cmaj7, C7, Cm7, Cm7b5, all from C.",
+          "playback": {
+            "notes": [
+              [
+                "C3",
+                "E3",
+                "G3",
+                "B3"
+              ],
+              [
+                "C3",
+                "E3",
+                "G3",
+                "Bb3"
+              ],
+              [
+                "C3",
+                "Eb3",
+                "G3",
+                "Bb3"
+              ],
+              [
+                "C3",
+                "Eb3",
+                "Gb3",
+                "Bb3"
+              ]
+            ],
+            "bpm": 40,
+            "style": "block"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Play Cmaj7, Dm7, G7, Am7, Em7.",
+            "chords": [
+              "Cmaj7",
+              "Dm7",
+              "G7",
+              "Am7",
+              "Em7"
+            ],
+            "passAccuracy": 0.8
+          },
+          "mistakeTips": [
+            "Cmaj7 and Am7 are easy: they are C and Am with one finger lifted.",
+            "Dm7: flatten finger 1 across strings 2 and 1.",
+            "The open strings carry the 7ths. Keep them ringing."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "ii–V–I in C: Dm7, G7, Cmaj7, one minute.",
+            "chords": [
+              "Dm7",
+              "G7",
+              "Cmaj7"
+            ],
+            "durationSec": 60,
+            "key": "C major",
+            "passAccuracy": 0.7
+          },
+          "mistakeTips": [
+            "Dm7 to G7: finger 1 stays at fret 1 but moves from strings 2-1 to string 1 only.",
+            "G7 to Cmaj7: the F on string 1 drops to E (open) as the chord resolves. Listen for it."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Seventh chords",
+          "questions": [
+            {
+              "prompt": "Spell G7.",
+              "choices": [
+                "G B D F",
+                "G B D F#",
+                "G Bb D F"
+              ],
+              "answerIndex": 0,
+              "explanation": "Dominant 7th: major triad + b7."
+            },
+            {
+              "prompt": "Spell Fmaj7.",
+              "choices": [
+                "F A C E",
+                "F A C Eb",
+                "F Ab C Eb"
+              ],
+              "answerIndex": 0,
+              "explanation": "Major triad + major 7th."
+            },
+            {
+              "prompt": "Which diatonic seventh chord falls on degree 5 of a major key?",
+              "choices": [
+                "Dominant 7th",
+                "Major 7th",
+                "Minor 7th"
+              ],
+              "answerIndex": 0,
+              "explanation": "V7."
+            },
+            {
+              "prompt": "What is the vii chord in G major as a seventh chord?",
+              "choices": [
+                "F#m7b5",
+                "F#m7",
+                "F#7"
+              ],
+              "answerIndex": 0,
+              "explanation": "F# A C E: half-diminished."
+            },
+            {
+              "prompt": "How does Am7 differ from Am?",
+              "choices": [
+                "It adds G",
+                "It adds G#",
+                "It removes E"
+              ],
+              "answerIndex": 0,
+              "explanation": "A C E + G (minor 7th)."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Chord quality by ear",
+          "generator": {
+            "kind": "chordQualityByEar",
+            "params": {
+              "qualities": "maj7,7,m7,m7b5"
+            }
+          },
+          "count": 6
+        },
+        {
+          "type": "quiz",
+          "title": "Spell the chord",
+          "generator": {
+            "kind": "chordSpelling",
+            "params": {
+              "qualities": "maj7,7,m7,m7b5",
+              "roots": "C,D,E,F,G,A,B"
+            }
+          },
+          "count": 5
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s8.l1.r1",
+          "kind": "fact",
+          "prompt": "Formulas for maj7, 7, m7, m7b5?",
+          "answer": "1 3 5 7; 1 3 5 b7; 1 b3 5 b7; 1 b3 b5 b7."
+        },
+        {
+          "id": "guitar.s8.l1.r2",
+          "kind": "fact",
+          "prompt": "Diatonic seventh chords in C?",
+          "answer": "Cmaj7 Dm7 Em7 Fmaj7 G7 Am7 Bm7b5"
+        },
+        {
+          "id": "guitar.s8.l1.r3",
+          "kind": "earQuality",
+          "prompt": "Name the chord quality.",
+          "answer": "Dominant 7th",
+          "playback": {
+            "notes": [
+              [
+                "G2",
+                "B2",
+                "D3",
+                "G3",
+                "B3",
+                "F4"
+              ]
+            ],
+            "style": "strum"
+          }
+        },
+        {
+          "id": "guitar.s8.l1.r4",
+          "kind": "earQuality",
+          "prompt": "Name the chord quality.",
+          "answer": "Major 7th",
+          "playback": {
+            "notes": [
+              [
+                "C3",
+                "E3",
+                "G3",
+                "B3",
+                "E4"
+              ]
+            ],
+            "style": "strum"
+          }
+        }
+      ],
+      "glossaryTerms": [
+        "seventh chord",
+        "major seventh chord",
+        "dominant seventh chord",
+        "minor seventh chord",
+        "half-diminished chord",
+        "diminished seventh chord"
+      ]
+    },
+    {
+      "id": "guitar.s8.l2",
+      "title": "Arpeggios",
+      "summary": "Play chords one note at a time as melodic lines, in open position and in a movable fingering.",
+      "minutes": 14,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Chords as lines",
+          "body": "An **arpeggio** is a chord played one note at a time, and for a soloist it is a map of the safest notes over that chord. Every note of an arpeggio is a **chord tone**.\n\nPracticing arpeggios through a progression trains your hands to find each chord's notes as the chords change. That is the skill chord-tone soloing depends on (next lesson)."
+        },
+        {
+          "type": "explain",
+          "title": "Through a progression",
+          "body": "In open position, over **C – Am – Dm – G7** (I – vi – ii – V7 in C), play four chord tones per chord, lowest first:\n\n- **C**: C (5 fret 3), E (4 fret 2), G (3 open), C (2 fret 1)\n- **Am**: A (5 open), E (4 fret 2), A (3 fret 2), C (2 fret 1)\n- **Dm**: D (4 open), A (3 fret 2), D (2 fret 3), F (1 fret 1)\n- **G7**: G (6 fret 3), B (5 fret 2), D (4 open), F (4 fret 3)"
+        },
+        {
+          "type": "demo",
+          "title": "C – Am – Dm – G7 arpeggios",
+          "caption": "Four notes per chord, eighth notes.",
+          "playback": {
+            "notes": [
+              [
+                "C3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "A3"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "A3"
+              ],
+              [
+                "D4"
+              ],
+              [
+                "F4"
+              ],
+              [
+                "G2"
+              ],
+              [
+                "B2"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "F3"
+              ]
+            ],
+            "rhythm": "e e e e e e e e e e e e e e e e",
+            "bpm": 80
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Arpeggiate C, Am, Dm, G7: four notes each, in time.",
+            "notes": [
+              "C3",
+              "E3",
+              "G3",
+              "C4",
+              "A2",
+              "E3",
+              "A3",
+              "C4",
+              "D3",
+              "A3",
+              "D4",
+              "F4",
+              "G2",
+              "B2",
+              "D3",
+              "F3"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q q q",
+            "bpm": 70,
+            "tempoSteps": [
+              70,
+              85,
+              100
+            ]
+          },
+          "mistakeTips": [
+            "Hold each chord fingering while you pick its notes.",
+            "Change fingerings during the last note of each group, not after it.",
+            "Pick each note once, cleanly. Let them ring into each other."
+          ]
+        },
+        {
+          "type": "explain",
+          "title": "A movable minor arpeggio",
+          "body": "Inside position 1 of A minor pentatonic (Stage 6) sits the A minor arpeggio: A C E. Leave out D and G and you get:\n\nstring 6: 5 (A), 8 (C) · string 5: 7 (E) · string 4: 7 (A) · string 3: 5 (C) · string 2: 5 (E) · string 1: 5 (A), 8 (C)\n\nSlide it to any fret for other minor chords: at fret 7 it is B minor, at fret 10 D minor.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:5",
+              "6:8",
+              "5:7",
+              "4:7",
+              "3:5",
+              "2:5",
+              "1:5",
+              "1:8"
+            ],
+            "chord": "Am",
+            "labels": "intervals",
+            "fretRange": [
+              4,
+              9
+            ],
+            "caption": "A minor arpeggio in position 1."
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "A minor arpeggio, position 1, up and down.",
+            "notes": [
+              "A2",
+              "C3",
+              "E3",
+              "A3",
+              "C4",
+              "E4",
+              "A4",
+              "C5",
+              "A4",
+              "E4",
+              "C4",
+              "A3",
+              "E3",
+              "C3",
+              "A2"
+            ],
+            "bpm": 70,
+            "tempoSteps": [
+              70,
+              85,
+              100
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:5",
+                "6:8",
+                "5:7",
+                "4:7",
+                "3:5",
+                "2:5",
+                "1:5",
+                "1:8"
+              ],
+              "chord": "Am",
+              "labels": "noteNames",
+              "fretRange": [
+                4,
+                9
+              ]
+            }
+          },
+          "mistakeTips": [
+            "One note per string except strings 6 and 1.",
+            "Use finger 1 at fret 5 and finger 3 at fret 7; finger 4 at fret 8."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Arpeggios",
+          "questions": [
+            {
+              "prompt": "What notes are in a G7 arpeggio?",
+              "choices": [
+                "G B D F",
+                "G B D",
+                "G A B D"
+              ],
+              "answerIndex": 0,
+              "explanation": "The four chord tones of G7."
+            },
+            {
+              "prompt": "Why practice arpeggios through a progression?",
+              "choices": [
+                "To find each chord's tones as the chords change",
+                "To play faster",
+                "To tune the guitar"
+              ],
+              "answerIndex": 0,
+              "explanation": "They map the chord tones for soloing."
+            },
+            {
+              "prompt": "The A minor arpeggio fingering moved to fret 10 gives…",
+              "choices": [
+                "D minor",
+                "C minor",
+                "E minor"
+              ],
+              "answerIndex": 0,
+              "explanation": "String 6, fret 10 is D."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s8.l2.r1",
+          "kind": "fact",
+          "prompt": "What is an arpeggio?",
+          "answer": "A chord's notes played one at a time."
+        }
+      ],
+      "glossaryTerms": [
+        "arpeggio",
+        "chord tone"
+      ]
+    },
+    {
+      "id": "guitar.s8.l3",
+      "title": "Chord-tone soloing",
+      "summary": "Aim for notes of the current chord on strong beats so your lines follow the changes.",
+      "minutes": 15,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Follow the chords",
+          "body": "Pentatonic soloing uses one scale over the whole song. **Chord-tone soloing** changes targets with each chord: on strong beats (1 and 3), play a note that belongs to the chord of the moment. Between those beats, any scale note can connect them.\n\nThe strongest targets are the **guide tones**, the 3rd and 7th of each chord. They decide major or minor and dominant or not, and they usually move by a half or whole step to the next chord's guide tones."
+        },
+        {
+          "type": "explain",
+          "title": "A line over C – Am – F – G",
+          "body": "Each measure starts on the chord's 3rd:\n\n- **C**: E D C E (E is the 3rd of C)\n- **Am**: C B A C (C is the 3rd of Am)\n- **F**: A G F A (A is the 3rd of F)\n- **G**: B D G (B is the 3rd of G)\n- **C**: C\n\nNotice the first notes of each measure: E, C, A, B, C. A smooth line that spells the harmony even without chords."
+        },
+        {
+          "type": "demo",
+          "title": "The line with its chords",
+          "caption": "Chords first, then the line alone.",
+          "playback": {
+            "chords": [
+              "C",
+              "Am",
+              "F",
+              "G",
+              "C"
+            ],
+            "bpm": 50,
+            "style": "strum"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Play the chord-tone line in time: E D C E | C B A C | A G F A | B D G(half) | C(whole).",
+            "notes": [
+              "E4",
+              "D4",
+              "C4",
+              "E4",
+              "C4",
+              "B3",
+              "A3",
+              "C4",
+              "A3",
+              "G3",
+              "F3",
+              "A3",
+              "B3",
+              "D4",
+              "G3",
+              "C4"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q h w",
+            "bpm": 70,
+            "tempoSteps": [
+              70,
+              85,
+              100
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "4:3",
+                "3:0",
+                "3:2",
+                "2:0",
+                "2:1",
+                "2:3",
+                "1:0"
+              ],
+              "scale": "C major",
+              "labels": "noteNames",
+              "fretRange": [
+                0,
+                4
+              ]
+            }
+          },
+          "mistakeTips": [
+            "All notes are in open position: F (4 fret 3), G (3 open), A (3 fret 2), B (2 open), C (2 fret 1), D (2 fret 3), E (1 open).",
+            "Feel how the first note of each measure matches the chord change."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "improvise",
+            "prompt": "Improvise over C – Am – F – G for one minute. Start each measure on a note of the new chord.",
+            "scale": "C major",
+            "key": "C major",
+            "bpm": 70,
+            "durationSec": 60,
+            "passAccuracy": 0.7
+          },
+          "mistakeTips": [
+            "C = C E G, Am = A C E, F = F A C, G = G B D.",
+            "Try landing on the 3rd of each chord: E, C, A, B.",
+            "Leave space; a few well-placed chord tones beat a flood of notes."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Chord tones",
+          "questions": [
+            {
+              "prompt": "Over an F chord, which note is a chord tone?",
+              "choices": [
+                "A",
+                "B",
+                "D"
+              ],
+              "answerIndex": 0,
+              "explanation": "F A C."
+            },
+            {
+              "prompt": "What are the guide tones of G7?",
+              "choices": [
+                "B and F",
+                "G and D",
+                "D and F"
+              ],
+              "answerIndex": 0,
+              "explanation": "The 3rd (B) and 7th (F)."
+            },
+            {
+              "prompt": "Over Am, which of these is the 3rd?",
+              "choices": [
+                "C",
+                "C#",
+                "E"
+              ],
+              "answerIndex": 0,
+              "explanation": "A to C is a minor third."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s8.l3.r1",
+          "kind": "fact",
+          "prompt": "What are guide tones?",
+          "answer": "The 3rd and 7th of a chord."
+        }
+      ],
+      "glossaryTerms": [
+        "chord-tone soloing",
+        "chord tone",
+        "guide tones"
+      ]
+    },
+    {
+      "id": "guitar.s8.l4",
+      "title": "Modes",
+      "summary": "Hear the seven modes of the major scale, and play Dorian and Mixolydian over vamps.",
+      "minutes": 15,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Same notes, new home",
+          "body": "A **mode** is what you get when you play a scale from a different starting note and treat that note as home. You already know one case: A natural minor is C major started on A.\n\nThe seven modes of C major (the **parent scale**):\n\n| Degree | Mode | From C major | Compared with |\n|---|---|---|---|\n| 1 | **Ionian** | C to C | the major scale itself |\n| 2 | **Dorian** | D to D | minor with a raised 6 |\n| 3 | **Phrygian** | E to E | minor with a b2 |\n| 4 | **Lydian** | F to F | major with a #4 |\n| 5 | **Mixolydian** | G to G | major with a b7 |\n| 6 | **Aeolian** | A to A | natural minor itself |\n| 7 | **Locrian** | B to B | minor with b2 and b5 |"
+        },
+        {
+          "type": "explain",
+          "title": "Why the home note matters",
+          "body": "D Dorian and C major contain the same notes, but they do not sound the same. What decides the mode is the **home note and the chords underneath**. Over a Dm chord, the notes of C major sound like D Dorian; over C, they sound like C major.\n\nSo compare each mode to the major or minor scale on the **same** root. That shows its one characteristic note:\n\n- **Dorian** = minor + natural 6. D Dorian: D E F G A **B** C. The B (instead of Bb) is its bright color.\n- **Mixolydian** = major + b7. G Mixolydian: G A B C D E **F**. The F (instead of F#) gives a bluesy, rock sound.\n- **Lydian** = major + #4: dreamy. **Phrygian** = minor + b2: dark and Spanish-sounding."
+        },
+        {
+          "type": "explain",
+          "title": "Vamps",
+          "body": "Modes are easiest to hear over a **vamp**, a short repeating chord pattern:\n\n- **Dorian vamp**: Dm7 to G (i7 to IV). The G chord contains B, the Dorian 6th.\n- **Mixolydian vamp**: G to F (I to bVII). The F chord contains F, the Mixolydian b7.\n\nMany folk tunes are modal. \"Scarborough Fair\" and \"Drunken Sailor\" are both Dorian; you will play the second one in the review.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "4:0",
+              "4:2",
+              "4:3",
+              "3:0",
+              "3:2",
+              "2:0",
+              "2:1",
+              "2:3"
+            ],
+            "scale": "D dorian",
+            "labels": "degrees",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "D Dorian, open position."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Dorian, then Mixolydian",
+          "caption": "D Dorian over Dm7, then G Mixolydian over G.",
+          "playback": {
+            "notes": [
+              [
+                "D3",
+                "A3",
+                "C4",
+                "F4"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "F3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "A3"
+              ],
+              [
+                "B3"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "D4"
+              ],
+              [
+                "G2",
+                "B2",
+                "D3",
+                "G3",
+                "B3",
+                "G4"
+              ],
+              [
+                "G2"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "B2"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "F3"
+              ],
+              [
+                "G3"
+              ]
+            ],
+            "bpm": 90
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "scale",
+            "prompt": "D Dorian, one octave, open position: D (string 4 open) to D (string 2 fret 3).",
+            "scale": "D dorian",
+            "octaves": 1,
+            "bpm": 70,
+            "tempoSteps": [
+              70,
+              85,
+              100
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "4:0",
+                "4:2",
+                "4:3",
+                "3:0",
+                "3:2",
+                "2:0",
+                "2:1",
+                "2:3"
+              ],
+              "scale": "D dorian",
+              "labels": "noteNames",
+              "fretRange": [
+                0,
+                4
+              ]
+            }
+          },
+          "mistakeTips": [
+            "These are the C major notes, starting from D.",
+            "Lean on the B (string 2 open): it is the Dorian color note."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "scale",
+            "prompt": "G Mixolydian, one octave: G (string 6 fret 3) to G (string 3 open).",
+            "scale": "G mixolydian",
+            "octaves": 1,
+            "bpm": 70,
+            "tempoSteps": [
+              70,
+              85,
+              100
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:3",
+                "5:0",
+                "5:2",
+                "5:3",
+                "4:0",
+                "4:2",
+                "4:3",
+                "3:0"
+              ],
+              "scale": "G mixolydian",
+              "labels": "noteNames",
+              "fretRange": [
+                0,
+                4
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Same fingering as G major except F natural: string 4 fret 3 instead of fret 4."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "improvise",
+            "prompt": "Improvise with D Dorian over a Dm7–G vamp for one minute.",
+            "scale": "D dorian",
+            "key": "D minor",
+            "bpm": 80,
+            "durationSec": 60,
+            "passAccuracy": 0.7
+          },
+          "mistakeTips": [
+            "End phrases on D.",
+            "Use B over the G chord to bring out the Dorian sound."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Modes",
+          "questions": [
+            {
+              "prompt": "Which mode starts on degree 5 of the major scale?",
+              "choices": [
+                "Mixolydian",
+                "Dorian",
+                "Lydian"
+              ],
+              "answerIndex": 0,
+              "explanation": "Ionian 1, Dorian 2, Phrygian 3, Lydian 4, Mixolydian 5, Aeolian 6, Locrian 7."
+            },
+            {
+              "prompt": "Dorian is natural minor with which change?",
+              "choices": [
+                "Raised 6th",
+                "Raised 7th",
+                "Flat 2nd"
+              ],
+              "answerIndex": 0,
+              "explanation": "1 2 b3 4 5 6 b7."
+            },
+            {
+              "prompt": "What is the parent major scale of E Dorian?",
+              "choices": [
+                "D major",
+                "E major",
+                "C major"
+              ],
+              "answerIndex": 0,
+              "explanation": "Dorian starts on degree 2; E is degree 2 of D major."
+            },
+            {
+              "prompt": "Spell G Mixolydian.",
+              "choices": [
+                "G A B C D E F",
+                "G A B C D E F#",
+                "G A Bb C D E F"
+              ],
+              "answerIndex": 0,
+              "explanation": "G major with F instead of F#."
+            },
+            {
+              "prompt": "Which mode is the same as the natural minor scale?",
+              "choices": [
+                "Aeolian",
+                "Ionian",
+                "Phrygian"
+              ],
+              "answerIndex": 0,
+              "explanation": "Aeolian starts on degree 6."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s8.l4.r1",
+          "kind": "fact",
+          "prompt": "Order of the modes from degree 1?",
+          "answer": "Ionian, Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian."
+        },
+        {
+          "id": "guitar.s8.l4.r2",
+          "kind": "fact",
+          "prompt": "Characteristic note of Mixolydian compared with major?",
+          "answer": "The flat 7th."
+        },
+        {
+          "id": "guitar.s8.l4.r3",
+          "kind": "fact",
+          "prompt": "Characteristic note of Dorian compared with natural minor?",
+          "answer": "The natural (raised) 6th."
+        }
+      ],
+      "glossaryTerms": [
+        "mode",
+        "parent scale",
+        "Ionian",
+        "Dorian",
+        "Phrygian",
+        "Lydian",
+        "Mixolydian",
+        "Aeolian",
+        "Locrian",
+        "vamp"
+      ]
+    },
+    {
+      "id": "guitar.s8.l5",
+      "title": "Secondary dominants",
+      "summary": "Borrow dominant 7th chords to lead strongly into chords other than I.",
+      "minutes": 14,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Five of five",
+          "body": "V7 pulls strongly to I because its 3rd (the leading tone) rises a half step to the tonic. You can use the same pull toward any major or minor chord in the key by putting **that chord's** V7 in front of it. This is a **secondary dominant**.\n\nIn C major:\n\n| Target | Its V7 | Written | Note outside the key |\n|---|---|---|---|\n| G (V) | D7 | V7/V | F# |\n| Am (vi) | E7 | V7/vi | G# |\n| Dm (ii) | A7 | V7/ii | C# |\n| Em (iii) | B7 | V7/iii | D# |\n| F (IV) | C7 | V7/IV | Bb |\n\n\"V7/V\" is read \"five of five\". The note outside the key is the borrowed leading tone; it rises a half step into the target's root."
+        },
+        {
+          "type": "explain",
+          "title": "Hearing it",
+          "body": "Compare C – Dm – G7 – C with C – **A7** – Dm – G7 – C. The A7 adds C#, which pushes up to D. The move from a secondary dominant to its target is a **resolution**, a release of tension.\n\nChains of dominants are common in ragtime and early jazz: E7 – A7 – D7 – G7 – C, each resolving down a fifth to the next.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:0",
+              "4:2",
+              "3:0",
+              "2:2",
+              "1:0"
+            ],
+            "chord": "A7",
+            "labels": "intervals",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "A7: the C# (3rd) leads to D."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "With and without",
+          "caption": "C Dm G7 C, then C A7 Dm G7 C.",
+          "playback": {
+            "chords": [
+              "C",
+              "Dm",
+              "G7",
+              "C",
+              "C",
+              "A7",
+              "Dm",
+              "G7",
+              "C"
+            ],
+            "bpm": 50,
+            "style": "strum"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "strumRhythm",
+            "prompt": "C – A7 – Dm – G7, one measure each, four downstrokes.",
+            "chords": [
+              "C",
+              "A7",
+              "Dm",
+              "G7"
+            ],
+            "rhythm": "q q q q",
+            "bpm": 70,
+            "repetitions": 2,
+            "key": "C major",
+            "tempoSteps": [
+              70,
+              85,
+              100
+            ]
+          },
+          "mistakeTips": [
+            "A7 to Dm: finger 2 moves from string 4 to string 3, both at fret 2.",
+            "Listen for the C# in A7 (string 2, fret 2) rising to D in Dm (string 2, fret 3)."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "V7/vi to vi: E7 to Am, one minute.",
+            "chords": [
+              "E7",
+              "Am"
+            ],
+            "durationSec": 60,
+            "passAccuracy": 0.7
+          },
+          "mistakeTips": [
+            "E7 is E with finger 3 lifted. Move fingers 1 and 2 over one string for Am, then add finger 3.",
+            "The G# (string 3 fret 1 in E7) rises to A (string 3 fret 2 in Am)."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Secondary dominants",
+          "questions": [
+            {
+              "prompt": "In C major, what is V7/V?",
+              "choices": [
+                "D7",
+                "G7",
+                "A7"
+              ],
+              "answerIndex": 0,
+              "explanation": "V of C is G; the V7 of G is D7."
+            },
+            {
+              "prompt": "In G major, what is V7/vi?",
+              "choices": [
+                "B7",
+                "E7",
+                "D7"
+              ],
+              "answerIndex": 0,
+              "explanation": "vi of G is Em; the V7 of E is B7."
+            },
+            {
+              "prompt": "Which note in E7 is outside C major?",
+              "choices": [
+                "G#",
+                "B",
+                "D"
+              ],
+              "answerIndex": 0,
+              "explanation": "E G# B D. G# is the leading tone of A."
+            },
+            {
+              "prompt": "Where does A7 usually resolve in C major?",
+              "choices": [
+                "Dm",
+                "G",
+                "F"
+              ],
+              "answerIndex": 0,
+              "explanation": "A7 is V7/ii."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s8.l5.r1",
+          "kind": "fact",
+          "prompt": "Secondary dominants in C major: V7/V, V7/vi, V7/ii?",
+          "answer": "D7, E7, A7"
+        },
+        {
+          "id": "guitar.s8.l5.r2",
+          "kind": "fact",
+          "prompt": "What is a secondary dominant?",
+          "answer": "The V7 of a chord other than I, placed before it."
+        }
+      ],
+      "glossaryTerms": [
+        "secondary dominant",
+        "resolution",
+        "dominant seventh chord"
+      ]
+    },
+    {
+      "id": "guitar.s8.l6",
+      "title": "Reading standard notation",
+      "summary": "Read notes on the treble staff, connect them to the fretboard, and sight-read a short line.",
+      "minutes": 15,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "The staff",
+          "body": "Standard notation writes pitch on a **staff**: five lines and four spaces. Higher on the staff means higher in pitch. Guitar music uses the **treble clef**, which curls around the second line from the bottom and marks it as G.\n\n- **Lines**, bottom to top: **E G B D F** (\"Every Good Boy Does Fine\").\n- **Spaces**, bottom to top: **F A C E** (spells \"face\").\n\nNotes above or below the staff use short **ledger lines**. The key signature and time signature come right after the clef.",
+          "diagram": {
+            "kind": "staff",
+            "notes": [
+              "E4",
+              "G4",
+              "B4",
+              "D5",
+              "F5"
+            ],
+            "labels": "noteNames",
+            "pitchRange": [
+              "C4",
+              "A5"
+            ],
+            "caption": "Treble staff lines: E G B D F."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Guitar sounds an octave lower",
+          "body": "To keep notes on the staff, **guitar music is written one octave higher than it sounds**. The clef sometimes has a small 8 underneath to say so.\n\n| Written | Sounds | Where |\n|---|---|---|\n| E below three ledger lines (E3) | E2 | string 6 open |\n| C on one ledger line below (C4) | C3 | string 5 fret 3 |\n| E, bottom line (E4) | E3 | string 4 fret 2 |\n| G, second line (G4) | G3 | string 3 open |\n| B, middle line (B4) | B3 | string 2 open |\n| E, top space (E5) | E4 | string 1 open |\n\nSo the open strings are easy anchors: G string = second line, B string = middle line, high E = top space."
+        },
+        {
+          "type": "explain",
+          "title": "Rhythm on the staff",
+          "body": "Note heads show pitch; the rest of the symbol shows length. Hollow head with no stem = whole note; hollow with stem = half; filled with stem = quarter; a flag or beam = eighth. You already count these from Stage 2.\n\nTab shows where to play; notation shows pitch and rhythm exactly. Reading both lets you use any written music, including piano and vocal parts.",
+          "diagram": {
+            "kind": "staff",
+            "notes": [
+              "E4",
+              "G4",
+              "B4",
+              "G4",
+              "C5",
+              "B4",
+              "A4",
+              "G4"
+            ],
+            "labels": "none",
+            "pitchRange": [
+              "C4",
+              "A5"
+            ],
+            "caption": "Written pitch. Guitar sounds one octave lower."
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Sight-read this line in open position. The diagram shows the written notes; play them one octave lower, as guitarists always do.",
+            "notes": [
+              "E3",
+              "G3",
+              "B3",
+              "G3",
+              "C4",
+              "B3",
+              "A3",
+              "G3",
+              "F3",
+              "A3",
+              "C4",
+              "A3",
+              "G3"
+            ],
+            "rhythm": "q q q q q q q q q q q q w",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72
+            ],
+            "diagram": {
+              "kind": "staff",
+              "notes": [
+                "E4",
+                "G4",
+                "B4",
+                "G4",
+                "C5",
+                "B4",
+                "A4",
+                "G4",
+                "F4",
+                "A4",
+                "C5",
+                "A4",
+                "G4"
+              ],
+              "labels": "none",
+              "pitchRange": [
+                "C4",
+                "A5"
+              ],
+              "caption": "Written pitch."
+            }
+          },
+          "mistakeTips": [
+            "Bottom line E = string 4 fret 2. Second line G = open string 3. Middle line B = open string 2.",
+            "Space C (third space) = string 2 fret 1. Space A (second space) = string 3 fret 2. Space F (first space) = string 4 fret 3.",
+            "Look one note ahead of the one you are playing."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Reading notes",
+          "questions": [
+            {
+              "prompt": "What are the lines of the treble staff, bottom to top?",
+              "choices": [
+                "E G B D F",
+                "F A C E G",
+                "G B D F A"
+              ],
+              "answerIndex": 0,
+              "explanation": "Every Good Boy Does Fine."
+            },
+            {
+              "prompt": "What are the spaces, bottom to top?",
+              "choices": [
+                "F A C E",
+                "E G B D",
+                "A C E G"
+              ],
+              "answerIndex": 0,
+              "explanation": "They spell FACE."
+            },
+            {
+              "prompt": "A note on the middle line is written B4. Which open string plays it?",
+              "choices": [
+                "String 2",
+                "String 3",
+                "String 1"
+              ],
+              "answerIndex": 0,
+              "explanation": "It sounds B3: the open B string."
+            },
+            {
+              "prompt": "Why is guitar written an octave higher than it sounds?",
+              "choices": [
+                "To keep notes on the treble staff",
+                "Guitars are tuned high",
+                "It is a printing error"
+              ],
+              "answerIndex": 0,
+              "explanation": "Otherwise most notes would need many ledger lines."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Name the note on the staff",
+          "generator": {
+            "kind": "noteOnStaff",
+            "params": {
+              "clef": "treble",
+              "range": "C4-G5",
+              "guitarOctave": "true"
+            }
+          },
+          "count": 8
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s8.l6.r1",
+          "kind": "fact",
+          "prompt": "Treble staff lines and spaces?",
+          "answer": "Lines E G B D F; spaces F A C E."
+        },
+        {
+          "id": "guitar.s8.l6.r2",
+          "kind": "fact",
+          "prompt": "How does written guitar music relate to sounding pitch?",
+          "answer": "Written one octave higher than it sounds."
+        }
+      ],
+      "glossaryTerms": [
+        "staff",
+        "treble clef",
+        "ledger line",
+        "octave transposition (guitar)",
+        "sight-reading"
+      ]
+    },
+    {
+      "id": "guitar.s8.l7",
+      "title": "Beyond review: modes and sevenths",
+      "summary": "Review seventh chords, modes, secondary dominants, and reading, then play a Dorian folk tune and a ii–V–I progression.",
+      "minutes": 15,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "What you know now",
+          "body": "- Seventh chords: **maj7, 7, m7, m7b5**; diatonic sevenths Imaj7 ii7 iii7 IVmaj7 V7 vi7 viiø7.\n- **Arpeggios** and **chord-tone soloing** follow the changes.\n- **Modes**: same notes, new home. Dorian = minor + 6; Mixolydian = major + b7.\n- **Secondary dominants** borrow V7 to lead into any diatonic major or minor chord.\n- Treble staff: lines E G B D F, spaces F A C E; guitar sounds an octave lower than written."
+        },
+        {
+          "type": "quiz",
+          "title": "Final review",
+          "questions": [
+            {
+              "prompt": "Spell Dm7.",
+              "choices": [
+                "D F A C",
+                "D F# A C",
+                "D F A C#"
+              ],
+              "answerIndex": 0,
+              "explanation": "Minor triad + minor 7th."
+            },
+            {
+              "prompt": "In D major, what is V7/V?",
+              "choices": [
+                "E7",
+                "A7",
+                "B7"
+              ],
+              "answerIndex": 0,
+              "explanation": "V of D is A; the V7 of A is E7."
+            },
+            {
+              "prompt": "Which mode is major with a #4?",
+              "choices": [
+                "Lydian",
+                "Mixolydian",
+                "Dorian"
+              ],
+              "answerIndex": 0,
+              "explanation": "F Lydian: F G A B C D E, with B instead of Bb."
+            },
+            {
+              "prompt": "What is the parent scale of A Dorian?",
+              "choices": [
+                "G major",
+                "A major",
+                "C major"
+              ],
+              "answerIndex": 0,
+              "explanation": "A is degree 2 of G major."
+            },
+            {
+              "prompt": "What is the iii7 chord in C major?",
+              "choices": [
+                "Em7",
+                "Emaj7",
+                "E7"
+              ],
+              "answerIndex": 0,
+              "explanation": "E G B D."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Chord quality by ear",
+          "generator": {
+            "kind": "chordQualityByEar",
+            "params": {
+              "qualities": "maj,min,maj7,7,m7,m7b5"
+            }
+          },
+          "count": 6
+        },
+        {
+          "type": "explain",
+          "title": "Drunken Sailor",
+          "body": "\"Drunken Sailor\" is a traditional sea shanty and is in the public domain. It is in **D Dorian**: the second line sits on a C chord, and the third line climbs A B C D. That B natural is the Dorian 6th.\n\nAll notes are in open position: D (4 open), E (4 fret 2), F (4 fret 3), G (3 open), A (3 fret 2), B (2 open), C (2 fret 1 or 5 fret 3), high D (2 fret 3).",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:3",
+              "4:0",
+              "4:2",
+              "4:3",
+              "3:0",
+              "3:2",
+              "2:0",
+              "2:1",
+              "2:3"
+            ],
+            "scale": "D dorian",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "type": "song",
+          "title": "Drunken Sailor (traditional)",
+          "caption": "Four lines: on A, on G, on A, then \"Early in the morning\" down to D.",
+          "notes": [
+            [
+              "A3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "F3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "F3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "D3"
+            ]
+          ],
+          "rhythm": "q e e q e e q q q q q e e q e e q q q q q e e q e e q q q q q q q q h h",
+          "bpm": 100
+        },
+        {
+          "type": "song",
+          "title": "ii–V–I Study (original)",
+          "caption": "Dm7 G7 Cmaj7 | Em7 A7 Dm7 G7 (A7 is V7/ii) | Dm7 G7 Cmaj7. Two strums per measure.",
+          "chords": [
+            "Dm7",
+            "Dm7",
+            "G7",
+            "G7",
+            "Cmaj7",
+            "Cmaj7",
+            "Cmaj7",
+            "Cmaj7",
+            "Em7",
+            "Em7",
+            "A7",
+            "A7",
+            "Dm7",
+            "Dm7",
+            "G7",
+            "G7",
+            "Dm7",
+            "Dm7",
+            "G7",
+            "G7",
+            "Cmaj7",
+            "Cmaj7",
+            "Cmaj7",
+            "Cmaj7"
+          ],
+          "rhythm": "h h h h h h h h h h h h h h h h h h h h h h h h",
+          "bpm": 80
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s8.l7.r1",
+          "kind": "fact",
+          "prompt": "Which mode is Drunken Sailor in, and what note shows it?",
+          "answer": "D Dorian; B natural (the raised 6th)."
+        }
+      ],
+      "glossaryTerms": [
+        "mode",
+        "Dorian",
+        "seventh chord",
+        "secondary dominant"
+      ]
+    }
+  ],
+  "branches": []
+}

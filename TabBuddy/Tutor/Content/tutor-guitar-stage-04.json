@@ -1,0 +1,1499 @@
+{
+  "id": "guitar.s4",
+  "instrument": "guitar",
+  "order": 4,
+  "title": "Major scale and intervals",
+  "summary": "The major scale formula, scale degrees, movable fingerings, and naming and hearing intervals.",
+  "lessons": [
+    {
+      "id": "guitar.s4.l1",
+      "title": "The major scale formula",
+      "summary": "Build the major scale from whole and half steps, see it on one string, and play C major in open position.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "A pattern of steps",
+          "body": "A **scale** is a set of notes in order, starting and ending on a home note called the **tonic**.\n\nThe **major scale** is the reference point for almost all music theory. It always uses the same pattern of steps:\n\n**W – W – H – W – W – W – H**\n\n(W = whole step = 2 frets, H = half step = 1 fret.)\n\nFrom C: C –W– D –W– E –H– F –W– G –W– A –W– B –H– C. The half steps land exactly on E–F and B–C, so **C major has no sharps or flats**."
+        },
+        {
+          "type": "explain",
+          "title": "The formula on one string",
+          "body": "Playing a scale along one string shows the pattern as distances. Start on the open low E and follow W W H W W W H:\n\nFrets **0 – 2 – 4 – 5 – 7 – 9 – 11 – 12**\n\nThat spells **E F# G# A B C# D# E**. Every letter appears once, in order, and four of them need sharps to fit the pattern. This is why keys have sharps or flats: the formula decides them, not the letters.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "6:2",
+              "6:4",
+              "6:5",
+              "6:7",
+              "6:9",
+              "6:11",
+              "6:12"
+            ],
+            "scale": "E major",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              12
+            ],
+            "caption": "E major on string 6."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "E major on one string",
+          "caption": "Up and down string 6. Listen for the two half steps near the top of each half.",
+          "playback": {
+            "scale": "E major",
+            "octaves": 1,
+            "bpm": 90
+          },
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "6:2",
+              "6:4",
+              "6:5",
+              "6:7",
+              "6:9",
+              "6:11",
+              "6:12"
+            ],
+            "scale": "E major",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              12
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Play E major along the low E string: frets 0 2 4 5 7 9 11 12, then back down.",
+            "notes": [
+              "E2",
+              "F#2",
+              "G#2",
+              "A2",
+              "B2",
+              "C#3",
+              "D#3",
+              "E3",
+              "D#3",
+              "C#3",
+              "B2",
+              "A2",
+              "G#2",
+              "F#2",
+              "E2"
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:0",
+                "6:2",
+                "6:4",
+                "6:5",
+                "6:7",
+                "6:9",
+                "6:11",
+                "6:12"
+              ],
+              "scale": "E major",
+              "labels": "noteNames",
+              "fretRange": [
+                0,
+                12
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Say \"whole, whole, half\" as you move: two frets, two frets, one fret.",
+            "The half steps are frets 4→5 and 11→12."
+          ]
+        },
+        {
+          "type": "explain",
+          "title": "C major in open position",
+          "body": "Across the strings, the same scale fits in a small area near the nut:\n\n- String 5: **C** (3)\n- String 4: **D** (0), **E** (2), **F** (3)\n- String 3: **G** (0), **A** (2)\n- String 2: **B** (0), **C** (1)\n\nUse finger 1 for fret 1, finger 2 for fret 2, finger 3 for fret 3.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:3",
+              "4:0",
+              "4:2",
+              "4:3",
+              "3:0",
+              "3:2",
+              "2:0",
+              "2:1"
+            ],
+            "scale": "C major",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "scale",
+            "prompt": "Play C major up and down in open position, one note per beat.",
+            "scale": "C major",
+            "octaves": 1,
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84,
+              96
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "5:3",
+                "4:0",
+                "4:2",
+                "4:3",
+                "3:0",
+                "3:2",
+                "2:0",
+                "2:1"
+              ],
+              "scale": "C major",
+              "labels": "noteNames",
+              "fretRange": [
+                0,
+                4
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Use alternate picking: down, up, down, up.",
+            "Keep fingers hovering close to the strings when not pressing.",
+            "The low C is on string 5, fret 3, not the open low E."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "The formula",
+          "questions": [
+            {
+              "prompt": "What is the step pattern of the major scale?",
+              "choices": [
+                "W W H W W W H",
+                "W H W W H W W",
+                "W W W H W W H"
+              ],
+              "answerIndex": 0,
+              "explanation": "Whole, whole, half, whole, whole, whole, half."
+            },
+            {
+              "prompt": "Why does C major have no sharps or flats?",
+              "choices": [
+                "Its half steps fall on E–F and B–C",
+                "C is the first letter",
+                "It is the easiest key"
+              ],
+              "answerIndex": 0,
+              "explanation": "The formula's half steps (3–4 and 7–8) match the natural half steps E–F and B–C."
+            },
+            {
+              "prompt": "What is the third note of E major?",
+              "choices": [
+                "G",
+                "G#",
+                "Ab"
+              ],
+              "answerIndex": 1,
+              "explanation": "E –W– F# –W– G#."
+            },
+            {
+              "prompt": "Between which scale degrees are the half steps?",
+              "choices": [
+                "3–4 and 7–8",
+                "2–3 and 6–7",
+                "4–5 and 7–8"
+              ],
+              "answerIndex": 0,
+              "explanation": "W W H: the first half step is 3–4. W W W H: the second is 7–8."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s4.l1.r1",
+          "kind": "fact",
+          "prompt": "Major scale step pattern?",
+          "answer": "W W H W W W H"
+        },
+        {
+          "id": "guitar.s4.l1.r2",
+          "kind": "fact",
+          "prompt": "Where are the half steps in a major scale?",
+          "answer": "Between degrees 3–4 and 7–8."
+        }
+      ],
+      "glossaryTerms": [
+        "scale",
+        "major scale",
+        "tonic",
+        "whole step",
+        "half step"
+      ]
+    },
+    {
+      "id": "guitar.s4.l2",
+      "title": "Scale degrees and G major",
+      "summary": "Number and name the scale degrees, play G major over two octaves, and learn a movable fingering.",
+      "minutes": 14,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Scale degrees",
+          "body": "Each note of a scale has a number, its **scale degree**, counted from the tonic. Theory uses these numbers so ideas work in every key.\n\n| Degree | Name | In C | In G |\n|---|---|---|---|\n| 1 | tonic | C | G |\n| 2 | supertonic | D | A |\n| 3 | mediant | E | B |\n| 4 | subdominant | F | C |\n| 5 | dominant | G | D |\n| 6 | submediant | A | E |\n| 7 | leading tone | B | F# |\n\nDegree 7 is the **leading tone**: a half step below the tonic, it sounds like it wants to rise to it. Degree 5, the **dominant**, is the second most important note after the tonic."
+        },
+        {
+          "type": "explain",
+          "title": "G major",
+          "body": "Apply W W H W W W H from G: **G A B C D E F# G**. The formula needs F# between E and G: E to F# is a whole step, F# to G is a half step. G major has **one sharp**.\n\nTwo octaves fit in open position, from the low G on string 6, fret 3 up to the G on string 1, fret 3.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:3",
+              "5:0",
+              "5:2",
+              "5:3",
+              "4:0",
+              "4:2",
+              "4:4",
+              "3:0",
+              "3:2",
+              "2:0",
+              "2:1",
+              "2:3",
+              "1:0",
+              "1:2",
+              "1:3"
+            ],
+            "scale": "G major",
+            "labels": "degrees",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "G major, two octaves, with scale degrees."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "G major, two octaves",
+          "caption": "Up and down at 80 BPM.",
+          "playback": {
+            "scale": "G major",
+            "octaves": 2,
+            "bpm": 80
+          },
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:3",
+              "5:0",
+              "5:2",
+              "5:3",
+              "4:0",
+              "4:2",
+              "4:4",
+              "3:0",
+              "3:2",
+              "2:0",
+              "2:1",
+              "2:3",
+              "1:0",
+              "1:2",
+              "1:3"
+            ],
+            "scale": "G major",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "scale",
+            "prompt": "G major, two octaves, open position. Alternate picking, one note per beat.",
+            "scale": "G major",
+            "octaves": 2,
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84,
+              96
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:3",
+                "5:0",
+                "5:2",
+                "5:3",
+                "4:0",
+                "4:2",
+                "4:4",
+                "3:0",
+                "3:2",
+                "2:0",
+                "2:1",
+                "2:3",
+                "1:0",
+                "1:2",
+                "1:3"
+              ],
+              "scale": "G major",
+              "labels": "noteNames",
+              "fretRange": [
+                0,
+                4
+              ]
+            }
+          },
+          "mistakeTips": [
+            "F# appears twice: string 4 fret 4 and string 1 fret 2. Use finger 4 for the first one.",
+            "Start the low G with finger 3 so fingers 1–2 are ready for frets 1 and 2 later.",
+            "Strict down-up picking even when crossing strings. It feels odd at first and pays off later."
+          ]
+        },
+        {
+          "type": "explain",
+          "title": "A movable fingering",
+          "body": "Open-position scales use open strings, so they only work in one key. A fingering with **no open strings** can slide to any fret.\n\nHere is G major in **second position**: the index finger covers fret 2, and each finger covers its own fret (**one finger per fret**: 1 on fret 2, 2 on 3, 3 on 4, 4 on 5). The root is on string 6, fret 3, under finger 2.\n\nSlide the whole fingering up two frets and the root becomes A: you are playing **A major**. The pattern is the same; only the starting fret changes.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:3",
+              "6:5",
+              "5:2",
+              "5:3",
+              "5:5",
+              "4:2",
+              "4:4",
+              "4:5",
+              "3:2",
+              "3:4",
+              "3:5",
+              "2:3",
+              "2:5",
+              "1:2",
+              "1:3"
+            ],
+            "scale": "G major",
+            "labels": "degrees",
+            "fretRange": [
+              1,
+              6
+            ],
+            "caption": "G major, movable fingering. Root under finger 2."
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Move the fingering up two frets and play A major, one octave, from string 6 fret 5 to string 4 fret 7.",
+            "notes": [
+              "A2",
+              "B2",
+              "C#3",
+              "D3",
+              "E3",
+              "F#3",
+              "G#3",
+              "A3"
+            ],
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:5",
+                "6:7",
+                "5:4",
+                "5:5",
+                "5:7",
+                "4:4",
+                "4:6",
+                "4:7"
+              ],
+              "scale": "A major",
+              "labels": "noteNames",
+              "fretRange": [
+                3,
+                8
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Index finger at fret 4, finger 2 on the root at fret 5.",
+            "Same finger pattern as G: only the position changed.",
+            "Say the degrees as you play: 1 2 3 4 5 6 7 1."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Degrees and spelling",
+          "questions": [
+            {
+              "prompt": "What is scale degree 5 of G major?",
+              "choices": [
+                "C",
+                "D",
+                "E"
+              ],
+              "answerIndex": 1,
+              "explanation": "G A B C D: D is the fifth note."
+            },
+            {
+              "prompt": "What is the leading tone of G major?",
+              "choices": [
+                "F",
+                "F#",
+                "E"
+              ],
+              "answerIndex": 1,
+              "explanation": "Degree 7 is a half step below G: F#."
+            },
+            {
+              "prompt": "What is scale degree 4 called?",
+              "choices": [
+                "Dominant",
+                "Subdominant",
+                "Mediant"
+              ],
+              "answerIndex": 1,
+              "explanation": "4 = subdominant, 5 = dominant."
+            },
+            {
+              "prompt": "How many sharps are in G major?",
+              "choices": [
+                "0",
+                "1",
+                "2"
+              ],
+              "answerIndex": 1,
+              "explanation": "Only F#."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Spell the scale",
+          "generator": {
+            "kind": "scaleSpelling",
+            "params": {
+              "scales": "C major,G major,D major,F major"
+            }
+          },
+          "count": 4
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s4.l2.r1",
+          "kind": "fact",
+          "prompt": "Spell G major.",
+          "answer": "G A B C D E F# G"
+        },
+        {
+          "id": "guitar.s4.l2.r2",
+          "kind": "fact",
+          "prompt": "Name scale degrees 1, 4, 5, and 7.",
+          "answer": "Tonic, subdominant, dominant, leading tone."
+        }
+      ],
+      "glossaryTerms": [
+        "scale degree",
+        "tonic",
+        "supertonic",
+        "mediant",
+        "subdominant",
+        "dominant",
+        "submediant",
+        "leading tone",
+        "position",
+        "one finger per fret"
+      ]
+    },
+    {
+      "id": "guitar.s4.l3",
+      "title": "Intervals: measuring distance",
+      "summary": "Name intervals by number and quality, count their half steps, and find them on the fretboard.",
+      "minutes": 14,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Interval number",
+          "body": "An **interval** is the distance between two notes. Its name has two parts.\n\nThe **interval number** counts letter names from the lower note to the upper note, **including both**:\n\n- C to D: C D → a **second**.\n- C to E: C D E → a **third**.\n- C to G: C D E F G → a **fifth**.\n- C to C: eight letters → an **octave**.\n\nCount letters, not frets. C to E and C to Eb are both thirds."
+        },
+        {
+          "type": "explain",
+          "title": "Interval quality",
+          "body": "The **interval quality** pins down the exact size in half steps:\n\n| Interval | Half steps | From C |\n|---|---|---|\n| minor 2nd (m2) | 1 | Db |\n| major 2nd (M2) | 2 | D |\n| minor 3rd (m3) | 3 | Eb |\n| major 3rd (M3) | 4 | E |\n| perfect 4th (P4) | 5 | F |\n| tritone (A4 / d5) | 6 | F# / Gb |\n| perfect 5th (P5) | 7 | G |\n| minor 6th (m6) | 8 | Ab |\n| major 6th (M6) | 9 | A |\n| minor 7th (m7) | 10 | Bb |\n| major 7th (M7) | 11 | B |\n| octave (P8) | 12 | C |\n\nFrom the tonic of a major scale, every scale note is a major or perfect interval: M2, M3, P4, P5, M6, M7, P8. Minor intervals are one half step smaller than major ones.",
+          "diagram": {
+            "kind": "intervalLadder",
+            "scale": "C major",
+            "labels": "intervals",
+            "caption": "Intervals above C in the C major scale."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Intervals on the fretboard",
+          "body": "Because strings 6, 5, and 4 are each a perfect 4th apart, intervals form fixed finger patterns there. From a root on string 6 (or string 5, one string higher):\n\n- **M2**: same string, 2 frets up.\n- **m3**: next string, 2 frets lower.\n- **M3**: next string, 1 fret lower.\n- **P4**: next string, same fret.\n- **P5**: next string, 2 frets up.\n- **M6**: two strings up, 1 fret lower.\n- **m7**: two strings up, same fret.\n- **P8**: two strings up, 2 frets up.\n\nCrossing onto the B string (string 2) shifts these patterns up one fret, because G to B is a major 3rd instead of a 4th.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:5",
+              "5:3",
+              "5:4",
+              "5:5",
+              "5:7",
+              "4:4",
+              "4:5",
+              "4:7"
+            ],
+            "labels": "intervals",
+            "fretRange": [
+              2,
+              8
+            ],
+            "caption": "Intervals above A (string 6, fret 5)."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Intervals above A",
+          "caption": "A with its M2, M3, P4, P5, M6, and octave, each played after the root.",
+          "playback": {
+            "notes": [
+              [
+                "A2"
+              ],
+              [
+                "B2"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "C#3"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "F#3"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "A3"
+              ]
+            ],
+            "bpm": 80
+          },
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:5",
+              "5:3",
+              "5:4",
+              "5:5",
+              "5:7",
+              "4:4",
+              "4:5",
+              "4:7"
+            ],
+            "labels": "intervals",
+            "fretRange": [
+              2,
+              8
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "From A on string 6, fret 5, play each interval after the root: M2, M3, P4, P5, P8.",
+            "notes": [
+              "A2",
+              "B2",
+              "A2",
+              "C#3",
+              "A2",
+              "D3",
+              "A2",
+              "E3",
+              "A2",
+              "A3"
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:5",
+                "6:7",
+                "5:4",
+                "5:5",
+                "5:7",
+                "4:7"
+              ],
+              "labels": "intervals",
+              "fretRange": [
+                2,
+                8
+              ]
+            }
+          },
+          "mistakeTips": [
+            "M3 is on string 5, one fret lower than the root: fret 4.",
+            "P4 is straight across: string 5, fret 5. P5 is two frets higher: fret 7.",
+            "The octave is two strings up, two frets up: string 4, fret 7."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Name the interval",
+          "questions": [
+            {
+              "prompt": "C to G is a…",
+              "choices": [
+                "Perfect 4th",
+                "Perfect 5th",
+                "Major 6th"
+              ],
+              "answerIndex": 1,
+              "explanation": "C D E F G: five letters, seven half steps."
+            },
+            {
+              "prompt": "How many half steps is a minor 3rd?",
+              "choices": [
+                "3",
+                "4",
+                "5"
+              ],
+              "answerIndex": 0,
+              "explanation": "Minor 3rd = 3; major 3rd = 4."
+            },
+            {
+              "prompt": "D to F# is a…",
+              "choices": [
+                "Minor 3rd",
+                "Major 3rd",
+                "Perfect 4th"
+              ],
+              "answerIndex": 1,
+              "explanation": "D E F: a third. D to F# is 4 half steps: major."
+            },
+            {
+              "prompt": "What interval is 5 half steps?",
+              "choices": [
+                "Perfect 4th",
+                "Tritone",
+                "Major 3rd"
+              ],
+              "answerIndex": 0,
+              "explanation": "P4 = 5, tritone = 6, P5 = 7."
+            },
+            {
+              "prompt": "E to F is a…",
+              "choices": [
+                "Minor 2nd",
+                "Major 2nd",
+                "Unison"
+              ],
+              "answerIndex": 0,
+              "explanation": "One half step: minor 2nd."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Interval names",
+          "generator": {
+            "kind": "intervalByName",
+            "params": {
+              "intervals": "m2,M2,m3,M3,P4,P5,M6,P8"
+            }
+          },
+          "count": 6
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s4.l3.r1",
+          "kind": "fact",
+          "prompt": "Half steps in m3, M3, P4, P5?",
+          "answer": "3, 4, 5, 7."
+        },
+        {
+          "id": "guitar.s4.l3.r2",
+          "kind": "fact",
+          "prompt": "On strings 6 to 5, where is the P5 above a root?",
+          "answer": "Next string, two frets up."
+        },
+        {
+          "id": "guitar.s4.l3.r3",
+          "kind": "fact",
+          "prompt": "What interval is C to A?",
+          "answer": "Major 6th (9 half steps)."
+        }
+      ],
+      "glossaryTerms": [
+        "interval",
+        "interval number",
+        "interval quality",
+        "minor second",
+        "major second",
+        "minor third",
+        "major third",
+        "perfect fourth",
+        "tritone",
+        "perfect fifth",
+        "major sixth",
+        "minor seventh",
+        "major seventh",
+        "octave"
+      ]
+    },
+    {
+      "id": "guitar.s4.l4",
+      "title": "Hearing intervals",
+      "summary": "Recognize common intervals by ear using public-domain song openings, and play them back.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Reference songs",
+          "body": "Link each interval to the opening of a song you already know. Sing the song in your head and compare.\n\n| Interval | Rising reference |\n|---|---|\n| M2 | \"Frère Jacques\" (first two notes) |\n| m3 | \"Greensleeves\" (\"A-las\") |\n| M3 | \"When the Saints\" (\"Oh when\") |\n| P4 | \"Here Comes the Bride\" (Wagner's Bridal Chorus) |\n| P5 | \"Twinkle, Twinkle\" (\"Twin-kle, twin-kle\") |\n| M6 | \"My Bonnie Lies Over the Ocean\" (\"My Bon-\") |\n| P8 | fret 12 of any string after the open string |\n\nAll of these songs are old enough to be in the public domain. If a different song works better for you, use it."
+        },
+        {
+          "type": "demo",
+          "title": "Each interval above C",
+          "caption": "M2, m3, M3, P4, P5, M6, P8, each from C3.",
+          "playback": {
+            "notes": [
+              [
+                "C3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "Eb3"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "F3"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "A3"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "C4"
+              ]
+            ],
+            "bpm": 70
+          }
+        },
+        {
+          "type": "quiz",
+          "title": "Which interval?",
+          "questions": [
+            {
+              "prompt": "Listen. Which interval?",
+              "choices": [
+                "M3",
+                "P5",
+                "P8"
+              ],
+              "answerIndex": 1,
+              "explanation": "Seven half steps: the \"Twinkle, Twinkle\" leap.",
+              "playback": {
+                "notes": [
+                  [
+                    "D3"
+                  ],
+                  [
+                    "A3"
+                  ]
+                ],
+                "bpm": 60
+              }
+            },
+            {
+              "prompt": "Listen. Which interval?",
+              "choices": [
+                "m3",
+                "M3",
+                "P4"
+              ],
+              "answerIndex": 1,
+              "explanation": "Four half steps: \"Oh when\" from \"When the Saints\".",
+              "playback": {
+                "notes": [
+                  [
+                    "G3"
+                  ],
+                  [
+                    "B3"
+                  ]
+                ],
+                "bpm": 60
+              }
+            },
+            {
+              "prompt": "Listen. Which interval?",
+              "choices": [
+                "P4",
+                "P5",
+                "M6"
+              ],
+              "answerIndex": 0,
+              "explanation": "Five half steps: \"Here Comes the Bride\".",
+              "playback": {
+                "notes": [
+                  [
+                    "A2"
+                  ],
+                  [
+                    "D3"
+                  ]
+                ],
+                "bpm": 60
+              }
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Intervals by ear",
+          "generator": {
+            "kind": "intervalByEar",
+            "params": {
+              "intervals": "M2,m3,M3,P4,P5,M6,P8",
+              "direction": "up"
+            }
+          },
+          "count": 8
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "intervalPlayback",
+            "prompt": "Listen to an interval, then play it back on your guitar starting from A (string 6, fret 5). Intervals come from this lesson's set.",
+            "notes": [
+              "A2"
+            ],
+            "repetitions": 5,
+            "passAccuracy": 0.6,
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:5",
+                "5:3",
+                "5:4",
+                "5:5",
+                "5:7",
+                "4:4",
+                "4:5",
+                "4:7"
+              ],
+              "labels": "intervals",
+              "fretRange": [
+                2,
+                8
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Sing the second note before you look for it.",
+            "Use the reference songs: \"Twinkle\" for P5, \"Here Comes the Bride\" for P4.",
+            "Use the fretboard patterns from the last lesson once you know the name."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "melodyEcho",
+            "prompt": "Echo: listen to each two-note phrase, then play it back.",
+            "notes": [
+              "C3",
+              "G3",
+              "C3",
+              "E3",
+              "C3",
+              "F3",
+              "C3",
+              "C4"
+            ],
+            "passAccuracy": 0.7
+          },
+          "mistakeTips": [
+            "The first note is always C (string 5, fret 3).",
+            "P5 from C is G: string 4, fret 5. P4 is F: string 4, fret 3."
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s4.l4.r1",
+          "kind": "earInterval",
+          "prompt": "Name the interval.",
+          "answer": "Perfect 5th",
+          "playback": {
+            "notes": [
+              [
+                "C3"
+              ],
+              [
+                "G3"
+              ]
+            ],
+            "bpm": 60
+          }
+        },
+        {
+          "id": "guitar.s4.l4.r2",
+          "kind": "earInterval",
+          "prompt": "Name the interval.",
+          "answer": "Major 3rd",
+          "playback": {
+            "notes": [
+              [
+                "D3"
+              ],
+              [
+                "F#3"
+              ]
+            ],
+            "bpm": 60
+          }
+        },
+        {
+          "id": "guitar.s4.l4.r3",
+          "kind": "earInterval",
+          "prompt": "Name the interval.",
+          "answer": "Perfect 4th",
+          "playback": {
+            "notes": [
+              [
+                "E3"
+              ],
+              [
+                "A3"
+              ]
+            ],
+            "bpm": 60
+          }
+        },
+        {
+          "id": "guitar.s4.l4.r4",
+          "kind": "earInterval",
+          "prompt": "Name the interval.",
+          "answer": "Minor 3rd",
+          "playback": {
+            "notes": [
+              [
+                "A2"
+              ],
+              [
+                "C3"
+              ]
+            ],
+            "bpm": 60
+          }
+        }
+      ],
+      "glossaryTerms": [
+        "interval",
+        "perfect fifth",
+        "perfect fourth",
+        "major third"
+      ]
+    },
+    {
+      "id": "guitar.s4.l5",
+      "title": "Hearing scale degrees",
+      "summary": "Hear how each scale degree relates to the tonic, and echo short phrases in C major.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Every note has a role",
+          "body": "Once a key is set, each scale degree has its own feeling relative to the tonic:\n\n- **1** sounds settled, like home.\n- **5** is stable too, but open.\n- **3** is stable and gives the major sound.\n- **7** leans hard up to 1.\n- **4** tends to fall to 3.\n- **2** can fall to 1 or rise to 3.\n- **6** often falls to 5.\n\nHearing these tendencies is how musicians work out melodies by ear: they hear \"that note wants to go home\" and know it is 7 or 2."
+        },
+        {
+          "type": "demo",
+          "title": "Tension and release",
+          "caption": "C major scale up to 7, a pause, then 1. Then 4 falling to 3.",
+          "playback": {
+            "notes": [
+              [
+                "C3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "F3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "A3"
+              ],
+              [
+                "B3"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "F3"
+              ],
+              [
+                "E3"
+              ]
+            ],
+            "rhythm": "q q q q q q h h h h",
+            "bpm": 80
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "melodyEcho",
+            "prompt": "Echo short phrases in C major. Each starts on C (string 5, fret 3).",
+            "notes": [
+              "C3",
+              "D3",
+              "E3",
+              "C3",
+              "E3",
+              "G3",
+              "C3",
+              "B2",
+              "C3"
+            ],
+            "key": "C major",
+            "passAccuracy": 0.7,
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:7",
+                "5:3",
+                "4:0",
+                "4:2",
+                "4:3",
+                "3:0",
+                "3:2",
+                "2:0",
+                "2:1"
+              ],
+              "scale": "C major",
+              "labels": "degrees",
+              "fretRange": [
+                0,
+                7
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Sing it first, then find it.",
+            "B2 (degree 7 below the tonic) is on string 6, fret 7, or string 5, fret 2.",
+            "Most phrases move by step. Try the neighbor note first."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Scale degrees by ear",
+          "generator": {
+            "kind": "scaleDegreeByEar",
+            "params": {
+              "keys": "C major,G major",
+              "degrees": "1,2,3,4,5,6,7"
+            }
+          },
+          "count": 6
+        },
+        {
+          "type": "quiz",
+          "title": "Tendencies",
+          "questions": [
+            {
+              "prompt": "Which degree pulls most strongly up to the tonic?",
+              "choices": [
+                "7",
+                "5",
+                "3"
+              ],
+              "answerIndex": 0,
+              "explanation": "The leading tone is a half step below 1."
+            },
+            {
+              "prompt": "Which degree sounds most like home?",
+              "choices": [
+                "1",
+                "4",
+                "6"
+              ],
+              "answerIndex": 0,
+              "explanation": "The tonic is the point of rest."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s4.l5.r1",
+          "kind": "fact",
+          "prompt": "Which scale degree is the leading tone, and where does it want to go?",
+          "answer": "7; up a half step to 1."
+        }
+      ],
+      "glossaryTerms": [
+        "scale degree",
+        "leading tone",
+        "tonic"
+      ]
+    },
+    {
+      "id": "guitar.s4.l6",
+      "title": "Scale and interval review",
+      "summary": "Review the major scale, scale degrees, and intervals, then play two melodies built from the scale.",
+      "minutes": 14,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "What you know now",
+          "body": "- Major scale: **W W H W W W H**. Half steps between degrees 3–4 and 7–8.\n- Degrees: 1 tonic, 2 supertonic, 3 mediant, 4 subdominant, 5 dominant, 6 submediant, 7 leading tone.\n- Intervals: m2 1, M2 2, m3 3, M3 4, P4 5, tritone 6, P5 7, m6 8, M6 9, m7 10, M7 11, P8 12 half steps.\n- A fingering with no open strings is movable: slide it to change key."
+        },
+        {
+          "type": "quiz",
+          "title": "Review",
+          "questions": [
+            {
+              "prompt": "Spell D major.",
+              "choices": [
+                "D E F G A B C D",
+                "D E F# G A B C# D",
+                "D E F# G# A B C# D"
+              ],
+              "answerIndex": 1,
+              "explanation": "D –W– E –W– F# –H– G –W– A –W– B –W– C# –H– D. Two sharps."
+            },
+            {
+              "prompt": "What is the 6th degree of C major?",
+              "choices": [
+                "A",
+                "G",
+                "B"
+              ],
+              "answerIndex": 0,
+              "explanation": "C D E F G A."
+            },
+            {
+              "prompt": "G to D is a…",
+              "choices": [
+                "Perfect 4th",
+                "Perfect 5th",
+                "Major 6th"
+              ],
+              "answerIndex": 1,
+              "explanation": "G A B C D: five letters, 7 half steps."
+            },
+            {
+              "prompt": "Which interval is 9 half steps?",
+              "choices": [
+                "Minor 6th",
+                "Major 6th",
+                "Minor 7th"
+              ],
+              "answerIndex": 1,
+              "explanation": "m6 = 8, M6 = 9, m7 = 10."
+            },
+            {
+              "prompt": "You slide the G major fingering from fret 3 to fret 7 on string 6. What key are you in?",
+              "choices": [
+                "A major",
+                "B major",
+                "C major"
+              ],
+              "answerIndex": 1,
+              "explanation": "String 6: G at 3, A at 5, B at 7."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Intervals by ear",
+          "generator": {
+            "kind": "intervalByEar",
+            "params": {
+              "intervals": "M2,m3,M3,P4,P5,M6,P8",
+              "direction": "up"
+            }
+          },
+          "count": 6
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "scale",
+            "prompt": "Speed check: C major, one octave, open position.",
+            "scale": "C major",
+            "octaves": 1,
+            "bpm": 80,
+            "tempoSteps": [
+              80,
+              92,
+              104
+            ]
+          },
+          "mistakeTips": [
+            "Even notes matter more than speed.",
+            "Keep strict alternate picking."
+          ]
+        },
+        {
+          "type": "explain",
+          "title": "Joy to the World: a scale in disguise",
+          "body": "The opening of \"Joy to the World\" (words by Isaac Watts, 1719; tune published by Lowell Mason, 1839; public domain) is a **D major scale going straight down**: D C# B A G F# E D.\n\nIn open position: D (2 fret 3), C# (2 fret 2), B (2 open), A (3 fret 2), G (3 open), F# (4 fret 4), E (4 fret 2), D (4 open).",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "2:3",
+              "2:2",
+              "2:0",
+              "3:2",
+              "3:0",
+              "4:4",
+              "4:2",
+              "4:0"
+            ],
+            "scale": "D major",
+            "labels": "degrees",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "type": "song",
+          "title": "Joy to the World, opening (Mason)",
+          "caption": "Degrees 8 7 6 5 4 3 2 1.",
+          "notes": [
+            [
+              "D4"
+            ],
+            [
+              "C#4"
+            ],
+            [
+              "B3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "F#3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "D3"
+            ],
+            []
+          ],
+          "rhythm": "h q. e h. q h h h. qr",
+          "bpm": 80
+        },
+        {
+          "type": "song",
+          "title": "Ode to Joy in G (Beethoven)",
+          "caption": "The same melody as Stage 1, now in G on strings 3 and 2: G (3 open), A (3 fret 2), B (2 open), C (2 fret 1), D (2 fret 3). It uses only degrees 1 to 5.",
+          "notes": [
+            [
+              "B3"
+            ],
+            [
+              "B3"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "B3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "B3"
+            ],
+            [
+              "B3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "B3"
+            ],
+            [
+              "B3"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "B3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "B3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "G3"
+            ]
+          ],
+          "rhythm": "q q q q q q q q q q q q q. e h q q q q q q q q q q q q q. e h",
+          "bpm": 90
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s4.l6.r1",
+          "kind": "fact",
+          "prompt": "Spell D major.",
+          "answer": "D E F# G A B C# D"
+        }
+      ],
+      "glossaryTerms": [
+        "major scale",
+        "scale degree",
+        "interval"
+      ]
+    }
+  ],
+  "branches": []
+}

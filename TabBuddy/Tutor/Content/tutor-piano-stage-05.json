@@ -1,0 +1,1272 @@
+{
+  "id": "piano.s5",
+  "instrument": "piano",
+  "order": 5,
+  "title": "Triads, inversions, and left-hand chords",
+  "summary": "Build major, minor, and diminished triads, play them in inversions, and move between chords with small left-hand moves.",
+  "lessons": [
+    {
+      "id": "piano.s5.l1",
+      "title": "Building triads",
+      "summary": "Stack two thirds to make a three-note chord.",
+      "minutes": 11,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "What a triad is",
+          "body": "A **chord** is three or more notes sounded together. The most common chord is the **triad**: a **root**, the note a 3rd above it (the **third**), and the note a 5th above the root (the **fifth**).\n\nOn white keys, a triad is \"play one, skip one, play one, skip one, play one\": C–E–G, D–F–A, and so on.\n\nRight hand: play a root-position triad with fingers **1 3 5**. Left hand: fingers **5 3 1**.",
+          "diagram": {
+            "kind": "keyboard",
+            "chord": "C",
+            "notes": [
+              "C4",
+              "E4",
+              "G4"
+            ],
+            "labels": "fingers",
+            "pitchRange": [
+              "C4",
+              "C5"
+            ],
+            "caption": "C major triad, RH 1–3–5."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Major and minor",
+          "body": "The size of each third decides the chord's quality:\n\n- **Major triad** = major 3rd (4 half steps) + minor 3rd (3 half steps). **C = C E G.** Written as just the letter: \"C\".\n- **Minor triad** = minor 3rd (3) + major 3rd (4). **Cm = C E♭ G.** Written with \"m\": \"Cm\".\n\nThe only difference is the middle note, a half step apart. Most listeners hear major as brighter and minor as darker.",
+          "diagram": {
+            "kind": "keyboard",
+            "chord": "Cm",
+            "notes": [
+              "C4",
+              "Eb4",
+              "G4"
+            ],
+            "pitchRange": [
+              "C4",
+              "C5"
+            ],
+            "caption": "C minor: lower the 3rd by a half step."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "C major, then C minor",
+          "caption": "Each chord is played broken (one note at a time), then together.",
+          "playback": {
+            "notes": [
+              [
+                "C4"
+              ],
+              [
+                "E4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "C4",
+                "E4",
+                "G4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "Eb4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "C4",
+                "Eb4",
+                "G4"
+              ]
+            ],
+            "bpm": 72
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Right hand, fingers 1 3 5: play C (C4 E4 G4), F (F4 A4 C5), and G (G4 B4 D5), one at a time.",
+            "chords": [
+              "C",
+              "F",
+              "G"
+            ],
+            "diagram": {
+              "kind": "keyboard",
+              "notes": [
+                "C4",
+                "E4",
+                "G4",
+                "F4",
+                "A4",
+                "C5",
+                "G4",
+                "B4",
+                "D5"
+              ],
+              "pitchRange": [
+                "C4",
+                "D5"
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Press all three keys at exactly the same time.",
+            "Keep fingers 2 and 4 relaxed above their keys, not pressing.",
+            "If the app hears only part of the chord, press evenly; finger 5 tends to be weaker than the others."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Right hand: play C, then Cm (C4 E♭4 G4). Then G, then Gm (G4 B♭4 D5).",
+            "chords": [
+              "C",
+              "Cm",
+              "G",
+              "Gm"
+            ]
+          },
+          "mistakeTips": [
+            "Only finger 3 moves: from the white key down to the black key.",
+            "Listen for the brighter (major) and darker (minor) sound."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "A triad contains…",
+              "choices": [
+                "Root, 3rd, and 5th",
+                "Root, 2nd, and 4th",
+                "Any three notes",
+                "Root, 4th, and 5th"
+              ],
+              "answerIndex": 0,
+              "explanation": "A triad stacks two thirds on a root."
+            },
+            {
+              "prompt": "Spell a D minor triad.",
+              "choices": [
+                "D F A",
+                "D F♯ A",
+                "D E A",
+                "D F A♭"
+              ],
+              "answerIndex": 0,
+              "explanation": "D–F is a minor 3rd; F–A is a major 3rd."
+            },
+            {
+              "prompt": "A major triad is built from…",
+              "choices": [
+                "Major 3rd, then minor 3rd",
+                "Minor 3rd, then major 3rd",
+                "Two major 3rds",
+                "Two minor 3rds"
+              ],
+              "answerIndex": 0,
+              "explanation": "C–E (4 half steps) + E–G (3 half steps)."
+            },
+            {
+              "prompt": "Which fingers does the right hand use for a root-position triad?",
+              "choices": [
+                "1 3 5",
+                "1 2 3",
+                "2 3 4",
+                "1 2 5"
+              ],
+              "answerIndex": 0,
+              "explanation": "Thumb, middle, pinky."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Spell the triad",
+          "generator": {
+            "kind": "chordSpelling",
+            "params": {
+              "roots": "C,D,E,F,G,A",
+              "qualities": "maj,min"
+            }
+          },
+          "count": 6
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s5.l1.r1",
+          "kind": "playChord",
+          "prompt": "Play a C major triad.",
+          "answer": "C"
+        },
+        {
+          "id": "piano.s5.l1.r2",
+          "kind": "fact",
+          "prompt": "How do you change a major triad to minor?",
+          "answer": "Lower the 3rd by a half step."
+        },
+        {
+          "id": "piano.s5.l1.r3",
+          "kind": "earQuality",
+          "prompt": "Major or minor?",
+          "answer": "Minor",
+          "playback": {
+            "chords": [
+              "Am"
+            ],
+            "style": "block"
+          }
+        }
+      ],
+      "glossaryTerms": [
+        "Chord",
+        "Triad",
+        "Root",
+        "Third",
+        "Fifth",
+        "Major triad",
+        "Minor triad",
+        "Chord quality"
+      ]
+    },
+    {
+      "id": "piano.s5.l2",
+      "title": "The white-key triads",
+      "summary": "Every white-key triad is major, minor, or diminished.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Seven triads on white keys",
+          "body": "Build a triad on each white key using only white keys (C major scale notes):\n\n| Root | Notes | Quality |\n|---|---|---|\n| C | C E G | major |\n| D | D F A | minor |\n| E | E G B | minor |\n| F | F A C | major |\n| G | G B D | major |\n| A | A C E | minor |\n| B | B D F | **diminished** |\n\nA **diminished triad** is two minor 3rds (3 + 3 half steps), so its 5th is a half step smaller than a perfect 5th. It is written \"dim\" or \"°\": B°. An **augmented triad** is two major 3rds (C E G♯, written \"aug\" or \"+\"); it does not occur on the white keys.",
+          "diagram": {
+            "kind": "keyboard",
+            "scale": "C major",
+            "pitchRange": [
+              "C4",
+              "B5"
+            ],
+            "caption": "Play-skip-play-skip-play from each white key."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Up the white-key triads",
+          "caption": "C, Dm, Em, F, G, Am, B°, C.",
+          "playback": {
+            "chords": [
+              "C",
+              "Dm",
+              "Em",
+              "F",
+              "G",
+              "Am",
+              "Bdim",
+              "C"
+            ],
+            "bpm": 60,
+            "style": "block"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Right hand 1 3 5: play every white-key triad from C4 upward: C, Dm, Em, F, G, Am, B°, C.",
+            "chords": [
+              "C",
+              "Dm",
+              "Em",
+              "F",
+              "G",
+              "Am",
+              "Bdim",
+              "C"
+            ]
+          },
+          "mistakeTips": [
+            "Keep the same hand frame and move it one white key at a time.",
+            "Check each one: C D E F G A B C."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Major or minor?",
+          "generator": {
+            "kind": "chordQualityByEar",
+            "params": {
+              "qualities": "maj,min"
+            }
+          },
+          "count": 6
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "Which white-key triad is diminished?",
+              "choices": [
+                "B D F",
+                "A C E",
+                "E G B",
+                "D F A"
+              ],
+              "answerIndex": 0,
+              "explanation": "B–D and D–F are both minor 3rds."
+            },
+            {
+              "prompt": "What quality is E G B?",
+              "choices": [
+                "Minor",
+                "Major",
+                "Diminished",
+                "Augmented"
+              ],
+              "answerIndex": 0,
+              "explanation": "E–G is 3 half steps (minor 3rd), G–B is 4."
+            },
+            {
+              "prompt": "An augmented triad has…",
+              "choices": [
+                "Two major 3rds",
+                "Two minor 3rds",
+                "A minor 3rd then a major 3rd",
+                "A 4th and a 5th"
+              ],
+              "answerIndex": 0,
+              "explanation": "C E G♯: 4 + 4 half steps."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Spell the triad",
+          "generator": {
+            "kind": "chordSpelling",
+            "params": {
+              "roots": "C,D,E,F,G,A,B,Bb",
+              "qualities": "maj,min,dim"
+            }
+          },
+          "count": 6
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s5.l2.r1",
+          "kind": "fact",
+          "prompt": "Which white-key triads are major?",
+          "answer": "C, F, G"
+        },
+        {
+          "id": "piano.s5.l2.r2",
+          "kind": "fact",
+          "prompt": "Which white-key triads are minor?",
+          "answer": "Dm, Em, Am"
+        },
+        {
+          "id": "piano.s5.l2.r3",
+          "kind": "earQuality",
+          "prompt": "Major or minor?",
+          "answer": "Major",
+          "playback": {
+            "chords": [
+              "F"
+            ],
+            "style": "block"
+          }
+        }
+      ],
+      "glossaryTerms": [
+        "Diminished triad",
+        "Augmented triad",
+        "Chord quality"
+      ]
+    },
+    {
+      "id": "piano.s5.l3",
+      "title": "Inversions",
+      "summary": "Rearrange a triad so the 3rd or 5th is the lowest note.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Three ways to stack C",
+          "body": "An **inversion** keeps the same three notes but puts a different one at the bottom:\n\n- **Root position:** root lowest. C E G.\n- **First inversion:** 3rd lowest. E G C. Written **C/E** (\"C over E\").\n- **Second inversion:** 5th lowest. G C E. Written **C/G**.\n\nA **slash chord** like C/E names the chord, then the bass note. The chord's name and quality do not change; only the order does.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C4",
+              "E4",
+              "G4",
+              "C5",
+              "E5",
+              "G5"
+            ],
+            "pitchRange": [
+              "C4",
+              "G5"
+            ],
+            "caption": "C, C/E, C/G: move the bottom note up an octave each time."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Inversion fingering",
+          "body": "Right hand:\n- Root position: **1 3 5**\n- First inversion (E G C): **1 2 5**\n- Second inversion (G C E): **1 3 5**\n\nLeft hand:\n- Root position: **5 3 1**\n- First inversion (E G C): **5 3 1**\n- Second inversion (G C E): **5 2 1**\n\nThe finger on the note next to the wide gap (a 4th) changes: in RH first inversion, finger 2 plays G so 5 can reach C."
+        },
+        {
+          "type": "demo",
+          "title": "C in three positions",
+          "caption": "C (C4 E4 G4), C/E (E4 G4 C5), C/G (G4 C5 E5), then back.",
+          "playback": {
+            "notes": [
+              [
+                "C4",
+                "E4",
+                "G4"
+              ],
+              [
+                "E4",
+                "G4",
+                "C5"
+              ],
+              [
+                "G4",
+                "C5",
+                "E5"
+              ],
+              [
+                "E4",
+                "G4",
+                "C5"
+              ],
+              [
+                "C4",
+                "E4",
+                "G4"
+              ]
+            ],
+            "bpm": 60
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Right hand: C (C4 E4 G4), C/E (E4 G4 C5), C/G (G4 C5 E5). Use 1 3 5, 1 2 5, 1 3 5.",
+            "chords": [
+              "C",
+              "C/E",
+              "C/G"
+            ]
+          },
+          "mistakeTips": [
+            "Each new chord moves the lowest note up to the top.",
+            "Keep all three notes together; lift the hand only slightly between chords."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Right hand: F (F4 A4 C5), F/A (A4 C5 F5), F/C (C5 F5 A5).",
+            "chords": [
+              "F",
+              "F/A",
+              "F/C"
+            ]
+          },
+          "mistakeTips": [
+            "F/A: A is lowest, so fingers 1 2 5.",
+            "F/C: C is lowest, fingers 1 3 5."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "What is the lowest note of C/E?",
+              "choices": [
+                "E",
+                "C",
+                "G",
+                "B"
+              ],
+              "answerIndex": 0,
+              "explanation": "The note after the slash is the bass note."
+            },
+            {
+              "prompt": "G B D in first inversion is…",
+              "choices": [
+                "B D G",
+                "D G B",
+                "G B D",
+                "B G D"
+              ],
+              "answerIndex": 0,
+              "explanation": "First inversion puts the 3rd (B) on the bottom."
+            },
+            {
+              "prompt": "What is the second inversion of F major?",
+              "choices": [
+                "C F A",
+                "A C F",
+                "F A C",
+                "C A F"
+              ],
+              "answerIndex": 0,
+              "explanation": "Second inversion puts the 5th (C) on the bottom."
+            },
+            {
+              "prompt": "Right-hand fingering for a first-inversion triad?",
+              "choices": [
+                "1 2 5",
+                "1 3 5",
+                "1 2 3",
+                "2 3 5"
+              ],
+              "answerIndex": 0,
+              "explanation": "The gap is at the top, so 2 then 5."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s5.l3.r1",
+          "kind": "fact",
+          "prompt": "What does C/G mean?",
+          "answer": "A C major chord with G as the lowest note (second inversion)."
+        },
+        {
+          "id": "piano.s5.l3.r2",
+          "kind": "playChord",
+          "prompt": "Play C/E.",
+          "answer": "C/E"
+        }
+      ],
+      "glossaryTerms": [
+        "Inversion",
+        "Root position",
+        "First inversion",
+        "Second inversion",
+        "Slash chord",
+        "Bass note"
+      ]
+    },
+    {
+      "id": "piano.s5.l4",
+      "title": "Left-hand chords with small moves",
+      "summary": "Use inversions so the left hand barely moves between C, F, and G.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Closest-position chords",
+          "body": "Jumping from C position to F position to G position is slow. Instead, pick the inversion that is **closest** to the chord you are already holding:\n\n- **C**: C3 E3 G3 (fingers 5 3 1)\n- **F/C**: C3 F3 A3 (fingers 5 2 1). C stays; E→F and G→A each move up one white key.\n- **G/B**: B2 D3 G3 (fingers 5 3 1). C→B moves down a half step, E→D down a step, G stays.\n\nKeeping common notes and moving others by step is called **voice leading**. It sounds smooth and saves effort.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "B2",
+              "C3",
+              "D3",
+              "E3",
+              "F3",
+              "G3",
+              "A3"
+            ],
+            "pitchRange": [
+              "G2",
+              "C4"
+            ],
+            "caption": "C3–E3–G3, C3–F3–A3, B2–D3–G3."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "C, F/C, C, G/B, C",
+          "caption": "Listen to how little changes between chords.",
+          "playback": {
+            "notes": [
+              [
+                "C3",
+                "E3",
+                "G3"
+              ],
+              [
+                "C3",
+                "F3",
+                "A3"
+              ],
+              [
+                "C3",
+                "E3",
+                "G3"
+              ],
+              [
+                "B2",
+                "D3",
+                "G3"
+              ],
+              [
+                "C3",
+                "E3",
+                "G3"
+              ]
+            ],
+            "bpm": 60
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "Left hand: switch between C (C3 E3 G3) and F/C (C3 F3 A3) for 60 seconds. Keep finger 5 on C3 the whole time.",
+            "chords": [
+              "C",
+              "F/C"
+            ],
+            "durationSec": 60
+          },
+          "mistakeTips": [
+            "Finger 5 stays on C3. For C, fingers 3 and 1 play E3 and G3; for F/C, fingers 2 and 1 play F3 and A3.",
+            "Look at the keys only when you need to; feel the position.",
+            "Count clean changes, not speed. A clean change sounds all three notes together."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "Left hand: switch between C (C3 E3 G3) and G/B (B2 D3 G3) for 60 seconds.",
+            "chords": [
+              "C",
+              "G/B"
+            ],
+            "durationSec": 60
+          },
+          "mistakeTips": [
+            "Finger 1 stays on G3.",
+            "Finger 5 moves from C3 down a half step to B2.",
+            "Finger 3 moves from E3 down to D3."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Left hand, the whole set: C, F/C, C, G/B, C.",
+            "chords": [
+              "C",
+              "F/C",
+              "C",
+              "G/B",
+              "C"
+            ]
+          },
+          "mistakeTips": [
+            "Keep the hand close to the keys between chords.",
+            "Lower notes can be harder for the microphone to hear; press evenly and firmly."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "Which inversion of F is closest to C3 E3 G3?",
+              "choices": [
+                "F/C: C3 F3 A3",
+                "F: F3 A3 C4",
+                "F/A: A2 C3 F3",
+                "They are all the same distance"
+              ],
+              "answerIndex": 0,
+              "explanation": "C stays, and E and G each move up one key."
+            },
+            {
+              "prompt": "Which note do C and G/B share?",
+              "choices": [
+                "G",
+                "C",
+                "E",
+                "B"
+              ],
+              "answerIndex": 0,
+              "explanation": "C = C E G and G/B = B D G: both have G."
+            },
+            {
+              "prompt": "What is voice leading?",
+              "choices": [
+                "Moving each chord note the shortest way to the next chord",
+                "Singing along with the melody",
+                "Playing the loudest note first",
+                "Using only root-position chords"
+              ],
+              "answerIndex": 0,
+              "explanation": "Good voice leading keeps common notes and moves others by step."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s5.l4.r1",
+          "kind": "fact",
+          "prompt": "Left-hand notes for C, F/C, and G/B near C3?",
+          "answer": "C3 E3 G3; C3 F3 A3; B2 D3 G3."
+        },
+        {
+          "id": "piano.s5.l4.r2",
+          "kind": "playChord",
+          "prompt": "Play G/B with your left hand.",
+          "answer": "G/B"
+        }
+      ],
+      "glossaryTerms": [
+        "Voice leading",
+        "Common tone",
+        "Inversion"
+      ]
+    },
+    {
+      "id": "piano.s5.l5",
+      "title": "Stage 5 review: Triad Waltz",
+      "summary": "Spell and hear triads, then play two short chord pieces.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "quiz",
+          "title": "Stage 5 check: spelling",
+          "generator": {
+            "kind": "chordSpelling",
+            "params": {
+              "roots": "C,D,E,F,G,A,B,Bb,Eb",
+              "qualities": "maj,min,dim"
+            }
+          },
+          "count": 6
+        },
+        {
+          "type": "quiz",
+          "title": "Stage 5 check: by ear",
+          "generator": {
+            "kind": "chordQualityByEar",
+            "params": {
+              "qualities": "maj,min,dim"
+            }
+          },
+          "count": 6
+        },
+        {
+          "type": "quiz",
+          "title": "Stage 5 check: spelling and inversions",
+          "questions": [
+            {
+              "prompt": "Spell A minor.",
+              "choices": [
+                "A C E",
+                "A C♯ E",
+                "A D E",
+                "A C E♭"
+              ],
+              "answerIndex": 0,
+              "explanation": "A–C is a minor 3rd; C–E a major 3rd."
+            },
+            {
+              "prompt": "What is Dm/A?",
+              "choices": [
+                "A D F",
+                "D F A",
+                "F A D",
+                "A D F♯"
+              ],
+              "answerIndex": 0,
+              "explanation": "D minor (D F A) with A in the bass: second inversion."
+            }
+          ]
+        },
+        {
+          "type": "song",
+          "title": "Triad Waltz (original), right hand",
+          "caption": "Chords: C, F/C, G/B, C, Am, Dm/A, G/B, C. Right hand; each chord uses the closest inversion. Count 1 2 3.",
+          "notes": [
+            [
+              "C4",
+              "E4",
+              "G4"
+            ],
+            [
+              "C4",
+              "E4",
+              "G4"
+            ],
+            [
+              "C4",
+              "F4",
+              "A4"
+            ],
+            [
+              "C4",
+              "F4",
+              "A4"
+            ],
+            [
+              "B3",
+              "D4",
+              "G4"
+            ],
+            [
+              "B3",
+              "D4",
+              "G4"
+            ],
+            [
+              "C4",
+              "E4",
+              "G4"
+            ],
+            [
+              "A3",
+              "C4",
+              "E4"
+            ],
+            [
+              "A3",
+              "C4",
+              "E4"
+            ],
+            [
+              "A3",
+              "D4",
+              "F4"
+            ],
+            [
+              "A3",
+              "D4",
+              "F4"
+            ],
+            [
+              "B3",
+              "D4",
+              "G4"
+            ],
+            [
+              "B3",
+              "D4",
+              "G4"
+            ],
+            [
+              "C4",
+              "E4",
+              "G4"
+            ]
+          ],
+          "rhythm": "h q h q h q h. h q h q h q h.",
+          "bpm": 80,
+          "beatsPerMeasure": 3
+        },
+        {
+          "type": "song",
+          "title": "Chord March (original), left hand",
+          "caption": "Left hand: C, F/C, C, G/B, then faster changes. Keep finger 5 near C3.",
+          "notes": [
+            [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            [
+              "C3",
+              "F3",
+              "A3"
+            ],
+            [
+              "C3",
+              "F3",
+              "A3"
+            ],
+            [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            [
+              "B2",
+              "D3",
+              "G3"
+            ],
+            [
+              "B2",
+              "D3",
+              "G3"
+            ],
+            [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            [
+              "C3",
+              "F3",
+              "A3"
+            ],
+            [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            [
+              "B2",
+              "D3",
+              "G3"
+            ],
+            [
+              "C3",
+              "E3",
+              "G3"
+            ]
+          ],
+          "rhythm": "h h h h h h h h h h h h w",
+          "bpm": 80
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s5.l5.r1",
+          "kind": "earQuality",
+          "prompt": "Name the chord quality.",
+          "answer": "Diminished",
+          "playback": {
+            "chords": [
+              "Bdim"
+            ],
+            "style": "block"
+          }
+        }
+      ],
+      "glossaryTerms": [
+        "Triad",
+        "Inversion"
+      ]
+    }
+  ],
+  "branches": [
+    {
+      "id": "piano.b.pedal",
+      "title": "Pedal basics",
+      "summary": "Use the sustain pedal to connect chords without blurring them.",
+      "unlocksAfter": "piano.s5.l5",
+      "lessons": [
+        {
+          "id": "piano.b.pedal.l1",
+          "title": "The three pedals",
+          "summary": "What each pedal does, and how to use the sustain pedal with your right foot.",
+          "minutes": 8,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "What the pedals do",
+              "body": "Most pianos have up to three pedals:\n\n- **Right: sustain (damper) pedal.** Lifts all the dampers off the strings, so notes keep ringing after you release the keys. This is the one you will use most.\n- **Left: soft pedal (una corda).** Makes the sound softer and a little darker.\n- **Middle:** varies. On many grands it is the **sostenuto** pedal (sustains only the notes held when it is pressed); on many uprights it is a practice mute. Many digital pianos have only a sustain pedal.\n\nUse your **right foot** for the sustain pedal. Keep your **heel on the floor** and press with the ball of the foot, like a gentle hinge."
+            },
+            {
+              "type": "explain",
+              "title": "Pedal and the microphone",
+              "body": "The sustain pedal makes old notes keep sounding under new ones. That is the point musically, but it makes it harder for the app to tell which notes you just played. With pedal down, expect more notes marked **uncertain**.\n\n- Change the pedal cleanly with each new chord (next lesson).\n- For graded exercises outside this branch, leave the pedal off unless the lesson asks for it."
+            },
+            {
+              "type": "demo",
+              "title": "Without and with pedal",
+              "caption": "C, F, G, C played detached, then the same chords held by the pedal.",
+              "playback": {
+                "notes": [
+                  [
+                    "C4",
+                    "E4",
+                    "G4"
+                  ],
+                  [
+                    "C4",
+                    "F4",
+                    "A4"
+                  ],
+                  [
+                    "B3",
+                    "D4",
+                    "G4"
+                  ],
+                  [
+                    "C4",
+                    "E4",
+                    "G4"
+                  ]
+                ],
+                "bpm": 60,
+                "style": "block"
+              }
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "playChord",
+                "prompt": "Play C (C4 E4 G4) with the right hand, press the pedal, then release the keys and listen: the chord keeps ringing. Lift the pedal to stop it. Repeat with F and G.",
+                "chords": [
+                  "C",
+                  "F",
+                  "G"
+                ]
+              },
+              "mistakeTips": [
+                "Keep your heel on the floor.",
+                "Lift the pedal fully to stop the sound; a half-lifted pedal leaves a blur.",
+                "The app only checks that the chord sounded; the pedal itself is not graded."
+              ]
+            },
+            {
+              "type": "quiz",
+              "questions": [
+                {
+                  "prompt": "Which pedal sustains notes after you release the keys?",
+                  "choices": [
+                    "The right (sustain) pedal",
+                    "The left (soft) pedal",
+                    "Any pedal",
+                    "None"
+                  ],
+                  "answerIndex": 0,
+                  "explanation": "The sustain pedal lifts the dampers."
+                },
+                {
+                  "prompt": "Where should your heel be?",
+                  "choices": [
+                    "On the floor",
+                    "On the pedal",
+                    "Lifted in the air",
+                    "Under the bench"
+                  ],
+                  "answerIndex": 0,
+                  "explanation": "Heel down; the foot works like a hinge."
+                },
+                {
+                  "prompt": "Why can the pedal make grading less certain?",
+                  "choices": [
+                    "Older notes keep ringing under new ones",
+                    "The pedal is too loud",
+                    "The app hears the pedal click as a note",
+                    "It changes the tuning"
+                  ],
+                  "answerIndex": 0,
+                  "explanation": "Overlapping notes are harder to separate."
+                }
+              ]
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "piano.b.pedal.l1.r1",
+              "kind": "fact",
+              "prompt": "What does the sustain pedal do?",
+              "answer": "Lifts the dampers so notes keep ringing after the keys are released."
+            }
+          ],
+          "glossaryTerms": [
+            "Sustain pedal",
+            "Damper",
+            "Soft pedal",
+            "Sostenuto pedal"
+          ]
+        },
+        {
+          "id": "piano.b.pedal.l2",
+          "title": "Legato pedaling",
+          "summary": "Change the pedal just after each new chord to connect chords without blurring.",
+          "minutes": 10,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "Up with the new chord, down right after",
+              "body": "**Legato** means smooth and connected. **Legato pedaling** (also called syncopated or overlapping pedaling) connects chords that your hands cannot join alone:\n\n1. Play the first chord, then press the pedal down.\n2. Play the next chord. **At the same moment**, lift the pedal.\n3. **Just after** the new chord sounds, press the pedal down again.\n\nCount it as \"play – up – down.\" The pedal goes up with the hands and down just after them. If the pedal goes down **before** the old chord is cleared, the two chords blur together."
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "playChord",
+                "prompt": "Right hand C, Am, F, G (closest inversions: C4 E4 G4 → C4 E4 A4 → C4 F4 A4 → B3 D4 G4) with legato pedaling. Change the pedal on each chord.",
+                "chords": [
+                  "C",
+                  "Am/C",
+                  "F/C",
+                  "G/B"
+                ]
+              },
+              "mistakeTips": [
+                "If you hear two chords blurred, press the pedal down a little later.",
+                "If you hear a gap, press it down sooner after the new chord.",
+                "Go slowly; the order (hands, pedal up, pedal down) matters more than speed."
+              ]
+            },
+            {
+              "type": "quiz",
+              "questions": [
+                {
+                  "prompt": "When do you lift the sustain pedal in legato pedaling?",
+                  "choices": [
+                    "As you play the new chord",
+                    "Before you play the new chord",
+                    "Only at the end of the piece",
+                    "Halfway through the old chord"
+                  ],
+                  "answerIndex": 0,
+                  "explanation": "Pedal up with the new chord, down just after."
+                },
+                {
+                  "prompt": "What causes a blur between chords?",
+                  "choices": [
+                    "Pressing the pedal down before the old chord is cleared",
+                    "Lifting the pedal too early",
+                    "Playing too softly",
+                    "Using the left pedal"
+                  ],
+                  "answerIndex": 0,
+                  "explanation": "The pedal must come up to clear the old chord first."
+                }
+              ]
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "piano.b.pedal.l2.r1",
+              "kind": "fact",
+              "prompt": "Legato pedaling order?",
+              "answer": "Play the new chord and lift the pedal together, then press the pedal down just after."
+            }
+          ],
+          "glossaryTerms": [
+            "Legato",
+            "Legato pedaling"
+          ]
+        },
+        {
+          "id": "piano.b.pedal.l3",
+          "title": "Pedal review: Pedal Chorale",
+          "summary": "Play a short chord piece with a clean pedal change on every chord.",
+          "minutes": 8,
+          "steps": [
+            {
+              "type": "song",
+              "title": "Pedal Chorale (original)",
+              "caption": "Left hand plays the single bass note (C3, A2, F2, G2); right hand plays the chord. Change the pedal with every chord: up with the hands, down just after. The app grades the notes, not the pedal; heavy pedal may make some notes read as uncertain.",
+              "notes": [
+                [
+                  "C3",
+                  "C4",
+                  "E4",
+                  "G4"
+                ],
+                [
+                  "A2",
+                  "C4",
+                  "E4",
+                  "A4"
+                ],
+                [
+                  "F2",
+                  "C4",
+                  "F4",
+                  "A4"
+                ],
+                [
+                  "G2",
+                  "B3",
+                  "D4",
+                  "G4"
+                ],
+                [
+                  "C3",
+                  "C4",
+                  "E4",
+                  "G4"
+                ],
+                [
+                  "F2",
+                  "C4",
+                  "F4",
+                  "A4"
+                ],
+                [
+                  "G2",
+                  "B3",
+                  "D4",
+                  "G4"
+                ],
+                [
+                  "C3",
+                  "C4",
+                  "E4",
+                  "G4"
+                ],
+                [
+                  "A2",
+                  "C4",
+                  "E4",
+                  "A4"
+                ],
+                [
+                  "F2",
+                  "C4",
+                  "F4",
+                  "A4"
+                ],
+                [
+                  "G2",
+                  "B3",
+                  "D4",
+                  "G4"
+                ],
+                [
+                  "G2",
+                  "B3",
+                  "D4",
+                  "G4"
+                ],
+                [
+                  "C3",
+                  "C4",
+                  "E4",
+                  "G4"
+                ]
+              ],
+              "rhythm": "h h h h h h h h h h h h w",
+              "bpm": 60,
+              "passAccuracy": 0.7
+            }
+          ],
+          "reviewItems": [],
+          "glossaryTerms": [
+            "Legato pedaling"
+          ]
+        }
+      ]
+    }
+  ]
+}

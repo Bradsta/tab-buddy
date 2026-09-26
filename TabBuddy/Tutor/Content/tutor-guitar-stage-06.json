@@ -1,0 +1,2538 @@
+{
+  "id": "guitar.s6",
+  "instrument": "guitar",
+  "order": 6,
+  "title": "Pentatonic and blues",
+  "summary": "Minor and major pentatonic scales, the blues scale, five positions, lead techniques, the 12-bar blues, and first improvisation.",
+  "lessons": [
+    {
+      "id": "guitar.s6.l1",
+      "title": "The minor pentatonic scale",
+      "summary": "Learn the five-note scale behind most rock and blues solos and play it in its first box position.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Five notes",
+          "body": "A **pentatonic scale** has five notes instead of seven. The **minor pentatonic** takes the natural minor scale and leaves out degrees 2 and 6:\n\n**1 – b3 – 4 – 5 – b7**\n\nIn A: **A C D E G**.\n\n(\"b3\" means a minor third above the root, one half step below the major scale's 3rd. \"b7\" is likewise a minor 7th.)\n\nWithout the half steps of the full scale, no two notes clash. That makes the pentatonic scale forgiving for improvising: almost any note works over a matching chord."
+        },
+        {
+          "type": "explain",
+          "title": "Position 1",
+          "body": "The most used guitar fingering is a **box position** covering frets 5 to 8 for A minor pentatonic. Two notes per string:\n\n| String | Frets | Notes |\n|---|---|---|\n| 6 | 5, 8 | A, C |\n| 5 | 5, 7 | D, E |\n| 4 | 5, 7 | G, A |\n| 3 | 5, 7 | C, D |\n| 2 | 5, 8 | E, G |\n| 1 | 5, 8 | A, C |\n\nFinger 1 plays every fret-5 note. Finger 3 plays fret 7, and finger 4 (or 3) plays fret 8. The root A is on strings 6 and 1 at fret 5, and on string 4 at fret 7.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:5",
+              "6:8",
+              "5:5",
+              "5:7",
+              "4:5",
+              "4:7",
+              "3:5",
+              "3:7",
+              "2:5",
+              "2:8",
+              "1:5",
+              "1:8"
+            ],
+            "scale": "A minor pentatonic",
+            "labels": "degrees",
+            "fretRange": [
+              4,
+              9
+            ],
+            "caption": "A minor pentatonic, position 1."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Position 1 up and down",
+          "caption": "From A on string 6 to C on string 1 and back.",
+          "playback": {
+            "notes": [
+              [
+                "A2"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "A3"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "D4"
+              ],
+              [
+                "E4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "A4"
+              ],
+              [
+                "C5"
+              ],
+              [
+                "A4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "E4"
+              ],
+              [
+                "D4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "A3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "A2"
+              ]
+            ],
+            "bpm": 100
+          },
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:5",
+              "6:8",
+              "5:5",
+              "5:7",
+              "4:5",
+              "4:7",
+              "3:5",
+              "3:7",
+              "2:5",
+              "2:8",
+              "1:5",
+              "1:8"
+            ],
+            "scale": "A minor pentatonic",
+            "labels": "noteNames",
+            "fretRange": [
+              4,
+              9
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "scale",
+            "prompt": "A minor pentatonic, position 1, two octaves up and down. Alternate picking.",
+            "scale": "A minor pentatonic",
+            "octaves": 2,
+            "bpm": 70,
+            "tempoSteps": [
+              70,
+              85,
+              100,
+              115
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:5",
+                "6:8",
+                "5:5",
+                "5:7",
+                "4:5",
+                "4:7",
+                "3:5",
+                "3:7",
+                "2:5",
+                "2:8",
+                "1:5",
+                "1:8"
+              ],
+              "scale": "A minor pentatonic",
+              "labels": "noteNames",
+              "fretRange": [
+                4,
+                9
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Keep finger 1 anchored at fret 5 and let the other fingers reach.",
+            "Strings 6, 2, and 1 use frets 5 and 8; strings 5, 4, and 3 use frets 5 and 7.",
+            "The scale goes one note past two octaves, to C on string 1. Stop there and come back down."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Minor pentatonic",
+          "questions": [
+            {
+              "prompt": "Which degrees make the minor pentatonic scale?",
+              "choices": [
+                "1 b3 4 5 b7",
+                "1 2 3 5 6",
+                "1 2 b3 5 6"
+              ],
+              "answerIndex": 0,
+              "explanation": "Natural minor without 2 and 6."
+            },
+            {
+              "prompt": "Spell E minor pentatonic.",
+              "choices": [
+                "E G A B D",
+                "E F# G B C",
+                "E G# A B D"
+              ],
+              "answerIndex": 0,
+              "explanation": "1 E, b3 G, 4 A, 5 B, b7 D."
+            },
+            {
+              "prompt": "In position 1 of A minor pentatonic, which fret does finger 1 cover?",
+              "choices": [
+                "3",
+                "5",
+                "7"
+              ],
+              "answerIndex": 1,
+              "explanation": "The box sits at frets 5 to 8."
+            },
+            {
+              "prompt": "Why is the pentatonic scale forgiving to improvise with?",
+              "choices": [
+                "It has no half steps that clash",
+                "It has more notes",
+                "It is always in A"
+              ],
+              "answerIndex": 0,
+              "explanation": "Removing degrees 2 and 6 removes the half steps."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Spell the scale",
+          "generator": {
+            "kind": "scaleSpelling",
+            "params": {
+              "scales": "A minor pentatonic,E minor pentatonic,D minor pentatonic,G minor pentatonic"
+            }
+          },
+          "count": 4
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s6.l1.r1",
+          "kind": "fact",
+          "prompt": "Minor pentatonic degrees?",
+          "answer": "1 b3 4 5 b7"
+        },
+        {
+          "id": "guitar.s6.l1.r2",
+          "kind": "fact",
+          "prompt": "Spell A minor pentatonic.",
+          "answer": "A C D E G"
+        }
+      ],
+      "glossaryTerms": [
+        "pentatonic scale",
+        "minor pentatonic scale",
+        "box position",
+        "position"
+      ]
+    },
+    {
+      "id": "guitar.s6.l2",
+      "title": "Bends, hammer-ons, pull-offs, and slides",
+      "summary": "Learn the four techniques that make pentatonic lines sound like guitar, and check your bends against a target pitch.",
+      "minutes": 14,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Hammer-ons and pull-offs",
+          "body": "These let you play two notes with one pick stroke.\n\n- **Hammer-on**: pick a note, then bring another finger down hard on a higher fret of the same string. The string keeps vibrating at the new pitch. Example: pick string 3 fret 5 (C), hammer finger 3 onto fret 7 (D).\n- **Pull-off**: with two fingers down on one string, pick the higher note, then pull the higher finger off slightly sideways, plucking the string as you go. Example: fingers on string 2 frets 5 and 8, pick fret 8 (G), pull off to fret 5 (E).\n\nHammer with the fingertip, close to the fret. For a pull-off, the lower finger must already be pressing."
+        },
+        {
+          "type": "explain",
+          "title": "Slides",
+          "body": "A **slide** moves a finger along the string to a new fret while the note keeps sounding. Keep the same pressure while moving; lighten it and the note dies, press too hard and it squeaks.\n\nExample: pick string 4 fret 5 (G) and slide finger 3 up to fret 7 (A). Slides connect the pentatonic positions too."
+        },
+        {
+          "type": "explain",
+          "title": "Bends and vibrato",
+          "body": "A **bend** pushes the string across the fretboard to raise its pitch. Most bends go up a **whole step** (2 frets' worth) or a **half step**.\n\n- Use finger 3 for the bend, with fingers 1 and 2 behind it on the same string for support.\n- Push from the wrist, turning it like opening a door, not by squeezing with the finger.\n- Bend strings 1 to 3 toward the ceiling. The low strings are usually pulled toward the floor.\n\nTarget pitch matters. A whole-step bend on string 3 fret 7 (D) should reach **E**, the same pitch as string 2 fret 5. Out-of-tune bends are the most common lead-guitar problem.\n\n**Vibrato** is a small, repeated bend-and-release that makes a held note sing.\n\nThe app hears pitch only, so it checks where a bend lands, not how you got there."
+        },
+        {
+          "type": "demo",
+          "title": "The four techniques",
+          "caption": "Hammer-on C to D, pull-off G to E, slide G to A, then a bend from D up to E.",
+          "playback": {
+            "notes": [
+              [
+                "C4"
+              ],
+              [
+                "D4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "E4"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "A3"
+              ],
+              [
+                "D4"
+              ],
+              [
+                "E4"
+              ]
+            ],
+            "rhythm": "q q q q q q q q",
+            "bpm": 70
+          },
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "3:5",
+              "3:7",
+              "2:8",
+              "2:5",
+              "4:5",
+              "4:7"
+            ],
+            "scale": "A minor pentatonic",
+            "labels": "noteNames",
+            "fretRange": [
+              4,
+              9
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Hammer-on and pull-off pairs: C to D (string 3, frets 5 to 7), then G to E (string 2, frets 8 to 5). Pick only the first note of each pair.",
+            "notes": [
+              "C4",
+              "D4",
+              "G4",
+              "E4",
+              "C4",
+              "D4",
+              "G4",
+              "E4"
+            ],
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              70,
+              80
+            ]
+          },
+          "mistakeTips": [
+            "If the hammered note is weak, snap the finger down faster, right behind the fret.",
+            "If the pull-off note is weak, pull the finger slightly toward the floor as it leaves the string.",
+            "Keep finger 1 pressing fret 5 throughout."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playNote",
+            "prompt": "Bend string 3 at fret 7 up a whole step until it matches E (string 2, fret 5). Hold it there until the app accepts it. Play the target first if it helps.",
+            "notes": [
+              "E4"
+            ],
+            "repetitions": 3,
+            "passAccuracy": 0.67,
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "3:7",
+                "2:5"
+              ],
+              "labels": "noteNames",
+              "fretRange": [
+                4,
+                9
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Support the bend with fingers 1 and 2 on frets 5 and 6.",
+            "Bend from the wrist. If the note stops short, push a little more.",
+            "If the app hears D# or a pitch between D# and E, you are bending only part of the way."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Techniques",
+          "questions": [
+            {
+              "prompt": "How many times do you pick for a hammer-on from fret 5 to fret 7?",
+              "choices": [
+                "Once",
+                "Twice",
+                "Not at all"
+              ],
+              "answerIndex": 0,
+              "explanation": "Pick the first note; the hammer sounds the second."
+            },
+            {
+              "prompt": "Which technique lowers the pitch without picking again?",
+              "choices": [
+                "Hammer-on",
+                "Pull-off",
+                "Bend"
+              ],
+              "answerIndex": 1,
+              "explanation": "Pulling off a finger reveals the lower fretted note."
+            },
+            {
+              "prompt": "A whole-step bend from D should reach…",
+              "choices": [
+                "D#",
+                "E",
+                "F"
+              ],
+              "answerIndex": 1,
+              "explanation": "A whole step above D is E."
+            },
+            {
+              "prompt": "Which part of the body should power a bend?",
+              "choices": [
+                "The wrist turning",
+                "The fingertip squeezing",
+                "The elbow"
+              ],
+              "answerIndex": 0,
+              "explanation": "Rotate the wrist like turning a door handle."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s6.l2.r1",
+          "kind": "fact",
+          "prompt": "What is the difference between a hammer-on and a pull-off?",
+          "answer": "Hammer-on: finger strikes a higher fret. Pull-off: finger leaves to reveal a lower fret. Both without picking again."
+        },
+        {
+          "id": "guitar.s6.l2.r2",
+          "kind": "fact",
+          "prompt": "Whole-step bend from G reaches what note?",
+          "answer": "A"
+        }
+      ],
+      "glossaryTerms": [
+        "hammer-on",
+        "pull-off",
+        "slide",
+        "bend",
+        "vibrato"
+      ]
+    },
+    {
+      "id": "guitar.s6.l3",
+      "title": "The five pentatonic positions",
+      "summary": "Connect five box positions of A minor pentatonic to cover the whole neck.",
+      "minutes": 15,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Five boxes, one scale",
+          "body": "A minor pentatonic has only five notes, but they repeat all over the neck. Guitarists split the neck into **five positions**, each starting on the next note of the scale on string 6:\n\n| Position | Starts on | Frets (about) |\n|---|---|---|\n| 1 | A | 5–8 |\n| 2 | C | 7–10 |\n| 3 | D | 9–13 |\n| 4 | E | 12–15 |\n| 5 | G | 14–17 |\n\nAfter position 5 the pattern repeats: position 1 again at fret 17, and also at fret 5 minus 12 (open position, frets 0 to 3).\n\nEach position shares its lower notes with the position below and its upper notes with the one above. You connect them by sliding along a string."
+        },
+        {
+          "type": "explain",
+          "title": "Position 2",
+          "body": "Position 2 starts where position 1's upper notes are: C on string 6, fret 8.\n\nFrets: string 6: 8, 10 · string 5: 7, 10 · string 4: 7, 10 · string 3: 7, 9 · string 2: 8, 10 · string 1: 8, 10.\n\nRoots (A) are on string 4 fret 7 and string 2 fret 10.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:8",
+              "6:10",
+              "5:7",
+              "5:10",
+              "4:7",
+              "4:10",
+              "3:7",
+              "3:9",
+              "2:8",
+              "2:10",
+              "1:8",
+              "1:10"
+            ],
+            "scale": "A minor pentatonic",
+            "labels": "degrees",
+            "fretRange": [
+              6,
+              11
+            ],
+            "caption": "Position 2."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Position 3",
+          "body": "Starts on D, string 6 fret 10.\n\nFrets: string 6: 10, 12 · string 5: 10, 12 · string 4: 10, 12 · string 3: 9, 12 · string 2: 10, 13 · string 1: 10, 12.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:10",
+              "6:12",
+              "5:10",
+              "5:12",
+              "4:10",
+              "4:12",
+              "3:9",
+              "3:12",
+              "2:10",
+              "2:13",
+              "1:10",
+              "1:12"
+            ],
+            "scale": "A minor pentatonic",
+            "labels": "degrees",
+            "fretRange": [
+              8,
+              14
+            ],
+            "caption": "Position 3."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Position 4",
+          "body": "Starts on E, string 6 fret 12.\n\nFrets: string 6: 12, 15 · string 5: 12, 15 · string 4: 12, 14 · string 3: 12, 14 · string 2: 13, 15 · string 1: 12, 15.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:12",
+              "6:15",
+              "5:12",
+              "5:15",
+              "4:12",
+              "4:14",
+              "3:12",
+              "3:14",
+              "2:13",
+              "2:15",
+              "1:12",
+              "1:15"
+            ],
+            "scale": "A minor pentatonic",
+            "labels": "degrees",
+            "fretRange": [
+              11,
+              16
+            ],
+            "caption": "Position 4."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Position 5",
+          "body": "Starts on G, string 6 fret 15.\n\nFrets: string 6: 15, 17 · string 5: 15, 17 · string 4: 14, 17 · string 3: 14, 17 · string 2: 15, 17 · string 1: 15, 17.\n\nOn most acoustic guitars the upper frets are hard to reach past the body joint. Positions 1 to 3, plus the open position, are the most practical on acoustic.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:15",
+              "6:17",
+              "5:15",
+              "5:17",
+              "4:14",
+              "4:17",
+              "3:14",
+              "3:17",
+              "2:15",
+              "2:17",
+              "1:15",
+              "1:17"
+            ],
+            "scale": "A minor pentatonic",
+            "labels": "degrees",
+            "fretRange": [
+              13,
+              18
+            ],
+            "caption": "Position 5."
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Position 2 of A minor pentatonic, up from C on string 6, fret 8.",
+            "notes": [
+              "C3",
+              "D3",
+              "E3",
+              "G3",
+              "A3",
+              "C4",
+              "D4",
+              "E4",
+              "G4",
+              "A4",
+              "C5",
+              "D5"
+            ],
+            "bpm": 70,
+            "tempoSteps": [
+              70,
+              85,
+              100
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:8",
+                "6:10",
+                "5:7",
+                "5:10",
+                "4:7",
+                "4:10",
+                "3:7",
+                "3:9",
+                "2:8",
+                "2:10",
+                "1:8",
+                "1:10"
+              ],
+              "scale": "A minor pentatonic",
+              "labels": "noteNames",
+              "fretRange": [
+                6,
+                11
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Use one finger per fret: finger 1 on fret 7, 2 on 8, 3 on 9, 4 on 10.",
+            "String 3 uses frets 7 and 9; string 2 uses 8 and 10.",
+            "Say the note names as you go: C D E G A C D E G A C D."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Connect positions 1 and 2 on string 3: play C D E up the G string with slides (frets 5, 7, 9), then back down.",
+            "notes": [
+              "C4",
+              "D4",
+              "E4",
+              "D4",
+              "C4"
+            ],
+            "bpm": 60
+          },
+          "mistakeTips": [
+            "Slide finger 3 from fret 7 to fret 9 to cross into position 2.",
+            "This is one of many ways to move between positions. Any string works."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Positions",
+          "questions": [
+            {
+              "prompt": "Which note starts position 2 of A minor pentatonic on string 6?",
+              "choices": [
+                "C",
+                "D",
+                "G"
+              ],
+              "answerIndex": 0,
+              "explanation": "The positions start on successive scale notes: A, C, D, E, G."
+            },
+            {
+              "prompt": "After position 5, what comes next going up?",
+              "choices": [
+                "Position 1 an octave higher",
+                "Position 6",
+                "A new scale"
+              ],
+              "answerIndex": 0,
+              "explanation": "The five positions repeat every 12 frets."
+            },
+            {
+              "prompt": "How many different notes are in every position?",
+              "choices": [
+                "5",
+                "7",
+                "12"
+              ],
+              "answerIndex": 0,
+              "explanation": "Every position is the same five notes, A C D E G."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s6.l3.r1",
+          "kind": "fact",
+          "prompt": "A minor pentatonic positions start on which notes on string 6?",
+          "answer": "A (5), C (8), D (10), E (12), G (15)."
+        }
+      ],
+      "glossaryTerms": [
+        "box position",
+        "position",
+        "minor pentatonic scale"
+      ]
+    },
+    {
+      "id": "guitar.s6.l4",
+      "title": "Major pentatonic and the blues scale",
+      "summary": "See the major pentatonic inside the minor one, and add the blue note to make the blues scale.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Major pentatonic",
+          "body": "The **major pentatonic scale** is the major scale without degrees 4 and 7: **1 – 2 – 3 – 5 – 6**. C major pentatonic is **C D E G A**.\n\nThose are the same five notes as A minor pentatonic. Just as A minor is the relative minor of C major, **A minor pentatonic and C major pentatonic share notes**; only the home note changes. Every minor pentatonic position is also a major pentatonic position for the note three frets higher.\n\nG major pentatonic in open position (G A B D E) is a friendly one for acoustic players, and it fits songs in G.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:3",
+              "5:0",
+              "5:2",
+              "4:0",
+              "4:2",
+              "3:0",
+              "3:2",
+              "2:0",
+              "2:3",
+              "1:0",
+              "1:3"
+            ],
+            "scale": "G major pentatonic",
+            "labels": "degrees",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "G major pentatonic, open position."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "The blues scale",
+          "body": "Add one note to the minor pentatonic: the **b5**, a tritone above the root. The result is the **blues scale**: **1 – b3 – 4 – b5 – 5 – b7**.\n\nIn A: **A C D Eb E G**. In position 1 the Eb is at string 5 fret 6 and string 3 fret 8.\n\nThe b5 is a **blue note**: it sounds tense and is usually used as a passing note between 4 and 5, not held.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:5",
+              "6:8",
+              "5:5",
+              "5:6",
+              "5:7",
+              "4:5",
+              "4:7",
+              "3:5",
+              "3:7",
+              "3:8",
+              "2:5",
+              "2:8",
+              "1:5",
+              "1:8"
+            ],
+            "scale": "A blues",
+            "labels": "degrees",
+            "fretRange": [
+              4,
+              9
+            ],
+            "caption": "A blues scale, position 1."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Minor pentatonic, then blues scale",
+          "caption": "A minor pentatonic one octave, then the A blues scale one octave.",
+          "playback": {
+            "notes": [
+              [
+                "A2"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "A3"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "Eb3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "A3"
+              ]
+            ],
+            "bpm": 90
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "scale",
+            "prompt": "G major pentatonic, two octaves, open position.",
+            "scale": "G major pentatonic",
+            "octaves": 2,
+            "bpm": 70,
+            "tempoSteps": [
+              70,
+              85,
+              100
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:3",
+                "5:0",
+                "5:2",
+                "4:0",
+                "4:2",
+                "3:0",
+                "3:2",
+                "2:0",
+                "2:3",
+                "1:0",
+                "1:3"
+              ],
+              "scale": "G major pentatonic",
+              "labels": "noteNames",
+              "fretRange": [
+                0,
+                4
+              ]
+            }
+          },
+          "mistakeTips": [
+            "No note is on fret 1. Use fingers 2 and 3 for frets 2 and 3.",
+            "Start and end on G (string 6, fret 3) so the ear hears G as home."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "A blues scale, position 1, from A on string 6 to A on string 1.",
+            "notes": [
+              "A2",
+              "C3",
+              "D3",
+              "Eb3",
+              "E3",
+              "G3",
+              "A3",
+              "C4",
+              "D4",
+              "Eb4",
+              "E4",
+              "G4",
+              "A4"
+            ],
+            "bpm": 70,
+            "tempoSteps": [
+              70,
+              85,
+              100
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:5",
+                "6:8",
+                "5:5",
+                "5:6",
+                "5:7",
+                "4:5",
+                "4:7",
+                "3:5",
+                "3:7",
+                "3:8",
+                "2:5",
+                "2:8",
+                "1:5",
+                "1:8"
+              ],
+              "scale": "A blues",
+              "labels": "noteNames",
+              "fretRange": [
+                4,
+                9
+              ]
+            }
+          },
+          "mistakeTips": [
+            "The Eb on string 5 is fret 6: use finger 2.",
+            "On string 3, the Eb is fret 8: use finger 4."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Pentatonic and blues",
+          "questions": [
+            {
+              "prompt": "Which degrees make the major pentatonic?",
+              "choices": [
+                "1 2 3 5 6",
+                "1 b3 4 5 b7",
+                "1 2 4 5 6"
+              ],
+              "answerIndex": 0,
+              "explanation": "Major scale without 4 and 7."
+            },
+            {
+              "prompt": "Which major pentatonic has the same notes as A minor pentatonic?",
+              "choices": [
+                "C major pentatonic",
+                "E major pentatonic",
+                "D major pentatonic"
+              ],
+              "answerIndex": 0,
+              "explanation": "Relative keys: A minor and C major."
+            },
+            {
+              "prompt": "Which note does the blues scale add to the minor pentatonic?",
+              "choices": [
+                "b5",
+                "2",
+                "major 3rd"
+              ],
+              "answerIndex": 0,
+              "explanation": "The flat 5th, e.g. Eb in A."
+            },
+            {
+              "prompt": "Spell E blues scale.",
+              "choices": [
+                "E G A Bb B D",
+                "E G A A# B D#",
+                "E F# G A B D"
+              ],
+              "answerIndex": 0,
+              "explanation": "E, b3 G, 4 A, b5 Bb, 5 B, b7 D."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s6.l4.r1",
+          "kind": "fact",
+          "prompt": "Blues scale degrees?",
+          "answer": "1 b3 4 b5 5 b7"
+        },
+        {
+          "id": "guitar.s6.l4.r2",
+          "kind": "fact",
+          "prompt": "Spell G major pentatonic.",
+          "answer": "G A B D E"
+        }
+      ],
+      "glossaryTerms": [
+        "major pentatonic scale",
+        "blues scale",
+        "blue note",
+        "tritone",
+        "relative minor"
+      ]
+    },
+    {
+      "id": "guitar.s6.l5",
+      "title": "Dominant 7ths and the 12-bar blues",
+      "summary": "Play A7, D7, and E7, and learn the twelve-measure form behind countless blues and rock songs.",
+      "minutes": 14,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Dominant seventh chords",
+          "body": "Blues uses **dominant seventh chords**: a major triad plus a **minor seventh** above the root.\n\n- **A7** = A C# E + **G**\n- **D7** = D F# A + **C**\n- **E7** = E G# B + **D**\n\nThe name \"dominant\" comes from its natural home on degree 5 (V7) of a major key. Blues uses it on I, IV, and V alike, which is part of its sound. Stage 8 covers seventh chords in full.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:0",
+              "4:2",
+              "3:0",
+              "2:2",
+              "1:0"
+            ],
+            "chord": "A7",
+            "labels": "intervals",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "A7: root, 3rd, 5th, b7."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Open 7th fingerings",
+          "body": "- **A7**: finger 2 on string 4 fret 2, finger 3 on string 2 fret 2. Strum 5 to 1. (It is the A chord with string 3 left open, so that string rings as G.)\n- **D7**: finger 2 on string 3 fret 2, finger 1 on string 2 fret 1, finger 3 on string 1 fret 2. Strum 4 to 1.\n- **E7**: finger 2 on string 5 fret 2, finger 1 on string 3 fret 1. Strum all six. (E with finger 3 lifted, so string 4 rings open as D.)",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "4:0",
+              "3:2",
+              "2:1",
+              "1:2"
+            ],
+            "chord": "D7",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "D7: strings 4 to 1."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "The 12-bar form",
+          "body": "The **twelve-bar blues** is a 12-measure cycle of I, IV, and V:\n\n| | | | |\n|---|---|---|---|\n| I | I | I | I |\n| IV | IV | I | I |\n| V | IV | I | V |\n\nIn A: **A7 A7 A7 A7 | D7 D7 A7 A7 | E7 D7 A7 E7**.\n\n- Measure 12 on V is the **turnaround**: it sets up the return to measure 1.\n- A common variant, the **quick change**, goes to IV in measure 2 and back to I in measure 3.\n- Lyrics often follow the same plan: a line, the line repeated, and an answering line, one per four measures."
+        },
+        {
+          "type": "demo",
+          "title": "12 bars in A",
+          "caption": "One chord strum per beat, one time through.",
+          "playback": {
+            "chords": [
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "D7",
+              "D7",
+              "D7",
+              "D7",
+              "D7",
+              "D7",
+              "D7",
+              "D7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "E7",
+              "E7",
+              "E7",
+              "E7",
+              "D7",
+              "D7",
+              "D7",
+              "D7",
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "E7",
+              "E7",
+              "E7",
+              "E7"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q",
+            "bpm": 100,
+            "style": "strum"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Play A7, D7, and E7.",
+            "chords": [
+              "A7",
+              "D7",
+              "E7"
+            ]
+          },
+          "mistakeTips": [
+            "A7: string 3 must ring open. Arch finger 2.",
+            "D7: skip strings 6 and 5.",
+            "E7: string 4 rings open. Keep finger 2 off it."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "strumRhythm",
+            "prompt": "12-bar blues in A: four downstrokes per measure. Follow the chord shown.",
+            "chords": [
+              "A7",
+              "A7",
+              "A7",
+              "A7",
+              "D7",
+              "D7",
+              "A7",
+              "A7",
+              "E7",
+              "D7",
+              "A7",
+              "E7"
+            ],
+            "rhythm": "q q q q",
+            "bpm": 80,
+            "repetitions": 1,
+            "key": "A major",
+            "tempoSteps": [
+              80,
+              90,
+              100
+            ]
+          },
+          "mistakeTips": [
+            "Count measures as well as beats: \"1 2 3 4, 2 2 3 4, 3 2 3 4…\".",
+            "The change to D7 comes after four measures of A7. The E7 comes in measure 9.",
+            "Measure 12 is E7, not A7. It leads back to the top."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "12-bar blues",
+          "questions": [
+            {
+              "prompt": "Spell A7.",
+              "choices": [
+                "A C# E G",
+                "A C E G",
+                "A C# E G#"
+              ],
+              "answerIndex": 0,
+              "explanation": "Major triad + minor 7th (G)."
+            },
+            {
+              "prompt": "What chord is in measure 5 of a 12-bar blues in A?",
+              "choices": [
+                "A7",
+                "D7",
+                "E7"
+              ],
+              "answerIndex": 1,
+              "explanation": "Measures 5–6 are IV."
+            },
+            {
+              "prompt": "What is the V chord of a 12-bar blues in E?",
+              "choices": [
+                "A7",
+                "B7",
+                "E7"
+              ],
+              "answerIndex": 1,
+              "explanation": "E F# G# A B: V = B, so B7."
+            },
+            {
+              "prompt": "What is a quick change?",
+              "choices": [
+                "IV in measure 2",
+                "V in measure 2",
+                "Doubling the tempo"
+              ],
+              "answerIndex": 0,
+              "explanation": "I – IV – I – I in the first four measures."
+            },
+            {
+              "prompt": "What is the turnaround's job?",
+              "choices": [
+                "Lead back to measure 1",
+                "End the song",
+                "Change key"
+              ],
+              "answerIndex": 0,
+              "explanation": "V in the last measure pulls back to I."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s6.l5.r1",
+          "kind": "fact",
+          "prompt": "12-bar blues in Roman numerals?",
+          "answer": "I I I I | IV IV I I | V IV I V"
+        },
+        {
+          "id": "guitar.s6.l5.r2",
+          "kind": "playChord",
+          "prompt": "Play E7.",
+          "answer": "E7",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "5:2",
+              "4:0",
+              "3:1",
+              "2:0",
+              "1:0"
+            ],
+            "chord": "E7",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "id": "guitar.s6.l5.r3",
+          "kind": "fact",
+          "prompt": "Formula for a dominant 7th chord?",
+          "answer": "Major triad plus a minor 7th: 1 3 5 b7."
+        }
+      ],
+      "glossaryTerms": [
+        "dominant seventh chord",
+        "twelve-bar blues",
+        "quick change",
+        "turnaround",
+        "minor seventh"
+      ]
+    },
+    {
+      "id": "guitar.s6.l6",
+      "title": "First improvisation",
+      "summary": "Make up your own phrases over a 12-bar blues using call and response and a few simple rules.",
+      "minutes": 15,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Improvising is choosing",
+          "body": "**Improvisation** means making up music on the spot. It is less mysterious than it sounds: you choose from a small set of notes (A minor pentatonic) and a small set of rhythms, and you group them into **phrases**.\n\nStart with rules that limit your choices:\n\n1. Use only three notes at first: A, C, and D in position 1 (string 4 fret 7, string 3 frets 5 and 7).\n2. Play short phrases of 2 to 4 beats, then **rest** as long as you played.\n3. End phrases on **A**, the root. It always sounds finished.\n4. Repeat a phrase you like. Repetition sounds intentional."
+        },
+        {
+          "type": "explain",
+          "title": "Call and response",
+          "body": "**Call and response** is a musical conversation: a phrase (the call), then an answer (the response). Blues is built on it.\n\nA simple way in: play a phrase, then answer it with the same rhythm but a different last note. Or copy the app's phrase exactly, then change one thing."
+        },
+        {
+          "type": "demo",
+          "title": "A call",
+          "caption": "A two-measure phrase in A minor pentatonic, ending on A.",
+          "playback": {
+            "notes": [
+              [
+                "C4"
+              ],
+              [
+                "D4"
+              ],
+              [
+                "E4"
+              ],
+              [
+                "D4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "A3"
+              ]
+            ],
+            "rhythm": "q q h q q h",
+            "bpm": 80
+          },
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:5",
+              "6:8",
+              "5:5",
+              "5:7",
+              "4:5",
+              "4:7",
+              "3:5",
+              "3:7",
+              "2:5",
+              "2:8",
+              "1:5",
+              "1:8"
+            ],
+            "scale": "A minor pentatonic",
+            "labels": "noteNames",
+            "fretRange": [
+              4,
+              9
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "melodyEcho",
+            "prompt": "Echo the call: play it back exactly.",
+            "notes": [
+              "C4",
+              "D4",
+              "E4",
+              "D4",
+              "C4",
+              "A3"
+            ],
+            "bpm": 80,
+            "passAccuracy": 0.7,
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:5",
+                "6:8",
+                "5:5",
+                "5:7",
+                "4:5",
+                "4:7",
+                "3:5",
+                "3:7",
+                "2:5",
+                "2:8",
+                "1:5",
+                "1:8"
+              ],
+              "scale": "A minor pentatonic",
+              "labels": "noteNames",
+              "fretRange": [
+                4,
+                9
+              ]
+            }
+          },
+          "mistakeTips": [
+            "It starts on C (string 3, fret 5) and ends on A (string 4, fret 7).",
+            "Sing it first. If you can sing it, you can find it."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "improvise",
+            "prompt": "Improvise over the 12-bar blues in A for one minute using A minor pentatonic. Follow the rules: short phrases, rests, end on A.",
+            "scale": "A minor pentatonic",
+            "key": "A minor",
+            "bpm": 80,
+            "durationSec": 60,
+            "passAccuracy": 0.7,
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:5",
+                "6:8",
+                "5:5",
+                "5:7",
+                "4:5",
+                "4:7",
+                "3:5",
+                "3:7",
+                "2:5",
+                "2:8",
+                "1:5",
+                "1:8"
+              ],
+              "scale": "A minor pentatonic",
+              "labels": "noteNames",
+              "fretRange": [
+                4,
+                9
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Leave space. Rests are part of the phrase.",
+            "Fewer notes, played with good timing, sound better than many rushed notes.",
+            "Try a bend from D to E (string 3, fret 7) to end a phrase with some tension.",
+            "The grade counts notes in the scale and steady rhythm. It does not judge taste."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Improvisation",
+          "questions": [
+            {
+              "prompt": "Which note is the safest place to end a phrase over A blues?",
+              "choices": [
+                "A",
+                "Eb",
+                "G"
+              ],
+              "answerIndex": 0,
+              "explanation": "The root sounds settled."
+            },
+            {
+              "prompt": "What is call and response?",
+              "choices": [
+                "A phrase answered by another phrase",
+                "Playing along with a recording",
+                "Tuning by ear"
+              ],
+              "answerIndex": 0,
+              "explanation": "A musical question and answer."
+            },
+            {
+              "prompt": "Why leave rests between phrases?",
+              "choices": [
+                "They separate ideas and let the music breathe",
+                "The app needs time",
+                "They are required in blues"
+              ],
+              "answerIndex": 0,
+              "explanation": "Rests separate ideas the way pauses separate sentences."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s6.l6.r1",
+          "kind": "fact",
+          "prompt": "Name three simple rules for a first improvisation.",
+          "answer": "Few notes; short phrases with rests; end on the root."
+        }
+      ],
+      "glossaryTerms": [
+        "improvisation",
+        "call and response",
+        "phrase"
+      ]
+    },
+    {
+      "id": "guitar.s6.l7",
+      "title": "Blues review: a 12-bar head",
+      "summary": "Review pentatonic scales, techniques, and the 12-bar form, then play a 12-bar rhythm part and an original melody over it.",
+      "minutes": 15,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "What you know now",
+          "body": "- Minor pentatonic **1 b3 4 5 b7**, major pentatonic **1 2 3 5 6**, blues scale **1 b3 4 b5 5 b7**.\n- Five positions cover the neck.\n- Hammer-ons, pull-offs, slides, and bends; bends must reach a target pitch.\n- 12-bar blues: **I I I I | IV IV I I | V IV I V** with dominant 7th chords.\n- Improvise with short phrases, rests, and strong endings."
+        },
+        {
+          "type": "quiz",
+          "title": "Blues review",
+          "questions": [
+            {
+              "prompt": "Spell D minor pentatonic.",
+              "choices": [
+                "D F G A C",
+                "D E F# A B",
+                "D F G Ab A C"
+              ],
+              "answerIndex": 0,
+              "explanation": "1 D, b3 F, 4 G, 5 A, b7 C."
+            },
+            {
+              "prompt": "Which scale adds the b5 to the minor pentatonic?",
+              "choices": [
+                "Blues scale",
+                "Major pentatonic",
+                "Natural minor"
+              ],
+              "answerIndex": 0,
+              "explanation": "1 b3 4 b5 5 b7."
+            },
+            {
+              "prompt": "In a 12-bar blues in G, which chord is in measure 9?",
+              "choices": [
+                "C7",
+                "D7",
+                "G7"
+              ],
+              "answerIndex": 1,
+              "explanation": "Measure 9 is V: D7."
+            },
+            {
+              "prompt": "Which technique raises pitch by pushing the string sideways?",
+              "choices": [
+                "Bend",
+                "Slide",
+                "Pull-off"
+              ],
+              "answerIndex": 0,
+              "explanation": "A bend changes pitch without changing fret."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Spell the scale",
+          "generator": {
+            "kind": "scaleSpelling",
+            "params": {
+              "scales": "A blues,E blues,C major pentatonic,G major pentatonic,D minor pentatonic"
+            }
+          },
+          "count": 4
+        },
+        {
+          "type": "song",
+          "title": "12-Bar Blues in A: rhythm",
+          "caption": "Two strums per measure: A7 A7 A7 A7 | D7 D7 A7 A7 | E7 D7 A7 E7.",
+          "chords": [
+            "A7",
+            "A7",
+            "A7",
+            "A7",
+            "A7",
+            "A7",
+            "A7",
+            "A7",
+            "D7",
+            "D7",
+            "D7",
+            "D7",
+            "A7",
+            "A7",
+            "A7",
+            "A7",
+            "E7",
+            "E7",
+            "D7",
+            "D7",
+            "A7",
+            "A7",
+            "E7",
+            "E7"
+          ],
+          "rhythm": "h h h h h h h h h h h h h h h h h h h h h h h h",
+          "bpm": 90
+        },
+        {
+          "type": "explain",
+          "title": "A 12-bar head",
+          "body": "A **head** is the main melody of a blues or jazz tune. This one is original and uses only A minor pentatonic in position 1: A (4 fret 7), C (3 fret 5), D (3 fret 7), E (2 fret 5), G (2 fret 8), high A (1 fret 5), and low E (5 fret 7).\n\nNotice the call-and-response plan: measures 1–4 are a call, 5–8 answer it over D7, and 9–12 close the form.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:7",
+              "4:7",
+              "3:5",
+              "3:7",
+              "2:5",
+              "2:8",
+              "1:5"
+            ],
+            "scale": "A minor pentatonic",
+            "labels": "noteNames",
+            "fretRange": [
+              4,
+              9
+            ]
+          }
+        },
+        {
+          "type": "song",
+          "title": "Position One Blues (original)",
+          "caption": "12 measures over the A blues. Add a slide or hammer-on wherever it feels natural; the app grades the notes.",
+          "notes": [
+            [
+              "E4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "E3"
+            ],
+            []
+          ],
+          "rhythm": "q q h q q q q q q h w q q h q q q q q q h w h h h h w h hr",
+          "bpm": 90
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s6.l7.r1",
+          "kind": "fact",
+          "prompt": "Which chords make a 12-bar blues in E?",
+          "answer": "E7, A7, B7"
+        }
+      ],
+      "glossaryTerms": [
+        "twelve-bar blues",
+        "blues scale",
+        "phrase"
+      ]
+    }
+  ],
+  "branches": [
+    {
+      "id": "guitar.b.shuffle",
+      "title": "Blues shuffle",
+      "summary": "The shuffle feel, power chords, and the boogie rhythm through a full 12-bar blues. Optional.",
+      "unlocksAfter": "guitar.s6.l7",
+      "lessons": [
+        {
+          "id": "guitar.b.shuffle.l1",
+          "title": "The shuffle feel",
+          "summary": "Turn straight eighth notes into a long-short triplet shuffle.",
+          "minutes": 10,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "Long-short",
+              "body": "A **shuffle** plays each beat as a long note and a short note. It comes from the triplet: divide the beat into three, hold through the first two parts, and play again on the third.\n\nCount: \"**1** – a **2** – a **3** – a **4** – a\". Many players hear it as \"**doo**-ba **doo**-ba\".\n\nKeep the picking hand moving in steady triplets: down (play), up (miss), down (play)... or simply down-up with the upstroke late. Either way, the feel is uneven on purpose.",
+              "diagram": {
+                "kind": "rhythm",
+                "rhythm": "tq te tq te tq te tq te",
+                "caption": "Shuffle eighths: long-short on every beat."
+              }
+            },
+            {
+              "type": "demo",
+              "title": "Straight, then shuffled",
+              "caption": "Open A string: one measure of straight eighths, then one of shuffle.",
+              "playback": {
+                "notes": [
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A2"
+                  ]
+                ],
+                "rhythm": "e e e e e e e e tq te tq te tq te tq te",
+                "bpm": 90
+              }
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "playSequence",
+                "prompt": "Open A string: two measures of shuffle eighths.",
+                "notes": [
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2",
+                  "A2"
+                ],
+                "rhythm": "tq te tq te tq te tq te tq te tq te tq te tq te",
+                "bpm": 80,
+                "tempoSteps": [
+                  80,
+                  90,
+                  100,
+                  110
+                ]
+              },
+              "mistakeTips": [
+                "Say \"doo-ba doo-ba\" out loud while you play.",
+                "The short note sits just before the next beat, not halfway.",
+                "If it sounds straight, make the first note longer."
+              ]
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "guitar.b.shuffle.l1.r1",
+              "kind": "fact",
+              "prompt": "How is a shuffle beat divided?",
+              "answer": "Into a triplet: long note on the first two parts, short note on the third."
+            }
+          ],
+          "glossaryTerms": [
+            "shuffle",
+            "swing",
+            "triplet"
+          ]
+        },
+        {
+          "id": "guitar.b.shuffle.l2",
+          "title": "Power chords and the boogie pattern",
+          "summary": "Play A5, D5, and E5, and add the sixth to make the classic boogie rhythm.",
+          "minutes": 12,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "Power chords",
+              "body": "A **power chord** has only a root and a perfect fifth, written with a 5: **A5** = A + E. With no third it is neither major nor minor, so it fits under blues melodies that mix major and minor sounds.\n\nOpen power chords, two strings each:\n\n- **A5**: open string 5 + string 4 fret 2.\n- **D5**: open string 4 + string 3 fret 2.\n- **E5**: open string 6 + string 5 fret 2.",
+              "diagram": {
+                "kind": "fretboard",
+                "notes": [
+                  "5:0",
+                  "4:2"
+                ],
+                "chord": "A5",
+                "labels": "noteNames",
+                "fretRange": [
+                  0,
+                  4
+                ],
+                "caption": "A5: strings 5 and 4."
+              }
+            },
+            {
+              "type": "explain",
+              "title": "Adding the sixth",
+              "body": "The **boogie pattern** alternates the power chord with a **dyad** (two notes) of the root and the 6th: stretch finger 3 two frets past finger 1.\n\nFor A: A+E (fret 2), A+E, A+F# (fret 4), A+F#, repeating. The same move works for D on strings 4 and 3, and for E on strings 6 and 5.\n\nPlayed with a shuffle feel, this is the rhythm part of a great many blues and early rock songs."
+            },
+            {
+              "type": "demo",
+              "title": "Boogie in A",
+              "caption": "Two measures, shuffle feel.",
+              "playback": {
+                "notes": [
+                  [
+                    "A2",
+                    "E3"
+                  ],
+                  [
+                    "A2",
+                    "E3"
+                  ],
+                  [
+                    "A2",
+                    "F#3"
+                  ],
+                  [
+                    "A2",
+                    "F#3"
+                  ],
+                  [
+                    "A2",
+                    "E3"
+                  ],
+                  [
+                    "A2",
+                    "E3"
+                  ],
+                  [
+                    "A2",
+                    "F#3"
+                  ],
+                  [
+                    "A2",
+                    "F#3"
+                  ],
+                  [
+                    "A2",
+                    "E3"
+                  ],
+                  [
+                    "A2",
+                    "E3"
+                  ],
+                  [
+                    "A2",
+                    "F#3"
+                  ],
+                  [
+                    "A2",
+                    "F#3"
+                  ],
+                  [
+                    "A2",
+                    "E3"
+                  ],
+                  [
+                    "A2",
+                    "E3"
+                  ],
+                  [
+                    "A2",
+                    "F#3"
+                  ],
+                  [
+                    "A2",
+                    "F#3"
+                  ]
+                ],
+                "rhythm": "tq te tq te tq te tq te tq te tq te tq te tq te",
+                "bpm": 90
+              }
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "strumRhythm",
+                "prompt": "Strum A5, D5, then E5 in shuffle eighths, one measure each. Hit only the two strings of each chord.",
+                "chords": [
+                  "A5",
+                  "D5",
+                  "E5"
+                ],
+                "rhythm": "tq te tq te tq te tq te",
+                "bpm": 80,
+                "repetitions": 2,
+                "tempoSteps": [
+                  80,
+                  90,
+                  100
+                ]
+              },
+              "mistakeTips": [
+                "Aim the pick at the root string and stop after the next string.",
+                "Rest the side of your picking hand on the bridge-end of the strings for a tighter, muted sound.",
+                "Keep finger 1 down; only finger 3 moves for the sixth."
+              ]
+            },
+            {
+              "type": "song",
+              "title": "Boogie in A, two measures",
+              "caption": "Fret 2, fret 2, fret 4, fret 4, twice per measure.",
+              "notes": [
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ]
+              ],
+              "rhythm": "tq te tq te tq te tq te tq te tq te tq te tq te",
+              "bpm": 80
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "guitar.b.shuffle.l2.r1",
+              "kind": "fact",
+              "prompt": "What notes are in A5?",
+              "answer": "A and E (root and fifth)."
+            },
+            {
+              "id": "guitar.b.shuffle.l2.r2",
+              "kind": "playChord",
+              "prompt": "Play E5.",
+              "answer": "E5",
+              "diagram": {
+                "kind": "fretboard",
+                "notes": [
+                  "6:0",
+                  "5:2"
+                ],
+                "chord": "E5",
+                "labels": "noteNames",
+                "fretRange": [
+                  0,
+                  4
+                ]
+              }
+            }
+          ],
+          "glossaryTerms": [
+            "power chord",
+            "boogie pattern",
+            "dyad",
+            "perfect fifth"
+          ]
+        },
+        {
+          "id": "guitar.b.shuffle.l3",
+          "title": "12-bar shuffle in A",
+          "summary": "Put the boogie pattern through the full 12-bar blues form.",
+          "minutes": 15,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "Moving the pattern",
+              "body": "Use the boogie pattern on each chord of the 12-bar form:\n\n- A measures: strings 5 and 4 (A with E, F#).\n- D measures: strings 4 and 3 (D with A, B).\n- E measures: strings 6 and 5 (E with B, C#).\n\nForm: **A A A A | D D A A | E D A E**.",
+              "diagram": {
+                "kind": "fretboard",
+                "notes": [
+                  "4:0",
+                  "3:2"
+                ],
+                "chord": "D5",
+                "labels": "noteNames",
+                "fretRange": [
+                  0,
+                  4
+                ],
+                "caption": "D5: strings 4 and 3."
+              }
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "chordChanges",
+                "prompt": "Warm-up: A5, D5, E5 changes for one minute.",
+                "chords": [
+                  "A5",
+                  "D5",
+                  "E5"
+                ],
+                "durationSec": 60,
+                "passAccuracy": 0.7
+              },
+              "mistakeTips": [
+                "The finger pattern is the same on each string pair; only the strings change.",
+                "Look ahead to the next string pair at the end of each measure."
+              ]
+            },
+            {
+              "type": "song",
+              "title": "12-Bar Shuffle in A (original arrangement)",
+              "caption": "Twelve measures of boogie pattern. Keep the shuffle feel steady through every change.",
+              "notes": [
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "D3",
+                  "A3"
+                ],
+                [
+                  "D3",
+                  "A3"
+                ],
+                [
+                  "D3",
+                  "B3"
+                ],
+                [
+                  "D3",
+                  "B3"
+                ],
+                [
+                  "D3",
+                  "A3"
+                ],
+                [
+                  "D3",
+                  "A3"
+                ],
+                [
+                  "D3",
+                  "B3"
+                ],
+                [
+                  "D3",
+                  "B3"
+                ],
+                [
+                  "D3",
+                  "A3"
+                ],
+                [
+                  "D3",
+                  "A3"
+                ],
+                [
+                  "D3",
+                  "B3"
+                ],
+                [
+                  "D3",
+                  "B3"
+                ],
+                [
+                  "D3",
+                  "A3"
+                ],
+                [
+                  "D3",
+                  "A3"
+                ],
+                [
+                  "D3",
+                  "B3"
+                ],
+                [
+                  "D3",
+                  "B3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "E2",
+                  "B2"
+                ],
+                [
+                  "E2",
+                  "B2"
+                ],
+                [
+                  "E2",
+                  "C#3"
+                ],
+                [
+                  "E2",
+                  "C#3"
+                ],
+                [
+                  "E2",
+                  "B2"
+                ],
+                [
+                  "E2",
+                  "B2"
+                ],
+                [
+                  "E2",
+                  "C#3"
+                ],
+                [
+                  "E2",
+                  "C#3"
+                ],
+                [
+                  "D3",
+                  "A3"
+                ],
+                [
+                  "D3",
+                  "A3"
+                ],
+                [
+                  "D3",
+                  "B3"
+                ],
+                [
+                  "D3",
+                  "B3"
+                ],
+                [
+                  "D3",
+                  "A3"
+                ],
+                [
+                  "D3",
+                  "A3"
+                ],
+                [
+                  "D3",
+                  "B3"
+                ],
+                [
+                  "D3",
+                  "B3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "E3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "A2",
+                  "F#3"
+                ],
+                [
+                  "E2",
+                  "B2"
+                ],
+                [
+                  "E2",
+                  "B2"
+                ],
+                [
+                  "E2",
+                  "C#3"
+                ],
+                [
+                  "E2",
+                  "C#3"
+                ],
+                [
+                  "E2",
+                  "B2"
+                ],
+                [
+                  "E2",
+                  "B2"
+                ],
+                [
+                  "E2",
+                  "C#3"
+                ],
+                [
+                  "E2",
+                  "C#3"
+                ]
+              ],
+              "rhythm": "tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te tq te",
+              "bpm": 80
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "guitar.b.shuffle.l3.r1",
+              "kind": "fact",
+              "prompt": "Which string pair carries the D boogie?",
+              "answer": "Strings 4 and 3."
+            }
+          ],
+          "glossaryTerms": [
+            "shuffle",
+            "twelve-bar blues",
+            "boogie pattern"
+          ]
+        }
+      ]
+    }
+  ]
+}

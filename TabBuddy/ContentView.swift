@@ -7,6 +7,7 @@ enum AppPage: Hashable {
     case tabMaker
     case tabMakerDocument(UUID)
     case tuner
+    case tutor
 }
 
 enum ImportKind { case file, folder }
@@ -30,16 +31,7 @@ struct ContentView: View {
             FileBrowserView(
                 currentFile: $currentFile,
                 path: $path,
-                onFileOpen: { file in
-                      // 1) rotate the identity
-                      viewerIdentity = UUID()
-                      
-                      // 2) set the file
-                      currentFile = file
-                      
-                      // 3) push the destination
-                      path.append(.viewer)
-                }
+                onFileOpen: openFile
             )
             .navigationDestination(for: AppPage.self) { page in
                 switch page {
@@ -55,6 +47,8 @@ struct ContentView: View {
                     TabMakerDocumentDestination(tabID: tabID)
                 case .tuner:
                     TunerView()
+                case .tutor:
+                    TutorRootView(onOpenSong: openFile)
                 }
             }
         }
@@ -66,10 +60,20 @@ struct ContentView: View {
             LibraryManager.shared.importPendingSharedFiles(context: context)
             TagIndexer.rebuild(in: context)
             backfillFolderNames()
+            if TutorLaunchOptions.openOnLaunch { path.append(.tutor) }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { ReaderPersistence.flush(context) }
         }
+    }
+
+    private func openFile(_ file: FileItem) {
+        // 1) rotate the identity
+        viewerIdentity = UUID()
+        // 2) set the file
+        currentFile = file
+        // 3) push the destination
+        path.append(.viewer)
     }
 
     private func backfillFolderNames() {

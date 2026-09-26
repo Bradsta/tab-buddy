@@ -1,0 +1,1247 @@
+{
+  "id": "guitar.s5",
+  "instrument": "guitar",
+  "order": 5,
+  "title": "Keys and harmony",
+  "summary": "Chords built from the scale, Roman numerals, common progressions, key signatures, the circle of fifths, relative minor keys, and the capo.",
+  "lessons": [
+    {
+      "id": "guitar.s5.l1",
+      "title": "Chords from the scale",
+      "summary": "Build a chord on every note of the major scale and find the major-minor-minor-major-major-minor-diminished pattern.",
+      "minutes": 14,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Stacking thirds inside a key",
+          "body": "A **key** is the scale and tonic a song is built around. In the key of C major the notes are C D E F G A B.\n\nBuild a triad on each note by stacking every other scale note, using only notes from the scale (that is what **diatonic** means):\n\n| Degree | Notes | Chord |\n|---|---|---|\n| 1 | C E G | C |\n| 2 | D F A | Dm |\n| 3 | E G B | Em |\n| 4 | F A C | F |\n| 5 | G B D | G |\n| 6 | A C E | Am |\n| 7 | B D F | Bdim |\n\nThese seven are the **diatonic chords** of C major."
+        },
+        {
+          "type": "explain",
+          "title": "The pattern holds in every major key",
+          "body": "Check the thirds: C–E is 4 half steps (major) but D–F is 3 (minor). The scale's uneven steps make some chords major and some minor.\n\nThe result is always the same order:\n\n**major – minor – minor – major – major – minor – diminished**\n\nThe chord on degree 7 is a **diminished triad**: a minor third plus another minor third. B to F is only 6 half steps, a **diminished fifth**, one half step smaller than a perfect fifth. It sounds tense.\n\nIn G major (G A B C D E F#) the diatonic chords are: **G, Am, Bm, C, D, Em, F#dim**. You already play five of them."
+        },
+        {
+          "type": "demo",
+          "title": "The seven chords of C major",
+          "caption": "Each diatonic triad of C major, from C up to Bdim, then C again.",
+          "playback": {
+            "notes": [
+              [
+                "C3",
+                "E3",
+                "G3"
+              ],
+              [
+                "D3",
+                "F3",
+                "A3"
+              ],
+              [
+                "E3",
+                "G3",
+                "B3"
+              ],
+              [
+                "F3",
+                "A3",
+                "C4"
+              ],
+              [
+                "G3",
+                "B3",
+                "D4"
+              ],
+              [
+                "A3",
+                "C4",
+                "E4"
+              ],
+              [
+                "B3",
+                "D4",
+                "F4"
+              ],
+              [
+                "C4",
+                "E4",
+                "G4"
+              ]
+            ],
+            "bpm": 60,
+            "style": "block"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Play the diatonic chords of G major that you know: G, Am, C, D, Em.",
+            "chords": [
+              "G",
+              "Am",
+              "C",
+              "D",
+              "Em"
+            ],
+            "key": "G major"
+          },
+          "mistakeTips": [
+            "These are degrees 1, 2, 4, 5, and 6 of G major.",
+            "Bm and F#dim need barre or partial fingerings; they come later."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Diatonic chords",
+          "questions": [
+            {
+              "prompt": "What is the chord on degree 2 of C major?",
+              "choices": [
+                "D",
+                "Dm",
+                "Ddim"
+              ],
+              "answerIndex": 1,
+              "explanation": "D F A: D to F is a minor third."
+            },
+            {
+              "prompt": "What is the chord on degree 5 of G major?",
+              "choices": [
+                "D",
+                "Dm",
+                "D7"
+              ],
+              "answerIndex": 0,
+              "explanation": "D F# A. F# is in G major, so the chord is major."
+            },
+            {
+              "prompt": "Which degree of a major key has a diminished chord?",
+              "choices": [
+                "2",
+                "5",
+                "7"
+              ],
+              "answerIndex": 2,
+              "explanation": "The pattern is maj min min maj maj min dim."
+            },
+            {
+              "prompt": "Spell Bdim.",
+              "choices": [
+                "B D F",
+                "B D# F#",
+                "B D F#"
+              ],
+              "answerIndex": 0,
+              "explanation": "B to D is a minor third, B to F is a diminished fifth."
+            },
+            {
+              "prompt": "Which chord is on degree 6 of G major?",
+              "choices": [
+                "E",
+                "Em",
+                "Edim"
+              ],
+              "answerIndex": 1,
+              "explanation": "E G B, all in G major. Minor."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Spell the chord",
+          "generator": {
+            "kind": "chordSpelling",
+            "params": {
+              "qualities": "maj,min,dim",
+              "roots": "C,D,E,F,G,A,B"
+            }
+          },
+          "count": 5
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s5.l1.r1",
+          "kind": "fact",
+          "prompt": "Quality pattern of diatonic triads in a major key?",
+          "answer": "maj min min maj maj min dim"
+        },
+        {
+          "id": "guitar.s5.l1.r2",
+          "kind": "fact",
+          "prompt": "Diatonic chords of G major?",
+          "answer": "G Am Bm C D Em F#dim"
+        },
+        {
+          "id": "guitar.s5.l1.r3",
+          "kind": "fact",
+          "prompt": "Diatonic chords of C major?",
+          "answer": "C Dm Em F G Am Bdim"
+        }
+      ],
+      "glossaryTerms": [
+        "key",
+        "diatonic",
+        "diatonic chords",
+        "diminished triad",
+        "diminished fifth"
+      ]
+    },
+    {
+      "id": "guitar.s5.l2",
+      "title": "Roman numerals and I–IV–V",
+      "summary": "Name chords by their scale degree and play the I–IV–V progression in several keys.",
+      "minutes": 14,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Roman numerals",
+          "body": "Musicians name chords by the scale degree of their root, using **Roman numerals**:\n\n**I – ii – iii – IV – V – vi – vii°**\n\n- **Uppercase** = major. **Lowercase** = minor. **°** = diminished.\n- In G: I = G, ii = Am, iii = Bm, IV = C, V = D, vi = Em, vii° = F#dim.\n- In D: I = D, ii = Em, iii = F#m, IV = G, V = A, vi = Bm, vii° = C#dim.\n\nNumerals let you describe a progression once and play it in any key. \"I–IV–V\" means G–C–D in G and D–G–A in D."
+        },
+        {
+          "type": "explain",
+          "title": "I, IV, and V",
+          "body": "Three chords do most of the work in folk, blues, country, and rock:\n\n- **I** – the **tonic chord**. Home.\n- **IV** – the **subdominant chord**. Moves away from home.\n- **V** – the **dominant chord**. Strong pull back to I.\n\nTogether, I, IV, and V contain every note of the major scale. That is why so many melodies can be harmonized with only these three.\n\n| Key | I | IV | V |\n|---|---|---|---|\n| C | C | F | G |\n| G | G | C | D |\n| D | D | G | A |\n| A | A | D | E |\n| E | E | A | B |"
+        },
+        {
+          "type": "demo",
+          "title": "I–IV–V–I in G and in D",
+          "caption": "G C D G, then D G A D. Same numerals, same feeling, different key.",
+          "playback": {
+            "chords": [
+              "G",
+              "C",
+              "D",
+              "G",
+              "D",
+              "G",
+              "A",
+              "D"
+            ],
+            "bpm": 50,
+            "style": "strum"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "I–IV–V in G: G, C, D, one strum each, for one minute.",
+            "chords": [
+              "G",
+              "C",
+              "D"
+            ],
+            "durationSec": 60,
+            "key": "G major",
+            "passAccuracy": 0.7
+          },
+          "mistakeTips": [
+            "Say the numerals as you change: \"one, four, five\".",
+            "C to D: land finger 3 on string 2, fret 3 first."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "strumRhythm",
+            "prompt": "I–IV–V–I in D: D, G, A, D. One measure each, four downstrokes.",
+            "chords": [
+              "D",
+              "G",
+              "A",
+              "D"
+            ],
+            "rhythm": "q q q q",
+            "bpm": 70,
+            "repetitions": 2,
+            "key": "D major",
+            "tempoSteps": [
+              70,
+              80,
+              90
+            ]
+          },
+          "mistakeTips": [
+            "D to G: all fingers move. Aim for the G bass note on string 6 first.",
+            "G to A: fingers 1, 2, 3 line up at fret 2 for A. Keep the movement small.",
+            "A strums from string 5, D from string 4."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Numerals",
+          "questions": [
+            {
+              "prompt": "In G major, what is IV?",
+              "choices": [
+                "C",
+                "D",
+                "Am"
+              ],
+              "answerIndex": 0,
+              "explanation": "G A B C: C is degree 4."
+            },
+            {
+              "prompt": "In D major, what is V?",
+              "choices": [
+                "G",
+                "A",
+                "Bm"
+              ],
+              "answerIndex": 1,
+              "explanation": "D E F# G A: A is degree 5."
+            },
+            {
+              "prompt": "What does lowercase \"vi\" tell you?",
+              "choices": [
+                "The chord on degree 6 is minor",
+                "It is a 6th chord",
+                "Play it softly"
+              ],
+              "answerIndex": 0,
+              "explanation": "Lowercase = minor."
+            },
+            {
+              "prompt": "Which numerals are the major chords in a major key?",
+              "choices": [
+                "I, IV, V",
+                "I, ii, V",
+                "ii, iii, vi"
+              ],
+              "answerIndex": 0,
+              "explanation": "I, IV, and V are major; ii, iii, vi are minor; vii° is diminished."
+            },
+            {
+              "prompt": "In A major, what are I, IV, and V?",
+              "choices": [
+                "A, D, E",
+                "A, D, E7",
+                "A, C, D"
+              ],
+              "answerIndex": 0,
+              "explanation": "A B C# D E: I = A, IV = D, V = E."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Roman numerals",
+          "generator": {
+            "kind": "romanNumeral",
+            "params": {
+              "keys": "C,G,D,A"
+            }
+          },
+          "count": 6
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s5.l2.r1",
+          "kind": "fact",
+          "prompt": "I, IV, V in G?",
+          "answer": "G, C, D"
+        },
+        {
+          "id": "guitar.s5.l2.r2",
+          "kind": "fact",
+          "prompt": "I, IV, V in D?",
+          "answer": "D, G, A"
+        },
+        {
+          "id": "guitar.s5.l2.r3",
+          "kind": "fact",
+          "prompt": "I, IV, V in A?",
+          "answer": "A, D, E"
+        }
+      ],
+      "glossaryTerms": [
+        "Roman numerals",
+        "tonic chord",
+        "subdominant chord",
+        "dominant chord"
+      ]
+    },
+    {
+      "id": "guitar.s5.l3",
+      "title": "Common progressions",
+      "summary": "Play I–V–vi–IV, I–vi–IV–V, and ii–V–I, and hear why they work.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Four chords, thousands of songs",
+          "body": "A few **progressions** appear constantly. In G major:\n\n| Name | Numerals | In G |\n|---|---|---|\n| Pop progression | I – V – vi – IV | G – D – Em – C |\n| 1950s progression | I – vi – IV – V | G – Em – C – D |\n| Minor start | vi – IV – I – V | Em – C – G – D |\n| ii–V–I | ii – V – I | Am – D – G |\n\nThe first and third are the same loop started at a different point. The **ii–V–I** is the backbone of jazz: ii leads to V, and V resolves to I."
+        },
+        {
+          "type": "explain",
+          "title": "Why V leads home",
+          "body": "V contains the **leading tone** (degree 7). In G, the D chord (D F# A) has F#, a half step below G. When D moves to G, F# rises to G, and the ear hears the move as an arrival.\n\nIV and ii share notes with each other and both tend to move to V. vi shares two notes with I (Em = E G B, G = G B D), which is why vi can stand in for I as a softer, darker home."
+        },
+        {
+          "type": "demo",
+          "title": "I–V–vi–IV in G",
+          "caption": "Twice through.",
+          "playback": {
+            "chords": [
+              "G",
+              "D",
+              "Em",
+              "C",
+              "G",
+              "D",
+              "Em",
+              "C"
+            ],
+            "bpm": 50,
+            "style": "strum"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "strumRhythm",
+            "prompt": "I–V–vi–IV in G with the pattern \"down, down-up, up-down-up\". One measure each.",
+            "chords": [
+              "G",
+              "D",
+              "Em",
+              "C"
+            ],
+            "rhythm": "q e e er e e e",
+            "bpm": 70,
+            "repetitions": 2,
+            "key": "G major",
+            "tempoSteps": [
+              70,
+              80,
+              90
+            ]
+          },
+          "mistakeTips": [
+            "Em to C: finger 2 moves from string 5 to string 4 at fret 2, finger 3 moves from string 4 fret 2 to string 5 fret 3, and finger 1 lands on string 2 fret 1. Practice it slowly on its own.",
+            "Keep the strumming hand moving through every change.",
+            "If one change keeps failing, run one-minute changes on just those two chords."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "ii–V–I in G: Am, D, G, for one minute.",
+            "chords": [
+              "Am",
+              "D",
+              "G"
+            ],
+            "durationSec": 60,
+            "key": "G major",
+            "passAccuracy": 0.7
+          },
+          "mistakeTips": [
+            "Am to D: finger 1 moves from string 2 fret 1 to string 3 fret 2.",
+            "D to G: finger 3 moves from string 2 to string 1, both at fret 3."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Hearing progressions",
+          "questions": [
+            {
+              "prompt": "Listen. Which progression is this?",
+              "choices": [
+                "I–IV–V–I",
+                "I–V–vi–IV",
+                "I–vi–IV–V"
+              ],
+              "answerIndex": 1,
+              "explanation": "G D Em C: I–V–vi–IV.",
+              "playback": {
+                "chords": [
+                  "G",
+                  "D",
+                  "Em",
+                  "C"
+                ],
+                "bpm": 50,
+                "style": "strum"
+              }
+            },
+            {
+              "prompt": "Listen. Does the last chord sound finished?",
+              "choices": [
+                "Yes, it ends on I",
+                "No, it ends on V"
+              ],
+              "answerIndex": 1,
+              "explanation": "G C G D ends on D, the V chord. It sounds like it wants to continue to G.",
+              "playback": {
+                "chords": [
+                  "G",
+                  "C",
+                  "G",
+                  "D"
+                ],
+                "bpm": 50,
+                "style": "strum"
+              }
+            },
+            {
+              "prompt": "In D major, what is I–V–vi–IV?",
+              "choices": [
+                "D A Bm G",
+                "D G A Bm",
+                "D A B G"
+              ],
+              "answerIndex": 0,
+              "explanation": "I = D, V = A, vi = Bm, IV = G."
+            },
+            {
+              "prompt": "Which note makes V pull toward I?",
+              "choices": [
+                "The leading tone",
+                "The tonic",
+                "The subdominant"
+              ],
+              "answerIndex": 0,
+              "explanation": "Degree 7 in the V chord rises a half step to the tonic."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s5.l3.r1",
+          "kind": "fact",
+          "prompt": "I–V–vi–IV in G?",
+          "answer": "G D Em C"
+        },
+        {
+          "id": "guitar.s5.l3.r2",
+          "kind": "fact",
+          "prompt": "ii–V–I in G?",
+          "answer": "Am D G"
+        }
+      ],
+      "glossaryTerms": [
+        "progression",
+        "leading tone",
+        "dominant chord"
+      ]
+    },
+    {
+      "id": "guitar.s5.l4",
+      "title": "Key signatures and the circle of fifths",
+      "summary": "Read key signatures, learn the order of sharps and flats, and use the circle of fifths.",
+      "minutes": 14,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Key signatures",
+          "body": "Every major key needs a fixed set of sharps or flats to fit the W W H W W W H pattern. Instead of marking every F# in a song in G, the sharp is written once at the start of each line: the **key signature**.\n\nSharps are always added in the **order of sharps**: **F C G D A E B** (\"Father Charles Goes Down And Ends Battle\").\n\nFlats are added in the **order of flats**: **B E A D G C F**, the same list backwards (\"Battle Ends And Down Goes Charles's Father\")."
+        },
+        {
+          "type": "explain",
+          "title": "Naming the key from the signature",
+          "body": "**Sharp keys:** the last sharp is the leading tone. Go up a half step for the key. Two sharps (F# C#) → C# + half step = **D major**.\n\n**Flat keys:** the second-to-last flat is the key. Three flats (Bb Eb Ab) → **Eb major**. One flat is **F major** (memorize this one).\n\n| Sharps | Key | | Flats | Key |\n|---|---|---|---|---|\n| 0 | C | | 1 | F |\n| 1 | G | | 2 | Bb |\n| 2 | D | | 3 | Eb |\n| 3 | A | | 4 | Ab |\n| 4 | E | | 5 | Db |\n| 5 | B | | 6 | Gb |\n| 6 | F# | | 7 | Cb |\n| 7 | C# | | | |"
+        },
+        {
+          "type": "explain",
+          "title": "The circle of fifths",
+          "body": "Arrange the keys so each step clockwise goes **up a perfect fifth**: C → G → D → A → E → B → F#/Gb → Db → Ab → Eb → Bb → F → back to C.\n\n- Each step clockwise adds one sharp (or removes one flat).\n- Neighbors differ by only one note, so songs often move between neighboring keys.\n- A key's **IV and V** sit on either side of it. Around G you find C (IV) and D (V). You can read I–IV–V for any key straight off the circle.\n\nAt the bottom, F# major (6 sharps) and Gb major (6 flats) are the same pitches with different names: enharmonic keys.",
+          "diagram": {
+            "kind": "circleOfFifths",
+            "key": "G major",
+            "caption": "G major with its neighbors C (IV) and D (V)."
+          }
+        },
+        {
+          "type": "quiz",
+          "title": "Key signatures",
+          "questions": [
+            {
+              "prompt": "Which key has two sharps?",
+              "choices": [
+                "G major",
+                "D major",
+                "A major"
+              ],
+              "answerIndex": 1,
+              "explanation": "F# and C#. The last sharp, C#, is the leading tone of D."
+            },
+            {
+              "prompt": "Which key has one flat?",
+              "choices": [
+                "F major",
+                "Bb major",
+                "C major"
+              ],
+              "answerIndex": 0,
+              "explanation": "F major: Bb."
+            },
+            {
+              "prompt": "What are the first three sharps, in order?",
+              "choices": [
+                "F C G",
+                "C G D",
+                "B E A"
+              ],
+              "answerIndex": 0,
+              "explanation": "Father Charles Goes…"
+            },
+            {
+              "prompt": "A key signature has Bb, Eb, Ab, Db. What key is it?",
+              "choices": [
+                "Db major",
+                "Ab major",
+                "Eb major"
+              ],
+              "answerIndex": 1,
+              "explanation": "Second-to-last flat: Ab."
+            },
+            {
+              "prompt": "What is next clockwise after A on the circle of fifths?",
+              "choices": [
+                "D",
+                "E",
+                "B"
+              ],
+              "answerIndex": 1,
+              "explanation": "A up a perfect fifth is E."
+            },
+            {
+              "prompt": "Using the circle, what are IV and V of D?",
+              "choices": [
+                "G and A",
+                "A and E",
+                "C and G"
+              ],
+              "answerIndex": 0,
+              "explanation": "D's neighbors are G (counterclockwise) and A (clockwise)."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Name the key signature",
+          "generator": {
+            "kind": "keySignature",
+            "params": {
+              "keys": "C,G,D,A,E,B,F#,F,Bb,Eb,Ab,Db",
+              "mode": "major"
+            }
+          },
+          "count": 6
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s5.l4.r1",
+          "kind": "fact",
+          "prompt": "Order of sharps?",
+          "answer": "F C G D A E B"
+        },
+        {
+          "id": "guitar.s5.l4.r2",
+          "kind": "fact",
+          "prompt": "Order of flats?",
+          "answer": "B E A D G C F"
+        },
+        {
+          "id": "guitar.s5.l4.r3",
+          "kind": "fact",
+          "prompt": "How many sharps in A major, and which?",
+          "answer": "Three: F# C# G#."
+        },
+        {
+          "id": "guitar.s5.l4.r4",
+          "kind": "fact",
+          "prompt": "How many flats in Eb major, and which?",
+          "answer": "Three: Bb Eb Ab."
+        }
+      ],
+      "glossaryTerms": [
+        "key signature",
+        "order of sharps",
+        "order of flats",
+        "circle of fifths",
+        "enharmonic"
+      ]
+    },
+    {
+      "id": "guitar.s5.l5",
+      "title": "Relative minor keys",
+      "summary": "Find the minor key hiding in every major key, and hear the major V chord in minor.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Same notes, different home",
+          "body": "Play the notes of C major but start and end on A: **A B C D E F G A**. The notes are the same, but the home note is A, and it sounds minor. This is the **natural minor scale**, and A minor is the **relative minor** of C major.\n\n- The relative minor's tonic is **degree 6** of the major key, or 3 half steps below the major tonic.\n- They share a key signature. G major and E minor both have one sharp.\n- Going the other way, C is the **relative major** of A minor.\n\nNatural minor step pattern: **W H W W H W W**. Compared with major, degrees 3, 6, and 7 are a half step lower.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:0",
+              "5:2",
+              "5:3",
+              "4:0",
+              "4:2",
+              "4:3",
+              "3:0",
+              "3:2"
+            ],
+            "scale": "A natural minor",
+            "labels": "degrees",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Chords in a minor key",
+          "body": "The diatonic chords of A minor are the same seven chords as C major, counted from A:\n\n**i – ii° – III – iv – v – VI – VII** = **Am – Bdim – C – Dm – Em – F – G**\n\nIn practice, minor-key songs often raise degree 7 (G → G#). That turns v (Em) into a major **V** (E = E G# B), which pulls much more strongly back to i. A natural minor scale with a raised 7th is called the **harmonic minor scale**.\n\nThat is why you so often hear **Am and E** together."
+        },
+        {
+          "type": "demo",
+          "title": "i – iv – V – i in A minor",
+          "caption": "Am, Dm, E, Am. The G# in the E chord leads back to A.",
+          "playback": {
+            "chords": [
+              "Am",
+              "Dm",
+              "E",
+              "Am"
+            ],
+            "bpm": 50,
+            "style": "strum"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "scale",
+            "prompt": "A natural minor, one octave, open position.",
+            "scale": "A natural minor",
+            "octaves": 1,
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "5:0",
+                "5:2",
+                "5:3",
+                "4:0",
+                "4:2",
+                "4:3",
+                "3:0",
+                "3:2"
+              ],
+              "scale": "A natural minor",
+              "labels": "noteNames",
+              "fretRange": [
+                0,
+                4
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Same fingers as C major; you just start on the open A string.",
+            "End on A (string 3, fret 2) and listen to how it settles."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "i–V in A minor: Am to E and back, one minute.",
+            "chords": [
+              "Am",
+              "E"
+            ],
+            "durationSec": 60,
+            "key": "A minor",
+            "passAccuracy": 0.7
+          },
+          "mistakeTips": [
+            "Same finger layout, moved one string. Move the fingers as a block.",
+            "E strums all six strings; Am starts on string 5."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Relative keys",
+          "questions": [
+            {
+              "prompt": "What is the relative minor of G major?",
+              "choices": [
+                "E minor",
+                "A minor",
+                "D minor"
+              ],
+              "answerIndex": 0,
+              "explanation": "Degree 6 of G major is E."
+            },
+            {
+              "prompt": "What is the relative major of D minor?",
+              "choices": [
+                "F major",
+                "Bb major",
+                "A major"
+              ],
+              "answerIndex": 0,
+              "explanation": "Up 3 half steps from D is F. Both have one flat."
+            },
+            {
+              "prompt": "How many sharps does E minor have?",
+              "choices": [
+                "0",
+                "1",
+                "2"
+              ],
+              "answerIndex": 1,
+              "explanation": "Same as G major: F#."
+            },
+            {
+              "prompt": "Why do minor-key songs often use a major V chord?",
+              "choices": [
+                "The raised 7th leads strongly to the tonic",
+                "Minor chords are hard to play",
+                "It is required by the key signature"
+              ],
+              "answerIndex": 0,
+              "explanation": "G# in E major is a half step below A."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Minor key signatures",
+          "generator": {
+            "kind": "keySignature",
+            "params": {
+              "keys": "A,E,B,D,G",
+              "mode": "minor"
+            }
+          },
+          "count": 4
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s5.l5.r1",
+          "kind": "fact",
+          "prompt": "How do you find the relative minor of a major key?",
+          "answer": "Degree 6 of the major scale (3 half steps below the tonic)."
+        },
+        {
+          "id": "guitar.s5.l5.r2",
+          "kind": "fact",
+          "prompt": "Natural minor step pattern?",
+          "answer": "W H W W H W W"
+        }
+      ],
+      "glossaryTerms": [
+        "relative minor",
+        "relative major",
+        "natural minor scale",
+        "harmonic minor scale",
+        "key signature"
+      ]
+    },
+    {
+      "id": "guitar.s5.l6",
+      "title": "The capo and transposing",
+      "summary": "Use a capo to play open-chord fingerings in any key, and transpose progressions with Roman numerals.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "What a capo does",
+          "body": "A **capo** clamps across all six strings at one fret, acting like a new nut. Every open string goes up by that many half steps, and so does every chord you play above it.\n\nWith the capo at fret 2, the **G form** (your normal G fingering) sounds as **A**. The fingering is the **chord form**; the sounding chord is the name the rest of the band uses.\n\nPlace the capo just behind the fret, straight across, with just enough pressure to stop buzzing. Retune after clamping; capos often pull strings slightly sharp."
+        },
+        {
+          "type": "explain",
+          "title": "Capo chart",
+          "body": "Count up the frets from the chord form:\n\n| Capo | G form | C form | D form | Em form |\n|---|---|---|---|---|\n| 1 | Ab | Db | Eb | Fm |\n| 2 | A | D | E | F#m |\n| 3 | Bb | Eb | F | Gm |\n| 4 | B | E | F# | G#m |\n| 5 | C | F | G | Am |\n| 7 | D | G | A | Bm |\n\nBecause the forms G, C, D, Em are I, IV, V, vi in G, any capo position gives you I, IV, V, vi of the new key."
+        },
+        {
+          "type": "explain",
+          "title": "Transposing with numerals",
+          "body": "To **transpose** a song, move every chord by the same interval. Roman numerals make it easy:\n\n1. Write the progression as numerals in the original key. In E: E – A – B – C#m = I – IV – V – vi.\n2. Pick a key with easy chords: G gives G – C – D – Em.\n3. Play it in G, or keep the original key with a capo. G forms would need capo 9 (E is nine half steps above G), which is very high. C forms at capo 4 (C – F – G – Am, sounding E – A – B – C#m) need a barre for F. D forms at capo 2 (D – G – A – Bm) need a barre for Bm. Choose what suits your hands and the singer.\n\nThe app grades what it hears, so with a capo it expects the sounding chords."
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Put a capo at fret 2. Play your G, C, and D fingerings. They should sound as A, D, and E.",
+            "chords": [
+              "A",
+              "D",
+              "E"
+            ]
+          },
+          "mistakeTips": [
+            "Retune with the capo on if chords sound sour.",
+            "Your fingers move up with the capo: G form fret 3 becomes fret 5, and so on.",
+            "If a chord is not recognized, make sure the capo is at fret 2, not fret 1 or 3."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Capo at fret 3. Play the Em form. What sounds is G minor.",
+            "chords": [
+              "Gm"
+            ]
+          },
+          "mistakeTips": [
+            "Em form above capo 3: fingers at fret 5 on strings 5 and 4.",
+            "Pitch is graded, so the app hears Gm (G Bb D)."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Capo and transposing",
+          "questions": [
+            {
+              "prompt": "Capo at fret 2, G form. What sounds?",
+              "choices": [
+                "G",
+                "A",
+                "Bb"
+              ],
+              "answerIndex": 1,
+              "explanation": "G up two half steps is A."
+            },
+            {
+              "prompt": "Capo at fret 5, Am form. What sounds?",
+              "choices": [
+                "Dm",
+                "Cm",
+                "Em"
+              ],
+              "answerIndex": 0,
+              "explanation": "A up five half steps: A Bb B C C# D."
+            },
+            {
+              "prompt": "A song in A uses A, D, E, F#m. You want to use G, C, D, Em forms. Where does the capo go?",
+              "choices": [
+                "Fret 1",
+                "Fret 2",
+                "Fret 3"
+              ],
+              "answerIndex": 1,
+              "explanation": "G form + 2 = A."
+            },
+            {
+              "prompt": "Transpose I–IV–V from G to D.",
+              "choices": [
+                "D G A",
+                "D A E",
+                "D G Bm"
+              ],
+              "answerIndex": 0,
+              "explanation": "I, IV, V of D are D, G, A."
+            },
+            {
+              "prompt": "Why retune after putting on a capo?",
+              "choices": [
+                "The capo can pull strings sharp",
+                "The capo lowers the pitch",
+                "It changes the key signature"
+              ],
+              "answerIndex": 0,
+              "explanation": "Pressing the strings down stretches them a little."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s5.l6.r1",
+          "kind": "fact",
+          "prompt": "Capo 2, G C D forms. What sounds?",
+          "answer": "A D E"
+        },
+        {
+          "id": "guitar.s5.l6.r2",
+          "kind": "fact",
+          "prompt": "Capo 3, Em form. What sounds?",
+          "answer": "Gm"
+        }
+      ],
+      "glossaryTerms": [
+        "capo",
+        "transpose",
+        "chord form"
+      ]
+    },
+    {
+      "id": "guitar.s5.l7",
+      "title": "Keys and harmony review: Greensleeves",
+      "summary": "Review keys, numerals, and the circle of fifths, then play a minor-key melody and a I–V–vi–IV song.",
+      "minutes": 15,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "What you know now",
+          "body": "- Diatonic triads in major: **I ii iii IV V vi vii°**.\n- **I–IV–V**, **I–V–vi–IV**, **ii–V–I**.\n- Order of sharps **F C G D A E B**; flats **B E A D G C F**.\n- The **circle of fifths** shows neighbors and I–IV–V at a glance.\n- The relative minor is degree 6; minor keys often borrow a major V.\n- A capo moves open-chord forms to any key."
+        },
+        {
+          "type": "quiz",
+          "title": "Harmony review",
+          "questions": [
+            {
+              "prompt": "In A major, what is vi?",
+              "choices": [
+                "F#m",
+                "F#",
+                "Fm"
+              ],
+              "answerIndex": 0,
+              "explanation": "A B C# D E F#: degree 6 is F#, and vi is minor."
+            },
+            {
+              "prompt": "Which key has 3 sharps?",
+              "choices": [
+                "E major",
+                "A major",
+                "D major"
+              ],
+              "answerIndex": 1,
+              "explanation": "F# C# G#: last sharp G#, half step up is A."
+            },
+            {
+              "prompt": "What is the relative minor of D major?",
+              "choices": [
+                "B minor",
+                "F# minor",
+                "E minor"
+              ],
+              "answerIndex": 0,
+              "explanation": "Degree 6 of D major is B."
+            },
+            {
+              "prompt": "In C major, which chord is V?",
+              "choices": [
+                "F",
+                "G",
+                "Am"
+              ],
+              "answerIndex": 1,
+              "explanation": "C D E F G."
+            },
+            {
+              "prompt": "Capo 4, C form. What sounds?",
+              "choices": [
+                "E",
+                "F",
+                "D"
+              ],
+              "answerIndex": 0,
+              "explanation": "C up four half steps: C# D D# E."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Roman numerals",
+          "generator": {
+            "kind": "romanNumeral",
+            "params": {
+              "keys": "C,G,D,A,E,F"
+            }
+          },
+          "count": 5
+        },
+        {
+          "type": "quiz",
+          "title": "Key signatures",
+          "generator": {
+            "kind": "keySignature",
+            "params": {
+              "keys": "C,G,D,A,E,F,Bb,Eb",
+              "mode": "major,minor"
+            }
+          },
+          "count": 5
+        },
+        {
+          "type": "explain",
+          "title": "Greensleeves",
+          "body": "\"Greensleeves\" is an English folk tune from the 1500s and is in the public domain. It is in **A minor**, the relative minor of C major, in 3/4.\n\nListen for the **G#** near the end of the phrase: the raised 7th from the harmonic minor, borrowed from the E chord, leading back toward A.\n\nNotes in open position: A (3 fret 2), B (2 open), C (2 fret 1), D (2 fret 3), E (1 open), F (1 fret 1), G (3 open), G# (3 fret 1), low E (4 fret 2).",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "4:2",
+              "3:0",
+              "3:1",
+              "3:2",
+              "2:0",
+              "2:1",
+              "2:3",
+              "1:0",
+              "1:1"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "type": "song",
+          "title": "Greensleeves, first phrase (traditional)",
+          "caption": "Starts with a pickup on beat 3. Count \"1 2\" silently, then play A on beat 3.",
+          "notes": [
+            [],
+            [
+              "A3"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "B3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "B3"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "G#3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "B3"
+            ],
+            [
+              "G#3"
+            ],
+            [
+              "E3"
+            ],
+            []
+          ],
+          "rhythm": "hr q h q q. e q h q q. e q h q q. e q h q h qr",
+          "bpm": 100,
+          "beatsPerMeasure": 3
+        },
+        {
+          "type": "song",
+          "title": "Four-Chord Loop (original)",
+          "caption": "I–V–vi–IV twice, then IV–V–I. Four downstrokes per measure.",
+          "chords": [
+            "G",
+            "G",
+            "G",
+            "G",
+            "D",
+            "D",
+            "D",
+            "D",
+            "Em",
+            "Em",
+            "Em",
+            "Em",
+            "C",
+            "C",
+            "C",
+            "C",
+            "G",
+            "G",
+            "G",
+            "G",
+            "D",
+            "D",
+            "D",
+            "D",
+            "Em",
+            "Em",
+            "Em",
+            "Em",
+            "C",
+            "C",
+            "C",
+            "C",
+            "C",
+            "C",
+            "C",
+            "C",
+            "D",
+            "D",
+            "D",
+            "D",
+            "G",
+            "G",
+            "G",
+            "G",
+            "G",
+            "G",
+            "G",
+            "G"
+          ],
+          "rhythm": "q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q q",
+          "bpm": 80
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s5.l7.r1",
+          "kind": "fact",
+          "prompt": "What note in an A minor song often comes from the E chord?",
+          "answer": "G# (the raised 7th)."
+        }
+      ],
+      "glossaryTerms": [
+        "key",
+        "relative minor",
+        "harmonic minor scale",
+        "circle of fifths"
+      ]
+    }
+  ],
+  "branches": []
+}

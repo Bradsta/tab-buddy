@@ -1,0 +1,1478 @@
+{
+  "id": "piano.s1",
+  "instrument": "piano",
+  "order": 1,
+  "title": "Keyboard geography and note names",
+  "summary": "Name every white and black key, understand octaves, and measure half and whole steps.",
+  "lessons": [
+    {
+      "id": "piano.s1.l1",
+      "title": "The white keys: A to G",
+      "summary": "Use the two- and three-black-key groups to name every white key.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "The musical alphabet",
+          "body": "Music uses only seven letter names: **A B C D E F G**. After G, the letters start again at A.\n\nOn the piano, the white keys run through those letters from left to right. Starting from C, you get **C D E F G A B**, then C again.\n\n- Around each **group of two black keys**: **C D E** (C left, D between, E right).\n- Around each **group of three black keys**: **F G A B** (F left, G and A between, B right).",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C4",
+              "D4",
+              "E4",
+              "F4",
+              "G4",
+              "A4",
+              "B4",
+              "C5"
+            ],
+            "pitchRange": [
+              "C4",
+              "C5"
+            ],
+            "caption": "C D E around two black keys; F G A B around three."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Up the white keys from middle C",
+          "caption": "C4 D4 E4 F4 G4 A4 B4 C5. Each step goes one white key to the right.",
+          "playback": {
+            "notes": [
+              [
+                "C4"
+              ],
+              [
+                "D4"
+              ],
+              [
+                "E4"
+              ],
+              [
+                "F4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "A4"
+              ],
+              [
+                "B4"
+              ],
+              [
+                "C5"
+              ]
+            ],
+            "bpm": 80
+          },
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C4",
+              "D4",
+              "E4",
+              "F4",
+              "G4",
+              "A4",
+              "B4",
+              "C5"
+            ],
+            "pitchRange": [
+              "C4",
+              "C5"
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Play the white keys from middle C up to the next C: C4 D4 E4 F4 G4 A4 B4 C5. Use any fingers for now; say each name out loud.",
+            "notes": [
+              "C4",
+              "D4",
+              "E4",
+              "F4",
+              "G4",
+              "A4",
+              "B4",
+              "C5"
+            ]
+          },
+          "mistakeTips": [
+            "D is the white key between the two black keys.",
+            "F is just left of the three black keys.",
+            "B is just left of the next C."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playNote",
+            "prompt": "Find and play each note: F4, A4, D4, B4, E4, G4.",
+            "notes": [
+              "F4",
+              "A4",
+              "D4",
+              "B4",
+              "E4",
+              "G4"
+            ]
+          },
+          "mistakeTips": [
+            "F: left edge of the three-black-key group.",
+            "A: between the second and third black keys of the three-group.",
+            "E: right edge of the two-black-key group."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Name the white key",
+          "generator": {
+            "kind": "noteOnKeyboard",
+            "params": {
+              "range": "C4-B4",
+              "accidentals": "none"
+            }
+          },
+          "count": 8
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s1.l1.r1",
+          "kind": "fact",
+          "prompt": "Which white keys surround the group of three black keys?",
+          "answer": "F G A B"
+        },
+        {
+          "id": "piano.s1.l1.r2",
+          "kind": "noteName",
+          "prompt": "Name the highlighted key.",
+          "answer": "F4",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "F4"
+            ],
+            "labels": "none",
+            "pitchRange": [
+              "C4",
+              "B4"
+            ]
+          }
+        },
+        {
+          "id": "piano.s1.l1.r3",
+          "kind": "playNote",
+          "prompt": "Play the A above middle C.",
+          "answer": "A4"
+        }
+      ],
+      "glossaryTerms": [
+        "Musical alphabet",
+        "White keys",
+        "Black keys"
+      ]
+    },
+    {
+      "id": "piano.s1.l2",
+      "title": "Octaves",
+      "summary": "The same letter repeats every eight white keys; octave numbers tell you which one.",
+      "minutes": 8,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Same letter, higher or lower",
+          "body": "From one C to the next C is an **octave**: 8 white keys counting both Cs, or 12 keys counting white and black. Notes an octave apart share a letter name and sound alike, one higher and one lower.\n\nIn **scientific pitch notation**, the number changes at every C: B3 is followed by C4. So the white keys go … A3 B3 **C4** D4 … B4 **C5** …\n\n- Lower pitch = further left. Higher pitch = further right.\n- The piano runs from **A0** (lowest) to **C8** (highest).",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "G3",
+              "G4",
+              "G5"
+            ],
+            "pitchRange": [
+              "C3",
+              "C6"
+            ],
+            "caption": "Three Gs, each an octave apart: G3, G4, G5."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Octaves on G",
+          "caption": "G3, G4, G5. Same name, higher each time.",
+          "playback": {
+            "notes": [
+              [
+                "G3"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "G5"
+              ]
+            ],
+            "bpm": 60
+          },
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "G3",
+              "G4",
+              "G5"
+            ],
+            "pitchRange": [
+              "C3",
+              "C6"
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "findAllNotes",
+            "prompt": "Play every F you can find in 40 seconds.",
+            "pitchClass": "F",
+            "durationSec": 40
+          },
+          "mistakeTips": [
+            "F is the white key just left of each group of three black keys.",
+            "Work steadily from left to right so you do not skip one.",
+            "Notes at the far ends are harder for the microphone to hear; play them a little louder."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playNote",
+            "prompt": "Play these exact notes: E3, E4, E5, then A3, A4.",
+            "notes": [
+              "E3",
+              "E4",
+              "E5",
+              "A3",
+              "A4"
+            ]
+          },
+          "mistakeTips": [
+            "Start from middle C (C4). E4 is two white keys to its right.",
+            "The number changes at C: the E just below middle C is E3.",
+            "A3 is the A just below middle C; A4 is the A just above it."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "How many white keys from one C to the next C, counting both?",
+              "choices": [
+                "8",
+                "7",
+                "12",
+                "5"
+              ],
+              "answerIndex": 0,
+              "explanation": "C D E F G A B C: eight white keys. Counting black keys too, it is 12 half steps."
+            },
+            {
+              "prompt": "Which note comes right after B3 on the white keys?",
+              "choices": [
+                "C4",
+                "C3",
+                "A3",
+                "B4"
+              ],
+              "answerIndex": 0,
+              "explanation": "Octave numbers change at C, so the next white key after B3 is C4."
+            },
+            {
+              "prompt": "What is the lowest note on an 88-key piano?",
+              "choices": [
+                "A0",
+                "C1",
+                "C0",
+                "E1"
+              ],
+              "answerIndex": 0,
+              "explanation": "The keyboard starts on A0 and ends on C8."
+            },
+            {
+              "prompt": "Notes an octave apart…",
+              "choices": [
+                "Share a letter name and sound alike",
+                "Always clash",
+                "Are always black keys",
+                "Are one key apart"
+              ],
+              "answerIndex": 0,
+              "explanation": "An octave doubles the frequency, which is why the two notes blend."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s1.l2.r1",
+          "kind": "fact",
+          "prompt": "Where does the octave number change?",
+          "answer": "At every C (B3 → C4)."
+        },
+        {
+          "id": "piano.s1.l2.r2",
+          "kind": "playNote",
+          "prompt": "Play G3.",
+          "answer": "G3"
+        }
+      ],
+      "glossaryTerms": [
+        "Octave",
+        "Scientific pitch notation",
+        "Pitch"
+      ]
+    },
+    {
+      "id": "piano.s1.l3",
+      "title": "Half steps and whole steps",
+      "summary": "Measure distance on the keyboard in half steps and whole steps.",
+      "minutes": 9,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "The smallest step",
+          "body": "A **half step** (also called a **semitone**) is the distance from one key to the very next key, black or white, with nothing in between.\n\n- C to the black key right of it is a half step.\n- **E to F** and **B to C** are half steps between two white keys: there is no black key between them.\n\nA **whole step** (a **whole tone**) is two half steps: skip exactly one key. C to D is a whole step (skipping the black key). E to F♯ is a whole step.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "E4",
+              "F4",
+              "B4",
+              "C5"
+            ],
+            "pitchRange": [
+              "C4",
+              "C5"
+            ],
+            "caption": "E–F and B–C: half steps with no black key between."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Half step, then whole step",
+          "caption": "C4 to D♭4 (half step), then C4 to D4 (whole step).",
+          "playback": {
+            "notes": [
+              [
+                "C4"
+              ],
+              [
+                "Db4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "D4"
+              ]
+            ],
+            "bpm": 60
+          },
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C4",
+              "Db4",
+              "D4"
+            ],
+            "pitchRange": [
+              "C4",
+              "G4"
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Play the chromatic scale (every key, black and white, in half steps) from middle C to the next C, 13 keys: C4 C♯4 D4 D♯4 E4 F4 F♯4 G4 G♯4 A4 A♯4 B4 C5.",
+            "notes": [
+              "C4",
+              "C#4",
+              "D4",
+              "D#4",
+              "E4",
+              "F4",
+              "F#4",
+              "G4",
+              "G#4",
+              "A4",
+              "A#4",
+              "B4",
+              "C5"
+            ]
+          },
+          "mistakeTips": [
+            "Every key, black and white, in order: no skipping.",
+            "E4 goes straight to F4; there is no black key between.",
+            "Use fingers 2 and 3 of your right hand, alternating, if that is comfortable."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "Which pair is a half step apart?",
+              "choices": [
+                "E and F",
+                "C and D",
+                "F and G",
+                "A and B"
+              ],
+              "answerIndex": 0,
+              "explanation": "E–F has no black key between it, so it is one half step. The others are whole steps."
+            },
+            {
+              "prompt": "A whole step equals…",
+              "choices": [
+                "Two half steps",
+                "One half step",
+                "Three half steps",
+                "An octave"
+              ],
+              "answerIndex": 0,
+              "explanation": "A whole step skips exactly one key."
+            },
+            {
+              "prompt": "Which pair of white keys is a whole step apart?",
+              "choices": [
+                "G and A",
+                "B and C",
+                "E and F",
+                "B and B"
+              ],
+              "answerIndex": 0,
+              "explanation": "G–A has a black key between it, so it is two half steps."
+            },
+            {
+              "prompt": "How many half steps are in an octave?",
+              "choices": [
+                "12",
+                "8",
+                "7",
+                "10"
+              ],
+              "answerIndex": 0,
+              "explanation": "Counting every key from C to the next C gives 12 half steps."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s1.l3.r1",
+          "kind": "fact",
+          "prompt": "Which two pairs of white keys are only a half step apart?",
+          "answer": "E–F and B–C."
+        },
+        {
+          "id": "piano.s1.l3.r2",
+          "kind": "earInterval",
+          "prompt": "Half step or whole step?",
+          "answer": "Whole step",
+          "playback": {
+            "notes": [
+              [
+                "F4"
+              ],
+              [
+                "G4"
+              ]
+            ],
+            "bpm": 60
+          }
+        }
+      ],
+      "glossaryTerms": [
+        "Half step",
+        "Whole step",
+        "Semitone",
+        "Whole tone",
+        "Chromatic scale"
+      ]
+    },
+    {
+      "id": "piano.s1.l4",
+      "title": "Sharps, flats, and the black keys",
+      "summary": "Name black keys with sharps and flats, and meet enharmonic notes.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Sharp and flat",
+          "body": "- A **sharp (♯)** raises a note by a half step. The black key just right of C is **C♯**.\n- A **flat (♭)** lowers a note by a half step. The black key just left of D is **D♭**.\n\nThat is the same key, so it has two names: **C♯ = D♭**. Two names for the same pitch are called **enharmonic** spellings. The five black keys in each octave are:\n\n**C♯/D♭, D♯/E♭, F♯/G♭, G♯/A♭, A♯/B♭**\n\nWhich name to use depends on the key and the chord (you will learn this in later stages). In this app, sharps are written with # and flats with b in note names like F#4 or Bb3.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C#4",
+              "D#4",
+              "F#4",
+              "G#4",
+              "A#4"
+            ],
+            "pitchRange": [
+              "C4",
+              "B4"
+            ],
+            "caption": "The five black keys, named with sharps."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Sharps and flats on white keys",
+          "body": "Because E–F and B–C are half steps, a sharp or flat can land on a white key: **E♯ = F**, **B♯ = C**, **F♭ = E**, **C♭ = B**. These spellings are rare, but they do appear in music with many sharps or flats."
+        },
+        {
+          "type": "demo",
+          "title": "One key, two names",
+          "caption": "F♯4, then G♭4: the same key and the same sound.",
+          "playback": {
+            "notes": [
+              [
+                "F#4"
+              ],
+              [
+                "Gb4"
+              ]
+            ],
+            "bpm": 60
+          },
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "F#4"
+            ],
+            "pitchRange": [
+              "C4",
+              "B4"
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playNote",
+            "prompt": "Play these black keys: F♯4, B♭4, C♯4, E♭4, G♯4, A♭3.",
+            "notes": [
+              "F#4",
+              "Bb4",
+              "C#4",
+              "Eb4",
+              "G#4",
+              "Ab3"
+            ]
+          },
+          "mistakeTips": [
+            "F♯ is the first black key of the three-group.",
+            "B♭ is the last black key of the three-group (just left of B).",
+            "C♯ is the first black key of the two-group; E♭ is the second.",
+            "A♭3 is the same key as G♯3, just below middle C."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "What does a sharp do?",
+              "choices": [
+                "Raises a note by a half step",
+                "Lowers a note by a half step",
+                "Raises a note by a whole step",
+                "Makes it louder"
+              ],
+              "answerIndex": 0,
+              "explanation": "Sharp = up one half step; flat = down one half step."
+            },
+            {
+              "prompt": "Which is another name for D♯?",
+              "choices": [
+                "E♭",
+                "D♭",
+                "E♯",
+                "C♯"
+              ],
+              "answerIndex": 0,
+              "explanation": "The black key between D and E is D♯ or E♭."
+            },
+            {
+              "prompt": "Which is another name for G♭?",
+              "choices": [
+                "F♯",
+                "G♯",
+                "A♭",
+                "F♭"
+              ],
+              "answerIndex": 0,
+              "explanation": "The black key between F and G is F♯ or G♭."
+            },
+            {
+              "prompt": "B♯ is played on which key?",
+              "choices": [
+                "C",
+                "B",
+                "A♯",
+                "C♯"
+              ],
+              "answerIndex": 0,
+              "explanation": "B–C is a half step, so raising B by a half step lands on C."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Name the key (black keys included)",
+          "generator": {
+            "kind": "noteOnKeyboard",
+            "params": {
+              "range": "C4-B4",
+              "accidentals": "both"
+            }
+          },
+          "count": 8
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s1.l4.r1",
+          "kind": "fact",
+          "prompt": "Give both names for the black key between A and B.",
+          "answer": "A♯ and B♭."
+        },
+        {
+          "id": "piano.s1.l4.r2",
+          "kind": "noteName",
+          "prompt": "Name the highlighted key (either name).",
+          "answer": "C♯4 / D♭4",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C#4"
+            ],
+            "labels": "none",
+            "pitchRange": [
+              "C4",
+              "B4"
+            ]
+          }
+        },
+        {
+          "id": "piano.s1.l4.r3",
+          "kind": "playNote",
+          "prompt": "Play B♭4.",
+          "answer": "Bb4"
+        }
+      ],
+      "glossaryTerms": [
+        "Sharp",
+        "Flat",
+        "Enharmonic",
+        "Accidental",
+        "Natural"
+      ]
+    },
+    {
+      "id": "piano.s1.l5",
+      "title": "Stage 1 review: Hot Cross Buns",
+      "summary": "Name keys quickly, then play two short tunes.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "quiz",
+          "title": "Stage 1 check: name the key",
+          "generator": {
+            "kind": "noteOnKeyboard",
+            "params": {
+              "range": "C3-C5",
+              "accidentals": "both"
+            }
+          },
+          "count": 10
+        },
+        {
+          "type": "quiz",
+          "title": "Stage 1 check: steps and octaves",
+          "questions": [
+            {
+              "prompt": "Which note is a half step above B?",
+              "choices": [
+                "C",
+                "D",
+                "A♯",
+                "C♯"
+              ],
+              "answerIndex": 0,
+              "explanation": "B–C is a white-key half step. (B♯ is also correct as a spelling, but the key is C.)"
+            },
+            {
+              "prompt": "What is a whole step above E?",
+              "choices": [
+                "F♯",
+                "F",
+                "G",
+                "E♯"
+              ],
+              "answerIndex": 0,
+              "explanation": "E–F is a half step; one more half step reaches F♯."
+            },
+            {
+              "prompt": "Which note is one octave above A3?",
+              "choices": [
+                "A4",
+                "A2",
+                "C4",
+                "A5"
+              ],
+              "answerIndex": 0,
+              "explanation": "The octave number goes up by one: A3 → A4."
+            }
+          ]
+        },
+        {
+          "type": "song",
+          "title": "Hot Cross Buns (traditional)",
+          "caption": "Right hand: thumb (1) on C, finger 2 on D, finger 3 on E. The quick notes in bar 3 are eighth notes, two per beat.",
+          "notes": [
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C4"
+            ]
+          ],
+          "rhythm": "q q h q q h e e e e e e e e q q h",
+          "bpm": 80
+        },
+        {
+          "type": "song",
+          "title": "Black Key Bells (original)",
+          "caption": "Only black keys. Start on F♯4, the first black key of the three-group above middle C.",
+          "notes": [
+            [
+              "F#4"
+            ],
+            [
+              "G#4"
+            ],
+            [
+              "A#4"
+            ],
+            [
+              "A#4"
+            ],
+            [
+              "G#4"
+            ],
+            [
+              "F#4"
+            ],
+            [
+              "C#5"
+            ],
+            [
+              "D#5"
+            ],
+            [
+              "C#5"
+            ],
+            [
+              "A#4"
+            ],
+            [
+              "G#4"
+            ],
+            [
+              "A#4"
+            ],
+            [
+              "F#4"
+            ]
+          ],
+          "rhythm": "q q h q q h q q q q q q h",
+          "bpm": 76
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s1.l5.r1",
+          "kind": "fact",
+          "prompt": "Name the white keys around the two-black-key group, left to right.",
+          "answer": "C D E"
+        }
+      ],
+      "glossaryTerms": [
+        "Eighth note"
+      ]
+    }
+  ],
+  "branches": [
+    {
+      "id": "piano.b.staff",
+      "title": "Reading the grand staff",
+      "summary": "Read notes in the treble and bass clefs and connect them to keys on the piano.",
+      "unlocksAfter": "piano.s1.l5",
+      "lessons": [
+        {
+          "id": "piano.b.staff.l1",
+          "title": "The treble clef",
+          "summary": "Lines and spaces of the treble staff, usually played by the right hand.",
+          "minutes": 10,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "The staff",
+              "body": "Written music uses a **staff**: five horizontal lines with four spaces between them. Each line and each space is one white-key letter. Moving up one line-or-space moves up one letter.\n\nA **clef** at the start of the staff tells you which notes the lines mean. The **treble clef** (𝄞) curls around the second line from the bottom, which is **G4**; that is why it is also called the G clef.",
+              "diagram": {
+                "kind": "staff",
+                "notes": [
+                  "G4"
+                ],
+                "pitchRange": [
+                  "C4",
+                  "G5"
+                ],
+                "caption": "Treble clef: the curl circles G4."
+              }
+            },
+            {
+              "type": "explain",
+              "title": "Lines and spaces",
+              "body": "- **Lines**, bottom to top: **E4 G4 B4 D5 F5**, often remembered as \"Every Good Boy Does Fine.\"\n- **Spaces**, bottom to top: **F4 A4 C5 E5**, which spell **FACE**.\n- **Middle C (C4)** sits on a short extra line just below the staff, called a **ledger line**.",
+              "diagram": {
+                "kind": "staff",
+                "notes": [
+                  "E4",
+                  "F4",
+                  "G4",
+                  "A4",
+                  "B4",
+                  "C5",
+                  "D5",
+                  "E5",
+                  "F5"
+                ],
+                "pitchRange": [
+                  "C4",
+                  "G5"
+                ]
+              }
+            },
+            {
+              "type": "demo",
+              "title": "Treble staff, bottom line to top line",
+              "caption": "E4 F4 G4 A4 B4 C5 D5 E5 F5: line, space, line, space…",
+              "playback": {
+                "notes": [
+                  [
+                    "E4"
+                  ],
+                  [
+                    "F4"
+                  ],
+                  [
+                    "G4"
+                  ],
+                  [
+                    "A4"
+                  ],
+                  [
+                    "B4"
+                  ],
+                  [
+                    "C5"
+                  ],
+                  [
+                    "D5"
+                  ],
+                  [
+                    "E5"
+                  ],
+                  [
+                    "F5"
+                  ]
+                ],
+                "bpm": 80
+              },
+              "diagram": {
+                "kind": "staff",
+                "notes": [
+                  "E4",
+                  "F4",
+                  "G4",
+                  "A4",
+                  "B4",
+                  "C5",
+                  "D5",
+                  "E5",
+                  "F5"
+                ],
+                "pitchRange": [
+                  "C4",
+                  "G5"
+                ]
+              }
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "playNote",
+                "prompt": "Read each note on the staff and play it: G4, E4, C5, F4, D5, A4.",
+                "notes": [
+                  "G4",
+                  "E4",
+                  "C5",
+                  "F4",
+                  "D5",
+                  "A4"
+                ],
+                "diagram": {
+                  "kind": "staff",
+                  "notes": [
+                    "G4",
+                    "E4",
+                    "C5",
+                    "F4",
+                    "D5",
+                    "A4"
+                  ],
+                  "labels": "none",
+                  "pitchRange": [
+                    "C4",
+                    "G5"
+                  ]
+                }
+              },
+              "mistakeTips": [
+                "Lines: E G B D F. Spaces: F A C E.",
+                "Count up from a note you know, such as G4 on the second line.",
+                "C5 is the third space, one octave above middle C."
+              ]
+            },
+            {
+              "type": "quiz",
+              "title": "Name the treble note",
+              "generator": {
+                "kind": "noteOnStaff",
+                "params": {
+                  "clef": "treble",
+                  "range": "C4-G5",
+                  "accidentals": "none"
+                }
+              },
+              "count": 10
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "piano.b.staff.l1.r1",
+              "kind": "fact",
+              "prompt": "Treble clef lines, bottom to top?",
+              "answer": "E G B D F"
+            },
+            {
+              "id": "piano.b.staff.l1.r2",
+              "kind": "fact",
+              "prompt": "Treble clef spaces, bottom to top?",
+              "answer": "F A C E"
+            },
+            {
+              "id": "piano.b.staff.l1.r3",
+              "kind": "noteName",
+              "prompt": "Name this note.",
+              "answer": "B4",
+              "diagram": {
+                "kind": "staff",
+                "notes": [
+                  "B4"
+                ],
+                "labels": "none",
+                "pitchRange": [
+                  "C4",
+                  "G5"
+                ]
+              }
+            }
+          ],
+          "glossaryTerms": [
+            "Staff",
+            "Clef",
+            "Treble clef",
+            "Ledger line"
+          ]
+        },
+        {
+          "id": "piano.b.staff.l2",
+          "title": "The bass clef",
+          "summary": "Lines and spaces of the bass staff, usually played by the left hand.",
+          "minutes": 10,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "The bass clef",
+              "body": "The **bass clef** (𝄢) marks lower notes. Its two dots sit on either side of the fourth line from the bottom, which is **F3**; that is why it is also called the F clef.\n\n- **Lines**, bottom to top: **G2 B2 D3 F3 A3**, often remembered as \"Good Boys Do Fine Always.\"\n- **Spaces**, bottom to top: **A2 C3 E3 G3**, \"All Cows Eat Grass.\"\n- **Middle C (C4)** sits on a ledger line just **above** the bass staff.",
+              "diagram": {
+                "kind": "staff",
+                "notes": [
+                  "G2",
+                  "A2",
+                  "B2",
+                  "C3",
+                  "D3",
+                  "E3",
+                  "F3",
+                  "G3",
+                  "A3"
+                ],
+                "pitchRange": [
+                  "F2",
+                  "C4"
+                ],
+                "caption": "Bass clef: the dots surround F3."
+              }
+            },
+            {
+              "type": "demo",
+              "title": "Bass staff, bottom line to top line",
+              "caption": "G2 A2 B2 C3 D3 E3 F3 G3 A3.",
+              "playback": {
+                "notes": [
+                  [
+                    "G2"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "B2"
+                  ],
+                  [
+                    "C3"
+                  ],
+                  [
+                    "D3"
+                  ],
+                  [
+                    "E3"
+                  ],
+                  [
+                    "F3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "A3"
+                  ]
+                ],
+                "bpm": 80
+              },
+              "diagram": {
+                "kind": "staff",
+                "notes": [
+                  "G2",
+                  "A2",
+                  "B2",
+                  "C3",
+                  "D3",
+                  "E3",
+                  "F3",
+                  "G3",
+                  "A3"
+                ],
+                "pitchRange": [
+                  "F2",
+                  "C4"
+                ]
+              }
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "playNote",
+                "prompt": "Read each bass-clef note and play it with your left hand: F3, C3, A3, G2, E3, D3.",
+                "notes": [
+                  "F3",
+                  "C3",
+                  "A3",
+                  "G2",
+                  "E3",
+                  "D3"
+                ],
+                "diagram": {
+                  "kind": "staff",
+                  "notes": [
+                    "F3",
+                    "C3",
+                    "A3",
+                    "G2",
+                    "E3",
+                    "D3"
+                  ],
+                  "labels": "none",
+                  "pitchRange": [
+                    "F2",
+                    "C4"
+                  ]
+                }
+              },
+              "mistakeTips": [
+                "Lines: G B D F A. Spaces: A C E G.",
+                "F3 is the line between the two dots of the clef.",
+                "C3 is the second space, one octave below middle C.",
+                "G2 is low; play it firmly so the microphone catches it."
+              ]
+            },
+            {
+              "type": "quiz",
+              "title": "Name the bass note",
+              "generator": {
+                "kind": "noteOnStaff",
+                "params": {
+                  "clef": "bass",
+                  "range": "F2-C4",
+                  "accidentals": "none"
+                }
+              },
+              "count": 10
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "piano.b.staff.l2.r1",
+              "kind": "fact",
+              "prompt": "Bass clef lines, bottom to top?",
+              "answer": "G B D F A"
+            },
+            {
+              "id": "piano.b.staff.l2.r2",
+              "kind": "fact",
+              "prompt": "Bass clef spaces, bottom to top?",
+              "answer": "A C E G"
+            }
+          ],
+          "glossaryTerms": [
+            "Bass clef",
+            "Staff",
+            "Ledger line"
+          ]
+        },
+        {
+          "id": "piano.b.staff.l3",
+          "title": "The grand staff and landmark notes",
+          "summary": "Join the two clefs, read from landmarks, and read accidentals on the staff.",
+          "minutes": 12,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "One staff for two hands",
+              "body": "Piano music uses the **grand staff**: a treble staff above a bass staff, joined by a brace. Usually the right hand reads the top staff and the left hand reads the bottom staff.\n\nMiddle C is the link: it is one ledger line below the treble staff **and** one ledger line above the bass staff. Both are the same key, C4.",
+              "diagram": {
+                "kind": "staff",
+                "notes": [
+                  "C4"
+                ],
+                "pitchRange": [
+                  "F2",
+                  "G5"
+                ],
+                "caption": "Middle C sits between the two staves."
+              }
+            },
+            {
+              "type": "explain",
+              "title": "Landmark notes",
+              "body": "Instead of counting from the bottom every time, learn a few **landmarks** and read by step from them:\n\n- **Treble G4** (second line, where the clef curls)\n- **Treble C5** (third space)\n- **Middle C4** (ledger line between the staves)\n- **Bass F3** (fourth line, between the clef's dots)\n- **Bass C3** (second space)\n\nA note on the next line up from a line note is a **skip** (two letters, such as G to B). A note in the space just above a line is a **step** (one letter).",
+              "diagram": {
+                "kind": "staff",
+                "notes": [
+                  "C3",
+                  "F3",
+                  "C4",
+                  "G4",
+                  "C5"
+                ],
+                "pitchRange": [
+                  "F2",
+                  "G5"
+                ]
+              }
+            },
+            {
+              "type": "explain",
+              "title": "Accidentals on the staff",
+              "body": "A sharp (♯) or flat (♭) placed before a note applies to that note **for the rest of the measure** (the bar). A **natural sign (♮)** cancels it and returns to the white key.\n\nAt the start of each line you may also see a **key signature**: sharps or flats that apply to every note of that letter throughout the piece. You will use key signatures in Stage 6."
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "playNote",
+                "prompt": "Landmark drill: play C3 (left hand), F3 (left hand), C4, G4 (right hand), C5 (right hand).",
+                "notes": [
+                  "C3",
+                  "F3",
+                  "C4",
+                  "G4",
+                  "C5"
+                ],
+                "diagram": {
+                  "kind": "staff",
+                  "notes": [
+                    "C3",
+                    "F3",
+                    "C4",
+                    "G4",
+                    "C5"
+                  ],
+                  "labels": "none",
+                  "pitchRange": [
+                    "F2",
+                    "G5"
+                  ]
+                }
+              },
+              "mistakeTips": [
+                "C3 is the second space of the bass staff.",
+                "F3 sits between the bass clef's dots.",
+                "G4 is where the treble clef curls."
+              ]
+            },
+            {
+              "type": "quiz",
+              "title": "Treble notes with accidentals",
+              "generator": {
+                "kind": "noteOnStaff",
+                "params": {
+                  "clef": "treble",
+                  "range": "C4-A5",
+                  "accidentals": "sharpsAndFlats"
+                }
+              },
+              "count": 6
+            },
+            {
+              "type": "quiz",
+              "title": "Bass notes",
+              "generator": {
+                "kind": "noteOnStaff",
+                "params": {
+                  "clef": "bass",
+                  "range": "E2-C4",
+                  "accidentals": "none"
+                }
+              },
+              "count": 6
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "piano.b.staff.l3.r1",
+              "kind": "fact",
+              "prompt": "Where is middle C on the grand staff?",
+              "answer": "On a ledger line between the staves: below the treble staff and above the bass staff."
+            },
+            {
+              "id": "piano.b.staff.l3.r2",
+              "kind": "fact",
+              "prompt": "How long does an accidental last?",
+              "answer": "Until the end of the measure (bar line), unless cancelled by a natural sign."
+            }
+          ],
+          "glossaryTerms": [
+            "Grand staff",
+            "Landmark notes",
+            "Natural",
+            "Key signature",
+            "Measure"
+          ]
+        },
+        {
+          "id": "piano.b.staff.l4",
+          "title": "Staff review: Mary Had a Little Lamb",
+          "summary": "Read a whole tune from the staff.",
+          "minutes": 8,
+          "steps": [
+            {
+              "type": "quiz",
+              "title": "Grand staff check",
+              "generator": {
+                "kind": "noteOnStaff",
+                "params": {
+                  "clef": "grand",
+                  "range": "G2-G5",
+                  "accidentals": "none"
+                }
+              },
+              "count": 10
+            },
+            {
+              "type": "song",
+              "title": "Mary Had a Little Lamb (traditional)",
+              "caption": "Read the notes from the treble staff rather than memorizing them. Right hand: 1 on C4, 2 on D4, 3 on E4, 5 on G4.",
+              "notes": [
+                [
+                  "E4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "G4"
+                ],
+                [
+                  "G4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "C4"
+                ]
+              ],
+              "rhythm": "q q q q q q h q q h q q h q q q q q q q q q q q q w",
+              "bpm": 84
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "piano.b.staff.l4.r1",
+              "kind": "noteName",
+              "prompt": "Name this note.",
+              "answer": "G4",
+              "diagram": {
+                "kind": "staff",
+                "notes": [
+                  "G4"
+                ],
+                "labels": "none",
+                "pitchRange": [
+                  "C4",
+                  "G5"
+                ]
+              }
+            }
+          ],
+          "glossaryTerms": [
+            "Grand staff"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -24,6 +24,38 @@ Defaults should work without choosing a directory, having an iCloud account, or 
 - Tuning normalization across the library and player. Recognizable note sequences use preset names; custom sequences, including repeated pitches, retain their labels. Unknown tuning information is not labeled Standard. Arbitrary tuning spellings do not necessarily provide enough octave information for accurate synthesized pitches.
 - Tab Maker and tuner/transcription tools. Transcription and notation-to-tab arrangement still explicitly target guitar. Maker documents and device-specific presentation/preferences remain local unless explicitly described otherwise.
 
+### Tutor and Practice (added 2026-09-25)
+
+Both features listen through the device microphone only (no MIDI input), work fully offline (no network calls, LLM, or downloaded models), and mute all app audio while listening; timing cues are visual (count-in, beat pulse, cursor). Grading checks sounding pitch, not string or fret. A detection the listener cannot decide is graded `uncertain` and shown as a neutral "not sure", never as a wrong note, and is excluded from accuracy.
+
+- **Tutor** (graduation-cap **Tutor** button in the library toolbar beside Tuner; `AppPage.tutor`): acoustic guitar and piano courses, each a fixed path of stages 0–8 with optional side branches that unlock after a named lesson and never block the path.
+  - Guitar: 56 main-path lessons and 4 branches (Rhythm reading, Fingerstyle basics, Songs you know, Blues shuffle; 12 lessons).
+  - Piano: 45 main-path lessons and 2 branches (Reading the grand staff, Pedal basics; 7 lessons).
+  - `tutor-glossary.json` has 253 terms.
+  - Lessons mix explain, demo (synth playback with diagram highlighting; demos authored without a diagram show chord names in the playback strip plus an automatic fretboard diagram (guitar open fingering) or keyboard diagram for the current chord), mic-graded practice, quiz (tap, or answer by playing for note/interval/chord-quality questions), and song steps (public-domain or original excerpts, Wait or Play-along). Mic-graded steps offer "Skip for now" when the microphone is off.
+  - Chord-change drills pass on an absolute clean-changes-per-minute goal that rises by stage: guitar 8/min through stage 3, 10 at stage 4, 12 at 5, 14 at 6–7, and 16 from 8. Piano uses the previous stage's goal.
+  - Completing a lesson seeds spaced-repetition review cards (simplified FSRS). Reviews are self-graded facts, auto-graded multiple choice, or mic-graded play cards.
+  - Other sections: Songs you know (library scores whose chord symbols use chords from completed lessons, read from stored canonical MusicXML `<harmony>` and from local text tabs, up to 300 files under 512 KB each, with no iCloud downloads; Guitar Pro chord names are not read), Games, Glossary, Calibration, and Tutor settings (instrument, daily goal, per-instrument progress reset).
+- **Games**: Fretboard Hunt (guitar), Key Hunt (piano), Chord Change Sprint, Interval Duel, Name That Quality, Rhythm Tapper, Scale Runner, Note Rush. Games keep personal bests only, with no streaks. Chord Change Sprint (60 s) cites a starting point of about 8 (guitar) / 10 (piano) clean changes a minute and 30 (guitar) / 40 (piano) per game as a solid goal, matching the lesson goals. Ear games and tap fallbacks work without the microphone.
+- **Calibration**: covers mic permission, input level with placement advice (iPad on a stand is the assumed setup), an instrument check (open low E / middle C with cents), and latency calibration. Latency is measured with 8 clicks, or 8 silent visual pulses as a fallback. It is saved per audio route and shared by lessons, games, and library practice. The default is 0.08 s until calibrated.
+- **Library Practice** (`waveform.and.mic` tool in both transports): covers the open score with practice chrome. You choose a measure range, speed (25–150%, quick 50–100%), and instrument.
+  - **Wait**: the cursor advances when the current target is heard; → skips it.
+  - **Play-along**: the cursor moves at the chosen speed after a visual one-bar count-in (two bars when a bar is shorter than 2 s).
+  - Live feedback turns heard notes green and never red. Native drawn tabs show the range drawn with an overlay; Guitar Pro, PDF, and MIDI sources show an event strip over the visible page.
+  - After a take of at least 3 s, the recording is analyzed on device (live verifier results plus post-take DSP transcription, alignment, local tempo), saved, and shown in a review sheet. The review has a note lanes view, timing lane, tempo ribbon (tap to loop), accuracy/timing MAD/weakest measures, suggestions that set the loop and speed in the viewer, take playback with a cursor, and a per-measure history heatmap across takes.
+  - A take in which nothing could be graded shows "couldn't hear this take clearly", is not scored, and stays out of the history heatmap.
+  - Leaving practice mid-take discards takes shorter than 3 s. Longer takes are analyzed, saved, and offered for review the next time practice opens for that score.
+  - Route changes and audio interruptions stop the take with an explanation.
+  - The review is a large sheet on every size class (page-sized on iOS 18+). Neither practice nor the review resets the viewer or counts another play.
+  - In compact width the Practice tool sits on the transport's second row.
+  - **Library writes**: a suggestion's loop is stored in the file's loop measures (drawn tabs) or the Guitar Pro loop, and its speed in the viewer's BPM. If practice changes the speed on a drawn tab that has no stored reference tempo, the player's current reference is saved as `FileItem.referenceBPM` so the percentage stays true. Practice makes no other library metadata writes.
+- **Practice availability**:
+  - Available for text/drawn tabs, and PDFs with a created guitar arrangement, whose `MeasureMap` has systems and resolved open-string octaves.
+  - Available for Guitar Pro once loaded (selected track exported from alphaTab).
+  - Available for any score with a sibling MIDI file of the same name.
+  - Otherwise the tool explains why it is unavailable: a tuning without octave information, or a PDF without structure.
+  - Guitar-family parts (guitar, bass, ukulele, mandolin, banjo) practice as guitar. A part uses the bass listening profile when it is a bass track, the lowest open string is below D2, or the file lists bass and no other guitar-family instrument.
+
 ## Portable score metadata
 
 Score details writes title, artist, composer, arranger, collection, arrangement, instruments, tuning, source name/URL/ID, and copyright inside supported library files. Deferred preparation reads these fields without requiring a sidecar. Catalog rescans (including Use Existing Folder) skip embedded content reads to avoid blocking on file providers; text and Guitar Pro readers also extract metadata when opened. User edits take precedence over inference. Personal tags, favorites, recents, loops, and practice settings remain library data and use the existing sync/backup flow.
@@ -61,6 +93,23 @@ Advanced offers **Use Existing Folder**, which adopts the exact selected directo
 
 Switching storage retains the previous file copies. There is no automatic cloud purge or destructive conflict resolution.
 
+### Tutor data (local only)
+
+Tutor and Practice data live in a separate SwiftData container at `Application Support/Tutor/tutor.store` (configuration `tutor`, `cloudKitDatabase: .none`). The library `cloud`/`local` stores and `FileItem` are not opened or modified by it, and it is not part of library sync or metadata backup. If the file store cannot open, the tutor falls back to an in-memory store for that session.
+
+| Model | Contents |
+|---|---|
+| `LessonProgressRecord` | Lesson status, best score, attempts per lesson and instrument. Game personal bests use ids `game.<id>.<instrument>`, with `.level<n>` above level 1 (Chord Change Sprint: `.<chord-pair>` for a non-default pair). |
+| `ReviewCardRecord` | Spaced-repetition cards per instrument. |
+| `PracticeTakeRecord` | `scoreKey` = `FileItem.id` UUID string, title, measures, BPM, accuracy, timing MAD, `analysisJSON` (a `TakeAnalysis` plus the passage and take settings), optional audio file name. |
+| `CalibrationRecord` | Latency seconds per route key, e.g. `out=Speaker;in=MicrophoneBuiltIn`. |
+| `TutorSettingsRecord` | Current instrument, daily goal (5–60 min). |
+
+- Takes record to a mono Float32 `.caf` in the temporary `TutorTakes` folder. Saved takes move to `Application Support/Tutor/Takes/` (excluded from device backup) and are re-encoded to AAC `.m4a` in the background; the original is kept if encoding fails.
+- Audio pruning keeps the 10 newest takes per score, and at most 200 files / 500 MB overall (oldest first). Pruning removes audio only; take records and analyses stay. Takes shorter than 3 s, or stopped during the count-in, are discarded.
+- Calibration goes through `TutorLatency.store()`: the tutor store, mirrored to `UserDefaults` keys `tutor.latency.<routeKey>`. Route keys describe the listening route (`.playAndRecord`, speaker default, A2DP not HFP). The input is predicted when the session is not recording, so the key is the same before and during listening. Keys containing `in=none`/`out=none` are ignored.
+- **Tutor settings → Reset progress** deletes lesson progress (including game bests) and review cards for one instrument. Settings, calibration, and library practice takes are kept. Deleting a take from the review removes its record and audio.
+
 ## Implementation map
 
 | Concern | Main code |
@@ -74,6 +123,18 @@ Switching storage retains the previous file copies. There is no automatic cloud 
 | Guitar Pro native/web adapter | `TabBuddy/GuitarProView.swift`, `TabBuddy/GuitarProAssets/player.js` |
 | External-source links and editable score details | `TabBuddy/ScoreDiscoveryView.swift` |
 | Parsing, tuning names, native drawing | `TabBuddy/TabParser.swift`, `Maker/ComposedNote.swift`, `Player/TabRenderModel.swift` |
+| Tutor shared types (`ExpectedEvent`, `TakeAnalysis`, …) | `TabBuddy/Tutor/Shared/TutorContracts.swift` |
+| Theory core (pitch, interval, scale, chord, key, rhythm, fretboard/keyboard) | `TabBuddy/Tutor/Theory/` |
+| Mic input, mute, take clock, route keys, calibration, detectors, synth | `TabBuddy/Tutor/Listening/` (`TutorAudioSession`, `TutorListener`, `ExpectedNoteVerifier`, `PolyphonicTranscriber`, `LatencyCalibrator`, `InstrumentProfile`, `TutorSynth`) |
+| Expected passages, alignment, tempo, take analysis | `TabBuddy/Tutor/Assessment/` |
+| Tutor SwiftData store and take audio | `TabBuddy/Tutor/Store/` |
+| Curriculum loading/validation, generators, SRS, path progress, song suggestions | `TabBuddy/Tutor/Curriculum/`, content in `TabBuddy/Tutor/Content/tutor-*.json` |
+| Tutor shell, lesson player, diagrams | `TabBuddy/Tutor/UI/Shell`, `UI/Lesson`, `UI/Diagrams`, `UI/Common` |
+| Games | `TabBuddy/Tutor/Games/` (registry in `UI/Shell/TutorGameRegistry.swift`) |
+| Library practice mode and take review | `TabBuddy/Tutor/Practice/`; viewer integration in `TabViewerView.swift` (`practiceStatus`, `openPractice`), `Player/TabTransportBar.swift` (`PracticeToolButton`), `GuitarProView.swift` + `GuitarProAssets/player.js` (`exportNotes`) |
+| App audio mute while listening | `.tutorListeningWillStart` observers in `MetronomeEngine`, `NotePlaybackEngine`, `PlaybackCoordinator`, `GuitarProPlayer`; `TutorAudioSession.outputMuted` guards |
+
+`TabBuddy/Tutor` and `TabBuddyTests/Tutor` are Xcode file-system-synchronized groups for the app and test targets. New files there need no `project.pbxproj` edits. The bundle is flat, so content files use unique `tutor-` names.
 
 The SwiftData `cloud` store contains `FileItem` and `LibraryDescriptor`; the name describes its historical role, not whether it is currently syncing. The `local` store contains derived tag indexes, Maker documents, authorization mounts, reachability, and migration jobs. Store names and schemas must remain migration-compatible.
 
@@ -112,7 +173,42 @@ Local discovery-source acquisition is documented in `Tools/TAB_CORPUS.md`. `Tool
 - Unsigned simulator tests explicitly disable real CloudKit mirroring. Temporary test roots simulate file migration and offline availability; they do not prove live iCloud synchronization.
 - Signed device builds with the registered identifiers and iCloud entitlements have succeeded. Live two-device sync, in-flight CloudKit behavior during connection changes, account changes, and production CloudKit schema deployment still require device validation.
 - Re-enabling sync after independently editing copies can encounter destination conflicts. The current policy is to report the conflict and retain both locations, not silently choose a winner.
+- Tutor/Practice tests (`TabBuddyTests/Tutor`) cover:
+  - the theory core
+  - curriculum decoding, plus the content validator run on every bundled JSON file
+  - generators, SRS math, and path unlocking
+  - the detectors on synthetic audio (Karplus–Strong strings, additive inharmonic piano, room noise, silence)
+  - alignment and tempo on synthetic timelines
+  - store CRUD and take-audio pruning
+  - route-key prediction and the shared latency store
+  - practice and game state machines, driven through fakes
+
+  `LessonUISnapshotTests` and `PracticeSnapshotTests` render PNGs only when `TEST_RUNNER_TUTOR_SNAPSHOT_DIR` / `TEST_RUNNER_PRACTICE_SNAPSHOT_DIR` is set. They are layout aids, not assertions, and skip in a normal run.
+- **Not verified:**
+  - real microphone accuracy on an acoustic guitar, piano, or bass, including iPad placement at music-stand distance
+  - device latency and the calibration procedure on hardware
+  - Bluetooth/USB routes
+  - learning quality of the curriculum and games
+
+  Detector thresholds were tuned on synthetic audio only, so synthetic hit rates are not real-world accuracy. The recorded fixture corpus and `.diag/authbench.swift --verifier` benchmark in the plan do not exist yet. Post-take transcription is an offline DSP harmonic-sum transcriber, not a Core ML model; Basic Pitch is not bundled. The tutor store is local, so it does not change live iCloud behavior. That is by construction, not something a two-device test has confirmed.
 - The committed Guitar Pro fixtures are original guitar and two-staff piano exercises. Downloaded GProTab arrangements are ignored local test inputs and must not be added to the repository or app. Bundled third-party assets retain their licenses and notices.
+
+## Developer launch arguments (DEBUG builds only)
+
+| Argument | Effect |
+|---|---|
+| `-TutorOpen` | Open the Tutor on launch. |
+| `-TutorInstrument guitar\|piano` | Tutor instrument (also selects a game's instrument). |
+| `-TutorSeedProgress <n>` | Mark the first n main-path lessons complete and make their cards due. |
+| `-TutorSection path\|reviews\|songs\|games\|glossary\|calibration\|settings\|review-session` | Open a tutor section. |
+| `-TutorCalibration` | Open the tutor on Calibration. |
+| `-TutorReviewKind <ReviewKind>` | Show due cards of that kind first. |
+| `-TutorLessonDemo <lessonID>` / `-TutorLessonStep <n>` | Open a lesson, optionally at a 0-based step. |
+| `-TutorDiagramGallery` (+ `-TutorGalleryPiano`) | Every diagram kind. |
+| `-TutorGame <id>` / `-TutorGamePhase play\|results\|countdown\|mic-off` | Open a game; a phase uses fake silent audio and an in-memory score store. |
+| `-TutorForceWidth <pt>` | Lay debug lesson/game screens out in a fixed-width column (Split View/compact check). |
+
+Game ids: `fretboard-hunt`, `key-hunt`, `chord-change-sprint`, `interval-duel`, `name-that-quality`, `rhythm-tapper`, `scale-runner`, `note-rush`. `PracticeDemoData` (DEBUG) supplies a scripted take for previews and snapshot tests; there is no launch argument for practice mode.
 
 ## Documentation maintenance
 

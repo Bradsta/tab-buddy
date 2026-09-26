@@ -1,0 +1,1063 @@
+{
+  "id": "piano.s3",
+  "instrument": "piano",
+  "order": 3,
+  "title": "Five-finger positions in C and G",
+  "summary": "Learn finger numbers, then play in C and G positions with each hand separately.",
+  "lessons": [
+    {
+      "id": "piano.s3.l1",
+      "title": "Finger numbers",
+      "summary": "Number your fingers 1 to 5 and play your first five-finger position.",
+      "minutes": 9,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Numbering the fingers",
+          "body": "Piano music numbers the fingers so fingering can be written above notes:\n\n- **1** = thumb\n- **2** = index\n- **3** = middle\n- **4** = ring\n- **5** = little finger (pinky)\n\nBoth hands use the same numbers, so **both thumbs are 1**. In the right hand, 1 is on the left of the hand; in the left hand, 1 is on the right. Tap each finger on your leg while saying its number, both hands."
+        },
+        {
+          "type": "explain",
+          "title": "C position, right hand",
+          "body": "A **five-finger position** puts one finger on each of five neighboring white keys. In **right-hand C position**, finger 1 is on **middle C (C4)**, and fingers 2 to 5 rest on **D4 E4 F4 G4**.\n\nKeep all five fingers resting on their keys, curved, even when they are not playing.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C4",
+              "D4",
+              "E4",
+              "F4",
+              "G4"
+            ],
+            "labels": "fingers",
+            "pitchRange": [
+              "C4",
+              "C5"
+            ],
+            "caption": "Right hand C position: 1 on C4 … 5 on G4."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Up and down the C position",
+          "caption": "C D E F G F E D C, one finger per key.",
+          "playback": {
+            "notes": [
+              [
+                "C4"
+              ],
+              [
+                "D4"
+              ],
+              [
+                "E4"
+              ],
+              [
+                "F4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "F4"
+              ],
+              [
+                "E4"
+              ],
+              [
+                "D4"
+              ],
+              [
+                "C4"
+              ]
+            ],
+            "bpm": 80
+          },
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C4",
+              "D4",
+              "E4",
+              "F4",
+              "G4"
+            ],
+            "labels": "fingers",
+            "pitchRange": [
+              "C4",
+              "C5"
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Right hand, C position: play fingers 1 2 3 4 5 4 3 2 1 (C4 D4 E4 F4 G4 F4 E4 D4 C4). One note per beat.",
+            "notes": [
+              "C4",
+              "D4",
+              "E4",
+              "F4",
+              "G4",
+              "F4",
+              "E4",
+              "D4",
+              "C4"
+            ],
+            "rhythm": "q q q q q q q q w",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84,
+              96
+            ]
+          },
+          "mistakeTips": [
+            "Keep every finger touching its key, even when not playing.",
+            "Finger 4 is the weakest; let it press with arm weight, not by squeezing.",
+            "Keep the thumb on its side corner, not flat."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "Which finger is number 1?",
+              "choices": [
+                "Thumb",
+                "Index",
+                "Pinky",
+                "Middle"
+              ],
+              "answerIndex": 0,
+              "explanation": "Both thumbs are finger 1."
+            },
+            {
+              "prompt": "Which finger is number 4?",
+              "choices": [
+                "Ring",
+                "Middle",
+                "Pinky",
+                "Index"
+              ],
+              "answerIndex": 0,
+              "explanation": "1 thumb, 2 index, 3 middle, 4 ring, 5 pinky."
+            },
+            {
+              "prompt": "In right-hand C position, which finger plays F4?",
+              "choices": [
+                "4",
+                "3",
+                "5",
+                "2"
+              ],
+              "answerIndex": 0,
+              "explanation": "C=1, D=2, E=3, F=4, G=5."
+            },
+            {
+              "prompt": "In right-hand C position, which note is under finger 3?",
+              "choices": [
+                "E4",
+                "D4",
+                "F4",
+                "G4"
+              ],
+              "answerIndex": 0,
+              "explanation": "Finger 3 rests on the third key, E4."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s3.l1.r1",
+          "kind": "fact",
+          "prompt": "Name the finger numbers from thumb to pinky.",
+          "answer": "1 thumb, 2 index, 3 middle, 4 ring, 5 pinky (same in both hands)."
+        },
+        {
+          "id": "piano.s3.l1.r2",
+          "kind": "fact",
+          "prompt": "Right-hand C position: which finger is on G4?",
+          "answer": "5"
+        }
+      ],
+      "glossaryTerms": [
+        "Finger numbers",
+        "Five-finger position",
+        "C position"
+      ]
+    },
+    {
+      "id": "piano.s3.l2",
+      "title": "Right hand: steps and skips",
+      "summary": "Move by step and by skip in right-hand C position, and echo short phrases.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Steps and skips",
+          "body": "- A **step** moves to the next key and next finger: C to D, fingers 1 to 2.\n- A **skip** jumps over one key: C to E, fingers 1 to 3. On the staff, a skip goes line to line or space to space.\n\nIn a five-finger position, the finger number tells you the note, so you rarely need to look down. Try to keep your eyes on the screen.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C4",
+              "E4",
+              "G4"
+            ],
+            "labels": "fingers",
+            "pitchRange": [
+              "C4",
+              "C5"
+            ],
+            "caption": "Skips: 1–3–5 = C E G."
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Skips: play 1 3 5 3 1 (C4 E4 G4 E4 C4), twice.",
+            "notes": [
+              "C4",
+              "E4",
+              "G4",
+              "E4",
+              "C4",
+              "C4",
+              "E4",
+              "G4",
+              "E4",
+              "C4"
+            ],
+            "rhythm": "q q q q h q q q q h",
+            "bpm": 66,
+            "tempoSteps": [
+              66,
+              80,
+              92
+            ]
+          },
+          "mistakeTips": [
+            "Keep fingers 2 and 4 resting on D and F; do not lift them high.",
+            "Let your hand stay in place. Only the fingers move."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Mixed: 1 2 3 1 | 3 4 5 (C4 D4 E4 C4 | E4 F4 G4).",
+            "notes": [
+              "C4",
+              "D4",
+              "E4",
+              "C4",
+              "E4",
+              "F4",
+              "G4"
+            ],
+            "rhythm": "q q q q q q h",
+            "bpm": 66,
+            "tempoSteps": [
+              66,
+              80,
+              92
+            ]
+          },
+          "mistakeTips": [
+            "The skip from 3 back to 1 is E down to C.",
+            "Hold the last note for two beats."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "melodyEcho",
+            "prompt": "Listen, then play the phrase back in right-hand C position.",
+            "notes": [
+              "C4",
+              "D4",
+              "E4",
+              "G4",
+              "E4",
+              "C4"
+            ],
+            "bpm": 72,
+            "repetitions": 3
+          },
+          "mistakeTips": [
+            "The phrase starts on C4 (finger 1).",
+            "Listen for steps (next key) versus skips (jumping one key).",
+            "Replay the phrase as often as you need."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "C to E is a…",
+              "choices": [
+                "Skip",
+                "Step",
+                "Octave",
+                "Half step"
+              ],
+              "answerIndex": 0,
+              "explanation": "C to E jumps over D, so it is a skip."
+            },
+            {
+              "prompt": "In right-hand C position, fingers 1–3–5 play…",
+              "choices": [
+                "C E G",
+                "C D E",
+                "D F A",
+                "E G B"
+              ],
+              "answerIndex": 0,
+              "explanation": "Finger 1 = C, 3 = E, 5 = G."
+            },
+            {
+              "prompt": "On the staff, a skip moves from…",
+              "choices": [
+                "A line to the next line",
+                "A line to the next space",
+                "One staff to the other",
+                "A note to the same note"
+              ],
+              "answerIndex": 0,
+              "explanation": "Line to line (or space to space) skips one letter."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s3.l2.r1",
+          "kind": "fact",
+          "prompt": "What is the difference between a step and a skip?",
+          "answer": "A step goes to the next letter (next key); a skip jumps over one letter."
+        }
+      ],
+      "glossaryTerms": [
+        "Step",
+        "Skip"
+      ]
+    },
+    {
+      "id": "piano.s3.l3",
+      "title": "Left hand in C position",
+      "summary": "Play the same five notes one octave lower with the left hand.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Left-hand C position",
+          "body": "Put your **left-hand finger 5 on C3** (the C below middle C). Fingers 4, 3, 2, 1 rest on **D3 E3 F3 G3**. The thumb ends up on G3.\n\nNotice the reversal: going **up** the keyboard, the right hand counts 1→5 but the left hand counts **5→1**. This takes practice, so go slowly and say the numbers.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C3",
+              "D3",
+              "E3",
+              "F3",
+              "G3"
+            ],
+            "labels": "fingers",
+            "pitchRange": [
+              "C3",
+              "C4"
+            ],
+            "caption": "Left hand C position: 5 on C3 … 1 on G3."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Left hand up and down",
+          "caption": "C3 D3 E3 F3 G3 F3 E3 D3 C3.",
+          "playback": {
+            "notes": [
+              [
+                "C3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "F3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "F3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "C3"
+              ]
+            ],
+            "bpm": 80
+          },
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C3",
+              "D3",
+              "E3",
+              "F3",
+              "G3"
+            ],
+            "labels": "fingers",
+            "pitchRange": [
+              "C3",
+              "C4"
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Left hand, C position: fingers 5 4 3 2 1 2 3 4 5 (C3 D3 E3 F3 G3 F3 E3 D3 C3).",
+            "notes": [
+              "C3",
+              "D3",
+              "E3",
+              "F3",
+              "G3",
+              "F3",
+              "E3",
+              "D3",
+              "C3"
+            ],
+            "rhythm": "q q q q q q q q w",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ]
+          },
+          "mistakeTips": [
+            "Finger 5 on C3, not C4.",
+            "Keep the left wrist level; it tends to drop.",
+            "Fingers 4 and 5 are weaker in most people's left hand. Slow down rather than forcing."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Left-hand skips: 5 3 1 3 5 (C3 E3 G3 E3 C3), twice.",
+            "notes": [
+              "C3",
+              "E3",
+              "G3",
+              "E3",
+              "C3",
+              "C3",
+              "E3",
+              "G3",
+              "E3",
+              "C3"
+            ],
+            "rhythm": "q q q q h q q q q h",
+            "bpm": 66,
+            "tempoSteps": [
+              66,
+              80
+            ]
+          },
+          "mistakeTips": [
+            "Finger 3 on E3 sits in the middle of the position.",
+            "Let the hand rest on all five keys between notes."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "In left-hand C position, which finger is on C3?",
+              "choices": [
+                "5",
+                "1",
+                "3",
+                "4"
+              ],
+              "answerIndex": 0,
+              "explanation": "Left hand 5 on C3, thumb on G3."
+            },
+            {
+              "prompt": "In left-hand C position, which note is under the thumb?",
+              "choices": [
+                "G3",
+                "C3",
+                "E3",
+                "C4"
+              ],
+              "answerIndex": 0,
+              "explanation": "The left thumb rests on G3."
+            },
+            {
+              "prompt": "Going up the keyboard, the left-hand finger numbers go…",
+              "choices": [
+                "5 4 3 2 1",
+                "1 2 3 4 5",
+                "1 3 5",
+                "They stay the same"
+              ],
+              "answerIndex": 0,
+              "explanation": "The left thumb is on the right side of the hand, so finger numbers go down as notes go up."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s3.l3.r1",
+          "kind": "fact",
+          "prompt": "Left-hand C position: where does finger 5 go?",
+          "answer": "C3, the C below middle C."
+        }
+      ],
+      "glossaryTerms": [
+        "C position",
+        "Finger numbers"
+      ]
+    },
+    {
+      "id": "piano.s3.l4",
+      "title": "G position, each hand",
+      "summary": "Move both hands to G position and play the same patterns starting on G.",
+      "minutes": 11,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "G position",
+          "body": "Positions are named after the note under the lowest finger.\n\n- **Right hand G position:** finger 1 on **G4** (the G above middle C); fingers 2 to 5 on **A4 B4 C5 D5**.\n- **Left hand G position:** finger 5 on **G2** (the second G below middle C); fingers 4 to 1 on **A2 B2 C3 D3**.\n\nAll five keys are white, just as in C position. The finger patterns you learned work the same way here; only the starting note changes.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "G4",
+              "A4",
+              "B4",
+              "C5",
+              "D5"
+            ],
+            "labels": "fingers",
+            "pitchRange": [
+              "G4",
+              "G5"
+            ],
+            "caption": "Right hand G position: 1 on G4 … 5 on D5."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Left hand G position",
+          "body": "G2 is lower than anything you have played so far. Play it with firm arm weight so it sounds clearly. Low notes are a little harder for a phone microphone to hear; if a note is marked uncertain, play it slightly louder.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "G2",
+              "A2",
+              "B2",
+              "C3",
+              "D3"
+            ],
+            "labels": "fingers",
+            "pitchRange": [
+              "G2",
+              "G3"
+            ],
+            "caption": "Left hand G position: 5 on G2 … 1 on D3."
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Right hand, G position: 1 2 3 4 5 4 3 2 1 (G4 A4 B4 C5 D5 C5 B4 A4 G4).",
+            "notes": [
+              "G4",
+              "A4",
+              "B4",
+              "C5",
+              "D5",
+              "C5",
+              "B4",
+              "A4",
+              "G4"
+            ],
+            "rhythm": "q q q q q q q q w",
+            "bpm": 66,
+            "tempoSteps": [
+              66,
+              80,
+              92
+            ]
+          },
+          "mistakeTips": [
+            "Finger 1 on the G just above middle C.",
+            "Finger 4 is on C5, one octave above middle C.",
+            "Keep the fingers curved and resting on their keys."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Left hand, G position: 5 4 3 2 1 2 3 4 5 (G2 A2 B2 C3 D3 C3 B2 A2 G2).",
+            "notes": [
+              "G2",
+              "A2",
+              "B2",
+              "C3",
+              "D3",
+              "C3",
+              "B2",
+              "A2",
+              "G2"
+            ],
+            "rhythm": "q q q q q q q q w",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ]
+          },
+          "mistakeTips": [
+            "G2 is two Gs below middle C.",
+            "The thumb lands on D3.",
+            "Play low notes with full arm weight so the microphone can hear them."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Right-hand skips in G: 1 3 5 3 1 (G4 B4 D5 B4 G4).",
+            "notes": [
+              "G4",
+              "B4",
+              "D5",
+              "B4",
+              "G4"
+            ],
+            "rhythm": "q q q q w",
+            "bpm": 66
+          },
+          "mistakeTips": [
+            "Fingers 1–3–5 in G position play G B D."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "Right-hand G position: which note is under finger 1?",
+              "choices": [
+                "G4",
+                "G3",
+                "D5",
+                "C4"
+              ],
+              "answerIndex": 0,
+              "explanation": "Right thumb on the G above middle C."
+            },
+            {
+              "prompt": "Left-hand G position: which finger plays G2?",
+              "choices": [
+                "5",
+                "1",
+                "3",
+                "2"
+              ],
+              "answerIndex": 0,
+              "explanation": "Left pinky on G2."
+            },
+            {
+              "prompt": "Fingers 1–3–5 in right-hand G position play…",
+              "choices": [
+                "G B D",
+                "G A B",
+                "C E G",
+                "G C D"
+              ],
+              "answerIndex": 0,
+              "explanation": "G=1, B=3, D=5."
+            },
+            {
+              "prompt": "Why can the same finger patterns work in C and G position?",
+              "choices": [
+                "Both positions cover five neighboring white keys",
+                "C and G are the same note",
+                "The fingers are renumbered",
+                "They don't"
+              ],
+              "answerIndex": 0,
+              "explanation": "Both positions sit on five neighboring white keys, so the fingers move the same way."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s3.l4.r1",
+          "kind": "fact",
+          "prompt": "Right-hand G position covers which notes?",
+          "answer": "G4 A4 B4 C5 D5"
+        },
+        {
+          "id": "piano.s3.l4.r2",
+          "kind": "playNote",
+          "prompt": "Play the note under right-hand finger 5 in G position.",
+          "answer": "D5"
+        }
+      ],
+      "glossaryTerms": [
+        "G position",
+        "Five-finger position"
+      ]
+    },
+    {
+      "id": "piano.s3.l5",
+      "title": "Stage 3 review: Ode to Joy",
+      "summary": "Play Ode to Joy in C position and G position, and a left-hand tune.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "quiz",
+          "title": "Stage 3 check",
+          "questions": [
+            {
+              "prompt": "Right-hand C position: which finger plays D4?",
+              "choices": [
+                "2",
+                "1",
+                "3",
+                "4"
+              ],
+              "answerIndex": 0,
+              "explanation": "C=1, D=2."
+            },
+            {
+              "prompt": "Left-hand C position: which finger plays F3?",
+              "choices": [
+                "2",
+                "4",
+                "1",
+                "3"
+              ],
+              "answerIndex": 0,
+              "explanation": "C3=5, D3=4, E3=3, F3=2, G3=1."
+            },
+            {
+              "prompt": "Left-hand G position: which note is under the thumb?",
+              "choices": [
+                "D3",
+                "G2",
+                "C3",
+                "D4"
+              ],
+              "answerIndex": 0,
+              "explanation": "5 on G2 … 1 on D3."
+            },
+            {
+              "prompt": "In both hands, finger 1 is the…",
+              "choices": [
+                "Thumb",
+                "Pinky",
+                "Index",
+                "Ring finger"
+              ],
+              "answerIndex": 0,
+              "explanation": "Both thumbs are 1."
+            }
+          ]
+        },
+        {
+          "type": "song",
+          "title": "Ode to Joy (Beethoven), right hand in C position",
+          "caption": "Right hand C position. Finger 3 on the first note (E4). The melody only moves by step, except for the repeated notes.",
+          "notes": [
+            [
+              "E4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ]
+          ],
+          "rhythm": "q q q q q q q q q q q q q. e h q q q q q q q q q q q q q. e h",
+          "bpm": 84
+        },
+        {
+          "type": "song",
+          "title": "Ode to Joy in G position",
+          "caption": "The same finger numbers, moved to G position (1 on G4). Moving a tune to a new starting note is called transposing.",
+          "notes": [
+            [
+              "B4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "D5"
+            ],
+            [
+              "D5"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "D5"
+            ],
+            [
+              "D5"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G4"
+            ]
+          ],
+          "rhythm": "q q q q q q q q q q q q q. e h q q q q q q q q q q q q q. e h",
+          "bpm": 84
+        },
+        {
+          "type": "song",
+          "title": "Hot Cross Buns, left hand (traditional)",
+          "caption": "Left hand C position: finger 3 on E3, 4 on D3, 5 on C3.",
+          "notes": [
+            [
+              "E3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "C3"
+            ]
+          ],
+          "rhythm": "q q h q q h e e e e e e e e q q h",
+          "bpm": 76
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s3.l5.r1",
+          "kind": "fact",
+          "prompt": "What does transposing a melody mean?",
+          "answer": "Playing it starting on a different note, keeping the same pattern of steps."
+        }
+      ],
+      "glossaryTerms": [
+        "Transpose"
+      ]
+    }
+  ]
+}

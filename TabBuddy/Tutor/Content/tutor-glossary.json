@@ -1,0 +1,2072 @@
+[
+  {
+    "term": "12-bar blues",
+    "definition": "A 12-measure chord form built on I, IV, and V, usually as dominant seventh chords: I I I I | IV IV I I | V IV I V. In C: C7, F7, G7. Also written twelve-bar blues.",
+    "seeAlso": [
+      "Dominant seventh chord",
+      "Turnaround",
+      "Blues scale",
+      "Quick change"
+    ]
+  },
+  {
+    "term": "A-form barre",
+    "definition": "A barre chord built from the open A (or Am) fingering, with its root on string 5.",
+    "seeAlso": [
+      "Barre chord",
+      "Root string"
+    ]
+  },
+  {
+    "term": "Accidental",
+    "definition": "A sharp (♯), flat (♭), or natural sign (♮) placed on a note. In sheet music it lasts until the end of the measure.",
+    "seeAlso": [
+      "Sharp",
+      "Flat",
+      "Natural sign",
+      "Key signature"
+    ]
+  },
+  {
+    "term": "Accompaniment",
+    "definition": "The harmony and rhythm that support a melody, such as chords in the left hand under a right-hand tune.",
+    "seeAlso": [
+      "Melody",
+      "Block chord",
+      "Alberti bass"
+    ]
+  },
+  {
+    "term": "Aeolian",
+    "definition": "The mode starting on degree 6 of the major scale; identical to the natural minor scale.",
+    "seeAlso": [
+      "Mode",
+      "Natural minor scale"
+    ]
+  },
+  {
+    "term": "Alberti bass",
+    "definition": "A broken-chord accompaniment played lowest, highest, middle, highest, usually in eighth notes. On a C chord: C G E G.",
+    "seeAlso": [
+      "Broken chord",
+      "Accompaniment"
+    ]
+  },
+  {
+    "term": "Alternate picking",
+    "definition": "Picking in a strict down-up-down-up pattern, with downstrokes on the beat and upstrokes between beats.",
+    "seeAlso": [
+      "Downstroke",
+      "Upstroke"
+    ]
+  },
+  {
+    "term": "Alternating bass",
+    "definition": "A fingerstyle guitar pattern where the thumb alternates between two bass strings on the beats. Similar in purpose to root–fifth bass on piano.",
+    "seeAlso": [
+      "Fingerstyle",
+      "Root–fifth bass"
+    ]
+  },
+  {
+    "term": "Anchor finger",
+    "definition": "On guitar, a finger that stays on the same fret and string between two chords, making the change easier. The piano equivalent is holding a common tone.",
+    "seeAlso": [
+      "Chord change",
+      "Common tone"
+    ]
+  },
+  {
+    "term": "Arpeggio",
+    "definition": "The notes of a chord played one after another instead of together, often in order up or down.",
+    "seeAlso": [
+      "Broken chord",
+      "Chord"
+    ]
+  },
+  {
+    "term": "Augmented second",
+    "definition": "An interval of 3 half steps spelled as a 2nd, such as F to G♯. It is the distinctive gap in the harmonic minor scale.",
+    "seeAlso": [
+      "Harmonic minor scale",
+      "Interval"
+    ]
+  },
+  {
+    "term": "Augmented triad",
+    "definition": "A triad made of two major 3rds, such as C E G♯. Written \"aug\" or \"+\".",
+    "seeAlso": [
+      "Triad",
+      "Diminished triad"
+    ]
+  },
+  {
+    "term": "Bar",
+    "definition": "Another word for measure: a group of beats between two bar lines.",
+    "seeAlso": [
+      "Measure",
+      "Bar line"
+    ]
+  },
+  {
+    "term": "Bar line",
+    "definition": "A vertical line through the staff that marks the end of one measure and the start of the next.",
+    "seeAlso": [
+      "Measure"
+    ]
+  },
+  {
+    "term": "Barre",
+    "definition": "On guitar, pressing several strings at once with one finger laid flat across the fret.",
+    "seeAlso": [
+      "Barre chord"
+    ]
+  },
+  {
+    "term": "Barre chord",
+    "definition": "A guitar chord that uses a barre, usually finger 1 acting as a movable nut, so one fingering can be played at any fret.",
+    "seeAlso": [
+      "Barre",
+      "E-form barre",
+      "A-form barre",
+      "Movable chord form"
+    ]
+  },
+  {
+    "term": "Bass clef",
+    "definition": "The clef for lower notes (𝄢), also called the F clef. Its two dots surround the F3 line. Lines, bottom to top: G2 B2 D3 F3 A3; spaces: A2 C3 E3 G3.",
+    "seeAlso": [
+      "Clef",
+      "Treble clef",
+      "Grand staff"
+    ]
+  },
+  {
+    "term": "Bass note",
+    "definition": "The lowest note of a chord as played. In a slash chord such as C/E, the note after the slash.",
+    "seeAlso": [
+      "Slash chord",
+      "Inversion"
+    ]
+  },
+  {
+    "term": "Beam",
+    "definition": "A thick line joining the stems of eighth notes (or shorter notes) into a group.",
+    "seeAlso": [
+      "Eighth note"
+    ]
+  },
+  {
+    "term": "Beat",
+    "definition": "The steady pulse of music that you tap your foot to. Also called the pulse.",
+    "seeAlso": [
+      "Tempo",
+      "Measure",
+      "Time signature"
+    ]
+  },
+  {
+    "term": "Bend",
+    "definition": "On guitar, pushing or pulling a string across the fretboard to raise its pitch, usually by a half or whole step.",
+    "seeAlso": [
+      "Vibrato",
+      "Blue note"
+    ]
+  },
+  {
+    "term": "Black keys",
+    "definition": "The raised keys on a piano, arranged in alternating groups of two and three. Each is named as a sharp or flat of a neighboring white key.",
+    "seeAlso": [
+      "White keys",
+      "Sharp",
+      "Flat"
+    ]
+  },
+  {
+    "term": "Block chord",
+    "definition": "A chord whose notes are all played at the same time.",
+    "seeAlso": [
+      "Chord",
+      "Broken chord"
+    ]
+  },
+  {
+    "term": "Blue note",
+    "definition": "A note outside the major scale that gives the blues its sound, especially the ♭3, ♭5, and ♭7 (E♭, G♭, and B♭ in C).",
+    "seeAlso": [
+      "Blues scale",
+      "Bend"
+    ]
+  },
+  {
+    "term": "Blues scale",
+    "definition": "A six-note scale: the minor pentatonic plus the ♭5. Degrees 1 ♭3 4 ♭5 5 ♭7. C blues: C E♭ F G♭ G B♭; A blues: A C D E♭ E G.",
+    "seeAlso": [
+      "Minor pentatonic scale",
+      "Blue note",
+      "12-bar blues"
+    ]
+  },
+  {
+    "term": "Body",
+    "definition": "The hollow wooden box of an acoustic guitar that makes the strings' vibration loud enough to hear.",
+    "seeAlso": [
+      "Soundhole",
+      "Bridge"
+    ]
+  },
+  {
+    "term": "Boogie pattern",
+    "definition": "A repeating blues bass pattern built from chord tones plus the 6th (and often the ♭7). On guitar, often a root–fifth dyad alternating with a root–sixth dyad; on piano, a left-hand line such as C E G A B♭ A G E.",
+    "seeAlso": [
+      "12-bar blues",
+      "Shuffle",
+      "Dyad"
+    ]
+  },
+  {
+    "term": "Box position",
+    "definition": "A guitar scale fingering that covers about four or five frets without shifting.",
+    "seeAlso": [
+      "Position",
+      "Minor pentatonic scale"
+    ]
+  },
+  {
+    "term": "BPM",
+    "definition": "Beats per minute, the unit of tempo. 60 BPM is one beat per second.",
+    "seeAlso": [
+      "Tempo",
+      "Beat"
+    ]
+  },
+  {
+    "term": "Bridge",
+    "definition": "The piece glued to the guitar body that anchors the strings at the far end.",
+    "seeAlso": [
+      "Saddle",
+      "Body"
+    ]
+  },
+  {
+    "term": "Broken chord",
+    "definition": "A chord played one note at a time instead of all together.",
+    "seeAlso": [
+      "Arpeggio",
+      "Alberti bass",
+      "Block chord"
+    ]
+  },
+  {
+    "term": "C position",
+    "definition": "A five-finger position with finger 1 (RH) on middle C and fingers 2–5 on D E F G; for the left hand, finger 5 on C3 and the thumb on G3.",
+    "seeAlso": [
+      "Five-finger position",
+      "G position"
+    ]
+  },
+  {
+    "term": "Cadence",
+    "definition": "A chord move that ends a phrase and gives a sense of rest or arrival. V→I is the strongest.",
+    "seeAlso": [
+      "Dominant",
+      "Tonic",
+      "Phrase"
+    ]
+  },
+  {
+    "term": "Calibration",
+    "definition": "A setup step in TabBuddy that measures room noise and the delay (latency) between playing and the app hearing it, so pitch and timing checks are fair. Run it before graded practice and again after moving the device or changing instruments.",
+    "seeAlso": [
+      "Microphone",
+      "Latency"
+    ]
+  },
+  {
+    "term": "Call and response",
+    "definition": "A musical conversation: one phrase (the call) is answered by another (the response).",
+    "seeAlso": [
+      "Phrase",
+      "Improvisation"
+    ]
+  },
+  {
+    "term": "Capo",
+    "definition": "A clamp across all guitar strings at one fret. It raises every open string by that many half steps.",
+    "seeAlso": [
+      "Transpose",
+      "Open string"
+    ]
+  },
+  {
+    "term": "Cent",
+    "definition": "One hundredth of a half step. Tuners show how many cents a note is away from its target.",
+    "seeAlso": [
+      "Tuner",
+      "Half step"
+    ]
+  },
+  {
+    "term": "Chord",
+    "definition": "Three or more different notes sounded together (or in close succession).",
+    "seeAlso": [
+      "Triad",
+      "Seventh chord",
+      "Chord quality"
+    ]
+  },
+  {
+    "term": "Chord change",
+    "definition": "Moving from one chord to the next in time.",
+    "seeAlso": [
+      "Anchor finger",
+      "Common tone"
+    ]
+  },
+  {
+    "term": "Chord diagram",
+    "definition": "A picture of the guitar fretboard showing where to put fingers for a chord. Vertical lines are strings, horizontal lines are frets.",
+    "seeAlso": [
+      "Fretboard",
+      "Finger numbers"
+    ]
+  },
+  {
+    "term": "Chord form",
+    "definition": "On guitar, the fingering a chord is played with, named after the open chord it comes from (G form, C form), regardless of the pitch it sounds at.",
+    "seeAlso": [
+      "Movable chord form",
+      "Five movable chord forms"
+    ]
+  },
+  {
+    "term": "Chord progression",
+    "definition": "A sequence of chords, often written in Roman numerals, such as I–IV–V–I. Also just called a progression.",
+    "seeAlso": [
+      "Roman numerals",
+      "Cadence",
+      "Progression"
+    ]
+  },
+  {
+    "term": "Chord quality",
+    "definition": "The type of a chord, set by its intervals: major, minor, diminished, augmented, and seventh-chord types such as maj7, 7, and m7.",
+    "seeAlso": [
+      "Major triad",
+      "Minor triad",
+      "Seventh chord"
+    ]
+  },
+  {
+    "term": "Chord symbol",
+    "definition": "A short name for a chord: root letter plus quality, such as C, Am, G7, or Fmaj7. A slash adds a bass note: C/E.",
+    "seeAlso": [
+      "Chord",
+      "Slash chord"
+    ]
+  },
+  {
+    "term": "Chord tone",
+    "definition": "A note that belongs to the chord being played at that moment.",
+    "seeAlso": [
+      "Chord",
+      "Chord-tone soloing",
+      "Guide tones"
+    ]
+  },
+  {
+    "term": "Chord-tone soloing",
+    "definition": "Improvising by aiming at notes of the current chord, especially on strong beats.",
+    "seeAlso": [
+      "Chord tone",
+      "Improvisation"
+    ]
+  },
+  {
+    "term": "Chromatic scale",
+    "definition": "All twelve notes in order, each one half step apart: every key on the piano, or every fret on one guitar string.",
+    "seeAlso": [
+      "Half step",
+      "Scale"
+    ]
+  },
+  {
+    "term": "Circle of fifths",
+    "definition": "All 12 keys arranged so each step clockwise is a perfect 5th higher: C G D A E B F♯/G♭ D♭ A♭ E♭ B♭ F. Each step clockwise adds a sharp (or removes a flat).",
+    "seeAlso": [
+      "Key signature",
+      "Perfect fifth"
+    ]
+  },
+  {
+    "term": "Clef",
+    "definition": "A symbol at the start of a staff that fixes which note each line and space stands for.",
+    "seeAlso": [
+      "Treble clef",
+      "Bass clef",
+      "Staff"
+    ]
+  },
+  {
+    "term": "Common tone",
+    "definition": "A note shared by two chords. Holding it while changing chords makes the change smooth.",
+    "seeAlso": [
+      "Voice leading"
+    ]
+  },
+  {
+    "term": "Contrary motion",
+    "definition": "Two parts or hands moving in opposite directions.",
+    "seeAlso": [
+      "Parallel motion",
+      "Hands together"
+    ]
+  },
+  {
+    "term": "Count-in",
+    "definition": "One or more measures of beats before playing starts, so you can feel the tempo. In TabBuddy it is shown visually while the app listens.",
+    "seeAlso": [
+      "Beat",
+      "Tempo"
+    ]
+  },
+  {
+    "term": "Crossing over",
+    "definition": "In scale fingering, bringing a finger (usually 3 or 4) over the thumb to reach the next note.",
+    "seeAlso": [
+      "Thumb under",
+      "Fingering"
+    ]
+  },
+  {
+    "term": "Damper",
+    "definition": "A felt pad that rests on a piano string to stop it sounding. Releasing a key lowers its damper; the sustain pedal lifts all of them.",
+    "seeAlso": [
+      "Sustain pedal"
+    ]
+  },
+  {
+    "term": "Diatonic",
+    "definition": "Using only the notes of the current key or scale.",
+    "seeAlso": [
+      "Key",
+      "Scale"
+    ]
+  },
+  {
+    "term": "Diatonic chords",
+    "definition": "The seven chords built by stacking thirds on each note of a scale, using only notes from that scale. In a major key: I ii iii IV V vi vii°.",
+    "seeAlso": [
+      "Diatonic",
+      "Roman numerals"
+    ]
+  },
+  {
+    "term": "Diminished fifth",
+    "definition": "An interval of six half steps with the letter span of a fifth, such as B to F. One spelling of the tritone.",
+    "seeAlso": [
+      "Tritone",
+      "Diminished triad"
+    ]
+  },
+  {
+    "term": "Diminished seventh chord",
+    "definition": "A diminished triad plus a diminished 7th (9 half steps above the root): stacked minor 3rds. Bdim7 = B D F A♭; Cdim7 = C E♭ G♭ B♭♭ (B♭♭ sounds as A).",
+    "seeAlso": [
+      "Seventh chord",
+      "Diminished triad"
+    ]
+  },
+  {
+    "term": "Diminished triad",
+    "definition": "A triad of two minor 3rds, such as B D F. Written \"dim\" or \"°\".",
+    "seeAlso": [
+      "Triad",
+      "Augmented triad"
+    ]
+  },
+  {
+    "term": "Dominant",
+    "definition": "The 5th degree of a scale, or the chord built on it (V). It pulls strongly back to the tonic.",
+    "seeAlso": [
+      "Tonic",
+      "Subdominant",
+      "Dominant seventh chord"
+    ]
+  },
+  {
+    "term": "Dominant chord",
+    "definition": "The chord built on scale degree 5 (V). It pulls strongly back to the tonic chord.",
+    "seeAlso": [
+      "Dominant",
+      "Tonic chord",
+      "Dominant seventh chord"
+    ]
+  },
+  {
+    "term": "Dominant seventh chord",
+    "definition": "A major triad plus a minor 7th above the root, such as G7 = G B D F or A7 = A C♯ E G. It is the V7 chord of a major key and the basic chord of the blues.",
+    "seeAlso": [
+      "Seventh chord",
+      "Dominant",
+      "12-bar blues"
+    ]
+  },
+  {
+    "term": "Dorian",
+    "definition": "The mode starting on degree 2 of the major scale: natural minor with a raised 6th (1 2 ♭3 4 5 6 ♭7). D Dorian: D E F G A B C.",
+    "seeAlso": [
+      "Mode",
+      "Natural minor scale"
+    ]
+  },
+  {
+    "term": "Dotted note",
+    "definition": "A note followed by a dot, which adds half its value. Dotted half = 3 beats; dotted quarter = 1½ beats.",
+    "seeAlso": [
+      "Note value"
+    ]
+  },
+  {
+    "term": "Downbeat",
+    "definition": "The first beat of a measure, usually the strongest.",
+    "seeAlso": [
+      "Beat",
+      "Measure"
+    ]
+  },
+  {
+    "term": "Downstroke",
+    "definition": "Picking or strumming toward the floor.",
+    "seeAlso": [
+      "Upstroke",
+      "Alternate picking"
+    ]
+  },
+  {
+    "term": "Dyad",
+    "definition": "Two different notes played together.",
+    "seeAlso": [
+      "Power chord",
+      "Chord"
+    ]
+  },
+  {
+    "term": "E-form barre",
+    "definition": "A barre chord built from the open E (or Em) fingering, with its root on string 6.",
+    "seeAlso": [
+      "Barre chord",
+      "Root string"
+    ]
+  },
+  {
+    "term": "Eighth note",
+    "definition": "A note lasting half a beat in 4/4; two fit in one beat. Counted \"1 & 2 &\".",
+    "seeAlso": [
+      "Quarter note",
+      "Beam",
+      "Note value"
+    ]
+  },
+  {
+    "term": "Enharmonic",
+    "definition": "Two names for the same pitch, such as C♯ and D♭, or E♯ and F.",
+    "seeAlso": [
+      "Sharp",
+      "Flat"
+    ]
+  },
+  {
+    "term": "Fifth",
+    "definition": "The interval of five letter names (C to G). In a triad, the note a 5th above the root.",
+    "seeAlso": [
+      "Interval",
+      "Triad",
+      "Root"
+    ]
+  },
+  {
+    "term": "Finger numbers",
+    "definition": "Numbers used to write fingering. They differ by instrument. Piano: 1 thumb, 2 index, 3 middle, 4 ring, 5 little finger, the same in both hands. Guitar fretting hand: 1 index, 2 middle, 3 ring, 4 little finger (T sometimes marks the thumb); picking-hand fingers use p i m a.",
+    "seeAlso": [
+      "Fingering",
+      "p i m a"
+    ]
+  },
+  {
+    "term": "Fingering",
+    "definition": "Which finger plays which note. Good fingering keeps the hand relaxed and the sound connected.",
+    "seeAlso": [
+      "Finger numbers",
+      "Thumb under",
+      "Crossing over"
+    ]
+  },
+  {
+    "term": "Fingerstyle",
+    "definition": "Playing guitar with the thumb and fingers of the picking hand instead of a pick.",
+    "seeAlso": [
+      "p i m a",
+      "Pinch",
+      "Alternating bass"
+    ]
+  },
+  {
+    "term": "First inversion",
+    "definition": "A chord with its 3rd as the lowest note, such as E G C for C major (written C/E).",
+    "seeAlso": [
+      "Inversion",
+      "Second inversion",
+      "Root position"
+    ]
+  },
+  {
+    "term": "Five movable chord forms",
+    "definition": "The C, A, G, E, and D open-chord fingerings used as movable forms on guitar. In that order they link up the neck for any chord; also called the CAGED system.",
+    "seeAlso": [
+      "Chord form",
+      "Movable chord form"
+    ]
+  },
+  {
+    "term": "Five-finger position",
+    "definition": "A hand position with one finger on each of five neighboring keys, named after the note under the lowest finger.",
+    "seeAlso": [
+      "C position",
+      "G position"
+    ]
+  },
+  {
+    "term": "Flat",
+    "definition": "The symbol ♭ (written b in note names like Bb3). It lowers a note by one half step: one key to the left on piano, one fret lower on guitar.",
+    "seeAlso": [
+      "Sharp",
+      "Natural",
+      "Half step"
+    ]
+  },
+  {
+    "term": "Flat (out of tune)",
+    "definition": "Tuned or sounding slightly too low.",
+    "seeAlso": [
+      "In tune",
+      "Sharp (out of tune)"
+    ]
+  },
+  {
+    "term": "Fret",
+    "definition": "A metal strip across the fretboard. Pressing a string just behind a fret shortens the vibrating length and raises the pitch. \"Fret 3\" also names the space just behind the third strip. Each fret is one half step.",
+    "seeAlso": [
+      "Fretboard",
+      "Half step"
+    ]
+  },
+  {
+    "term": "Fretboard",
+    "definition": "The front of the guitar neck, where you press strings against the frets. Also called the fingerboard.",
+    "seeAlso": [
+      "Fret",
+      "Neck"
+    ]
+  },
+  {
+    "term": "Fretting hand",
+    "definition": "The hand that presses strings on the fretboard (the left hand for most right-handed players).",
+    "seeAlso": [
+      "Picking hand",
+      "Finger numbers"
+    ]
+  },
+  {
+    "term": "G position",
+    "definition": "A five-finger position on G A B C D: right-hand thumb on G4, or left-hand finger 5 on G2.",
+    "seeAlso": [
+      "Five-finger position",
+      "C position"
+    ]
+  },
+  {
+    "term": "Grand staff",
+    "definition": "A treble staff and a bass staff joined by a brace, used for piano. Middle C sits on a ledger line between them.",
+    "seeAlso": [
+      "Treble clef",
+      "Bass clef",
+      "Middle C"
+    ]
+  },
+  {
+    "term": "Guide tones",
+    "definition": "The 3rd and 7th of a chord. They define its quality and move smoothly from chord to chord.",
+    "seeAlso": [
+      "Third",
+      "Seventh chord",
+      "Voice leading"
+    ]
+  },
+  {
+    "term": "Half note",
+    "definition": "A note lasting 2 beats in 4/4.",
+    "seeAlso": [
+      "Whole note",
+      "Quarter note",
+      "Note value"
+    ]
+  },
+  {
+    "term": "Half step",
+    "definition": "The smallest distance in Western music: one key to the very next key on the piano (black or white), or one fret on the guitar. Also called a semitone.",
+    "seeAlso": [
+      "Whole step",
+      "Semitone",
+      "Fret"
+    ]
+  },
+  {
+    "term": "Half-diminished chord",
+    "definition": "Short for half-diminished seventh chord: a diminished triad plus a minor 7th, such as Bm7♭5 = B D F A (also written Bø7).",
+    "seeAlso": [
+      "Half-diminished seventh chord"
+    ]
+  },
+  {
+    "term": "Half-diminished seventh chord",
+    "definition": "A diminished triad plus a minor 7th, such as Bm7♭5 = B D F A. Written m7♭5 or ø7. It is the vii chord of a major key.",
+    "seeAlso": [
+      "Seventh chord",
+      "Diminished triad",
+      "Locrian"
+    ]
+  },
+  {
+    "term": "Hammer-on",
+    "definition": "On guitar, sounding a higher note on the same string by bringing a fretting finger down hard, without picking again.",
+    "seeAlso": [
+      "Pull-off",
+      "Slide"
+    ]
+  },
+  {
+    "term": "Hand position",
+    "definition": "How the hand rests on the instrument. At the piano: fingers curved, playing on the pads near the tips, wrist level, thumb on its outer corner.",
+    "seeAlso": [
+      "Posture",
+      "Five-finger position",
+      "Position"
+    ]
+  },
+  {
+    "term": "Hands together",
+    "definition": "Playing with both hands at once. Learn each hand alone first, then combine them slowly.",
+    "seeAlso": [
+      "Parallel motion",
+      "Contrary motion"
+    ]
+  },
+  {
+    "term": "Harmonic minor scale",
+    "definition": "Natural minor with a raised 7th, such as A B C D E F G♯ A. It makes the V chord major.",
+    "seeAlso": [
+      "Natural minor scale",
+      "Melodic minor scale",
+      "Leading tone"
+    ]
+  },
+  {
+    "term": "Harmony",
+    "definition": "Notes sounding together, and how chords follow one another.",
+    "seeAlso": [
+      "Chord",
+      "Chord progression"
+    ]
+  },
+  {
+    "term": "Headstock",
+    "definition": "The top end of the guitar neck that holds the tuning pegs.",
+    "seeAlso": [
+      "Tuning peg",
+      "Neck"
+    ]
+  },
+  {
+    "term": "Hymn",
+    "definition": "A song of praise, usually with a simple, regular melody and four-part harmony. Many older hymns are in the public domain.",
+    "seeAlso": []
+  },
+  {
+    "term": "Improvisation",
+    "definition": "Making up music on the spot within a key, scale, or chord progression.",
+    "seeAlso": [
+      "Blues scale",
+      "Call and response"
+    ]
+  },
+  {
+    "term": "In tune",
+    "definition": "Sounding at the intended pitch, with no audible wobble against a reference.",
+    "seeAlso": [
+      "Tuner",
+      "Sharp (out of tune)",
+      "Flat (out of tune)"
+    ]
+  },
+  {
+    "term": "Interval",
+    "definition": "The distance between two notes, named by number (count letter names including both ends) and quality (major, minor, perfect, augmented, diminished).",
+    "seeAlso": [
+      "Half step",
+      "Major interval",
+      "Minor interval",
+      "Perfect interval"
+    ]
+  },
+  {
+    "term": "Interval number",
+    "definition": "The count of letter names from the lower note to the upper note, including both. C to E is a third (C D E).",
+    "seeAlso": [
+      "Interval",
+      "Interval quality"
+    ]
+  },
+  {
+    "term": "Interval quality",
+    "definition": "The part of an interval name that pins down the exact size in half steps: major, minor, perfect, augmented, or diminished.",
+    "seeAlso": [
+      "Interval",
+      "Interval number"
+    ]
+  },
+  {
+    "term": "Inversion",
+    "definition": "A chord arranged so a note other than the root is lowest.",
+    "seeAlso": [
+      "Root position",
+      "First inversion",
+      "Second inversion",
+      "Slash chord"
+    ]
+  },
+  {
+    "term": "Ionian",
+    "definition": "The mode starting on degree 1 of the major scale; identical to the major scale.",
+    "seeAlso": [
+      "Mode",
+      "Major scale"
+    ]
+  },
+  {
+    "term": "Key",
+    "definition": "The scale and home note (tonic) that a piece is based on, such as G major or E minor.",
+    "seeAlso": [
+      "Tonic",
+      "Key signature",
+      "Scale"
+    ]
+  },
+  {
+    "term": "Key signature",
+    "definition": "Sharps or flats at the start of each staff that apply to every note of those letters throughout the piece.",
+    "seeAlso": [
+      "Key",
+      "Order of sharps",
+      "Order of flats",
+      "Circle of fifths"
+    ]
+  },
+  {
+    "term": "Landmark notes",
+    "definition": "Easy-to-find notes on the staff used as reference points for reading, such as bass F3, middle C4, and treble G4.",
+    "seeAlso": [
+      "Grand staff"
+    ]
+  },
+  {
+    "term": "Latency",
+    "definition": "The small delay between when a sound happens and when the app hears it. Calibration measures it so timing grades are fair.",
+    "seeAlso": [
+      "Calibration"
+    ]
+  },
+  {
+    "term": "Leading tone",
+    "definition": "Scale degree 7 when it is a half step below the tonic, as in a major or harmonic minor scale (B in C major, G♯ in A minor). It pulls up toward the tonic.",
+    "seeAlso": [
+      "Tonic",
+      "Harmonic minor scale"
+    ]
+  },
+  {
+    "term": "Ledger line",
+    "definition": "A short extra line above or below a staff for notes outside its five lines. Middle C uses one.",
+    "seeAlso": [
+      "Staff",
+      "Middle C"
+    ]
+  },
+  {
+    "term": "Legato",
+    "definition": "Smooth and connected, with no gap between notes.",
+    "seeAlso": [
+      "Legato pedaling"
+    ]
+  },
+  {
+    "term": "Legato pedaling",
+    "definition": "Changing the sustain pedal just after each new chord: lift it as you play the chord, press it down right after. It connects chords without blurring them. Also called syncopated pedaling.",
+    "seeAlso": [
+      "Sustain pedal",
+      "Legato"
+    ]
+  },
+  {
+    "term": "Locrian",
+    "definition": "The mode starting on degree 7 of the major scale: 1 ♭2 ♭3 4 ♭5 ♭6 ♭7. B Locrian: B C D E F G A. Rarely used as a home.",
+    "seeAlso": [
+      "Mode",
+      "Half-diminished seventh chord"
+    ]
+  },
+  {
+    "term": "Loop",
+    "definition": "A section of a song set to repeat so you can practice it.",
+    "seeAlso": [
+      "Practice mode"
+    ]
+  },
+  {
+    "term": "Lydian",
+    "definition": "The mode starting on degree 4 of the major scale: major with a raised 4th (1 2 3 ♯4 5 6 7). F Lydian: F G A B C D E.",
+    "seeAlso": [
+      "Mode",
+      "Major scale"
+    ]
+  },
+  {
+    "term": "Major chord",
+    "definition": "A triad with a major third and a perfect fifth above the root, often described as bright. Written with the letter alone: C, G, E. Same as a major triad.",
+    "seeAlso": [
+      "Major triad",
+      "Minor chord"
+    ]
+  },
+  {
+    "term": "Major interval",
+    "definition": "A 2nd, 3rd, 6th, or 7th of the larger size: M2 = 2, M3 = 4, M6 = 9, M7 = 11 half steps. From a major scale's tonic, these intervals reach the scale's own notes.",
+    "seeAlso": [
+      "Minor interval",
+      "Interval"
+    ]
+  },
+  {
+    "term": "Major pentatonic scale",
+    "definition": "A five-note scale with degrees 1, 2, 3, 5, 6, such as C D E G A.",
+    "seeAlso": [
+      "Pentatonic scale",
+      "Minor pentatonic scale"
+    ]
+  },
+  {
+    "term": "Major scale",
+    "definition": "A seven-note scale with the step pattern W W H W W W H, such as C D E F G A B C.",
+    "seeAlso": [
+      "Scale",
+      "Whole step",
+      "Half step"
+    ]
+  },
+  {
+    "term": "Major second",
+    "definition": "An interval of two half steps (a whole step), such as C to D.",
+    "seeAlso": [
+      "Interval",
+      "Whole step"
+    ]
+  },
+  {
+    "term": "Major seventh",
+    "definition": "An interval of eleven half steps, such as C to B.",
+    "seeAlso": [
+      "Interval",
+      "Major interval",
+      "Major seventh chord"
+    ]
+  },
+  {
+    "term": "Major seventh chord",
+    "definition": "A major triad plus a major 7th, such as Cmaj7 = C E G B.",
+    "seeAlso": [
+      "Seventh chord"
+    ]
+  },
+  {
+    "term": "Major sixth",
+    "definition": "An interval of nine half steps, such as C to A.",
+    "seeAlso": [
+      "Interval",
+      "Major interval"
+    ]
+  },
+  {
+    "term": "Major third",
+    "definition": "An interval of four half steps, such as C to E (four frets on one guitar string).",
+    "seeAlso": [
+      "Interval",
+      "Major interval",
+      "Minor third"
+    ]
+  },
+  {
+    "term": "Major triad",
+    "definition": "A triad of a major 3rd plus a minor 3rd, such as C E G. Written as the letter alone: C.",
+    "seeAlso": [
+      "Triad",
+      "Minor triad"
+    ]
+  },
+  {
+    "term": "Measure",
+    "definition": "A group of beats between two bar lines. The time signature says how many beats each measure holds. Also called a bar.",
+    "seeAlso": [
+      "Bar line",
+      "Time signature"
+    ]
+  },
+  {
+    "term": "Mediant",
+    "definition": "Scale degree 3, or the chord built on it (iii in major).",
+    "seeAlso": [
+      "Scale degree"
+    ]
+  },
+  {
+    "term": "Melodic minor scale",
+    "definition": "Natural minor with raised 6th and 7th going up (A B C D E F♯ G♯ A); in classical use it returns to natural minor going down.",
+    "seeAlso": [
+      "Natural minor scale",
+      "Harmonic minor scale"
+    ]
+  },
+  {
+    "term": "Melody",
+    "definition": "The tune: a series of single notes heard as a line.",
+    "seeAlso": [
+      "Accompaniment",
+      "Phrase"
+    ]
+  },
+  {
+    "term": "Metronome",
+    "definition": "A device or app that marks a steady beat at a chosen tempo.",
+    "seeAlso": [
+      "Tempo",
+      "BPM"
+    ]
+  },
+  {
+    "term": "Microphone",
+    "definition": "How TabBuddy hears you. It detects pitch and note timing only; it cannot see fingering, strings, or posture. Very low notes and heavy piano pedal are harder for it to hear.",
+    "seeAlso": [
+      "Calibration",
+      "Pitch",
+      "Latency"
+    ]
+  },
+  {
+    "term": "Middle C",
+    "definition": "The C nearest the middle of the piano, written C4. It sits on a ledger line between the treble and bass staves.",
+    "seeAlso": [
+      "Scientific pitch notation",
+      "Grand staff"
+    ]
+  },
+  {
+    "term": "Minor chord",
+    "definition": "A triad with a minor third and a perfect fifth above the root, often described as dark. Written with m: Am, Em. Same as a minor triad.",
+    "seeAlso": [
+      "Minor triad",
+      "Major chord"
+    ]
+  },
+  {
+    "term": "Minor interval",
+    "definition": "A 2nd, 3rd, 6th, or 7th one half step smaller than major: m2 = 1, m3 = 3, m6 = 8, m7 = 10 half steps.",
+    "seeAlso": [
+      "Major interval",
+      "Interval"
+    ]
+  },
+  {
+    "term": "Minor pentatonic scale",
+    "definition": "A five-note scale: 1 ♭3 4 5 ♭7. A minor pentatonic: A C D E G.",
+    "seeAlso": [
+      "Blues scale",
+      "Scale"
+    ]
+  },
+  {
+    "term": "Minor scale",
+    "definition": "A scale with a lowered 3rd compared with major. The three common forms are natural, harmonic, and melodic minor.",
+    "seeAlso": [
+      "Natural minor scale",
+      "Harmonic minor scale",
+      "Melodic minor scale"
+    ]
+  },
+  {
+    "term": "Minor second",
+    "definition": "An interval of one half step, such as E to F.",
+    "seeAlso": [
+      "Interval",
+      "Half step"
+    ]
+  },
+  {
+    "term": "Minor seventh",
+    "definition": "An interval of ten half steps, such as G to F.",
+    "seeAlso": [
+      "Interval",
+      "Minor interval",
+      "Dominant seventh chord"
+    ]
+  },
+  {
+    "term": "Minor seventh chord",
+    "definition": "A minor triad plus a minor 7th, such as Am7 = A C E G.",
+    "seeAlso": [
+      "Seventh chord"
+    ]
+  },
+  {
+    "term": "Minor third",
+    "definition": "An interval of three half steps, such as A to C (three frets).",
+    "seeAlso": [
+      "Interval",
+      "Minor interval",
+      "Major third"
+    ]
+  },
+  {
+    "term": "Minor triad",
+    "definition": "A triad of a minor 3rd plus a major 3rd, such as A C E. Written with \"m\": Am.",
+    "seeAlso": [
+      "Triad",
+      "Major triad"
+    ]
+  },
+  {
+    "term": "Minuet",
+    "definition": "A graceful dance in 3/4 time, common in the Baroque and Classical eras.",
+    "seeAlso": [
+      "Time signature"
+    ]
+  },
+  {
+    "term": "Mixolydian",
+    "definition": "The mode starting on degree 5 of the major scale: major with a lowered 7th (1 2 3 4 5 6 ♭7). G Mixolydian: G A B C D E F.",
+    "seeAlso": [
+      "Mode",
+      "Dominant seventh chord"
+    ]
+  },
+  {
+    "term": "Mode",
+    "definition": "A scale made by starting a parent scale on a different degree, giving a new home note and a different sound. The seven modes of the major scale are Ionian, Dorian, Phrygian, Lydian, Mixolydian, Aeolian, and Locrian.",
+    "seeAlso": [
+      "Parent scale",
+      "Ionian",
+      "Dorian",
+      "Mixolydian",
+      "Aeolian"
+    ]
+  },
+  {
+    "term": "Movable chord form",
+    "definition": "A guitar chord fingering with no open strings, so it can slide to any fret to change the chord's root.",
+    "seeAlso": [
+      "Barre chord",
+      "Chord form"
+    ]
+  },
+  {
+    "term": "Musical alphabet",
+    "definition": "The seven letter names used for notes: A B C D E F G, repeating.",
+    "seeAlso": [
+      "White keys",
+      "Octave"
+    ]
+  },
+  {
+    "term": "Natural",
+    "definition": "Describes a note with no sharp or flat (a natural note), or the sign ♮ that cancels a sharp or flat.",
+    "seeAlso": [
+      "Natural note",
+      "Natural sign",
+      "Accidental"
+    ]
+  },
+  {
+    "term": "Natural minor scale",
+    "definition": "A seven-note scale with the step pattern W H W W H W W, such as A B C D E F G A.",
+    "seeAlso": [
+      "Minor scale",
+      "Relative minor"
+    ]
+  },
+  {
+    "term": "Natural note",
+    "definition": "A note named by a letter alone, with no sharp or flat (A B C D E F G). On the piano, the white keys.",
+    "seeAlso": [
+      "Natural",
+      "White keys"
+    ]
+  },
+  {
+    "term": "Natural sign",
+    "definition": "The symbol ♮. It cancels a sharp or flat.",
+    "seeAlso": [
+      "Natural",
+      "Accidental"
+    ]
+  },
+  {
+    "term": "Neck",
+    "definition": "The long part of the guitar you hold with your fretting hand; its front face is the fretboard.",
+    "seeAlso": [
+      "Fretboard",
+      "Headstock"
+    ]
+  },
+  {
+    "term": "Note value",
+    "definition": "How long a note lasts, measured in beats: whole, half, quarter, eighth, and so on.",
+    "seeAlso": [
+      "Whole note",
+      "Half note",
+      "Quarter note",
+      "Eighth note"
+    ]
+  },
+  {
+    "term": "Nut",
+    "definition": "The slotted strip between the headstock and the fretboard that holds the strings at the zero-fret end.",
+    "seeAlso": [
+      "Saddle",
+      "Fretboard"
+    ]
+  },
+  {
+    "term": "Octave",
+    "definition": "The interval between one note and the next note with the same letter name, 12 half steps up or down. The higher note vibrates exactly twice as fast, which is why the two sound alike.",
+    "seeAlso": [
+      "Interval",
+      "Scientific pitch notation",
+      "Pitch class"
+    ]
+  },
+  {
+    "term": "Octave transposition (guitar)",
+    "definition": "Guitar music is written one octave higher than it sounds, to keep notes on the treble staff. The treble clef sometimes has a small 8 below it to show this.",
+    "seeAlso": [
+      "Treble clef",
+      "Octave"
+    ]
+  },
+  {
+    "term": "One finger per fret",
+    "definition": "A guitar hand position where each of the four fretting fingers covers its own fret.",
+    "seeAlso": [
+      "Position"
+    ]
+  },
+  {
+    "term": "Open string",
+    "definition": "A guitar string played without pressing any fret. Written as fret 0.",
+    "seeAlso": [
+      "Fret",
+      "Standard tuning"
+    ]
+  },
+  {
+    "term": "Order of flats",
+    "definition": "The fixed order flats appear in key signatures: B E A D G C F.",
+    "seeAlso": [
+      "Key signature",
+      "Order of sharps"
+    ]
+  },
+  {
+    "term": "Order of sharps",
+    "definition": "The fixed order sharps appear in key signatures: F C G D A E B.",
+    "seeAlso": [
+      "Key signature",
+      "Order of flats"
+    ]
+  },
+  {
+    "term": "p i m a",
+    "definition": "Spanish letters for guitar picking-hand fingers: p thumb, i index, m middle, a ring.",
+    "seeAlso": [
+      "Fingerstyle",
+      "Picking hand"
+    ]
+  },
+  {
+    "term": "Parallel minor",
+    "definition": "The minor key with the same tonic as a major key, such as C minor for C major. It has a different key signature.",
+    "seeAlso": [
+      "Relative minor"
+    ]
+  },
+  {
+    "term": "Parallel motion",
+    "definition": "Two parts or hands moving in the same direction.",
+    "seeAlso": [
+      "Contrary motion",
+      "Hands together"
+    ]
+  },
+  {
+    "term": "Parent scale",
+    "definition": "The major scale a mode's notes come from. D Dorian's parent scale is C major.",
+    "seeAlso": [
+      "Mode"
+    ]
+  },
+  {
+    "term": "Pentatonic scale",
+    "definition": "A five-note scale. The major and minor pentatonic scales are the most common.",
+    "seeAlso": [
+      "Major pentatonic scale",
+      "Minor pentatonic scale"
+    ]
+  },
+  {
+    "term": "Perfect fifth",
+    "definition": "An interval of seven half steps, such as C to G or E to B.",
+    "seeAlso": [
+      "Interval",
+      "Perfect interval"
+    ]
+  },
+  {
+    "term": "Perfect fourth",
+    "definition": "An interval of five half steps, such as C to F.",
+    "seeAlso": [
+      "Interval",
+      "Perfect interval"
+    ]
+  },
+  {
+    "term": "Perfect interval",
+    "definition": "The unison, 4th, 5th, and octave in their natural sizes: P1 = 0, P4 = 5, P5 = 7, P8 = 12 half steps.",
+    "seeAlso": [
+      "Interval",
+      "Major interval"
+    ]
+  },
+  {
+    "term": "Phrase",
+    "definition": "A musical sentence: a group of notes that feels complete, often ending with a longer note or a cadence.",
+    "seeAlso": [
+      "Melody",
+      "Cadence"
+    ]
+  },
+  {
+    "term": "Phrygian",
+    "definition": "The mode starting on degree 3 of the major scale: natural minor with a lowered 2nd (1 ♭2 ♭3 4 5 ♭6 ♭7). E Phrygian: E F G A B C D.",
+    "seeAlso": [
+      "Mode"
+    ]
+  },
+  {
+    "term": "Picking hand",
+    "definition": "The hand that plucks or strums the strings (the right hand for most right-handed players).",
+    "seeAlso": [
+      "Fretting hand",
+      "p i m a"
+    ]
+  },
+  {
+    "term": "Pickup",
+    "definition": "One or more notes before the first full measure, leading into beat 1. Also called an anacrusis.",
+    "seeAlso": [
+      "Measure",
+      "Downbeat"
+    ]
+  },
+  {
+    "term": "Pinch",
+    "definition": "Plucking a bass note with the thumb and a higher note with a finger at the same moment.",
+    "seeAlso": [
+      "Fingerstyle"
+    ]
+  },
+  {
+    "term": "Pitch",
+    "definition": "How high or low a note sounds. Faster vibration (higher frequency) gives a higher pitch.",
+    "seeAlso": [
+      "Octave",
+      "Scientific pitch notation",
+      "Pitch class"
+    ]
+  },
+  {
+    "term": "Pitch class",
+    "definition": "All notes with the same name regardless of octave, such as every C.",
+    "seeAlso": [
+      "Octave",
+      "Pitch"
+    ]
+  },
+  {
+    "term": "Play-along",
+    "definition": "A practice mode where the score moves at a set tempo and you keep up.",
+    "seeAlso": [
+      "Practice mode",
+      "Wait mode"
+    ]
+  },
+  {
+    "term": "Position",
+    "definition": "Where the hand sits on the instrument. On guitar, named by the fret under the index finger. On piano, see five-finger position.",
+    "seeAlso": [
+      "One finger per fret",
+      "Five-finger position",
+      "Box position"
+    ]
+  },
+  {
+    "term": "Posture",
+    "definition": "How you sit or stand at the instrument. At the piano: forearms about level with the keys, feet supported, back tall and relaxed.",
+    "seeAlso": [
+      "Hand position"
+    ]
+  },
+  {
+    "term": "Power chord",
+    "definition": "A two-note chord of a root and a perfect fifth, with no third, written like A5. It is neither major nor minor.",
+    "seeAlso": [
+      "Dyad",
+      "Root–fifth bass"
+    ]
+  },
+  {
+    "term": "Practice mode",
+    "definition": "TabBuddy's mode for playing a library song while the app listens, then reviewing hits, misses, and timing.",
+    "seeAlso": [
+      "Wait mode",
+      "Play-along",
+      "Loop"
+    ]
+  },
+  {
+    "term": "Progression",
+    "definition": "A sequence of chords. Short for chord progression.",
+    "seeAlso": [
+      "Chord progression"
+    ]
+  },
+  {
+    "term": "Pull-off",
+    "definition": "On guitar, sounding a lower note on the same string by pulling a fretting finger off with a slight sideways pluck, without picking again.",
+    "seeAlso": [
+      "Hammer-on",
+      "Slide"
+    ]
+  },
+  {
+    "term": "Quarter note",
+    "definition": "A note lasting 1 beat in 4/4.",
+    "seeAlso": [
+      "Half note",
+      "Eighth note",
+      "Note value"
+    ]
+  },
+  {
+    "term": "Quick change",
+    "definition": "A 12-bar blues variation that moves to IV in measure 2 and back to I in measure 3.",
+    "seeAlso": [
+      "12-bar blues"
+    ]
+  },
+  {
+    "term": "Relative major",
+    "definition": "The major key that shares a minor key's signature, a minor 3rd above its tonic: C major for A minor.",
+    "seeAlso": [
+      "Relative minor"
+    ]
+  },
+  {
+    "term": "Relative minor",
+    "definition": "The minor key that shares a major key's signature, starting on the major scale's 6th degree: A minor for C major.",
+    "seeAlso": [
+      "Relative major",
+      "Parallel minor"
+    ]
+  },
+  {
+    "term": "Resolution",
+    "definition": "Movement from a tense chord or note to a stable one, such as V7 to I.",
+    "seeAlso": [
+      "Cadence",
+      "Dominant seventh chord"
+    ]
+  },
+  {
+    "term": "Rest",
+    "definition": "A symbol for a measured silence. Each note value has a matching rest.",
+    "seeAlso": [
+      "Note value"
+    ]
+  },
+  {
+    "term": "Roman numerals",
+    "definition": "Labels for chords by scale degree: uppercase for major (I, IV, V), lowercase for minor (ii, iii, vi), ° for diminished (vii°).",
+    "seeAlso": [
+      "Diatonic",
+      "Chord progression",
+      "Scale degree"
+    ]
+  },
+  {
+    "term": "Root",
+    "definition": "The note a chord is built on and named after. C is the root of C, Cm, and C7.",
+    "seeAlso": [
+      "Chord",
+      "Triad",
+      "Root position"
+    ]
+  },
+  {
+    "term": "Root position",
+    "definition": "A chord with its root as the lowest note, such as C E G.",
+    "seeAlso": [
+      "Inversion",
+      "Root"
+    ]
+  },
+  {
+    "term": "Root string",
+    "definition": "On guitar, the low E or A string, used to locate the lowest note (the root) of many chords and scales.",
+    "seeAlso": [
+      "Root",
+      "Barre chord"
+    ]
+  },
+  {
+    "term": "Root–fifth bass",
+    "definition": "An accompaniment using only each chord's root and fifth, together or alternating.",
+    "seeAlso": [
+      "Accompaniment",
+      "Root",
+      "Fifth"
+    ]
+  },
+  {
+    "term": "Saddle",
+    "definition": "The thin strip on the guitar bridge that the strings rest on; with the nut it sets the vibrating length.",
+    "seeAlso": [
+      "Bridge",
+      "Nut"
+    ]
+  },
+  {
+    "term": "Scale",
+    "definition": "A set of notes in order of pitch from a starting note (the tonic) to its octave.",
+    "seeAlso": [
+      "Major scale",
+      "Minor scale",
+      "Tonic"
+    ]
+  },
+  {
+    "term": "Scale degree",
+    "definition": "A note's number within a scale: the tonic is 1, the next note 2, and so on up to 7.",
+    "seeAlso": [
+      "Scale",
+      "Tonic",
+      "Roman numerals"
+    ]
+  },
+  {
+    "term": "Scientific pitch notation",
+    "definition": "Naming a pitch by letter and octave number, such as C4 (middle C). The number goes up by one at each C.",
+    "seeAlso": [
+      "Middle C",
+      "Octave"
+    ]
+  },
+  {
+    "term": "Second inversion",
+    "definition": "A chord with its 5th as the lowest note, such as G C E for C major (written C/G).",
+    "seeAlso": [
+      "Inversion",
+      "First inversion"
+    ]
+  },
+  {
+    "term": "Secondary dominant",
+    "definition": "A dominant chord borrowed from another key to lead into a chord other than I. V7/V (\"five of five\") is the V7 of the V chord: in C major, D7 leading to G.",
+    "seeAlso": [
+      "Dominant seventh chord",
+      "Dominant chord"
+    ]
+  },
+  {
+    "term": "Semitone",
+    "definition": "Another name for a half step.",
+    "seeAlso": [
+      "Half step"
+    ]
+  },
+  {
+    "term": "Seventh chord",
+    "definition": "A triad plus the note a 7th above the root, making four notes.",
+    "seeAlso": [
+      "Dominant seventh chord",
+      "Major seventh chord",
+      "Minor seventh chord",
+      "Half-diminished seventh chord",
+      "Diminished seventh chord"
+    ]
+  },
+  {
+    "term": "Sharp",
+    "definition": "The symbol ♯ (written # in note names like F#4). It raises a note by one half step: one key to the right on piano, one fret higher on guitar.",
+    "seeAlso": [
+      "Flat",
+      "Natural",
+      "Half step"
+    ]
+  },
+  {
+    "term": "Sharp (out of tune)",
+    "definition": "Tuned or sounding slightly too high.",
+    "seeAlso": [
+      "In tune",
+      "Flat (out of tune)"
+    ]
+  },
+  {
+    "term": "Shuffle",
+    "definition": "A blues rhythm played with a swung, long–short triplet feel on every beat.",
+    "seeAlso": [
+      "Swing",
+      "Triplet"
+    ]
+  },
+  {
+    "term": "Sight-reading",
+    "definition": "Playing written music you have not practiced before.",
+    "seeAlso": [
+      "Staff",
+      "Landmark notes"
+    ]
+  },
+  {
+    "term": "Sixteenth note",
+    "definition": "A note lasting a quarter of a beat in 4/4; four fill one beat, counted \"1 e & a\".",
+    "seeAlso": [
+      "Eighth note",
+      "Note value"
+    ]
+  },
+  {
+    "term": "Skip",
+    "definition": "A melodic move that jumps over one letter name, such as C to E (a 3rd). On the staff: line to line or space to space.",
+    "seeAlso": [
+      "Step",
+      "Interval"
+    ]
+  },
+  {
+    "term": "Slash chord",
+    "definition": "A chord symbol with a bass note after a slash, such as C/E (C major with E lowest).",
+    "seeAlso": [
+      "Inversion",
+      "Bass note",
+      "Chord symbol"
+    ]
+  },
+  {
+    "term": "Slide",
+    "definition": "On guitar, moving a fretting finger along the string to a new fret while the note keeps sounding.",
+    "seeAlso": [
+      "Hammer-on",
+      "Bend"
+    ]
+  },
+  {
+    "term": "Soft pedal",
+    "definition": "The left piano pedal (una corda). It makes the sound softer and a little darker.",
+    "seeAlso": [
+      "Sustain pedal",
+      "Sostenuto pedal"
+    ]
+  },
+  {
+    "term": "Sostenuto pedal",
+    "definition": "The middle pedal on many grand pianos. It sustains only the notes held down when it is pressed. On many uprights the middle pedal is a practice mute instead.",
+    "seeAlso": [
+      "Sustain pedal",
+      "Soft pedal"
+    ]
+  },
+  {
+    "term": "Soundhole",
+    "definition": "The round opening in the top of an acoustic guitar body.",
+    "seeAlso": [
+      "Body"
+    ]
+  },
+  {
+    "term": "Staff",
+    "definition": "Five horizontal lines and four spaces on which notes are written. Plural: staves.",
+    "seeAlso": [
+      "Clef",
+      "Ledger line",
+      "Grand staff"
+    ]
+  },
+  {
+    "term": "Standard tuning",
+    "definition": "The usual guitar tuning. From the thickest string to the thinnest: E A D G B E (E2 A2 D3 G3 B3 E4).",
+    "seeAlso": [
+      "String numbers",
+      "Tuner"
+    ]
+  },
+  {
+    "term": "Step",
+    "definition": "A melodic move to the next letter name, such as C to D (a 2nd).",
+    "seeAlso": [
+      "Skip",
+      "Half step",
+      "Whole step"
+    ]
+  },
+  {
+    "term": "Straight eighths",
+    "definition": "Eighth notes played exactly even, as written.",
+    "seeAlso": [
+      "Swing",
+      "Eighth note"
+    ]
+  },
+  {
+    "term": "String numbers",
+    "definition": "Guitarists number the strings 1 to 6 from the thinnest (high E) to the thickest (low E).",
+    "seeAlso": [
+      "Standard tuning"
+    ]
+  },
+  {
+    "term": "String set",
+    "definition": "A group of adjacent guitar strings used for a voicing, such as strings 3-2-1.",
+    "seeAlso": [
+      "Voicing",
+      "Inversion"
+    ]
+  },
+  {
+    "term": "Strum",
+    "definition": "Brushing the pick or fingers across several guitar strings in one motion.",
+    "seeAlso": [
+      "Strumming pattern",
+      "Downstroke"
+    ]
+  },
+  {
+    "term": "Strumming pattern",
+    "definition": "A repeating rhythm of downstrokes and upstrokes used to play chords on guitar.",
+    "seeAlso": [
+      "Strum",
+      "Downstroke",
+      "Upstroke"
+    ]
+  },
+  {
+    "term": "Subdominant",
+    "definition": "The 4th degree of a scale, or the chord built on it (IV).",
+    "seeAlso": [
+      "Tonic",
+      "Dominant"
+    ]
+  },
+  {
+    "term": "Subdominant chord",
+    "definition": "The chord built on scale degree 4 (IV).",
+    "seeAlso": [
+      "Subdominant",
+      "Tonic chord"
+    ]
+  },
+  {
+    "term": "Submediant",
+    "definition": "Scale degree 6, or the chord built on it (vi in major).",
+    "seeAlso": [
+      "Scale degree",
+      "Relative minor"
+    ]
+  },
+  {
+    "term": "Supertonic",
+    "definition": "Scale degree 2, or the chord built on it (ii in major).",
+    "seeAlso": [
+      "Scale degree"
+    ]
+  },
+  {
+    "term": "Sustain pedal",
+    "definition": "The right piano pedal. It lifts all the dampers so notes keep ringing after the keys are released. Heavy pedal makes notes harder for the app to separate.",
+    "seeAlso": [
+      "Damper",
+      "Legato pedaling"
+    ]
+  },
+  {
+    "term": "Swing",
+    "definition": "A rhythmic feel where pairs of eighth notes are played long–short instead of even, like the first and third notes of a triplet. Common in blues and jazz.",
+    "seeAlso": [
+      "Straight eighths",
+      "Eighth note",
+      "Shuffle"
+    ]
+  },
+  {
+    "term": "Syncopation",
+    "definition": "Accenting notes that fall between the main beats.",
+    "seeAlso": [
+      "Beat"
+    ]
+  },
+  {
+    "term": "Tempo",
+    "definition": "The speed of the beat, measured in beats per minute (BPM).",
+    "seeAlso": [
+      "BPM",
+      "Beat"
+    ]
+  },
+  {
+    "term": "Third",
+    "definition": "The interval of three letter names (C to E). In a triad, the note a 3rd above the root; it decides major or minor.",
+    "seeAlso": [
+      "Interval",
+      "Triad",
+      "Major triad",
+      "Minor triad"
+    ]
+  },
+  {
+    "term": "Thumb under",
+    "definition": "In scale fingering, passing the thumb under the hand to play the next note so the hand can continue up (right hand) or down (left hand).",
+    "seeAlso": [
+      "Crossing over",
+      "Fingering"
+    ]
+  },
+  {
+    "term": "Tie",
+    "definition": "A curved line joining two notes of the same pitch; play the first and hold through the second.",
+    "seeAlso": [
+      "Note value",
+      "Dotted note"
+    ]
+  },
+  {
+    "term": "Time signature",
+    "definition": "Two numbers at the start of music: the top says how many beats are in each measure, the bottom which note gets one beat. 4/4 = four quarter-note beats; 3/4 = three.",
+    "seeAlso": [
+      "Measure",
+      "Beat"
+    ]
+  },
+  {
+    "term": "Tonic",
+    "definition": "The first degree of a scale and the home note of a key; also the chord built on it (I or i).",
+    "seeAlso": [
+      "Key",
+      "Scale degree",
+      "Dominant"
+    ]
+  },
+  {
+    "term": "Tonic chord",
+    "definition": "The chord built on scale degree 1 (I in major, i in minor). It sounds like home.",
+    "seeAlso": [
+      "Tonic",
+      "Dominant chord"
+    ]
+  },
+  {
+    "term": "Transpose",
+    "definition": "To move music to a different starting note or key by shifting every note and chord by the same interval.",
+    "seeAlso": [
+      "Key",
+      "Interval",
+      "Capo"
+    ]
+  },
+  {
+    "term": "Treble clef",
+    "definition": "The clef for higher notes (𝄞), also called the G clef. Its curl circles the second line, G4. Lines, bottom to top: E4 G4 B4 D5 F5; spaces: F4 A4 C5 E5. Piano right-hand parts use it; guitar music uses it too, sounding an octave lower than written.",
+    "seeAlso": [
+      "Clef",
+      "Bass clef",
+      "Grand staff",
+      "Octave transposition (guitar)"
+    ]
+  },
+  {
+    "term": "Triad",
+    "definition": "A three-note chord made of a root, a 3rd, and a 5th.",
+    "seeAlso": [
+      "Chord",
+      "Root",
+      "Third",
+      "Fifth"
+    ]
+  },
+  {
+    "term": "Triplet",
+    "definition": "Three equal notes in the time normally taken by two of the same kind.",
+    "seeAlso": [
+      "Note value",
+      "Swing"
+    ]
+  },
+  {
+    "term": "Tritone",
+    "definition": "An interval of 6 half steps, such as C to F♯ or F to B. Spelled as an augmented 4th (C–F♯) or a diminished 5th (C–G♭, B–F).",
+    "seeAlso": [
+      "Interval",
+      "Diminished fifth"
+    ]
+  },
+  {
+    "term": "Tuner",
+    "definition": "A tool that listens to a note and shows whether it is flat, sharp, or in tune.",
+    "seeAlso": [
+      "In tune",
+      "Cent"
+    ]
+  },
+  {
+    "term": "Tuning peg",
+    "definition": "A geared knob on the headstock that tightens or loosens one string to raise or lower its pitch.",
+    "seeAlso": [
+      "Headstock",
+      "Tuner"
+    ]
+  },
+  {
+    "term": "Turnaround",
+    "definition": "A chord or short passage at the end of a form that leads back to the beginning, such as the V7 in bar 12 of a blues.",
+    "seeAlso": [
+      "12-bar blues"
+    ]
+  },
+  {
+    "term": "Twelve-bar blues",
+    "definition": "Another spelling of 12-bar blues.",
+    "seeAlso": [
+      "12-bar blues"
+    ]
+  },
+  {
+    "term": "Unison",
+    "definition": "Two notes at the same pitch; the interval of 0 half steps (P1).",
+    "seeAlso": [
+      "Interval",
+      "Octave"
+    ]
+  },
+  {
+    "term": "Upstroke",
+    "definition": "Picking or strumming toward the ceiling.",
+    "seeAlso": [
+      "Downstroke",
+      "Alternate picking"
+    ]
+  },
+  {
+    "term": "Vamp",
+    "definition": "A short repeating chord pattern, often used to practice a scale or mode, or to wait before a melody starts.",
+    "seeAlso": [
+      "Loop",
+      "Improvisation"
+    ]
+  },
+  {
+    "term": "Vibrato",
+    "definition": "A small, repeated wobble in pitch that makes a held note sing. On guitar it is made by the fretting finger; a piano cannot change a note's pitch once struck.",
+    "seeAlso": [
+      "Bend"
+    ]
+  },
+  {
+    "term": "Voice leading",
+    "definition": "How the individual notes of one chord move to the next. Smooth voice leading keeps common tones and moves other notes by step.",
+    "seeAlso": [
+      "Common tone",
+      "Inversion"
+    ]
+  },
+  {
+    "term": "Voicing",
+    "definition": "The particular arrangement of a chord's notes: which octaves, which order, which note is lowest, and which notes are doubled or left out.",
+    "seeAlso": [
+      "Chord",
+      "Inversion",
+      "String set"
+    ]
+  },
+  {
+    "term": "Wait mode",
+    "definition": "A practice mode where the app waits until it hears the right note or chord before moving on, with no tempo pressure.",
+    "seeAlso": [
+      "Practice mode",
+      "Play-along"
+    ]
+  },
+  {
+    "term": "Waltz",
+    "definition": "A dance in 3/4 time with a strong first beat.",
+    "seeAlso": [
+      "Time signature"
+    ]
+  },
+  {
+    "term": "White keys",
+    "definition": "The long piano keys, named with the letters A to G. From C to C they form the C major scale.",
+    "seeAlso": [
+      "Black keys",
+      "Musical alphabet"
+    ]
+  },
+  {
+    "term": "Whole note",
+    "definition": "A note lasting 4 beats, a full measure of 4/4.",
+    "seeAlso": [
+      "Half note",
+      "Note value"
+    ]
+  },
+  {
+    "term": "Whole step",
+    "definition": "Two half steps: two keys apart on the piano (skipping one) or two frets on the guitar, such as C to D or E to F♯. Also called a whole tone.",
+    "seeAlso": [
+      "Half step",
+      "Whole tone"
+    ]
+  },
+  {
+    "term": "Whole tone",
+    "definition": "Another name for a whole step. Sometimes shortened to \"tone\".",
+    "seeAlso": [
+      "Whole step"
+    ]
+  }
+]

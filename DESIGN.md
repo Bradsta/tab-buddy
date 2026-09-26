@@ -6,6 +6,22 @@ Implementation spec for the TabBuddy iOS app (SwiftUI). Reference mockups:
 `templates/tab-buddy-revamp/TabBuddyRevamp.dc.html` — option **1b** (iPad, 834×1194) and **2a** (iPhone, 390×844).
 Design tokens live in the Gamic Arts design-system folder (`tokens/*.css`, entry `styles.css`); hex conversions for Swift are below.
 
+## Tutor and Practice interface (2026-09-25)
+
+iPad is the primary device; iPhone and narrow Split View/Stage Manager windows must still work in compact width.
+
+- **Shell.** In regular width, a 300 pt sidebar holds the instrument switch, stages, and sections (Path, Reviews, Songs you know, Games, Glossary, Calibration, Tutor settings; ⌘1–⌘7), with a detail pane beside it. The two columns are drawn inside the pushed Tutor page, because a `NavigationSplitView` cannot nest in `ContentView`'s `NavigationStack`. In compact width, one scrolling path home pushes sections onto the app stack. Lessons, reviews, and games open full screen. Lesson details are a popover on iPad and a sheet on iPhone.
+- **Wide layouts put things side by side**, not stretched phone columns. Explain steps put the diagram beside the text. Practice steps use a large stage with a side control panel. Games put options and stats in a side column. The glossary shows list and entry together. The take review uses two columns at ≥ 680 pt in regular width.
+- **Honest grading.** An `uncertain` detection is a gray "?" / "not sure" and never counts against the player. Red is used only in the post-take review, for a confidently heard wrong pitch and for low-accuracy heatmap cells. Live feedback during a take or exercise only adds green (heard) and an accent ring on the current target. Misses stay neutral, or use a caution tint for "try again" in lessons.
+- **Visual timing.** App audio is muted while listening, so the count-in, beat pulse (accented downbeat), and cursor are visual. Demos and ear-training sounds play with listening stopped. Calibration offers silent visual pulses as well as clicks.
+- **Practice mode covers the reader** without leaving it. A practice bar takes the header seat, and a practice transport has a large Start/Stop target. Drawn tabs render the practice range natively with an overlay; Guitar Pro, PDF, and MIDI sources keep the page visible with an event strip. The Practice tool lives in the transport tools zone and moves to the second row in compact width.
+- **Review as a sheet.** The take review is a large sheet on every size class (page-sized on iOS 18+), so the reader underneath stays mounted: its teardown does not run and no play is counted. A take the detector could not hear says so instead of showing a score.
+- **Keyboard.** Space starts/stops listening or a take. ← / → move between lesson steps. → skips the current Wait target in practice (S skips a note in lesson Wait mode). Return continues. 1–4 (up to 9) answer quizzes and ear games. Escape closes. ⌘F searches the glossary, ⌘R starts reviews, ⌘L starts the mic check.
+- **Tap targets** are at least 44 pt, with larger primary actions readable from a music stand.
+- **Placement advice** assumes an iPad on a stand 0.5–1.5 m from the instrument. It names where the microphones are and suggests moving the device before asking the player to play louder.
+- **Games and goals without pressure.** Games keep personal bests only; there are no streaks, lives, or loss for missed days. The daily goal is described as a guide, not a streak. Games explain what they train and whether they use the microphone, and offer a tap alternative when the microphone is off. Levels keep separate bests so higher levels are compared fairly.
+- **Microphone denied.** The screen explains how to enable it in Settings. Playing steps offer "Skip for now", and quizzes, reviews, ear games, and the glossary keep working.
+
 ## Large-operation feedback (2026-09-07)
 
 Bulk removal displays processed/total progress, yields between batches, and reports failures. Catalog scanning publishes availability once rather than redrawing the library for every score. Existing external-folder versus managed-file deletion semantics remain distinct.

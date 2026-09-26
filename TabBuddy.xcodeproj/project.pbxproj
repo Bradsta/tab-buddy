@@ -232,6 +232,8 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E9E295F42F5D49050073D6A4 /* TabBuddyShare */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (F3A000183000000000000000 /* Exceptions for TabBuddyShare folder in TabBuddyShare target */, ); explicitFileTypes = {}; explicitFolders = (); path = TabBuddyShare; sourceTree = "<group>"; };
+		7B0000013F00000000000001 /* Tutor */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Tutor; sourceTree = "<group>"; };
+		7B0000023F00000000000001 /* Tutor */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Tutor; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -293,6 +295,7 @@
 		B1626C3829F631E500304E9E /* TabBuddy */ = {
 			isa = PBXGroup;
 			children = (
+				7B0000013F00000000000001 /* Tutor */,
 				F60000033000000000000000 /* EmbeddedScoreMetadata.swift */,
 				F60000053000000000000000 /* LibraryBrowserIndex.swift */,
 				F60000013000000000000000 /* ScoreDiscoveryView.swift */,
@@ -355,6 +358,7 @@
 		B1626C4929F631E600304E9E /* TabBuddyTests */ = {
 			isa = PBXGroup;
 			children = (
+				7B0000023F00000000000001 /* Tutor */,
 				F30000033000000000000000 /* LibraryArchitectureTests.swift */,
 				F4A000000000000000000009 /* GuitarProTests.swift */,
 				B1626C4A29F631E600304E9E /* TabBuddyTests.swift */,
@@ -441,6 +445,9 @@
 			dependencies = (
 				F3A000033000000000000000 /* PBXTargetDependency */,
 			);
+			fileSystemSynchronizedGroups = (
+				7B0000013F00000000000001 /* Tutor */,
+			);
 			name = TabBuddy;
 			productName = TabBuddy;
 			productReference = B1626C3629F631E500304E9E /* TabBuddy.app */;
@@ -478,6 +485,9 @@
 			);
 			dependencies = (
 				B1626C4829F631E600304E9E /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				7B0000023F00000000000001 /* Tutor */,
 			);
 			name = TabBuddyTests;
 			productName = TabBuddyTests;

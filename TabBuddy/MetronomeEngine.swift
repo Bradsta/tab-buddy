@@ -7,6 +7,7 @@
 //
 
 import AVFoundation
+import Combine
 
 @MainActor
 final class MetronomeEngine: ObservableObject {
@@ -33,8 +34,13 @@ final class MetronomeEngine: ObservableObject {
 
     // MARK: - Init
 
+    /// Tutor listening mutes app audio.
+    private var tutorMute: AnyCancellable?
+
     init(makeEngine: @escaping () -> AVAudioEngine = { AVAudioEngine() }) {
         self.makeEngine = makeEngine
+        tutorMute = NotificationCenter.default.publisher(for: .tutorListeningWillStart)
+            .sink { [weak self] _ in MainActor.assumeIsolated { self?.stop() } }
     }
 
     // MARK: - Setup
@@ -60,7 +66,7 @@ final class MetronomeEngine: ObservableObject {
     }
 
     func start() {
-        guard !engine.isRunning else { return }
+        guard !engine.isRunning, !TutorAudioSession.outputMuted else { return }
         configureAudioSession()
         if !engineConfigured { setupEngine(); engineConfigured = true }
         do {

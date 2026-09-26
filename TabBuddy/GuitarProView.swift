@@ -140,6 +140,22 @@ final class GuitarProPlayer: NSObject, ObservableObject, WKScriptMessageHandler,
         loopEnd = (saved["end"] as? Int).map { max(0, $0 - 1) }
         metronome.isEnabled = saved["metronome"] as? Bool ?? false
         notePlayer.isEnabled = saved["sound"] as? Bool ?? false
+        PracticeSourceRegistry.register(self, for: fileID)
+        // Tutor listening mutes app audio.
+        NotificationCenter.default.addObserver(self, selector: #selector(tutorListeningWillStart),
+                                               name: .tutorListeningWillStart, object: nil)
+    }
+
+    @objc private func tutorListeningWillStart() { send(.pause) }
+
+    /// Tutor practice: the selected track's notes (`PassageBuilder.AlphaTabNote` dictionaries).
+    func exportNotes() async -> [[String: Any]] {
+        guard loaded, let webView, let script = Command.exportNotes(selectedTrack).javaScript else { return [] }
+        return await withCheckedContinuation { continuation in
+            webView.evaluateJavaScript(script) { value, _ in
+                continuation.resume(returning: value as? [[String: Any]] ?? [])
+            }
+        }
     }
 
     var actions: PlayerPlaybackActions {
@@ -157,6 +173,7 @@ final class GuitarProPlayer: NSObject, ObservableObject, WKScriptMessageHandler,
         case play, pause, scrollToTop
         case seek(Int)
         case configure([String: Any])
+        case exportNotes(Int)
 
         var javaScript: String? {
             let method: String
@@ -167,6 +184,7 @@ final class GuitarProPlayer: NSObject, ObservableObject, WKScriptMessageHandler,
             case .scrollToTop: (method, argument) = ("scrollToTop", nil)
             case .seek(let bar): (method, argument) = ("seek", bar)
             case .configure(let options): (method, argument) = ("configure", options)
+            case .exportNotes(let track): (method, argument) = ("exportNotes", track)
             }
             var json = ""
             if let argument {

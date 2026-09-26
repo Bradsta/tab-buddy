@@ -1,0 +1,1483 @@
+{
+  "id": "piano.s8",
+  "instrument": "piano",
+  "order": 8,
+  "title": "Minor scales, seventh chords, and the blues",
+  "summary": "Play natural, harmonic, and melodic minor scales, build seventh chords, and play a 12-bar blues.",
+  "lessons": [
+    {
+      "id": "piano.s8.l1",
+      "title": "Natural minor and relative keys",
+      "summary": "The minor scale's step pattern, and the major key that shares its notes.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "The natural minor scale",
+          "body": "The **natural minor scale** uses the step pattern **W H W W H W W**. From A it uses only white keys: **A B C D E F G A**.\n\nCompared with a major scale on the same tonic, natural minor has a lowered 3rd, 6th, and 7th (in scale-degree terms: 1 2 ♭3 4 5 ♭6 ♭7). The lowered 3rd is what makes it sound minor.",
+          "diagram": {
+            "kind": "keyboard",
+            "scale": "A natural minor",
+            "notes": [
+              "A4",
+              "B4",
+              "C5",
+              "D5",
+              "E5",
+              "F5",
+              "G5",
+              "A5"
+            ],
+            "labels": "degrees",
+            "pitchRange": [
+              "A4",
+              "A5"
+            ]
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Relative major and minor",
+          "body": "A minor and C major use exactly the same notes and the same key signature (no sharps or flats). They are **relative** keys. Every major key has a **relative minor** that starts on its **6th degree** (three half steps below the tonic):\n\n| Major | Relative minor | Signature |\n|---|---|---|\n| C | A minor | none |\n| G | E minor | F♯ |\n| D | B minor | F♯ C♯ |\n| F | D minor | B♭ |\n| B♭ | G minor | B♭ E♭ |\n\nA **parallel** minor, by contrast, shares the tonic but not the signature: C major and C minor (three flats)."
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Right hand, A natural minor, A4 to A5 and back. Fingering like C major: up 1 2 3 1 2 3 4 5, down 5 4 3 2 1 3 2 1.",
+            "notes": [
+              "A4",
+              "B4",
+              "C5",
+              "D5",
+              "E5",
+              "F5",
+              "G5",
+              "A5",
+              "G5",
+              "F5",
+              "E5",
+              "D5",
+              "C5",
+              "B4",
+              "A4"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q h",
+            "bpm": 66,
+            "tempoSteps": [
+              66,
+              80,
+              92
+            ]
+          },
+          "mistakeTips": [
+            "All white keys.",
+            "The thumb passes under to D5 after C5 (finger 3).",
+            "Listen for the darker sound compared with C major."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Left hand, A natural minor, A2 to A3 and back. Fingering up 5 4 3 2 1 3 2 1.",
+            "notes": [
+              "A2",
+              "B2",
+              "C3",
+              "D3",
+              "E3",
+              "F3",
+              "G3",
+              "A3",
+              "G3",
+              "F3",
+              "E3",
+              "D3",
+              "C3",
+              "B2",
+              "A2"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q h",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ]
+          },
+          "mistakeTips": [
+            "The thumb plays E3; finger 3 crosses over to F3.",
+            "A2 is fairly low; play it firmly."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Right hand, E natural minor (one sharp, F♯), E4 to E5 and back. Fingering up 1 2 3 1 2 3 4 5.",
+            "notes": [
+              "E4",
+              "F#4",
+              "G4",
+              "A4",
+              "B4",
+              "C5",
+              "D5",
+              "E5",
+              "D5",
+              "C5",
+              "B4",
+              "A4",
+              "G4",
+              "F#4",
+              "E4"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q h",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ]
+          },
+          "mistakeTips": [
+            "F♯4 is finger 2.",
+            "The thumb passes under to A4 after G4."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "Step pattern of the natural minor scale?",
+              "choices": [
+                "W H W W H W W",
+                "W W H W W W H",
+                "H W W H W W W",
+                "W H W H W H W"
+              ],
+              "answerIndex": 0,
+              "explanation": "A B C D E F G A."
+            },
+            {
+              "prompt": "What is the relative minor of G major?",
+              "choices": [
+                "E minor",
+                "G minor",
+                "D minor",
+                "B minor"
+              ],
+              "answerIndex": 0,
+              "explanation": "The 6th degree of G major is E."
+            },
+            {
+              "prompt": "Which key has the same signature as F major?",
+              "choices": [
+                "D minor",
+                "F minor",
+                "A minor",
+                "E minor"
+              ],
+              "answerIndex": 0,
+              "explanation": "Both have one flat, B♭."
+            },
+            {
+              "prompt": "Spell D natural minor.",
+              "choices": [
+                "D E F G A B♭ C D",
+                "D E F♯ G A B C♯ D",
+                "D E F G A B C D",
+                "D E♭ F G A B♭ C D"
+              ],
+              "answerIndex": 0,
+              "explanation": "Same notes as F major, starting on D."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Minor key signatures",
+          "generator": {
+            "kind": "keySignature",
+            "params": {
+              "keys": "Am,Em,Bm,Dm,Gm",
+              "mode": "minor"
+            }
+          },
+          "count": 5
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s8.l1.r1",
+          "kind": "fact",
+          "prompt": "Natural minor step pattern?",
+          "answer": "W H W W H W W"
+        },
+        {
+          "id": "piano.s8.l1.r2",
+          "kind": "fact",
+          "prompt": "Relative minor of D major?",
+          "answer": "B minor"
+        }
+      ],
+      "glossaryTerms": [
+        "Minor scale",
+        "Natural minor scale",
+        "Relative minor",
+        "Relative major",
+        "Parallel minor"
+      ]
+    },
+    {
+      "id": "piano.s8.l2",
+      "title": "Harmonic and melodic minor",
+      "summary": "Raise the 7th (and sometimes the 6th) for a stronger pull home.",
+      "minutes": 13,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Harmonic minor",
+          "body": "In natural minor, the 7th degree (G in A minor) is a whole step below the tonic, so it pulls home weakly. **Harmonic minor** raises the 7th by a half step: **A B C D E F G♯ A**.\n\nThis makes the V chord major (**E = E G♯ B**, and **E7 = E G♯ B D**), giving minor keys a strong V→i cadence. The gap from F to G♯ is 3 half steps, an **augmented 2nd**, which gives harmonic minor its distinctive sound.\n\nThe raised 7th is written as an accidental in the music; it is not in the key signature.",
+          "diagram": {
+            "kind": "keyboard",
+            "scale": "A harmonic minor",
+            "notes": [
+              "A4",
+              "B4",
+              "C5",
+              "D5",
+              "E5",
+              "F5",
+              "G#5",
+              "A5"
+            ],
+            "pitchRange": [
+              "A4",
+              "A5"
+            ]
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Melodic minor",
+          "body": "**Melodic minor** (in classical use) raises both the 6th and 7th going **up**, to avoid the augmented 2nd: **A B C D E F♯ G♯ A**. Going **down** it usually returns to natural minor: **A G F E D C B A**.\n\nFingering for A natural, harmonic, and melodic minor is the same as C major in both hands.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "A4",
+              "B4",
+              "C5",
+              "D5",
+              "E5",
+              "F#5",
+              "G#5",
+              "A5"
+            ],
+            "pitchRange": [
+              "A4",
+              "A5"
+            ],
+            "caption": "A melodic minor ascending: F♯ and G♯."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Three forms of A minor",
+          "caption": "Natural, harmonic, then melodic (up and down).",
+          "playback": {
+            "notes": [
+              [
+                "A4"
+              ],
+              [
+                "B4"
+              ],
+              [
+                "C5"
+              ],
+              [
+                "D5"
+              ],
+              [
+                "E5"
+              ],
+              [
+                "F5"
+              ],
+              [
+                "G5"
+              ],
+              [
+                "A5"
+              ],
+              [
+                "A4"
+              ],
+              [
+                "B4"
+              ],
+              [
+                "C5"
+              ],
+              [
+                "D5"
+              ],
+              [
+                "E5"
+              ],
+              [
+                "F5"
+              ],
+              [
+                "G#5"
+              ],
+              [
+                "A5"
+              ],
+              [
+                "A4"
+              ],
+              [
+                "B4"
+              ],
+              [
+                "C5"
+              ],
+              [
+                "D5"
+              ],
+              [
+                "E5"
+              ],
+              [
+                "F#5"
+              ],
+              [
+                "G#5"
+              ],
+              [
+                "A5"
+              ],
+              [
+                "G5"
+              ],
+              [
+                "F5"
+              ],
+              [
+                "E5"
+              ],
+              [
+                "D5"
+              ],
+              [
+                "C5"
+              ],
+              [
+                "B4"
+              ],
+              [
+                "A4"
+              ]
+            ],
+            "bpm": 100
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Right hand, A harmonic minor, A4 to A5 and back. Fingering up 1 2 3 1 2 3 4 5.",
+            "notes": [
+              "A4",
+              "B4",
+              "C5",
+              "D5",
+              "E5",
+              "F5",
+              "G#5",
+              "A5",
+              "G#5",
+              "F5",
+              "E5",
+              "D5",
+              "C5",
+              "B4",
+              "A4"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q h",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ]
+          },
+          "mistakeTips": [
+            "G♯5 (finger 4) is the only black key.",
+            "The jump from F5 to G♯5 is wider than a whole step; keep finger 4 over G♯ ahead of time."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Right hand, A melodic minor: up with F♯ and G♯, down with F and G natural.",
+            "notes": [
+              "A4",
+              "B4",
+              "C5",
+              "D5",
+              "E5",
+              "F#5",
+              "G#5",
+              "A5",
+              "G5",
+              "F5",
+              "E5",
+              "D5",
+              "C5",
+              "B4",
+              "A4"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q h",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ]
+          },
+          "mistakeTips": [
+            "Up: A B C D E F♯ G♯ A. Down: A G F E D C B A.",
+            "Fingers 3 and 4 play the black keys going up and the white keys going down."
+          ]
+        },
+        {
+          "type": "song",
+          "title": "Greensleeves (traditional), first section",
+          "caption": "A minor, 3/4, pickup on beat 3. This common version mixes forms of A minor: G natural in some measures, G♯ where the melody leans into A (as in harmonic minor), and F♯ once near the end (as in melodic minor). Right hand.",
+          "notes": [
+            [],
+            [
+              "A4"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "D5"
+            ],
+            [
+              "E5"
+            ],
+            [
+              "F5"
+            ],
+            [
+              "E5"
+            ],
+            [
+              "D5"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "G#4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "G#4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "D5"
+            ],
+            [
+              "E5"
+            ],
+            [
+              "F5"
+            ],
+            [
+              "E5"
+            ],
+            [
+              "D5"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "G#4"
+            ],
+            [
+              "F#4"
+            ],
+            [
+              "G#4"
+            ],
+            [
+              "A4"
+            ]
+          ],
+          "rhythm": "hr q h q q. e q h q q. e q h q q. e q h q h q h q q. e q h q q. e q q. e q q. e q h.",
+          "bpm": 88,
+          "beatsPerMeasure": 3
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "Spell A harmonic minor.",
+              "choices": [
+                "A B C D E F G♯ A",
+                "A B C D E F G A",
+                "A B C D E F♯ G♯ A",
+                "A B C♯ D E F G♯ A"
+              ],
+              "answerIndex": 0,
+              "explanation": "Natural minor with a raised 7th."
+            },
+            {
+              "prompt": "Why raise the 7th in harmonic minor?",
+              "choices": [
+                "To make V major and pull strongly to the tonic",
+                "To remove all accidentals",
+                "To make the scale shorter",
+                "To make it a major scale"
+              ],
+              "answerIndex": 0,
+              "explanation": "G♯ is a half step below A, a strong pull home."
+            },
+            {
+              "prompt": "What is the V7 chord in A minor (harmonic)?",
+              "choices": [
+                "E7: E G♯ B D",
+                "Em7: E G B D",
+                "E: E G B",
+                "G7: G B D F"
+              ],
+              "answerIndex": 0,
+              "explanation": "With G♯, the V chord becomes major; add D for V7."
+            },
+            {
+              "prompt": "How does classical melodic minor descend?",
+              "choices": [
+                "As natural minor",
+                "As harmonic minor",
+                "As major",
+                "It does not descend"
+              ],
+              "answerIndex": 0,
+              "explanation": "Raised 6th and 7th going up; natural going down."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Spell harmonic minor",
+          "generator": {
+            "kind": "scaleSpelling",
+            "params": {
+              "keys": "A,E,D",
+              "type": "harmonic minor"
+            }
+          },
+          "count": 3
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s8.l2.r1",
+          "kind": "fact",
+          "prompt": "Spell E harmonic minor.",
+          "answer": "E F♯ G A B C D♯ E"
+        },
+        {
+          "id": "piano.s8.l2.r2",
+          "kind": "fact",
+          "prompt": "Spell A melodic minor ascending.",
+          "answer": "A B C D E F♯ G♯ A"
+        }
+      ],
+      "glossaryTerms": [
+        "Harmonic minor scale",
+        "Melodic minor scale",
+        "Augmented second",
+        "Leading tone"
+      ]
+    },
+    {
+      "id": "piano.s8.l3",
+      "title": "Seventh chords",
+      "summary": "Add a 7th on top of a triad for richer harmony.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Four-note chords",
+          "body": "A **seventh chord** is a triad plus the note a 7th above the root. The main types:\n\n| Symbol | Name | Build | From C |\n|---|---|---|---|\n| Cmaj7 | major seventh | major triad + major 7th | C E G B |\n| C7 | dominant seventh | major triad + minor 7th | C E G B♭ |\n| Cm7 | minor seventh | minor triad + minor 7th | C E♭ G B♭ |\n| Cm7♭5 | half-diminished | diminished triad + minor 7th | C E♭ G♭ B♭ |\n| Cdim7 | diminished seventh | diminished triad + diminished 7th | C E♭ G♭ B♭♭ (sounds as A) |\n\nRight-hand root-position fingering: **1 2 3 5**.",
+          "diagram": {
+            "kind": "keyboard",
+            "chord": "Cmaj7",
+            "notes": [
+              "C4",
+              "E4",
+              "G4",
+              "B4"
+            ],
+            "labels": "fingers",
+            "pitchRange": [
+              "C4",
+              "C5"
+            ]
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Seventh chords in a major key",
+          "body": "Stacking thirds on each degree of C major gives:\n\n**Imaj7 ii7 iii7 IVmaj7 V7 vi7 viiø7**\n\n**Cmaj7 · Dm7 · Em7 · Fmaj7 · G7 · Am7 · Bm7♭5**\n\nOnly V gets a dominant seventh, which is why V7 is so strongly linked to its key."
+        },
+        {
+          "type": "demo",
+          "title": "Cmaj7, C7, Cm7",
+          "caption": "Same root, three colors.",
+          "playback": {
+            "chords": [
+              "Cmaj7",
+              "C7",
+              "Cm7"
+            ],
+            "bpm": 50,
+            "style": "block"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Right hand, root position (1 2 3 5): Cmaj7 (C4 E4 G4 B4), Dm7 (D4 F4 A4 C5), G7 (G4 B4 D5 F5), Am7 (A4 C5 E5 G5).",
+            "chords": [
+              "Cmaj7",
+              "Dm7",
+              "G7",
+              "Am7"
+            ]
+          },
+          "mistakeTips": [
+            "All four notes together; finger 5 on the 7th.",
+            "If a note is missing, press finger 2 and 3 as firmly as 1 and 5.",
+            "Four-note chords are harder for the microphone than single notes; a partial result is normal at first."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "Spell G7.",
+              "choices": [
+                "G B D F",
+                "G B D F♯",
+                "G B♭ D F",
+                "G B D E"
+              ],
+              "answerIndex": 0,
+              "explanation": "Major triad + minor 7th."
+            },
+            {
+              "prompt": "Spell Dm7.",
+              "choices": [
+                "D F A C",
+                "D F♯ A C",
+                "D F A C♯",
+                "D F A♭ C"
+              ],
+              "answerIndex": 0,
+              "explanation": "Minor triad + minor 7th."
+            },
+            {
+              "prompt": "Which chord is the V7 in C major?",
+              "choices": [
+                "G7",
+                "Gmaj7",
+                "Gm7",
+                "C7"
+              ],
+              "answerIndex": 0,
+              "explanation": "Only the V chord is a dominant seventh."
+            },
+            {
+              "prompt": "Spell Fmaj7.",
+              "choices": [
+                "F A C E",
+                "F A C E♭",
+                "F A♭ C E♭",
+                "F A C D"
+              ],
+              "answerIndex": 0,
+              "explanation": "Major triad + major 7th."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Spell the seventh chord",
+          "generator": {
+            "kind": "chordSpelling",
+            "params": {
+              "roots": "C,D,E,F,G,A,Bb",
+              "qualities": "maj7,7,m7"
+            }
+          },
+          "count": 6
+        },
+        {
+          "type": "quiz",
+          "title": "Seventh chords by ear",
+          "generator": {
+            "kind": "chordQualityByEar",
+            "params": {
+              "qualities": "maj7,7,m7"
+            }
+          },
+          "count": 6
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s8.l3.r1",
+          "kind": "fact",
+          "prompt": "Spell Cmaj7, C7, and Cm7.",
+          "answer": "C E G B; C E G B♭; C E♭ G B♭"
+        },
+        {
+          "id": "piano.s8.l3.r2",
+          "kind": "earQuality",
+          "prompt": "Name the chord quality.",
+          "answer": "Dominant seventh",
+          "playback": {
+            "chords": [
+              "G7"
+            ],
+            "style": "block"
+          }
+        },
+        {
+          "id": "piano.s8.l3.r3",
+          "kind": "playChord",
+          "prompt": "Play Am7.",
+          "answer": "Am7"
+        }
+      ],
+      "glossaryTerms": [
+        "Seventh chord",
+        "Major seventh chord",
+        "Dominant seventh chord",
+        "Minor seventh chord",
+        "Half-diminished seventh chord",
+        "Diminished seventh chord"
+      ]
+    },
+    {
+      "id": "piano.s8.l4",
+      "title": "The 12-bar blues",
+      "summary": "The blues form, a boogie left hand, and the blues scale.",
+      "minutes": 14,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "The form",
+          "body": "The **12-bar blues** is a 12-measure chord pattern built on I, IV, and V, usually all played as **dominant seventh** chords. In C: **C7, F7, G7**.\n\n| Bars 1–4 | C7 | C7 | C7 | C7 |\n|---|---|---|---|---|\n| **Bars 5–8** | **F7** | **F7** | **C7** | **C7** |\n| **Bars 9–12** | **G7** | **F7** | **C7** | **G7** |\n\nThe G7 in bar 12 is a **turnaround**: it leads back to bar 1. On the last time through, end on C7.\n\nUsing a dominant seventh on I and IV breaks the major-key pattern from Stage 6 on purpose. That clash is part of the blues sound."
+        },
+        {
+          "type": "explain",
+          "title": "A boogie left hand",
+          "body": "A classic LH pattern climbs the chord and comes back, in eighth notes: **1 3 5 6 ♭7 6 5 3**.\n\n- C7: C3 E3 G3 A3 B♭3 A3 G3 E3\n- F7: F2 A2 C3 D3 E♭3 D3 C3 A2\n- G7: G2 B2 D3 E3 F3 E3 D3 B2\n\nBlues is often played with **swing** (long–short eighths). Here the eighths are **straight** (even) so the timing check is exact.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C3",
+              "E3",
+              "G3",
+              "A3",
+              "Bb3"
+            ],
+            "pitchRange": [
+              "C3",
+              "C4"
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Left hand boogie on C7, two measures.",
+            "notes": [
+              "C3",
+              "E3",
+              "G3",
+              "A3",
+              "Bb3",
+              "A3",
+              "G3",
+              "E3",
+              "C3",
+              "E3",
+              "G3",
+              "A3",
+              "Bb3",
+              "A3",
+              "G3",
+              "E3"
+            ],
+            "rhythm": "e e e e e e e e e e e e e e e e",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ]
+          },
+          "mistakeTips": [
+            "Fingering 5 4 3 2 1 2 3 4 (C E G A B♭ A G E). The hand spans a 7th; open it without locking the wrist.",
+            "Keep the eighth notes even.",
+            "Start slowly; this is the pattern for the whole blues."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Left hand boogie on F7 (from F2), then G7 (from G2), one measure each, then C7.",
+            "notes": [
+              "F2",
+              "A2",
+              "C3",
+              "D3",
+              "Eb3",
+              "D3",
+              "C3",
+              "A2",
+              "G2",
+              "B2",
+              "D3",
+              "E3",
+              "F3",
+              "E3",
+              "D3",
+              "B2",
+              "C3",
+              "E3",
+              "G3",
+              "A3",
+              "Bb3",
+              "A3",
+              "G3",
+              "E3"
+            ],
+            "rhythm": "e e e e e e e e e e e e e e e e e e e e e e e e",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ]
+          },
+          "mistakeTips": [
+            "Same finger pattern, moved to a new root.",
+            "F2 and G2 are low: play firmly so the microphone hears them."
+          ]
+        },
+        {
+          "type": "explain",
+          "title": "The blues scale",
+          "body": "The **C blues scale** is **C E♭ F G♭ G B♭ C**: the minor pentatonic scale (C E♭ F G B♭) plus the \"blue note\" G♭ (also written F♯). Melodies from this scale fit over all three chords of a blues in C.",
+          "diagram": {
+            "kind": "keyboard",
+            "scale": "C blues",
+            "notes": [
+              "C4",
+              "Eb4",
+              "F4",
+              "Gb4",
+              "G4",
+              "Bb4",
+              "C5"
+            ],
+            "pitchRange": [
+              "C4",
+              "C5"
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "improvise",
+            "prompt": "Improvise with the right hand for 60 seconds using the C blues scale (C4 to C5). Short phrases with space between them sound best.",
+            "scale": "C blues",
+            "key": "C major",
+            "bpm": 70,
+            "durationSec": 60
+          },
+          "mistakeTips": [
+            "Stay on the scale notes: C E♭ F G♭ G B♭.",
+            "Repeat a short idea, then change one note.",
+            "Leave rests. Space is part of the phrase.",
+            "The app scores how many notes are in the scale and how steady your rhythm is."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "Chords in a 12-bar blues in C?",
+              "choices": [
+                "C7, F7, G7",
+                "C, Dm, G",
+                "Cmaj7, Fmaj7, G7",
+                "C, Am, F, G"
+              ],
+              "answerIndex": 0,
+              "explanation": "I7, IV7, V7."
+            },
+            {
+              "prompt": "Which chord is in bar 5 of a 12-bar blues?",
+              "choices": [
+                "IV7",
+                "I7",
+                "V7",
+                "vi"
+              ],
+              "answerIndex": 0,
+              "explanation": "Bars 5–6 are IV7."
+            },
+            {
+              "prompt": "Spell the C blues scale.",
+              "choices": [
+                "C E♭ F G♭ G B♭",
+                "C D E G A",
+                "C D E F G A B",
+                "C E♭ F G B♭"
+              ],
+              "answerIndex": 0,
+              "explanation": "Minor pentatonic plus the blue note G♭."
+            },
+            {
+              "prompt": "What is a turnaround?",
+              "choices": [
+                "A chord or phrase at the end of the form that leads back to the start",
+                "Playing the piece backwards",
+                "A change of key",
+                "A long rest"
+              ],
+              "answerIndex": 0,
+              "explanation": "In bar 12, V7 turns back to I."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s8.l4.r1",
+          "kind": "fact",
+          "prompt": "12-bar blues chord order in Roman numerals?",
+          "answer": "I I I I | IV IV I I | V IV I V"
+        },
+        {
+          "id": "piano.s8.l4.r2",
+          "kind": "fact",
+          "prompt": "LH boogie pattern on C7?",
+          "answer": "C E G A B♭ A G E"
+        }
+      ],
+      "glossaryTerms": [
+        "12-bar blues",
+        "Dominant seventh chord",
+        "Blues scale",
+        "Blue note",
+        "Turnaround",
+        "Swing",
+        "Straight eighths",
+        "Minor pentatonic scale",
+        "Boogie pattern",
+        "Improvisation"
+      ]
+    },
+    {
+      "id": "piano.s8.l5",
+      "title": "Stage 8 review: Blues in C",
+      "summary": "Minor keys, seventh chords, and a complete 12-bar blues with both hands.",
+      "minutes": 14,
+      "steps": [
+        {
+          "type": "quiz",
+          "title": "Stage 8 check: seventh chords by ear",
+          "generator": {
+            "kind": "chordQualityByEar",
+            "params": {
+              "qualities": "maj7,7,m7,m7b5"
+            }
+          },
+          "count": 6
+        },
+        {
+          "type": "quiz",
+          "title": "Stage 8 check",
+          "questions": [
+            {
+              "prompt": "Relative minor of F major?",
+              "choices": [
+                "D minor",
+                "F minor",
+                "A minor",
+                "C minor"
+              ],
+              "answerIndex": 0,
+              "explanation": "The 6th degree of F major is D."
+            },
+            {
+              "prompt": "Which scale raises only the 7th of natural minor?",
+              "choices": [
+                "Harmonic minor",
+                "Melodic minor",
+                "Blues scale",
+                "Major"
+              ],
+              "answerIndex": 0,
+              "explanation": "A harmonic minor has G♯."
+            },
+            {
+              "prompt": "Spell Bm7♭5.",
+              "choices": [
+                "B D F A",
+                "B D F♯ A",
+                "B D♯ F♯ A",
+                "B D F A♭"
+              ],
+              "answerIndex": 0,
+              "explanation": "Diminished triad B D F plus the minor 7th A."
+            },
+            {
+              "prompt": "12-bar blues in G uses which chords?",
+              "choices": [
+                "G7, C7, D7",
+                "G7, D7, Em7",
+                "G, Am, D",
+                "G7, C7, F7"
+              ],
+              "answerIndex": 0,
+              "explanation": "I7 = G7, IV7 = C7, V7 = D7."
+            }
+          ]
+        },
+        {
+          "type": "song",
+          "title": "Blues in C (original)",
+          "caption": "Both hands. LH: the boogie pattern in straight eighths. RH: a three-note chord on beat 1 of each measure, held: C7 = E4 G4 B♭4, F7 = E♭4 F4 A4, G7 = F4 G4 B4. Ends on C7. Learn the LH alone first.",
+          "notes": [
+            [
+              "C3",
+              "E4",
+              "G4",
+              "Bb4"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "Bb3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "C3",
+              "E4",
+              "G4",
+              "Bb4"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "Bb3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "C3",
+              "E4",
+              "G4",
+              "Bb4"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "Bb3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "C3",
+              "E4",
+              "G4",
+              "Bb4"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "Bb3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "F2",
+              "Eb4",
+              "F4",
+              "A4"
+            ],
+            [
+              "A2"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "Eb3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "A2"
+            ],
+            [
+              "F2",
+              "Eb4",
+              "F4",
+              "A4"
+            ],
+            [
+              "A2"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "Eb3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "A2"
+            ],
+            [
+              "C3",
+              "E4",
+              "G4",
+              "Bb4"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "Bb3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "C3",
+              "E4",
+              "G4",
+              "Bb4"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "Bb3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "G2",
+              "F4",
+              "G4",
+              "B4"
+            ],
+            [
+              "B2"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "F3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "B2"
+            ],
+            [
+              "F2",
+              "Eb4",
+              "F4",
+              "A4"
+            ],
+            [
+              "A2"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "Eb3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "A2"
+            ],
+            [
+              "C3",
+              "E4",
+              "G4",
+              "Bb4"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "Bb3"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "G2",
+              "F4",
+              "G4",
+              "B4"
+            ],
+            [
+              "B2"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "F3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "B2"
+            ],
+            [
+              "C3",
+              "E4",
+              "G4",
+              "Bb4"
+            ]
+          ],
+          "rhythm": "e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e w",
+          "bpm": 60,
+          "passAccuracy": 0.7
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s8.l5.r1",
+          "kind": "fact",
+          "prompt": "RH C7 voicing used in Blues in C?",
+          "answer": "E4 G4 B♭4 (3rd, 5th, 7th)"
+        }
+      ],
+      "glossaryTerms": [
+        "12-bar blues",
+        "Voicing"
+      ]
+    }
+  ]
+}

@@ -264,9 +264,12 @@ struct TabTransportBar<Display: View>: View {
                         loopControl
                         displayControl
                     }
+                    // Practice sits beside the flexible scrubber so the top row
+                    // keeps its width in Slide Over.
                     HStack(spacing: 12) {
                         positionReadout
                         scrubber
+                        PracticeToolButton()
                     }
                 }
             } else {
@@ -275,6 +278,7 @@ struct TabTransportBar<Display: View>: View {
                     scrubber
                     tempoControl
                     loopControl
+                    PracticeToolButton()
                     displayControl
                 }
             }
@@ -631,7 +635,10 @@ struct OriginalTransportBar<Display: View>: View {
                         Spacer(minLength: 6)
                         tools
                     }
-                    speedSlider
+                    HStack(spacing: 12) {
+                        speedSlider
+                        PracticeToolButton()
+                    }
                 }
             } else {
                 HStack(spacing: 16) {
@@ -684,6 +691,7 @@ struct OriginalTransportBar<Display: View>: View {
             TransportTile(icon: "repeat", label: "Loop to top", active: loopToTop) {
                 loopToTop.toggle()
             }
+            if !isCompact { PracticeToolButton() }
             TransportTile(icon: "slider.horizontal.3", label: "Settings", active: false) {
                 showDisplay = true
             }

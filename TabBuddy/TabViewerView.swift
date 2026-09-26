@@ -111,6 +111,18 @@ struct TabViewerView: View {
     // Loop-to-top for the Original file view's auto-scroll transport.
     @State private var loopToTopText = false
 
+    // Tutor practice mode (TUTOR_IMPLEMENTATION.md §8).
+    @State private var practiceContext: PracticeScoreContext?
+    /// Ends the practice session when the viewer really leaves the screen.
+    @State private var practiceSession = PracticeSessionHandle()
+    /// The drawn player's 100% tempo, captured when it configures (mirrors
+    /// `TabPlayerView.configure()`), so practice speeds match the player's.
+    @State private var drawnReferenceBPM: Double?
+
+    /// Set on the first appear of this viewer; a later appear is a return from
+    /// a presentation, not a new visit (no play count, no file re-resolve).
+    @State private var viewerSession: TabViewerLifecycle.Session?
+
     private func resolveFile() {
         fileAccessTask?.cancel()
         fileAccessError = nil
@@ -190,7 +202,7 @@ struct TabViewerView: View {
             // (scrollable) render — raw text and PDF — gets the shared
             // scroll transport along its bottom.
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                if showScrollTransport {
+                if showScrollTransport && practiceContext == nil {
                     originalTransport
                 }
             }
@@ -198,9 +210,24 @@ struct TabViewerView: View {
         // interactive swipe-back — `navigationBarBackButtonHidden` is what
         // disables that edge gesture, so we deliberately don't set it.
         .toolbar(.hidden, for: .navigationBar)
+        .environment(\.practiceTool, PracticeToolState(resolveStatus: { practiceStatus }, open: { openPractice() }))
+        .overlay {
+            if let practiceContext {
+                PracticeModeView(context: practiceContext, session: practiceSession) { self.practiceContext = nil }
+            }
+        }
         .sheet(isPresented: $showDetails) { if let file { ScoreDetailsView(file: file) } }
         .onAppear {
             isVisible = true
+            if viewerSession != nil {
+                // Back from something that covered the viewer: keep the file,
+                // loops, and play count; only resume auto-scroll.
+                if scrollSpeed > 0 && !isGuitarPro {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { startAutoScroll() }
+                }
+                return
+            }
+            viewerSession = TabViewerLifecycle.Session(depth: path.count)
             if textMode == .player { hasShownPlayer = true }
             // restore saved scroll speed for this file
             if let saved = file?.scrollSpeed {
@@ -253,6 +280,17 @@ struct TabViewerView: View {
         }
         .onDisappear {
             isVisible = false
+            stopAutoScroll()
+            playbackCoordinator.pause()
+            metronome.stop()
+            notePlayer.stop()
+            persistReaderState()
+            // A full-screen presentation over the viewer also triggers this;
+            // the viewer is still the top page then, so keep its state.
+            if let session = viewerSession, session.isCovered(path: path) { return }
+            viewerSession = nil
+            practiceSession.close()
+            practiceContext = nil
             playCountTask?.cancel()
             fileAccessTask?.cancel()
             canonicalLoadTask?.cancel()
@@ -267,16 +305,6 @@ struct TabViewerView: View {
             metronome.stop()
             notePlayer.stop()
             lastScrolledSystem = -1
-            // persist scrollSpeed, loop markers, and BPM on exit
-            if let file, file.modelContext != nil, !file.isDeleted {
-                if file.scrollSpeed != Double(scrollSpeed) { file.scrollSpeed = Double(scrollSpeed) }
-                let start = loopStartY.map { Double($0) }
-                let end = loopEndY.map { Double($0) }
-                if file.loopStartY != start { file.loopStartY = start }
-                if file.loopEndY != end { file.loopEndY = end }
-                if file.userBPM != userBPM { file.userBPM = userBPM }
-                ReaderPersistence.scheduleSave(context)
-            }
             // clear loop on coordinator for safety
             coordinator.loopStartY = nil
             coordinator.loopEndY = nil
@@ -319,6 +347,18 @@ struct TabViewerView: View {
             .onDisappear { stopAutoScroll() }           // safety
     }
     
+    /// Persists scroll speed, loop markers, and BPM.
+    private func persistReaderState() {
+        guard let file, file.modelContext != nil, !file.isDeleted else { return }
+        if file.scrollSpeed != Double(scrollSpeed) { file.scrollSpeed = Double(scrollSpeed) }
+        let start = loopStartY.map { Double($0) }
+        let end = loopEndY.map { Double($0) }
+        if file.loopStartY != start { file.loopStartY = start }
+        if file.loopEndY != end { file.loopEndY = end }
+        if file.userBPM != userBPM { file.userBPM = userBPM }
+        ReaderPersistence.scheduleSave(context)
+    }
+
     private func startAutoScroll() {
         stopAutoScroll()
         guard isVisible, scrollSpeed > 0, !usingDrawnPlayer else { return }
@@ -625,7 +665,10 @@ struct TabViewerView: View {
                         TabPlayerView(map: map, file: file, subtitle: subtitleText,
                                       coordinator: playbackCoordinator, metronome: metronome,
                                       notePlayer: notePlayer, userBPM: $userBPM,
-                                      preparedModel: preparedRenderModel, isActive: usingDrawnPlayer)
+                                      preparedModel: preparedRenderModel, isActive: drawnPlayerActive)
+                            // Mirrors TabPlayerView.configure(), which runs on the same events.
+                            .onAppear { if drawnPlayerActive { captureDrawnReference() } }
+                            .onChange(of: drawnPlayerActive) { _, active in if active { captureDrawnReference() } }
                             .opacity(usingDrawnPlayer ? 1 : 0)
                             .allowsHitTesting(usingDrawnPlayer)
                             .accessibilityHidden(!usingDrawnPlayer)
@@ -724,6 +767,141 @@ struct TabViewerView: View {
             try? context.save()
             showRename = false
         }
+
+    // MARK: - Practice (listening)
+
+    /// The drawn player pauses while practice mode covers it; when practice
+    /// closes it configures again and picks up a loop practice set, keeping
+    /// its identity (scroll position, auto-scroll settings).
+    private var drawnPlayerActive: Bool { usingDrawnPlayer && practiceContext == nil }
+
+    private func captureDrawnReference() {
+        guard let map = measureMap else { return }
+        let reference = file?.referenceBPM ?? map.bpm ?? userBPM
+        drawnReferenceBPM = reference > 0 ? reference : 120
+    }
+
+    /// Whether the open score yields expected notes, and if not, why.
+    private var practiceStatus: PracticeToolState.Status {
+        if isGuitarPro {
+            guard let file, PracticeSourceRegistry.guitarPro(for: file.id)?.ready == true else {
+                return .unavailable("The score is still loading. Try again in a moment.")
+            }
+            return .available
+        }
+        if let map = measureMap, !map.systems.isEmpty, map.resolvedOpenStringMIDI != nil { return .available }
+        if pairedMIDI != nil { return .available }
+        if measureMap?.systems.isEmpty == false {
+            return .unavailable("This tab's tuning doesn't say which octave each string is in, so TabBuddy can't tell which pitches to listen for. A MIDI file with the same name beside it would work.")
+        }
+        if isPDF {
+            return .unavailable("This PDF has no structured notes to listen for. Create a guitar arrangement (Settings → Arrangement), or keep a MIDI file with the same name beside the PDF.")
+        }
+        return .unavailable("No notes have been read from this tab yet.")
+    }
+
+    private func openPractice() {
+        guard let file else { return }
+        stopAutoScroll()
+        playbackCoordinator.pause()
+        metronome.stop()
+        notePlayer.stop()
+        let key = file.id.uuidString
+        if isGuitarPro {
+            guard let player = PracticeSourceRegistry.guitarPro(for: file.id), player.ready else { return }
+            player.actions.pause()
+            let track = player.selectedTrack
+            var loop: ClosedRange<Int>?
+            if player.loopEnabled, let a = player.loopStart, let b = player.loopEnd { loop = min(a, b)...max(a, b) }
+            practiceContext = PracticeScoreContext(
+                scoreKey: key, title: file.displayTitle,
+                source: .alphaTab(track: track, export: { [weak player] in await player?.exportNotes() ?? [] }),
+                totalMeasures: player.total,
+                initialRange: loop ?? PracticeDefaults.span(from: player.coordinator.currentMeasureIndex, count: player.total),
+                referenceBPM: nil,
+                tempoPercent: player.coordinator.bpm / max(1, player.originalBPM) * 100,
+                instrument: PracticeDefaults.instrument(trackInstrument: player.tracks.first { $0.id == track }?.instrument,
+                                                        fileInstruments: file.instrumentKinds, isTablature: false),
+                isBass: PracticeDefaults.isBass(trackInstrument: player.tracks.first { $0.id == track }?.instrument,
+                                                fileInstruments: file.instrumentKinds, openStringMIDI: nil),
+                applyToViewer: { [weak player] loop, percent in
+                    guard let player else { return }
+                    if let loop { player.loopEnabled = true; player.loopStart = loop.lowerBound; player.loopEnd = loop.upperBound }
+                    if let percent {
+                        let bpm = (player.originalBPM * percent / 100).rounded()
+                        player.coordinator.bpm = bpm
+                        player.userBPM = bpm
+                    }
+                    player.applyOptions()
+                })
+            return
+        }
+        if let map = measureMap, !map.systems.isEmpty, map.resolvedOpenStringMIDI != nil {
+            // Same reference tempo as TabPlayerView's originalBPM.
+            let reference = max(1, file.referenceBPM ?? map.bpm ?? drawnReferenceBPM ?? userBPM)
+            var loop: ClosedRange<Int>?
+            if let a = file.loopStartMeasure, let b = file.loopEndMeasure { loop = min(a, b)...max(a, b) }
+            let model = preparedRenderModel.systems.isEmpty ? TabRenderModelBuilder.build(from: map) : preparedRenderModel
+            practiceContext = PracticeScoreContext(
+                scoreKey: key, title: file.displayTitle, source: .measureMap(map, model),
+                totalMeasures: map.measureCount,
+                initialRange: loop ?? PracticeDefaults.systemRange(containing: playbackCoordinator.currentMeasureIndex, in: map),
+                referenceBPM: reference, tempoPercent: userBPM / reference * 100,
+                instrument: PracticeDefaults.instrument(trackInstrument: nil, fileInstruments: file.instrumentKinds,
+                                                        isTablature: true),
+                isBass: PracticeDefaults.isBass(trackInstrument: nil, fileInstruments: file.instrumentKinds,
+                                                openStringMIDI: map.resolvedOpenStringMIDI),
+                applyToViewer: { loop, percent in
+                    if let loop {
+                        // The drawn player reads the loop when practice closes.
+                        file.loopStartMeasure = loop.lowerBound
+                        file.loopEndMeasure = loop.upperBound
+                        ReaderPersistence.scheduleSave(context)
+                    }
+                    if let percent {
+                        // Without a stored reference the player would take the new
+                        // BPM as its 100% when it configures again; keep the one
+                        // it showed so the percentage stays true.
+                        if file.referenceBPM == nil && map.bpm == nil {
+                            file.referenceBPM = reference
+                            ReaderPersistence.scheduleSave(context)
+                        }
+                        userBPM = (reference * percent / 100).rounded()
+                        playbackCoordinator.bpm = userBPM
+                    }
+                })
+            return
+        }
+        if let midi = pairedMIDI {
+            let reference = max(1, midi.initialBPM)
+            practiceContext = PracticeScoreContext(
+                scoreKey: key, title: file.displayTitle,
+                source: .midi(load: { await Self.copyPairedMIDI(for: file) }),
+                totalMeasures: 0, initialRange: nil, referenceBPM: nil,
+                tempoPercent: userBPM / reference * 100,
+                instrument: PracticeDefaults.instrument(trackInstrument: nil, fileInstruments: file.instrumentKinds,
+                                                        isTablature: false),
+                isBass: PracticeDefaults.isBass(trackInstrument: nil, fileInstruments: file.instrumentKinds,
+                                                openStringMIDI: nil),
+                applyToViewer: { _, percent in
+                    guard let percent else { return }
+                    userBPM = (reference * percent / 100).rounded()
+                    playbackCoordinator.bpm = userBPM
+                })
+        }
+    }
+
+    /// Copies the sibling MIDI file to a temporary file while holding the score's access lease.
+    private static func copyPairedMIDI(for file: FileItem) async -> URL? {
+        guard let lease = try? await LibraryManager.shared.acquireFile(file) else { return nil }
+        return await Task.detached(priority: .userInitiated) { () -> URL? in
+            defer { lease.close() }
+            guard let source = MIDITempoExtractor.findPairedMIDI(for: lease.url) else { return nil }
+            let copy = FileManager.default.temporaryDirectory
+                .appendingPathComponent("practice-\(UUID().uuidString).mid")
+            return (try? FileManager.default.copyItem(at: source, to: copy)) == nil ? nil : copy
+        }.value
+    }
 
     // MARK: - Playback Integration
 
@@ -983,3 +1161,17 @@ struct TabViewerView: View {
         }
     }
     }
+
+/// Tells a real departure from the viewer apart from a presentation that
+/// covers it (a full-screen cover also fires `onDisappear`).
+enum TabViewerLifecycle {
+    struct Session: Equatable {
+        /// Navigation depth when the viewer first appeared.
+        var depth: Int
+
+        /// True while the viewer is still the top page at its own depth.
+        func isCovered(path: [AppPage]) -> Bool {
+            path.count == depth && path.last == .viewer
+        }
+    }
+}

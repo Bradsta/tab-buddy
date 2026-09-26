@@ -80,6 +80,15 @@ final class PlaybackCoordinator: NSObject, ObservableObject {
     private var lastMeasureForNotes: Int = -1
     private var triggeredNotePositions: Set<Int> = []  // column-based dedup
 
+    override init() {
+        super.init()
+        // Tutor listening mutes app audio; the practice cursor runs separately.
+        NotificationCenter.default.addObserver(self, selector: #selector(tutorListeningWillStart),
+                                               name: .tutorListeningWillStart, object: nil)
+    }
+
+    @objc private func tutorListeningWillStart() { pause() }
+
     // MARK: - Playback Control
 
     func play() {

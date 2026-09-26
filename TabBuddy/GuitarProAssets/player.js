@@ -103,7 +103,48 @@
             scrollFrame = requestAnimationFrame(smoothScroll);
         }
     };
-    window.tabBuddyPlayer = { state, configure, seek,
+    // Tutor practice: one entry per sounding beat of a track (PassageBuilder.AlphaTabNote).
+    // Score-order ticks (repeats not expanded); tied continuations, dead notes,
+    // grace notes, rests, and percussion staves are skipped.
+    const exportNotes = trackIndex => {
+        if (!score) return [];
+        const t = Math.floor(clamp(trackIndex ?? options.track, 0, score.tracks.length - 1));
+        const tempos = [];
+        let tempo = score.tempo || 120;
+        for (const mb of score.masterBars) {
+            const autos = [...(mb.tempoAutomations || [])].sort((a, b) => a.ratioPosition - b.ratioPosition);
+            tempos.push({ start: tempo, autos });
+            for (const a of autos) tempo = a.value;
+        }
+        const tempoAt = (mb, tick) => {
+            const info = tempos[mb.index];
+            let value = info.start;
+            const length = mb.calculateDuration();
+            for (const a of info.autos) if (mb.start + a.ratioPosition * length <= tick + 0.5) value = a.value;
+            return value;
+        };
+        const notes = [];
+        for (const staff of score.tracks[t].staves) {
+            if (staff.isPercussion) continue;
+            for (const bar of staff.bars) {
+                const mb = bar.masterBar;
+                for (const voice of bar.voices) {
+                    for (const beat of voice.beats) {
+                        if (beat.isRest || beat.graceType) continue;
+                        const midi = beat.notes.filter(n => !n.isTieDestination && !n.isDead)
+                            .map(n => n.realValue).filter(Number.isFinite);
+                        if (!midi.length) continue;
+                        const start = beat.absoluteDisplayStart;
+                        notes.push({ track: t, bar: mb.index, start, duration: beat.displayDuration, midi,
+                            tempo: tempoAt(mb, start), ticksPerQuarter: 960, barStartTick: mb.start,
+                            beatsPerBar: mb.timeSignatureNumerator, beatValue: mb.timeSignatureDenominator });
+                    }
+                }
+            }
+        }
+        return notes.sort((a, b) => a.start - b.start);
+    };
+    window.tabBuddyPlayer = { state, configure, seek, exportNotes,
         scrollToTop: () => { scroll.scrollTop = 0; },
         play: () => { if (state.ready) api.play(); }, pause: () => api?.pause() };
     window.pausePlayback = () => api?.pause();

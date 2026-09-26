@@ -8,6 +8,7 @@
 //
 
 import AVFoundation
+import Combine
 
 @MainActor
 final class NotePlaybackEngine: ObservableObject {
@@ -62,8 +63,13 @@ final class NotePlaybackEngine: ObservableObject {
 
     // MARK: - Init
 
+    /// Tutor listening mutes app audio.
+    private var tutorMute: AnyCancellable?
+
     init(makeEngine: @escaping () -> AVAudioEngine = { AVAudioEngine() }) {
         self.makeEngine = makeEngine
+        tutorMute = NotificationCenter.default.publisher(for: .tutorListeningWillStart)
+            .sink { [weak self] _ in MainActor.assumeIsolated { self?.stop() } }
     }
 
     // MARK: - Setup
@@ -99,7 +105,7 @@ final class NotePlaybackEngine: ObservableObject {
     }
 
     func start() {
-        guard !engine.isRunning else { return }
+        guard !engine.isRunning, !TutorAudioSession.outputMuted else { return }
         // Configure audio session (shared with MetronomeEngine)
         let session = AVAudioSession.sharedInstance()
         do {

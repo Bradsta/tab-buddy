@@ -1,0 +1,1162 @@
+{
+  "id": "piano.s7",
+  "instrument": "piano",
+  "order": 7,
+  "title": "Hands together and accompaniment patterns",
+  "summary": "Coordinate both hands, then accompany melodies with block chords, broken chords, Alberti bass, and root–fifth bass.",
+  "lessons": [
+    {
+      "id": "piano.s7.l1",
+      "title": "Hands together: first steps",
+      "summary": "Play both hands at once in parallel and contrary motion.",
+      "minutes": 11,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "How to practice hands together",
+          "body": "Playing with both hands at once is a new coordination skill, separate from knowing each part.\n\n1. Learn each hand alone first until it is easy.\n2. Put them together **much slower** than either hand alone. Wait mode is fine.\n3. Watch the moments where both hands play at the same time; those are the checkpoints.\n4. Speed up only after several clean runs.\n\n**Parallel motion:** both hands move in the same direction. **Contrary motion:** the hands move in opposite directions (mirror image)."
+        },
+        {
+          "type": "explain",
+          "title": "Mirror fingering",
+          "body": "Contrary motion from C position is easier than it looks: put both thumbs near the middle, **LH 1 on G3** and **RH 1 on C4**. Moving outward, both hands use the **same finger numbers** at the same time: 1, 2, 3, 4, 5.\n\nIn parallel motion (both hands in C position, LH on C3, RH on C4) the finger numbers differ: when the RH plays 1, the LH plays 5.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C3",
+              "D3",
+              "E3",
+              "F3",
+              "G3",
+              "C4",
+              "D4",
+              "E4",
+              "F4",
+              "G4"
+            ],
+            "labels": "fingers",
+            "pitchRange": [
+              "C3",
+              "C5"
+            ]
+          }
+        },
+        {
+          "type": "song",
+          "title": "Parallel Walk (original)",
+          "caption": "Both hands in C position, one octave apart, moving in the same direction. LH 5 4 3 2 1 while RH 1 2 3 4 5.",
+          "notes": [
+            [
+              "C3",
+              "C4"
+            ],
+            [
+              "D3",
+              "D4"
+            ],
+            [
+              "E3",
+              "E4"
+            ],
+            [
+              "F3",
+              "F4"
+            ],
+            [
+              "G3",
+              "G4"
+            ],
+            [
+              "F3",
+              "F4"
+            ],
+            [
+              "E3",
+              "E4"
+            ],
+            [
+              "D3",
+              "D4"
+            ],
+            [
+              "C3",
+              "C4"
+            ]
+          ],
+          "rhythm": "q q q q q q q q w",
+          "bpm": 60
+        },
+        {
+          "type": "song",
+          "title": "Mirror Walk (original)",
+          "caption": "Contrary motion. Both thumbs start near middle C (LH on G3, RH on C4); both hands use the same finger numbers at the same time.",
+          "notes": [
+            [
+              "G3",
+              "C4"
+            ],
+            [
+              "F3",
+              "D4"
+            ],
+            [
+              "E3",
+              "E4"
+            ],
+            [
+              "D3",
+              "F4"
+            ],
+            [
+              "C3",
+              "G4"
+            ],
+            [
+              "D3",
+              "F4"
+            ],
+            [
+              "E3",
+              "E4"
+            ],
+            [
+              "F3",
+              "D4"
+            ],
+            [
+              "G3",
+              "C4"
+            ]
+          ],
+          "rhythm": "q q q q q q q q w",
+          "bpm": 60
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "Contrary motion means the hands…",
+              "choices": [
+                "Move in opposite directions",
+                "Move in the same direction",
+                "Take turns",
+                "Play the same note"
+              ],
+              "answerIndex": 0,
+              "explanation": "Contrary = mirror image."
+            },
+            {
+              "prompt": "When you first put hands together, you should…",
+              "choices": [
+                "Play much slower than hands alone",
+                "Play at full speed to build momentum",
+                "Only practice the right hand",
+                "Use the sustain pedal"
+              ],
+              "answerIndex": 0,
+              "explanation": "Slow, accurate repetitions build coordination."
+            },
+            {
+              "prompt": "In the Mirror Walk, which LH finger plays with RH finger 3?",
+              "choices": [
+                "3",
+                "1",
+                "5",
+                "2"
+              ],
+              "answerIndex": 0,
+              "explanation": "In contrary motion from the thumbs, the fingers match."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s7.l1.r1",
+          "kind": "fact",
+          "prompt": "Parallel vs contrary motion?",
+          "answer": "Parallel: both hands move the same direction. Contrary: they move in opposite directions."
+        }
+      ],
+      "glossaryTerms": [
+        "Hands together",
+        "Parallel motion",
+        "Contrary motion"
+      ]
+    },
+    {
+      "id": "piano.s7.l2",
+      "title": "Block-chord accompaniment",
+      "summary": "Hold a left-hand chord under a right-hand melody.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Melody and accompaniment",
+          "body": "Most piano music splits into a **melody** (the tune, often in the right hand) and an **accompaniment** (the harmony and rhythm supporting it, often in the left hand).\n\nThe simplest accompaniment is **block chords**: the LH plays all the chord's notes together and holds them. Use the closest-position LH chords from Stage 5: **C = C3 E3 G3**, **G/B = B2 D3 G3**.\n\nThe chord changes when the melody's harmony changes, usually at the start of a measure. When one hand holds while the other moves, keep the held keys down; do not let them bounce up."
+        },
+        {
+          "type": "demo",
+          "title": "Ode to Joy with block chords",
+          "caption": "The first two measures: LH chord on beat 1, RH melody on every beat.",
+          "playback": {
+            "notes": [
+              [
+                "C3",
+                "E3",
+                "G3",
+                "E4"
+              ],
+              [
+                "E4"
+              ],
+              [
+                "F4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "B2",
+                "D3",
+                "G3",
+                "G4"
+              ],
+              [
+                "F4"
+              ],
+              [
+                "E4"
+              ],
+              [
+                "D4"
+              ]
+            ],
+            "rhythm": "q q q q q q q q",
+            "bpm": 72
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "Left hand alone first: switch between C (C3 E3 G3) and G/B (B2 D3 G3) for 45 seconds.",
+            "chords": [
+              "C",
+              "G/B"
+            ],
+            "durationSec": 45
+          },
+          "mistakeTips": [
+            "Finger 1 stays on G3 for both chords.",
+            "Change without looking if you can."
+          ]
+        },
+        {
+          "type": "song",
+          "title": "Ode to Joy (Beethoven) with block chords",
+          "caption": "LH plays a chord at the start of each measure and holds it (in measures 4 and 8 the chord changes on beat 3). RH melody in C position. The app checks each note when it starts.",
+          "notes": [
+            [
+              "C3",
+              "E3",
+              "G3",
+              "E4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "B2",
+              "D3",
+              "G3",
+              "G4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C3",
+              "E3",
+              "G3",
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "C3",
+              "E3",
+              "G3",
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "B2",
+              "D3",
+              "G3",
+              "D4"
+            ],
+            [
+              "C3",
+              "E3",
+              "G3",
+              "E4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "B2",
+              "D3",
+              "G3",
+              "G4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "C3",
+              "E3",
+              "G3",
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "B2",
+              "D3",
+              "G3",
+              "D4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C3",
+              "E3",
+              "G3",
+              "C4"
+            ]
+          ],
+          "rhythm": "q q q q q q q q q q q q q. e h q q q q q q q q q q q q q. e h",
+          "bpm": 66
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "In Ode to Joy, which LH chord goes under \"G F E D\" (measure 2)?",
+              "choices": [
+                "G/B",
+                "C",
+                "F/C",
+                "Am"
+              ],
+              "answerIndex": 0,
+              "explanation": "G, F, and D belong to G/G7 harmony."
+            },
+            {
+              "prompt": "What is an accompaniment?",
+              "choices": [
+                "The harmony and rhythm supporting a melody",
+                "The loudest note",
+                "A fast scale",
+                "A kind of rest"
+              ],
+              "answerIndex": 0,
+              "explanation": "Accompaniment supports the tune."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s7.l2.r1",
+          "kind": "fact",
+          "prompt": "What is a block chord?",
+          "answer": "All the chord's notes played together."
+        }
+      ],
+      "glossaryTerms": [
+        "Melody",
+        "Accompaniment",
+        "Block chord"
+      ]
+    },
+    {
+      "id": "piano.s7.l3",
+      "title": "Broken chords and Alberti bass",
+      "summary": "Spread chord notes out in time for a flowing accompaniment.",
+      "minutes": 13,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Broken chords",
+          "body": "A **broken chord** plays the chord's notes one at a time instead of together. An **arpeggio** is a broken chord played in order up or down (C E G C).\n\nThe **Alberti bass** is a broken-chord pattern named after an 18th-century composer: **lowest, highest, middle, highest**. For C (C3 E3 G3): **C3 G3 E3 G3**, usually in eighth notes. Mozart and Haydn used it constantly.\n\n- C: C3 G3 E3 G3\n- F/C: C3 A3 F3 A3\n- G/B: B2 G3 D3 G3\n\nLH fingering: **5 1 3 1**. The thumb repeats; keep it light.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "pitchRange": [
+              "C3",
+              "C4"
+            ],
+            "caption": "Alberti on C: 5 on C3, 3 on E3, 1 on G3 → C G E G."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Alberti bass on C, F/C, C, G/B, C",
+          "caption": "Eighth notes, low–high–middle–high.",
+          "playback": {
+            "notes": [
+              [
+                "C3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "A3"
+              ],
+              [
+                "F3"
+              ],
+              [
+                "A3"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "A3"
+              ],
+              [
+                "F3"
+              ],
+              [
+                "A3"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "B2"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "B2"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "E3"
+              ],
+              [
+                "G3"
+              ]
+            ],
+            "rhythm": "e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e",
+            "bpm": 66
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Left hand alone, Alberti bass in eighth notes: C (C3 G3 E3 G3) twice, F/C (C3 A3 F3 A3) twice, C twice, G/B (B2 G3 D3 G3) twice.",
+            "notes": [
+              "C3",
+              "G3",
+              "E3",
+              "G3",
+              "C3",
+              "G3",
+              "E3",
+              "G3",
+              "C3",
+              "A3",
+              "F3",
+              "A3",
+              "C3",
+              "A3",
+              "F3",
+              "A3",
+              "C3",
+              "G3",
+              "E3",
+              "G3",
+              "C3",
+              "G3",
+              "E3",
+              "G3",
+              "B2",
+              "G3",
+              "D3",
+              "G3",
+              "B2",
+              "G3",
+              "D3",
+              "G3"
+            ],
+            "rhythm": "e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ]
+          },
+          "mistakeTips": [
+            "Fingering 5 1 3 1 for every chord.",
+            "Keep the thumb light so the lowest note sounds a little stronger.",
+            "Keep the eighth notes even; the app times each one."
+          ]
+        },
+        {
+          "type": "song",
+          "title": "Twinkle, Twinkle with Alberti bass (traditional)",
+          "caption": "LH Alberti in eighth notes; RH melody on the beats (C position). The RH notes land together with the 1st and 3rd LH note of each group. Hands alone first.",
+          "notes": [
+            [
+              "C3",
+              "C4"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "E3",
+              "C4"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "C3",
+              "G4"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "E3",
+              "G4"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "C3",
+              "A4"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "F3",
+              "A4"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "C3",
+              "G4"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "C3",
+              "F4"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "F3",
+              "F4"
+            ],
+            [
+              "A3"
+            ],
+            [
+              "C3",
+              "E4"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "E3",
+              "E4"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "B2",
+              "D4"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "D3",
+              "D4"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "C3",
+              "C4"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "E3"
+            ],
+            [
+              "G3"
+            ]
+          ],
+          "rhythm": "e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e",
+          "bpm": 60
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "Alberti bass order?",
+              "choices": [
+                "Lowest, highest, middle, highest",
+                "Lowest, middle, highest, middle",
+                "Highest, lowest, middle, lowest",
+                "All three together"
+              ],
+              "answerIndex": 0,
+              "explanation": "C G E G for a C chord."
+            },
+            {
+              "prompt": "Alberti bass for G/B (B2 D3 G3)?",
+              "choices": [
+                "B2 G3 D3 G3",
+                "B2 D3 G3 D3",
+                "G3 D3 B2 D3",
+                "B2 D3 B2 G3"
+              ],
+              "answerIndex": 0,
+              "explanation": "Lowest B2, highest G3, middle D3, highest G3."
+            },
+            {
+              "prompt": "An arpeggio is…",
+              "choices": [
+                "A chord played one note at a time, in order",
+                "Two chords played together",
+                "A scale with a skip",
+                "A rest"
+              ],
+              "answerIndex": 0,
+              "explanation": "Arpeggio comes from the Italian for harp-like."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s7.l3.r1",
+          "kind": "fact",
+          "prompt": "Alberti bass on C (C3 E3 G3)?",
+          "answer": "C3 G3 E3 G3"
+        }
+      ],
+      "glossaryTerms": [
+        "Broken chord",
+        "Arpeggio",
+        "Alberti bass"
+      ]
+    },
+    {
+      "id": "piano.s7.l4",
+      "title": "Root–fifth bass",
+      "summary": "Play just the root and fifth of each chord for a light, open accompaniment.",
+      "minutes": 11,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Root and fifth",
+          "body": "A **root–fifth** accompaniment plays only the chord's **root** and its **fifth**, either together or one after the other. It leaves out the 3rd, so it sounds open and works under both major and minor melodies.\n\n- C: C3 + G3\n- F: F2 + C3\n- G: G2 + D3\n- Am: A2 + E3\n\nLH fingering: **5** on the root, **1** on the fifth. Alternating root (beat 1) and fifth (beat 3) gives a gentle \"oom–pah\" motion.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C3",
+              "G3"
+            ],
+            "labels": "fingers",
+            "pitchRange": [
+              "F2",
+              "C4"
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Left hand root–fifth, half notes: C3 G3 | F2 C3 | G2 D3 | C3 G3.",
+            "notes": [
+              "C3",
+              "G3",
+              "F2",
+              "C3",
+              "G2",
+              "D3",
+              "C3",
+              "G3"
+            ],
+            "rhythm": "h h h h h h h h",
+            "bpm": 66,
+            "tempoSteps": [
+              66,
+              80,
+              92
+            ]
+          },
+          "mistakeTips": [
+            "Keep the hand in a fixed stretch of a 5th and move it as a unit.",
+            "F2 and G2 are low: play firmly so the microphone hears them."
+          ]
+        },
+        {
+          "type": "song",
+          "title": "Frère Jacques (traditional) with root–fifth bass",
+          "caption": "The whole tune fits over one chord, C. LH: C3 on beat 1, G3 on beat 3 (just C3 in the last two measures). RH starts in C position and reaches down to G3 near the end.",
+          "notes": [
+            [
+              "C3",
+              "C4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "G3",
+              "E4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C3",
+              "C4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "G3",
+              "E4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C3",
+              "E4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "G3",
+              "G4"
+            ],
+            [
+              "C3",
+              "E4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "G3",
+              "G4"
+            ],
+            [
+              "C3",
+              "G4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "G3",
+              "E4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C3",
+              "G4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "F4"
+            ],
+            [
+              "G3",
+              "E4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C3",
+              "C4"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C3",
+              "C4"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "C4"
+            ]
+          ],
+          "rhythm": "q q q q q q q q q q h q q h e e e e q q e e e e q q q q h q q h",
+          "bpm": 72
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "Root and fifth of F?",
+              "choices": [
+                "F and C",
+                "F and A",
+                "F and B♭",
+                "A and C"
+              ],
+              "answerIndex": 0,
+              "explanation": "F G A B♭ C: C is a 5th above F."
+            },
+            {
+              "prompt": "Root and fifth of Am?",
+              "choices": [
+                "A and E",
+                "A and C",
+                "C and E",
+                "A and D"
+              ],
+              "answerIndex": 0,
+              "explanation": "A B C D E: E is a 5th above A."
+            },
+            {
+              "prompt": "Why does root–fifth work under both major and minor melodies?",
+              "choices": [
+                "It leaves out the 3rd",
+                "It uses only black keys",
+                "It is always quiet",
+                "It includes every note"
+              ],
+              "answerIndex": 0,
+              "explanation": "The 3rd decides major or minor; without it, the sound is open."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s7.l4.r1",
+          "kind": "fact",
+          "prompt": "Root and fifth of G?",
+          "answer": "G and D"
+        }
+      ],
+      "glossaryTerms": [
+        "Root–fifth bass",
+        "Root",
+        "Fifth"
+      ]
+    },
+    {
+      "id": "piano.s7.l5",
+      "title": "Stage 7 review: Amazing Grace",
+      "summary": "A hands-together hymn in 3/4 with root–fifth bass.",
+      "minutes": 13,
+      "steps": [
+        {
+          "type": "quiz",
+          "title": "Stage 7 check",
+          "questions": [
+            {
+              "prompt": "Which accompaniment plays chord notes one at a time, low–high–middle–high?",
+              "choices": [
+                "Alberti bass",
+                "Block chords",
+                "Root–fifth",
+                "Pedal point"
+              ],
+              "answerIndex": 0,
+              "explanation": "C G E G is Alberti."
+            },
+            {
+              "prompt": "What should you do first when learning a hands-together piece?",
+              "choices": [
+                "Practice each hand alone",
+                "Play at full tempo",
+                "Add pedal",
+                "Memorize it"
+              ],
+              "answerIndex": 0,
+              "explanation": "Hands alone first, then together slowly."
+            },
+            {
+              "prompt": "Which LH root–fifth goes with a D chord?",
+              "choices": [
+                "D and A",
+                "D and F♯",
+                "D and G",
+                "A and D"
+              ],
+              "answerIndex": 0,
+              "explanation": "D E F♯ G A: A is a 5th above D."
+            }
+          ]
+        },
+        {
+          "type": "song",
+          "title": "Amazing Grace (traditional), first half",
+          "caption": "Key of G major, 3/4. It starts with a pickup note (D4) on beat 3. LH plays root and fifth together at the start of each measure: G2+D3 for G, C3+G3 for C, D3+A3 for D. RH melody from D4 to D5. Hands alone first.",
+          "notes": [
+            [],
+            [
+              "D4"
+            ],
+            [
+              "G2",
+              "D3",
+              "G4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G2",
+              "D3",
+              "B4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "C3",
+              "G3",
+              "G4"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "G2",
+              "D3",
+              "D4"
+            ],
+            [
+              "D4"
+            ],
+            [
+              "G2",
+              "D3",
+              "G4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G2",
+              "D3",
+              "B4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "D3",
+              "A3",
+              "D5"
+            ]
+          ],
+          "rhythm": "hr q h e e h q h q h q h e e h q h.",
+          "bpm": 72,
+          "beatsPerMeasure": 3
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s7.l5.r1",
+          "kind": "fact",
+          "prompt": "What is a pickup note?",
+          "answer": "A note (or notes) before the first full measure, leading into beat 1."
+        }
+      ],
+      "glossaryTerms": [
+        "Pickup",
+        "Hymn"
+      ]
+    }
+  ]
+}

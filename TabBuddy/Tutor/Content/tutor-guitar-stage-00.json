@@ -1,0 +1,828 @@
+{
+  "id": "guitar.s0",
+  "instrument": "guitar",
+  "order": 0,
+  "title": "Setup",
+  "summary": "Get to know the guitar, name and tune the strings, and make sure the app can hear you.",
+  "lessons": [
+    {
+      "id": "guitar.s0.l1",
+      "title": "Meet your guitar",
+      "summary": "Name the parts of an acoustic guitar and see how a fret changes a string's pitch.",
+      "minutes": 8,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "The parts you will use",
+          "body": "Every lesson refers to a few parts of the guitar, so it helps to name them once.\n\n- **Headstock** – the top end, holding the **tuning pegs**. Each peg tightens or loosens one string.\n- **Nut** – the slotted strip where the strings leave the headstock and cross onto the neck.\n- **Neck** and **fretboard** – the long part you hold. The metal strips across it are **frets**.\n- **Body** and **soundhole** – the hollow box that makes the strings loud.\n- **Bridge** and **saddle** – where the strings are anchored on the body.\n\nA string vibrates between the nut and the saddle. That vibrating length decides its **pitch**: how high or low it sounds.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "5:0",
+              "4:0",
+              "3:0",
+              "2:0",
+              "1:0"
+            ],
+            "labels": "none",
+            "fretRange": [
+              0,
+              5
+            ],
+            "caption": "The first five frets. The left edge is the nut; each column is one fret."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "What a fret does",
+          "body": "When you press a string just behind a fret, the string can only vibrate from that fret to the saddle. A shorter string vibrates faster, so the pitch goes up.\n\n- A string played without pressing anything is an **open string** (fret 0).\n- Each fret you move toward the body raises the pitch by the smallest step used in Western music. You will name that step in the next stage.\n\nPress with the fingertip close to the fret, not on top of it and not in the middle of the gap. Close to the fret needs less force and buzzes less."
+        },
+        {
+          "type": "explain",
+          "title": "Holding the guitar",
+          "body": "Sit upright with the waist of the guitar resting on your leg and the neck angled slightly upward.\n\n- The **fretting hand** presses strings. Its thumb rests behind the neck, roughly opposite your middle finger.\n- The **picking hand** plucks or strums over the soundhole.\n\nMost right-handed players fret with the left hand. If you play left-handed, everything in these lessons is mirrored; the string names and fret numbers stay the same."
+        },
+        {
+          "type": "demo",
+          "title": "Hear a fret raise the pitch",
+          "caption": "The lowest string played open, then at frets 1, 2, 3, 4, and 5. Each fret is one small step higher.",
+          "playback": {
+            "notes": [
+              [
+                "E2"
+              ],
+              [
+                "F2"
+              ],
+              [
+                "F#2"
+              ],
+              [
+                "G2"
+              ],
+              [
+                "G#2"
+              ],
+              [
+                "A2"
+              ]
+            ],
+            "bpm": 70,
+            "style": "sequence"
+          },
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "6:1",
+              "6:2",
+              "6:3",
+              "6:4",
+              "6:5"
+            ],
+            "labels": "none",
+            "fretRange": [
+              0,
+              5
+            ]
+          }
+        },
+        {
+          "type": "quiz",
+          "title": "Parts check",
+          "questions": [
+            {
+              "prompt": "Which part holds the tuning pegs?",
+              "choices": [
+                "Bridge",
+                "Headstock",
+                "Soundhole",
+                "Saddle"
+              ],
+              "answerIndex": 1,
+              "explanation": "The headstock is the top end of the neck. The pegs there tighten or loosen each string."
+            },
+            {
+              "prompt": "You press a string at a higher fret number. What happens to its pitch?",
+              "choices": [
+                "It goes up",
+                "It goes down",
+                "It stays the same"
+              ],
+              "answerIndex": 0,
+              "explanation": "Pressing a higher fret shortens the vibrating part of the string, so it vibrates faster and sounds higher."
+            },
+            {
+              "prompt": "Where should your fingertip press?",
+              "choices": [
+                "On top of the metal fret",
+                "In the middle between two frets",
+                "Just behind the fret"
+              ],
+              "answerIndex": 2,
+              "explanation": "Just behind the fret (on the headstock side) needs the least pressure and gives the cleanest note."
+            },
+            {
+              "prompt": "What is an open string?",
+              "choices": [
+                "A string with no finger pressing it",
+                "A broken string",
+                "The thickest string"
+              ],
+              "answerIndex": 0,
+              "explanation": "Open means no fret is pressed. Tabs and diagrams write it as 0."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s0.l1.r1",
+          "kind": "fact",
+          "prompt": "What does pressing a string at a fret do to its pitch, and why?",
+          "answer": "Raises it. The fret shortens the vibrating length, so the string vibrates faster."
+        },
+        {
+          "id": "guitar.s0.l1.r2",
+          "kind": "fact",
+          "prompt": "Where on the fretboard should a fingertip press?",
+          "answer": "Just behind the fret, on the headstock side."
+        }
+      ],
+      "glossaryTerms": [
+        "headstock",
+        "tuning peg",
+        "nut",
+        "neck",
+        "fretboard",
+        "fret",
+        "body",
+        "soundhole",
+        "bridge",
+        "saddle",
+        "pitch",
+        "open string",
+        "fretting hand",
+        "picking hand"
+      ]
+    },
+    {
+      "id": "guitar.s0.l2",
+      "title": "String names and numbers",
+      "summary": "Learn the six open strings by name (E A D G B E) and by number (6 to 1).",
+      "minutes": 8,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Six strings, two ways to name them",
+          "body": "**By number:** guitarists count from the thinnest string. The thinnest is string **1** and the thickest is string **6**. When you hold the guitar, string 1 is closest to the floor.\n\n**By note name:** in **standard tuning** the open strings are, from thickest to thinnest:\n\n**E – A – D – G – B – E**\n\nBoth E strings are the note E, but the thick one sounds two octaves lower. We call them **low E** (string 6) and **high E** (string 1). You will learn what an octave is in Stage 1.\n\nA memory sentence helps: **E**ddie **A**te **D**ynamite, **G**ood **B**ye **E**ddie.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "5:0",
+              "4:0",
+              "3:0",
+              "2:0",
+              "1:0"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "Open strings in standard tuning. Bottom row is string 6, low E."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Why numbers and names both matter",
+          "body": "Tabs and chord diagrams mostly use string numbers. Theory uses note names. You will see both, so learn both now:\n\n| String | Name | Sounding pitch |\n|---|---|---|\n| 6 | low E | E2 |\n| 5 | A | A2 |\n| 4 | D | D3 |\n| 3 | G | G3 |\n| 2 | B | B3 |\n| 1 | high E | E4 |\n\nThe number after the letter (E2, A2…) marks which octave the note is in. Middle C on a piano is C4, so your low E is well below it."
+        },
+        {
+          "type": "demo",
+          "title": "Hear each open string",
+          "caption": "From string 6 to string 1: E, A, D, G, B, E. Each is higher than the one before.",
+          "playback": {
+            "notes": [
+              [
+                "E2"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "B3"
+              ],
+              [
+                "E4"
+              ]
+            ],
+            "bpm": 60,
+            "style": "sequence"
+          },
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "5:0",
+              "4:0",
+              "3:0",
+              "2:0",
+              "1:0"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "type": "quiz",
+          "title": "String names",
+          "questions": [
+            {
+              "prompt": "What is the note name of string 5?",
+              "choices": [
+                "E",
+                "A",
+                "D",
+                "G"
+              ],
+              "answerIndex": 1,
+              "explanation": "From the thickest string: E (6), A (5), D (4), G (3), B (2), E (1)."
+            },
+            {
+              "prompt": "Which string number is the thinnest string?",
+              "choices": [
+                "1",
+                "6",
+                "3"
+              ],
+              "answerIndex": 0,
+              "explanation": "Strings are numbered from the thinnest (1) to the thickest (6)."
+            },
+            {
+              "prompt": "What are the open strings from thickest to thinnest?",
+              "choices": [
+                "E A D G B E",
+                "E B G D A E",
+                "A D G C E A",
+                "E A D G C E"
+              ],
+              "answerIndex": 0,
+              "explanation": "Standard tuning is E A D G B E from string 6 to string 1."
+            },
+            {
+              "prompt": "String 2 is which note?",
+              "choices": [
+                "G",
+                "E",
+                "B",
+                "D"
+              ],
+              "answerIndex": 2,
+              "explanation": "String 2 is B. Every other pair of neighboring strings is a fourth apart, but G to B is a third; you will meet that detail later."
+            },
+            {
+              "prompt": "Both outer strings are named E. How do they differ?",
+              "choices": [
+                "The thick one is two octaves lower",
+                "They are exactly the same pitch",
+                "The thin one is one octave lower"
+              ],
+              "answerIndex": 0,
+              "explanation": "Low E (string 6) is E2 and high E (string 1) is E4: two octaves apart."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Name the open string",
+          "generator": {
+            "kind": "noteOnFretboard",
+            "params": {
+              "strings": "1,2,3,4,5,6",
+              "fretMin": "0",
+              "fretMax": "0"
+            }
+          },
+          "count": 6
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s0.l2.r1",
+          "kind": "fact",
+          "prompt": "Open strings from string 6 to string 1?",
+          "answer": "E A D G B E"
+        },
+        {
+          "id": "guitar.s0.l2.r2",
+          "kind": "noteName",
+          "prompt": "Name this open string.",
+          "answer": "D",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "4:0"
+            ],
+            "labels": "none",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "id": "guitar.s0.l2.r3",
+          "kind": "noteName",
+          "prompt": "Name this open string.",
+          "answer": "B",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "2:0"
+            ],
+            "labels": "none",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        }
+      ],
+      "glossaryTerms": [
+        "string numbers",
+        "standard tuning",
+        "open string"
+      ]
+    },
+    {
+      "id": "guitar.s0.l3",
+      "title": "Tuning with the tuner",
+      "summary": "Tune all six strings with TabBuddy's tuner and hear the difference between in tune and out of tune.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Why tune every time",
+          "body": "Strings drift with temperature, humidity, and playing. A guitar that is slightly out of tune makes correct fingers sound wrong, and it makes the app's grading less reliable. Tune at the start of every practice session. It takes about a minute once you are used to it."
+        },
+        {
+          "type": "explain",
+          "title": "Using the tuner",
+          "body": "Open **Tuner** from the menu (next to Tutor). Then, for each string from 6 to 1:\n\n1. Pluck the open string and let it ring.\n2. The tuner shows the nearest note and a needle. Left of center means the string is **flat** (too low); right of center means **sharp** (too high). The distance is shown in **cents**; 100 cents is one fret.\n3. Turn that string's **tuning peg** in small amounts and pluck again. Watch the needle move.\n4. Stop when the needle sits in the center.\n\n**Tip:** tune *up* to the note. If a string is sharp, loosen it below the target and then tighten back up. The string holds its tuning better that way.\n\n**Check the note name first.** If the tuner shows D# instead of E on string 6, you are a whole fret off; keep turning until it shows E and then fine-tune."
+        },
+        {
+          "type": "explain",
+          "title": "Which way to turn",
+          "body": "Headstocks differ, so the direction that tightens a string is not the same on every guitar. Pluck while you turn and watch which way the needle moves. If it moves away from center, reverse. Turn slowly: a small twist changes a lot.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "5:0",
+              "4:0",
+              "3:0",
+              "2:0",
+              "1:0"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "Targets: E2, A2, D3, G3, B3, E4."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Reference pitches",
+          "caption": "The six target pitches, from string 6 to string 1. When two notes that should match are slightly out of tune, you hear a slow wobble in the sound. As you tune closer, the wobble slows and then disappears.",
+          "playback": {
+            "notes": [
+              [
+                "E2"
+              ],
+              [
+                "A2"
+              ],
+              [
+                "D3"
+              ],
+              [
+                "G3"
+              ],
+              [
+                "B3"
+              ],
+              [
+                "E4"
+              ]
+            ],
+            "bpm": 40,
+            "style": "sequence"
+          },
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "5:0",
+              "4:0",
+              "3:0",
+              "2:0",
+              "1:0"
+            ],
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playNote",
+            "prompt": "Tune with the Tuner first. Then play each open string, from string 6 to string 1. The app moves on when it hears each note.",
+            "notes": [
+              "E2",
+              "A2",
+              "D3",
+              "G3",
+              "B3",
+              "E4"
+            ],
+            "passAccuracy": 1.0,
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:0",
+                "5:0",
+                "4:0",
+                "3:0",
+                "2:0",
+                "1:0"
+              ],
+              "labels": "noteNames",
+              "fretRange": [
+                0,
+                4
+              ]
+            }
+          },
+          "mistakeTips": [
+            "If one string never registers, open the Tuner and check it. It may be a whole step off.",
+            "Pluck firmly over the soundhole and let the note ring for a second.",
+            "Keep other strings from ringing. Rest your fretting hand lightly on the strings you are not playing.",
+            "Move closer to the phone or tablet if the input level looks low."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Tuning check",
+          "questions": [
+            {
+              "prompt": "The needle sits to the left of center. What should you do?",
+              "choices": [
+                "Tighten the string (raise the pitch)",
+                "Loosen the string (lower the pitch)",
+                "Nothing; it is in tune"
+              ],
+              "answerIndex": 0,
+              "explanation": "Left of center means flat, which is too low. Tighten to raise the pitch."
+            },
+            {
+              "prompt": "The tuner shows C# while you tune string 5. What is wrong?",
+              "choices": [
+                "It is nearly a whole step sharp",
+                "It is a few cents flat",
+                "The tuner is broken"
+              ],
+              "answerIndex": 0,
+              "explanation": "String 5 should be A. C# is well above A, so the string is far too tight. Loosen it until the tuner reads A, then fine-tune."
+            },
+            {
+              "prompt": "How many cents are in one fret (one half step)?",
+              "choices": [
+                "10",
+                "50",
+                "100",
+                "12"
+              ],
+              "answerIndex": 2,
+              "explanation": "A cent is one hundredth of a half step, and each fret is one half step."
+            },
+            {
+              "prompt": "Why tune up to the note instead of down?",
+              "choices": [
+                "The string holds its pitch better",
+                "It is louder",
+                "The tuner cannot read falling notes"
+              ],
+              "answerIndex": 0,
+              "explanation": "Approaching from below lets the gears settle under tension, so the string is less likely to slip flat."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s0.l3.r1",
+          "kind": "fact",
+          "prompt": "The tuner needle is right of center. Is the string sharp or flat, and what do you do?",
+          "answer": "Sharp (too high). Loosen it below the note, then tighten back up to it."
+        },
+        {
+          "id": "guitar.s0.l3.r2",
+          "kind": "playNote",
+          "prompt": "Play the open A string, in tune.",
+          "answer": "A2",
+          "playback": {
+            "notes": [
+              [
+                "A2"
+              ]
+            ]
+          }
+        }
+      ],
+      "glossaryTerms": [
+        "tuner",
+        "in tune",
+        "sharp (out of tune)",
+        "flat (out of tune)",
+        "cent",
+        "tuning peg",
+        "standard tuning"
+      ]
+    },
+    {
+      "id": "guitar.s0.l4",
+      "title": "Microphone and calibration check",
+      "summary": "Give the app microphone access, run Calibration, and confirm it hears your guitar clearly.",
+      "minutes": 8,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "How the app listens",
+          "body": "The tutor grades you by listening through the microphone. It checks **which pitches** you play and **when**. It cannot tell which string or fret you used, so playing the right note in another place still counts.\n\nWhile the app listens, its own sound is switched off so it hears only you. Timing cues are therefore visual: a pulsing beat marker, a visual count-in, and a moving cursor.\n\nEverything runs on your device. Nothing you play is uploaded."
+        },
+        {
+          "type": "explain",
+          "title": "Open Calibration now",
+          "body": "Before graded practice, open **Calibration** from the Tutor home screen. It will:\n\n1. Ask for **microphone permission** if you have not given it. If you denied it earlier, the screen links to Settings.\n2. Show an **input level** meter. Strum and watch it move. Aim for the middle of the meter, not the top.\n3. Ask you to play your **open low E** to confirm it hears the guitar and that you are in tune.\n4. Measure **latency**: the small delay between a sound and when the app hears it. You play along with a short series of clicks or a flashing pulse. This makes timing grades fair.\n\nRun it again if you switch to headphones or a different device. Bluetooth headphones add a large delay, so recalibrate when you use them.\n\nCome back to this lesson when Calibration is done."
+        },
+        {
+          "type": "explain",
+          "title": "A good practice spot",
+          "body": "- Put the phone or tablet about an arm's length away, pointing at the soundhole.\n- Turn off fans, TVs, and music. Background noise causes missed or false detections.\n- Keep a steady volume. Very hard strums can overload the microphone.\n\nIf a grade ever seems wrong, the app prefers to say \"not sure\" rather than mark you wrong. Treat unsure results as a hint to play a little clearer, not as mistakes."
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playNote",
+            "prompt": "Play the open low E string. Then play the open high E string.",
+            "notes": [
+              "E2",
+              "E4"
+            ],
+            "passAccuracy": 1.0,
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:0",
+                "1:0"
+              ],
+              "labels": "noteNames",
+              "fretRange": [
+                0,
+                4
+              ]
+            }
+          },
+          "mistakeTips": [
+            "No response? Check that Calibration shows microphone access and a moving level meter.",
+            "Low E is the hardest note for a phone microphone. Pluck it firmly and let it ring.",
+            "If the app hears a different note, retune with the Tuner and try again."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Listening basics",
+          "questions": [
+            {
+              "prompt": "You play the correct note on a different string than the diagram shows. How is it graded?",
+              "choices": [
+                "Correct",
+                "Wrong",
+                "Half credit"
+              ],
+              "answerIndex": 0,
+              "explanation": "The app checks pitch, not string or fret. The same pitch anywhere on the neck counts."
+            },
+            {
+              "prompt": "Why is the app's sound off while it listens?",
+              "choices": [
+                "So it hears only your guitar",
+                "To save battery",
+                "Because lessons have no audio"
+              ],
+              "answerIndex": 0,
+              "explanation": "Muting output keeps the app from grading its own sound. Timing cues switch to visual pulses."
+            },
+            {
+              "prompt": "When should you run Calibration again?",
+              "choices": [
+                "After changing to headphones or another device",
+                "Every lesson",
+                "Never"
+              ],
+              "answerIndex": 0,
+              "explanation": "Latency depends on the audio route. Headphones, especially Bluetooth, change it."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s0.l4.r1",
+          "kind": "fact",
+          "prompt": "Does the tutor grade which string you used, or only the pitch?",
+          "answer": "Only the pitch. The same note anywhere on the neck counts."
+        }
+      ],
+      "glossaryTerms": [
+        "calibration",
+        "latency",
+        "wait mode"
+      ]
+    },
+    {
+      "id": "guitar.s0.l5",
+      "title": "Setup review",
+      "summary": "Check your tuning, name every open string, and play a short open-string tune.",
+      "minutes": 8,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Before you start",
+          "body": "Tune with the Tuner first. This lesson grades every note, so an out-of-tune string will cost you.\n\nYou now know the parts of the guitar, the open strings (E A D G B E from string 6 to string 1), how to tune, and how the app listens."
+        },
+        {
+          "type": "quiz",
+          "title": "Setup review",
+          "questions": [
+            {
+              "prompt": "Which list is standard tuning from string 6 to string 1?",
+              "choices": [
+                "E A D G B E",
+                "E A D G C E",
+                "D A D G B E"
+              ],
+              "answerIndex": 0,
+              "explanation": "E A D G B E. The sentence \"Eddie Ate Dynamite, Good Bye Eddie\" helps."
+            },
+            {
+              "prompt": "Which string is string 3?",
+              "choices": [
+                "G",
+                "D",
+                "B"
+              ],
+              "answerIndex": 0,
+              "explanation": "Counting from the thinnest: 1 = high E, 2 = B, 3 = G."
+            },
+            {
+              "prompt": "The tuner reads 20 cents flat. What does that mean?",
+              "choices": [
+                "Slightly too low",
+                "Slightly too high",
+                "A whole fret too low"
+              ],
+              "answerIndex": 0,
+              "explanation": "Flat means low. Twenty cents is a fifth of a fret: close, but worth fixing."
+            },
+            {
+              "prompt": "Which part do the strings rest on at the body end?",
+              "choices": [
+                "Saddle",
+                "Nut",
+                "Headstock"
+              ],
+              "answerIndex": 0,
+              "explanation": "The saddle sits on the bridge. The nut is at the other end."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Name the open string",
+          "generator": {
+            "kind": "noteOnFretboard",
+            "params": {
+              "strings": "1,2,3,4,5,6",
+              "fretMin": "0",
+              "fretMax": "0"
+            }
+          },
+          "count": 6
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playNote",
+            "prompt": "Play the open strings in this order: D, G, A, B, low E, high E.",
+            "notes": [
+              "D3",
+              "G3",
+              "A2",
+              "B3",
+              "E2",
+              "E4"
+            ],
+            "passAccuracy": 0.83
+          },
+          "mistakeTips": [
+            "Say the name out loud before you pluck. It builds the name-to-string link.",
+            "Use the numbers: D is 4, G is 3, A is 5, B is 2, low E is 6, high E is 1."
+          ]
+        },
+        {
+          "type": "song",
+          "title": "Open-String Walk",
+          "caption": "An original exercise tune on open strings only. Pluck one string per beat and follow the pulse.",
+          "notes": [
+            [
+              "E2"
+            ],
+            [
+              "A2"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "B3"
+            ],
+            [
+              "E4"
+            ],
+            [
+              "B3"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "D3"
+            ],
+            [
+              "A2"
+            ],
+            [
+              "E2"
+            ],
+            [
+              "G3"
+            ],
+            [
+              "B3"
+            ],
+            [
+              "E4"
+            ]
+          ],
+          "rhythm": "q q q q q q q q q q h q q h",
+          "bpm": 60
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s0.l5.r1",
+          "kind": "fact",
+          "prompt": "Memory sentence for the open strings?",
+          "answer": "Eddie Ate Dynamite, Good Bye Eddie (E A D G B E)."
+        }
+      ],
+      "glossaryTerms": [
+        "standard tuning",
+        "open string",
+        "string numbers"
+      ]
+    }
+  ],
+  "branches": []
+}

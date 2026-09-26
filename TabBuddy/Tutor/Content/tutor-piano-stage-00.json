@@ -1,0 +1,511 @@
+{
+  "id": "piano.s0",
+  "instrument": "piano",
+  "order": 0,
+  "title": "Setup: sitting, hand position, and middle C",
+  "summary": "Set up your bench and hands, find middle C, and check that the app can hear your piano.",
+  "lessons": [
+    {
+      "id": "piano.s0.l1",
+      "title": "Sit, reach, and relax",
+      "summary": "Bench height, distance, and a relaxed, curved hand.",
+      "minutes": 8,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Bench and posture",
+          "body": "Good posture lets you play longer without strain.\n\n- **Height:** sit so your forearms are roughly level with the keys, or slope slightly down toward them. Adjust the bench, or add a firm cushion.\n- **Distance:** sit far enough back that your elbows are a little in front of your body when your fingers rest on the keys. Your arms should not be cramped against your sides.\n- **Where to sit:** center yourself near the middle of the keyboard, roughly in front of middle C (you will find it in the next lesson).\n- **Feet:** flat on the floor, or on a footrest if they do not reach.\n- **Back:** tall but not stiff. Lean very slightly forward from the hips.",
+          "diagram": {
+            "kind": "keyboard",
+            "labels": "none",
+            "pitchRange": [
+              "C3",
+              "C6"
+            ],
+            "caption": "Sit roughly in front of the middle of this range."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "A relaxed, curved hand",
+          "body": "Let your arm hang at your side, then lift your hand onto the keys without changing it. That natural curve is the one you want.\n\n- **Fingers** curve down so you play on the pads near the fingertips, not on flat fingers.\n- **Thumb** plays on its outer side corner, near the nail.\n- **Wrist** stays level with the back of your hand. Do not let it sag below the keys or arch high.\n- **Shoulders** stay down. If they creep up, stop, breathe out, and let them drop.\n\nTension is the most common beginner problem. Short, relaxed practice beats long, tense practice."
+        },
+        {
+          "type": "explain",
+          "title": "Pressing a key",
+          "body": "A piano key makes sound when a small hammer strikes a string (or, on a digital piano, when a sensor triggers a sample).\n\n- Press the key all the way down with the weight of your hand, not a jab from the finger alone.\n- The harder and faster you press, the louder the note.\n- Keep the key down to keep the note sounding. Let it rise to stop the sound.\n\nTry a few white keys anywhere with each finger. Aim for an even, medium volume."
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "Your forearms should be roughly…",
+              "choices": [
+                "Level with the keys",
+                "Pointing up at the keys",
+                "Resting on the wood below the keys",
+                "Tucked against your ribs"
+              ],
+              "answerIndex": 0,
+              "explanation": "Level forearms (or a slight downward slope) keep your wrists relaxed."
+            },
+            {
+              "prompt": "Which part of the finger plays the key?",
+              "choices": [
+                "The pad near the fingertip",
+                "The flat middle of the finger",
+                "The fingernail",
+                "The knuckle"
+              ],
+              "answerIndex": 0,
+              "explanation": "Curved fingers let the pads near the tips do the work."
+            },
+            {
+              "prompt": "What should your wrist do?",
+              "choices": [
+                "Stay level with the back of the hand",
+                "Sag below the keys",
+                "Arch as high as possible",
+                "Rest on the piano"
+              ],
+              "answerIndex": 0,
+              "explanation": "A level wrist lets fingers move freely without strain."
+            },
+            {
+              "prompt": "How do you make a note louder?",
+              "choices": [
+                "Press the key faster and with more weight",
+                "Hold the key longer",
+                "Press it twice",
+                "Press it with the thumb only"
+              ],
+              "answerIndex": 0,
+              "explanation": "Speed and weight of the key press control volume. Holding longer only makes it last longer."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s0.l1.r1",
+          "kind": "fact",
+          "prompt": "Where does the thumb contact the key?",
+          "answer": "On its outer side corner, near the nail."
+        }
+      ],
+      "glossaryTerms": [
+        "Posture",
+        "Hand position",
+        "Key"
+      ]
+    },
+    {
+      "id": "piano.s0.l2",
+      "title": "Finding middle C",
+      "summary": "Use the groups of black keys to find every C, and middle C in particular.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "The two-black-key landmark",
+          "body": "Look at the black keys. They come in **groups of two** and **groups of three**, repeating across the whole keyboard.\n\nThe white key just to the **left of each group of two black keys** is **C**. Every C on the piano sits in the same spot in that pattern.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C3",
+              "C4",
+              "C5"
+            ],
+            "pitchRange": [
+              "A2",
+              "E5"
+            ],
+            "caption": "Each highlighted key is a C: just left of two black keys."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Middle C",
+          "body": "A standard piano has **88 keys**, from A0 at the far left to C8 at the far right. It contains eight Cs.\n\n**Middle C** is the C closest to the middle of the keyboard, usually right in front of the brand name. Musicians call it **C4**: it is the fourth C counting from the left. The number after a note name is its **octave number**; it goes up by one at every C.\n\nOn a smaller digital keyboard (61 or 76 keys), middle C is still the C nearest the middle.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C4"
+            ],
+            "pitchRange": [
+              "C3",
+              "C5"
+            ],
+            "caption": "Middle C (C4)"
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Hear middle C and its neighbors",
+          "caption": "Middle C, then the C below it (C3), then the C above it (C5). Same letter, lower and higher.",
+          "playback": {
+            "notes": [
+              [
+                "C4"
+              ],
+              [
+                "C3"
+              ],
+              [
+                "C5"
+              ]
+            ],
+            "bpm": 60
+          },
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C3",
+              "C4",
+              "C5"
+            ],
+            "pitchRange": [
+              "C3",
+              "C5"
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playNote",
+            "prompt": "Play middle C (C4) with your right-hand thumb, three times.",
+            "notes": [
+              "C4"
+            ],
+            "repetitions": 3
+          },
+          "mistakeTips": [
+            "Find a group of two black keys near the middle of the piano. C is the white key just to its left.",
+            "Make sure you are on the C nearest the middle. The C one group to the left is C3, not C4.",
+            "Press firmly enough for a clear, medium-loud note."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "findAllNotes",
+            "prompt": "Play every C you can find on your piano in 45 seconds, one at a time. Go from left to right.",
+            "pitchClass": "C",
+            "durationSec": 45
+          },
+          "mistakeTips": [
+            "Look for the groups of two black keys. Each C is just to the left of one.",
+            "The very lowest and highest Cs are hard for a phone microphone to hear. Play them a little louder, and do not worry if they are not counted.",
+            "Play one note at a time and let each ring briefly."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "C is the white key just to the left of…",
+              "choices": [
+                "A group of two black keys",
+                "A group of three black keys",
+                "Any black key",
+                "Every E"
+              ],
+              "answerIndex": 0,
+              "explanation": "Every C sits immediately left of a two-black-key group."
+            },
+            {
+              "prompt": "What is middle C called in scientific pitch notation?",
+              "choices": [
+                "C4",
+                "C1",
+                "C3",
+                "C8"
+              ],
+              "answerIndex": 0,
+              "explanation": "Middle C is C4, the fourth C from the left on an 88-key piano."
+            },
+            {
+              "prompt": "How many keys does a full-size piano have?",
+              "choices": [
+                "88",
+                "61",
+                "76",
+                "100"
+              ],
+              "answerIndex": 0,
+              "explanation": "Full-size pianos have 88 keys. 61- and 76-key keyboards are shortened versions."
+            },
+            {
+              "prompt": "The number in C4 tells you the…",
+              "choices": [
+                "Octave",
+                "Finger to use",
+                "Volume",
+                "Number of black keys"
+              ],
+              "answerIndex": 0,
+              "explanation": "The octave number goes up by one at every C."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s0.l2.r1",
+          "kind": "playNote",
+          "prompt": "Play middle C.",
+          "answer": "C4"
+        },
+        {
+          "id": "piano.s0.l2.r2",
+          "kind": "fact",
+          "prompt": "How do you find any C on the piano?",
+          "answer": "It is the white key just left of a group of two black keys."
+        }
+      ],
+      "glossaryTerms": [
+        "Middle C",
+        "Octave",
+        "Scientific pitch notation",
+        "Black keys",
+        "White keys"
+      ]
+    },
+    {
+      "id": "piano.s0.l3",
+      "title": "Mic check and calibration",
+      "summary": "Set up your phone or tablet so the app can hear your piano, then run Calibration.",
+      "minutes": 8,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "How the app listens",
+          "body": "TabBuddy grades piano through your device's **microphone**. It listens for **pitch** (which notes sound) and for **when** each note starts.\n\n- It cannot see your hands, so it cannot check fingering, posture, or which hand you used. Those are up to you; the lessons tell you what to aim for.\n- While it listens, the app's own sound is muted so it does not hear itself. Count-ins and beats are shown visually (a pulsing beat marker), not clicked.\n- It does not use MIDI cables or Bluetooth, and it works offline.\n- It is most reliable in the middle of the keyboard. Very low bass notes (below about E2), very high notes, and notes blurred by the sustain pedal are harder to hear. When the app is unsure, it marks a note as uncertain rather than wrong."
+        },
+        {
+          "type": "explain",
+          "title": "Set up your space",
+          "body": "- **Acoustic piano:** place the device on the music stand or on top of the piano, microphone uncovered.\n- **Digital piano or keyboard:** turn the **speakers on** at a medium volume and **unplug headphones**. With headphones in, the microphone hears nothing.\n- Keep the room reasonably quiet: no TV or music playing.\n- Do not use the sustain pedal during graded exercises unless a lesson asks for it.\n\n**Now run Calibration** in the Tutor section of the app before your first graded exercise. It measures your room's background noise and the delay between playing and hearing, so timing and pitch checks are fair. Run it again if you move the device or change pianos."
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playNote",
+            "prompt": "Mic check: play C4 (middle C), then C5, then C3. Let each note ring for a second.",
+            "notes": [
+              "C4",
+              "C5",
+              "C3"
+            ]
+          },
+          "mistakeTips": [
+            "If nothing registers, check that the microphone is not covered and that the app has microphone permission in iOS Settings.",
+            "Digital piano: make sure the speakers are on and headphones are unplugged.",
+            "Play a little louder, and wait for each note to be marked before playing the next.",
+            "If notes are often misheard, run Calibration again with the device where it will stay."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "What does the app grade when you play?",
+              "choices": [
+                "Which notes sound, and when they start",
+                "Your fingering",
+                "Your posture",
+                "Which hand you used"
+              ],
+              "answerIndex": 0,
+              "explanation": "The microphone hears pitch and timing only. Fingering and posture are your responsibility."
+            },
+            {
+              "prompt": "You have a digital piano with headphones plugged in. What should you do?",
+              "choices": [
+                "Unplug headphones and turn the speakers on",
+                "Turn the volume to zero",
+                "Hold the phone against the headphones",
+                "Nothing"
+              ],
+              "answerIndex": 0,
+              "explanation": "The microphone must hear the piano through the air, so the speakers need to be on."
+            },
+            {
+              "prompt": "Why are the count-in and beat shown visually?",
+              "choices": [
+                "App sound is muted while it listens",
+                "The app has no sound at all",
+                "Visual cues are always more accurate",
+                "To save battery"
+              ],
+              "answerIndex": 0,
+              "explanation": "Muting avoids the microphone hearing the app instead of your piano."
+            },
+            {
+              "prompt": "Which notes are hardest for the app to hear?",
+              "choices": [
+                "Very low bass notes and notes blurred by the pedal",
+                "Notes near middle C",
+                "White keys",
+                "Notes played with the thumb"
+              ],
+              "answerIndex": 0,
+              "explanation": "Mid-range notes without pedal are the most reliable."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s0.l3.r1",
+          "kind": "fact",
+          "prompt": "What should you run before your first graded exercise, and again after moving the device?",
+          "answer": "Calibration."
+        }
+      ],
+      "glossaryTerms": [
+        "Calibration",
+        "Microphone",
+        "Pitch",
+        "Sustain pedal"
+      ]
+    },
+    {
+      "id": "piano.s0.l4",
+      "title": "Stage 0 review: Middle C Echo",
+      "summary": "Check what you know, then play a short piece that uses only Cs.",
+      "minutes": 7,
+      "steps": [
+        {
+          "type": "quiz",
+          "title": "Stage 0 check",
+          "questions": [
+            {
+              "prompt": "Which description matches a good hand position?",
+              "choices": [
+                "Curved fingers, level wrist, relaxed shoulders",
+                "Flat fingers, low wrist",
+                "Stiff fingers, high wrist",
+                "Fingers straight, thumb tucked under"
+              ],
+              "answerIndex": 0,
+              "explanation": "Curved and relaxed is the goal."
+            },
+            {
+              "prompt": "Where is C3?",
+              "choices": [
+                "The C one octave below middle C",
+                "The C one octave above middle C",
+                "The lowest key on the piano",
+                "The black key left of middle C"
+              ],
+              "answerIndex": 0,
+              "explanation": "Octave numbers count up at each C, so C3 is the next C to the left of C4."
+            },
+            {
+              "prompt": "Before graded practice on a digital piano, you should…",
+              "choices": [
+                "Turn speakers on, unplug headphones, and run Calibration",
+                "Turn on the sustain pedal",
+                "Mute the piano",
+                "Plug in headphones"
+              ],
+              "answerIndex": 0,
+              "explanation": "The app needs to hear the piano clearly and know your setup."
+            }
+          ]
+        },
+        {
+          "type": "song",
+          "title": "Middle C Echo (original)",
+          "caption": "An original warm-up. Move between C3, C4, and C5. Watch the beat marker and play each C as it arrives. Use any comfortable finger.",
+          "notes": [
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "C4"
+            ],
+            [
+              "C3"
+            ],
+            [
+              "C4"
+            ]
+          ],
+          "rhythm": "q q q q q q h q q q q q q h q q q q w",
+          "bpm": 72
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s0.l4.r1",
+          "kind": "noteName",
+          "prompt": "Name the highlighted key.",
+          "answer": "C4 (middle C)",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C4"
+            ],
+            "labels": "none",
+            "pitchRange": [
+              "F3",
+              "G4"
+            ]
+          }
+        }
+      ],
+      "glossaryTerms": [
+        "Middle C",
+        "Octave"
+      ]
+    }
+  ]
+}

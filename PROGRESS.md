@@ -6,6 +6,52 @@ it lives, and what's next. Newest first.
 
 ---
 
+## 2026-09-25 — Tutor and library Practice mode
+
+- **Tutor**: added a guitar and piano learning track (Library toolbar → Tutor). Content:
+  - Each instrument has stages 0–8.
+  - Guitar: 56 main-path lessons plus 4 side branches (12 lessons).
+  - Piano: 45 main-path lessons plus 2 side branches (7 lessons).
+  - The glossary has 253 terms.
+- **Tutor features**:
+  - Lesson steps: explain, demo, mic-graded practice, quiz, and song.
+  - Simplified-FSRS reviews.
+  - Eight games with personal bests only.
+  - "Songs you know" library suggestions by chord content.
+  - Calibration: mic level/placement, instrument check, and per-route latency.
+  - Per-instrument progress reset.
+  - Chord-change drills use stage-based changes-per-minute goals. Demos without an authored diagram get an automatic chord diagram.
+- **Practice**: added library Practice mode for drawn/text tabs (and PDF arrangements) with a `MeasureMap`, Guitar Pro (alphaTab `exportNotes`), and sibling MIDI files. It has Wait and Play-along modes with a visual count-in. The take review sheet includes note/timing lanes, a tempo ribbon, suggestions, playback, and history. Bass tracks and low tunings use a bass listening profile.
+- **Listening**:
+  - Microphone only, fully offline, with app output muted while listening. Metronome, note playback, the playback coordinator, and the Guitar Pro player stop on `.tutorListeningWillStart`.
+  - Three tiers: the existing monophonic transcriber (tier A), a score-informed verifier (tier B), and a post-take DSP harmonic-sum transcriber (tier C). Basic Pitch/Core ML was not added.
+  - Uncertain detections are neutral and excluded from accuracy.
+- **Storage**:
+  - Separate local SwiftData store at `Application Support/Tutor/tutor.store` (no CloudKit). Library stores and `FileItem` schema are unchanged.
+  - Take audio goes to `Application Support/Tutor/Takes/`, AAC re-encoded and excluded from backup. It keeps 10 takes per score and at most 200 files / 500 MB overall; records are kept.
+  - One latency store per predicted audio route (`TutorLatency.store()`).
+  - Practice may write loop measures, BPM, and, when missing, `referenceBPM` to the open `FileItem`.
+  - `TabBuddy/Tutor` and `TabBuddyTests/Tutor` are synchronized Xcode groups.
+- **Validation (iOS Simulator, unsigned, `-parallel-testing-enabled NO`)**: the full `TabBuddy` scheme passed. Unit tests: 336 executed, 0 failures, 8 skipped (the opt-in `LessonUISnapshotTests` and `PracticeSnapshotTests` renders). UI tests: 6 passed. The Tutor suites account for 233 of the unit tests, including the curriculum validator over every bundled content file.
+- **Synthetic detection results (synthetic audio only, not real-world accuracy)**:
+  - Guitar single notes E2–E5: 37/37.
+  - Open chords: 16/16.
+  - Distant/reverb: 16/16.
+  - Piano notes A0–C8: 23/23. Piano triads: 7/7.
+  - Bass E1–G2: 16/16.
+  - False hits on silence/noise: 0/64. Wrong chord: 0/12 false hits. Octave/twelfth errors: 0/7 false hits.
+  - Tier A exact octave: 7/9.
+  - Tier C on synthetic chords: piano precision 0.93 / recall 0.82; guitar exact precision 0.77 / recall 0.56 (pitch class 0.78 / 0.88).
+- **Not verified**:
+  - real microphone accuracy on acoustic guitar, piano, or bass, including iPad at music-stand distance
+  - device latency and calibration
+  - Bluetooth/USB routes
+  - learning quality
+  - the recorded fixture corpus and `.diag/authbench.swift --verifier` benchmark, which do not exist yet
+  - device install, signed build, and visual inspection of the snapshot renders in this pass
+
+  Live iCloud behavior is unaffected by construction, since the tutor store is local; no two-device test was run.
+
 ## 2026-09-07 — Readable downloaded-file collection
 
 - Added a resumable organizer that copies raw corpus files into import-ready source/game-or-artist folders with readable game/artist - song names. Colliding arrangement names receive version numbers; raw downloads and queues remain unchanged.

@@ -1,0 +1,1470 @@
+{
+  "id": "piano.s4",
+  "instrument": "piano",
+  "order": 4,
+  "title": "Major scales and intervals",
+  "summary": "Build major scales from whole and half steps, play C, G, D, and F major with thumb crossings, and name intervals.",
+  "lessons": [
+    {
+      "id": "piano.s4.l1",
+      "title": "The major scale formula",
+      "summary": "Every major scale follows the same pattern of whole and half steps.",
+      "minutes": 9,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "A pattern of steps",
+          "body": "A **scale** is a set of notes played in order from one note up to the same note an octave higher. The first note is the **tonic**, and it names the scale.\n\nEvery **major scale** uses the same pattern of steps:\n\n**W W H W W W H** (W = whole step, H = half step)\n\nStarting on C, that pattern uses only white keys: C D E F G A B C. The half steps fall at E–F and B–C.",
+          "diagram": {
+            "kind": "keyboard",
+            "scale": "C major",
+            "notes": [
+              "C4",
+              "D4",
+              "E4",
+              "F4",
+              "G4",
+              "A4",
+              "B4",
+              "C5"
+            ],
+            "labels": "degrees",
+            "pitchRange": [
+              "C4",
+              "C5"
+            ],
+            "caption": "C major, numbered by scale degree."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Scale degrees",
+          "body": "Each note of a scale has a number called its **scale degree**: in C major, C = 1, D = 2, E = 3, F = 4, G = 5, A = 6, B = 7, then C = 1 (or 8) again. Degree numbers let you talk about any key the same way: \"the 5th degree\" is G in C major and D in G major.\n\nThe half steps in a major scale are always between degrees **3–4** and **7–8**."
+        },
+        {
+          "type": "demo",
+          "title": "C major, up and down",
+          "caption": "C4 to C5 and back.",
+          "playback": {
+            "notes": [
+              [
+                "C4"
+              ],
+              [
+                "D4"
+              ],
+              [
+                "E4"
+              ],
+              [
+                "F4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "A4"
+              ],
+              [
+                "B4"
+              ],
+              [
+                "C5"
+              ],
+              [
+                "B4"
+              ],
+              [
+                "A4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "F4"
+              ],
+              [
+                "E4"
+              ],
+              [
+                "D4"
+              ],
+              [
+                "C4"
+              ]
+            ],
+            "bpm": 90
+          },
+          "diagram": {
+            "kind": "keyboard",
+            "scale": "C major",
+            "labels": "degrees",
+            "pitchRange": [
+              "C4",
+              "C5"
+            ]
+          }
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "What is the step pattern of a major scale?",
+              "choices": [
+                "W W H W W W H",
+                "W H W W H W W",
+                "W W W H W W H",
+                "H W W W H W W"
+              ],
+              "answerIndex": 0,
+              "explanation": "Whole, whole, half, whole, whole, whole, half."
+            },
+            {
+              "prompt": "In a major scale, the half steps fall between degrees…",
+              "choices": [
+                "3–4 and 7–8",
+                "2–3 and 6–7",
+                "1–2 and 5–6",
+                "4–5 and 7–8"
+              ],
+              "answerIndex": 0,
+              "explanation": "In C major: E–F (3–4) and B–C (7–8)."
+            },
+            {
+              "prompt": "What is the 5th degree of C major?",
+              "choices": [
+                "G",
+                "F",
+                "A",
+                "E"
+              ],
+              "answerIndex": 0,
+              "explanation": "C D E F G: G is 5."
+            },
+            {
+              "prompt": "The first note of a scale is called the…",
+              "choices": [
+                "Tonic",
+                "Octave",
+                "Interval",
+                "Beat"
+              ],
+              "answerIndex": 0,
+              "explanation": "The tonic is the home note that names the scale."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Spell the scale",
+          "generator": {
+            "kind": "scaleSpelling",
+            "params": {
+              "keys": "C,G,F",
+              "type": "major"
+            }
+          },
+          "count": 3
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s4.l1.r1",
+          "kind": "fact",
+          "prompt": "Major scale step pattern?",
+          "answer": "W W H W W W H"
+        },
+        {
+          "id": "piano.s4.l1.r2",
+          "kind": "fact",
+          "prompt": "Between which degrees are the half steps in a major scale?",
+          "answer": "3–4 and 7–8"
+        }
+      ],
+      "glossaryTerms": [
+        "Scale",
+        "Major scale",
+        "Tonic",
+        "Scale degree",
+        "Whole step",
+        "Half step"
+      ]
+    },
+    {
+      "id": "piano.s4.l2",
+      "title": "C major with thumb crossings",
+      "summary": "Play eight notes with five fingers by passing the thumb under and crossing over.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Thumb under, finger over",
+          "body": "A scale has eight notes but you have five fingers, so the hand has to move without a gap in the sound.\n\n**Right hand, C major, one octave (C4 to C5):**\n- Up: **1 2 3 1 2 3 4 5**. After finger 3 plays E, the **thumb passes under** to play F.\n- Down: **5 4 3 2 1 3 2 1**. After the thumb plays F, **finger 3 crosses over** to play E.\n\nKeep the thumb moving under the hand early, while fingers 2 and 3 are still playing, so it is ready. Keep the wrist level and let the elbow move sideways slightly; do not twist the wrist.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C4",
+              "D4",
+              "E4",
+              "F4",
+              "G4",
+              "A4",
+              "B4",
+              "C5"
+            ],
+            "pitchRange": [
+              "C4",
+              "C5"
+            ],
+            "caption": "RH fingering up: C1 D2 E3 F1 G2 A3 B4 C5."
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Thumb-under drill, right hand: C4 D4 E4 F4 (1 2 3 1), then back E4 D4 C4 (3 2 1). Repeat slowly.",
+            "notes": [
+              "C4",
+              "D4",
+              "E4",
+              "F4",
+              "E4",
+              "D4",
+              "C4"
+            ],
+            "rhythm": "q q q q q q h",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ]
+          },
+          "mistakeTips": [
+            "Start moving the thumb toward F while finger 2 plays D.",
+            "The thumb plays on its side; do not rotate the whole hand.",
+            "Aim for an even sound with no gap at the crossing."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Right hand, C major scale, C4 to C5 and back. Fingering up 1 2 3 1 2 3 4 5, down 5 4 3 2 1 3 2 1.",
+            "notes": [
+              "C4",
+              "D4",
+              "E4",
+              "F4",
+              "G4",
+              "A4",
+              "B4",
+              "C5",
+              "B4",
+              "A4",
+              "G4",
+              "F4",
+              "E4",
+              "D4",
+              "C4"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q h",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84,
+              96
+            ]
+          },
+          "mistakeTips": [
+            "The thumb passes under after E (finger 3) going up.",
+            "Finger 3 crosses over the thumb to E going down.",
+            "If a note is late at the crossing, slow the tempo rather than rushing the other notes."
+          ]
+        },
+        {
+          "type": "explain",
+          "title": "Left hand, C major",
+          "body": "**Left hand, one octave (C3 to C4):**\n- Up: **5 4 3 2 1 3 2 1**. After the thumb plays G, **finger 3 crosses over** to A.\n- Down: **1 2 3 1 2 3 4 5**. After finger 3 plays A, the **thumb passes under** to G.\n\nNotice the left hand's fingering going up matches the right hand's going down.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C3",
+              "D3",
+              "E3",
+              "F3",
+              "G3",
+              "A3",
+              "B3",
+              "C4"
+            ],
+            "pitchRange": [
+              "C3",
+              "C4"
+            ],
+            "caption": "LH fingering up: C5 D4 E3 F2 G1 A3 B2 C1."
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Left hand, C major scale, C3 to C4 and back. Fingering up 5 4 3 2 1 3 2 1, down 1 2 3 1 2 3 4 5.",
+            "notes": [
+              "C3",
+              "D3",
+              "E3",
+              "F3",
+              "G3",
+              "A3",
+              "B3",
+              "C4",
+              "B3",
+              "A3",
+              "G3",
+              "F3",
+              "E3",
+              "D3",
+              "C3"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q h",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ]
+          },
+          "mistakeTips": [
+            "Finger 3 crosses over the thumb from G to A going up.",
+            "Going down, the thumb passes under after A.",
+            "Keep the left wrist from collapsing inward at the crossing."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "Right hand C major going up: which finger plays F?",
+              "choices": [
+                "1",
+                "4",
+                "3",
+                "2"
+              ],
+              "answerIndex": 0,
+              "explanation": "1 2 3 1 2 3 4 5: the thumb passes under to F."
+            },
+            {
+              "prompt": "Right hand C major going down: which finger plays E after the thumb plays F?",
+              "choices": [
+                "3",
+                "2",
+                "4",
+                "1"
+              ],
+              "answerIndex": 0,
+              "explanation": "Finger 3 crosses over the thumb."
+            },
+            {
+              "prompt": "Left hand C major going up: which finger plays A?",
+              "choices": [
+                "3",
+                "1",
+                "2",
+                "4"
+              ],
+              "answerIndex": 0,
+              "explanation": "5 4 3 2 1 then 3 crosses over to A."
+            },
+            {
+              "prompt": "Left hand C major going up: which finger plays C4 at the top?",
+              "choices": [
+                "1",
+                "5",
+                "3",
+                "2"
+              ],
+              "answerIndex": 0,
+              "explanation": "5 4 3 2 1 3 2 1: the thumb ends on C4."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s4.l2.r1",
+          "kind": "fact",
+          "prompt": "Right-hand C major fingering going up?",
+          "answer": "1 2 3 1 2 3 4 5"
+        },
+        {
+          "id": "piano.s4.l2.r2",
+          "kind": "fact",
+          "prompt": "Left-hand C major fingering going up?",
+          "answer": "5 4 3 2 1 3 2 1"
+        }
+      ],
+      "glossaryTerms": [
+        "Fingering",
+        "Thumb under",
+        "Crossing over"
+      ]
+    },
+    {
+      "id": "piano.s4.l3",
+      "title": "G major and D major",
+      "summary": "Add sharps to keep the major pattern, using the same fingering as C.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Why G major needs F♯",
+          "body": "Apply **W W H W W W H** from G: G–A (W), A–B (W), B–C (H), C–D (W), D–E (W), E–**F♯** (W), **F♯**–G (H).\n\nUsing F natural would put a half step at E–F and a whole step at F–G, breaking the pattern. So **G major = G A B C D E F♯ G**, with one sharp.\n\n**Fingering is the same as C major** in both hands: RH up 1 2 3 1 2 3 4 5; LH up 5 4 3 2 1 3 2 1. In the right hand, finger 4 plays F♯.",
+          "diagram": {
+            "kind": "keyboard",
+            "scale": "G major",
+            "notes": [
+              "G4",
+              "A4",
+              "B4",
+              "C5",
+              "D5",
+              "E5",
+              "F#5",
+              "G5"
+            ],
+            "labels": "noteNames",
+            "pitchRange": [
+              "G4",
+              "G5"
+            ],
+            "caption": "G major: one sharp, F♯."
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Right hand, G major, G4 to G5 and back. Fingering up 1 2 3 1 2 3 4 5.",
+            "notes": [
+              "G4",
+              "A4",
+              "B4",
+              "C5",
+              "D5",
+              "E5",
+              "F#5",
+              "G5",
+              "F#5",
+              "E5",
+              "D5",
+              "C5",
+              "B4",
+              "A4",
+              "G4"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q h",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84,
+              96
+            ]
+          },
+          "mistakeTips": [
+            "F♯5 is the black key just below G5; finger 4 plays it.",
+            "The thumb passes under to C5 after B4.",
+            "Keep finger 4 close to the black key before you need it."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Left hand, G major, G2 to G3 and back. Fingering up 5 4 3 2 1 3 2 1.",
+            "notes": [
+              "G2",
+              "A2",
+              "B2",
+              "C3",
+              "D3",
+              "E3",
+              "F#3",
+              "G3",
+              "F#3",
+              "E3",
+              "D3",
+              "C3",
+              "B2",
+              "A2",
+              "G2"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q h",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ]
+          },
+          "mistakeTips": [
+            "Finger 3 crosses over to E3 after the thumb plays D3.",
+            "Finger 2 plays F♯3.",
+            "G2 is low: play firmly so the microphone hears it."
+          ]
+        },
+        {
+          "type": "explain",
+          "title": "D major: two sharps",
+          "body": "From D: D–E (W), E–**F♯** (W), F♯–G (H), G–A (W), A–B (W), B–**C♯** (W), C♯–D (H).\n\n**D major = D E F♯ G A B C♯ D**, with two sharps: F♯ and C♯.\n\n**Fingering is again the same as C major**: RH up 1 2 3 1 2 3 4 5 (finger 3 on F♯, 4 on C♯); LH up 5 4 3 2 1 3 2 1.",
+          "diagram": {
+            "kind": "keyboard",
+            "scale": "D major",
+            "notes": [
+              "D4",
+              "E4",
+              "F#4",
+              "G4",
+              "A4",
+              "B4",
+              "C#5",
+              "D5"
+            ],
+            "pitchRange": [
+              "D4",
+              "D5"
+            ],
+            "caption": "D major: F♯ and C♯."
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Right hand, D major, D4 to D5 and back. Fingering up 1 2 3 1 2 3 4 5.",
+            "notes": [
+              "D4",
+              "E4",
+              "F#4",
+              "G4",
+              "A4",
+              "B4",
+              "C#5",
+              "D5",
+              "C#5",
+              "B4",
+              "A4",
+              "G4",
+              "F#4",
+              "E4",
+              "D4"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q h",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84,
+              96
+            ]
+          },
+          "mistakeTips": [
+            "Finger 3 is on F♯4, a black key, before the thumb passes under to G4.",
+            "Finger 4 plays C♯5.",
+            "Play slightly nearer the black keys so you do not have to reach."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Left hand, D major, D3 to D4 and back. Fingering up 5 4 3 2 1 3 2 1.",
+            "notes": [
+              "D3",
+              "E3",
+              "F#3",
+              "G3",
+              "A3",
+              "B3",
+              "C#4",
+              "D4",
+              "C#4",
+              "B3",
+              "A3",
+              "G3",
+              "F#3",
+              "E3",
+              "D3"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q h",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ]
+          },
+          "mistakeTips": [
+            "Finger 3 plays F♯3, then 2 on G3, 1 on A3.",
+            "Finger 3 crosses over to B3; finger 2 plays C♯4."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "Which note is sharp in G major?",
+              "choices": [
+                "F♯",
+                "C♯",
+                "G♯",
+                "B♭"
+              ],
+              "answerIndex": 0,
+              "explanation": "E–F♯ must be a whole step and F♯–G a half step."
+            },
+            {
+              "prompt": "Which notes are sharp in D major?",
+              "choices": [
+                "F♯ and C♯",
+                "F♯ only",
+                "C♯ and G♯",
+                "F♯ and G♯"
+              ],
+              "answerIndex": 0,
+              "explanation": "D E F♯ G A B C♯ D."
+            },
+            {
+              "prompt": "The right-hand fingering for G major and D major is the same as for…",
+              "choices": [
+                "C major",
+                "No other scale",
+                "F major",
+                "The left hand"
+              ],
+              "answerIndex": 0,
+              "explanation": "C, G, and D major all use RH 1 2 3 1 2 3 4 5."
+            },
+            {
+              "prompt": "Which note is the 7th degree of G major?",
+              "choices": [
+                "F♯",
+                "F",
+                "E",
+                "G"
+              ],
+              "answerIndex": 0,
+              "explanation": "G A B C D E F♯: F♯ is 7."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Spell the scale",
+          "generator": {
+            "kind": "scaleSpelling",
+            "params": {
+              "keys": "G,D",
+              "type": "major"
+            }
+          },
+          "count": 2
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s4.l3.r1",
+          "kind": "fact",
+          "prompt": "Spell G major.",
+          "answer": "G A B C D E F♯ G"
+        },
+        {
+          "id": "piano.s4.l3.r2",
+          "kind": "fact",
+          "prompt": "Spell D major.",
+          "answer": "D E F♯ G A B C♯ D"
+        }
+      ],
+      "glossaryTerms": [
+        "Major scale",
+        "Sharp"
+      ]
+    },
+    {
+      "id": "piano.s4.l4",
+      "title": "F major: finger 4 on B♭",
+      "summary": "A scale with a flat, and a right-hand fingering that differs from C.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Why F major needs B♭",
+          "body": "From F: F–G (W), G–A (W), A–**B♭** (H), B♭–C (W), C–D (W), D–E (W), E–F (H).\n\n**F major = F G A B♭ C D E F**, with one flat, B♭. (It is written B♭, not A♯, because a scale uses each letter once.)",
+          "diagram": {
+            "kind": "keyboard",
+            "scale": "F major",
+            "notes": [
+              "F4",
+              "G4",
+              "A4",
+              "Bb4",
+              "C5",
+              "D5",
+              "E5",
+              "F5"
+            ],
+            "pitchRange": [
+              "F4",
+              "F5"
+            ],
+            "caption": "F major: one flat, B♭."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "F major fingering",
+          "body": "- **Right hand up: 1 2 3 4 1 2 3 4.** Finger 4 plays B♭, then the thumb passes under to C. Down: 4 3 2 1 4 3 2 1.\n- **Left hand up: 5 4 3 2 1 3 2 1** (same as C major). The thumb plays C, then finger 3 crosses over to D. Down: 1 2 3 1 2 3 4 5.\n\nThe right hand avoids putting the thumb on the black key B♭, which would be awkward.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "F4",
+              "G4",
+              "A4",
+              "Bb4",
+              "C5",
+              "D5",
+              "E5",
+              "F5"
+            ],
+            "pitchRange": [
+              "F4",
+              "F5"
+            ],
+            "caption": "RH: F1 G2 A3 B♭4 C1 D2 E3 F4."
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Right hand, F major, F4 to F5 and back. Fingering up 1 2 3 4 1 2 3 4, down 4 3 2 1 4 3 2 1.",
+            "notes": [
+              "F4",
+              "G4",
+              "A4",
+              "Bb4",
+              "C5",
+              "D5",
+              "E5",
+              "F5",
+              "E5",
+              "D5",
+              "C5",
+              "Bb4",
+              "A4",
+              "G4",
+              "F4"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q h",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84,
+              96
+            ]
+          },
+          "mistakeTips": [
+            "Finger 4 plays B♭4; the thumb passes under to C5.",
+            "Going down, finger 4 crosses over the thumb from C5 to B♭4.",
+            "Do not start with the thumb on B♭."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Left hand, F major, F3 to F4 and back. Fingering up 5 4 3 2 1 3 2 1.",
+            "notes": [
+              "F3",
+              "G3",
+              "A3",
+              "Bb3",
+              "C4",
+              "D4",
+              "E4",
+              "F4",
+              "E4",
+              "D4",
+              "C4",
+              "Bb3",
+              "A3",
+              "G3",
+              "F3"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q h",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ]
+          },
+          "mistakeTips": [
+            "Finger 2 plays B♭3, the thumb plays C4, then finger 3 crosses over to D4.",
+            "Down: after D4 (3), the thumb passes under to C4."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "Which note is flat in F major?",
+              "choices": [
+                "B♭",
+                "E♭",
+                "A♭",
+                "D♭"
+              ],
+              "answerIndex": 0,
+              "explanation": "A–B♭ is the half step between degrees 3 and 4."
+            },
+            {
+              "prompt": "Right hand F major going up: which finger plays B♭?",
+              "choices": [
+                "4",
+                "1",
+                "3",
+                "2"
+              ],
+              "answerIndex": 0,
+              "explanation": "1 2 3 4 1 2 3 4: finger 4 plays B♭."
+            },
+            {
+              "prompt": "Why is it B♭ and not A♯ in F major?",
+              "choices": [
+                "Each letter is used once in the scale",
+                "A♯ is a different key on the piano",
+                "Flats are always preferred",
+                "A♯ does not exist"
+              ],
+              "answerIndex": 0,
+              "explanation": "F G A B♭ uses each letter once. A♯ would repeat A and skip B."
+            },
+            {
+              "prompt": "Left-hand F major fingering going up is…",
+              "choices": [
+                "5 4 3 2 1 3 2 1",
+                "1 2 3 4 1 2 3 4",
+                "4 3 2 1 4 3 2 1",
+                "5 4 3 2 1 4 3 2"
+              ],
+              "answerIndex": 0,
+              "explanation": "The left hand uses the same fingering as C major."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s4.l4.r1",
+          "kind": "fact",
+          "prompt": "Spell F major.",
+          "answer": "F G A B♭ C D E F"
+        },
+        {
+          "id": "piano.s4.l4.r2",
+          "kind": "fact",
+          "prompt": "Right-hand F major fingering going up?",
+          "answer": "1 2 3 4 1 2 3 4"
+        }
+      ],
+      "glossaryTerms": [
+        "Flat",
+        "Fingering"
+      ]
+    },
+    {
+      "id": "piano.s4.l5",
+      "title": "Intervals: measuring distance",
+      "summary": "Name the distance between two notes by number and quality, and hear them.",
+      "minutes": 13,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Interval number",
+          "body": "An **interval** is the distance between two notes. Its **number** comes from counting letter names, **including both ends**: C to E is C-D-E = a **3rd**; C to G is C-D-E-F-G = a **5th**. The same letter is a **unison**; the next same letter up is an **octave** (8th).",
+          "diagram": {
+            "kind": "intervalLadder",
+            "notes": [
+              "C4",
+              "D4",
+              "E4",
+              "F4",
+              "G4",
+              "A4",
+              "B4",
+              "C5"
+            ],
+            "labels": "intervals",
+            "caption": "Intervals above C4"
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Interval quality",
+          "body": "The **quality** tells you the exact size in half steps:\n\n| Interval | Half steps | Example from C |\n|---|---|---|\n| minor 2nd (m2) | 1 | C–D♭ |\n| major 2nd (M2) | 2 | C–D |\n| minor 3rd (m3) | 3 | C–E♭ |\n| major 3rd (M3) | 4 | C–E |\n| perfect 4th (P4) | 5 | C–F |\n| tritone (A4/d5) | 6 | C–F♯ / C–G♭ |\n| perfect 5th (P5) | 7 | C–G |\n| minor 6th (m6) | 8 | C–A♭ |\n| major 6th (M6) | 9 | C–A |\n| minor 7th (m7) | 10 | C–B♭ |\n| major 7th (M7) | 11 | C–B |\n| perfect octave (P8) | 12 | C–C |\n\nFrom the tonic of any major scale, every scale degree is a major or perfect interval: M2, M3, P4, P5, M6, M7, P8."
+        },
+        {
+          "type": "explain",
+          "title": "Hearing intervals",
+          "body": "Link each interval to the start of a tune you know (all public domain):\n\n- **M2**: \"Frère Jacques\" (first two notes)\n- **m3**: \"Greensleeves\" (first two notes)\n- **M3**: \"When the Saints Go Marching In\" (\"Oh when\")\n- **P4**: Wagner's \"Here Comes the Bride\" (\"Here comes\")\n- **P5**: \"Twinkle, Twinkle\" (\"twinkle, twin-\")\n- **M6**: \"My Bonnie Lies Over the Ocean\" (\"My Bon-\")\n- **P8**: the same note, higher; the two blend almost into one sound.",
+          "playback": {
+            "notes": [
+              [
+                "C4"
+              ],
+              [
+                "E4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "C5"
+              ]
+            ],
+            "bpm": 60
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Major and perfect intervals above C",
+          "caption": "C–D, C–E, C–F, C–G, C–A, C–B, C–C.",
+          "playback": {
+            "notes": [
+              [
+                "C4"
+              ],
+              [
+                "D4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "E4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "F4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "G4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "A4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "B4"
+              ],
+              [
+                "C4"
+              ],
+              [
+                "C5"
+              ]
+            ],
+            "bpm": 72
+          },
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "C4",
+              "D4",
+              "E4",
+              "F4",
+              "G4",
+              "A4",
+              "B4",
+              "C5"
+            ],
+            "labels": "intervals",
+            "pitchRange": [
+              "C4",
+              "C5"
+            ]
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "intervalPlayback",
+            "prompt": "Listen to the interval, then play both notes, lower first. This one starts on C4.",
+            "notes": [
+              "C4",
+              "G4"
+            ],
+            "repetitions": 3
+          },
+          "mistakeTips": [
+            "Count letter names to find the upper note: for a 5th, count C D E F G.",
+            "Sing the two notes before you play them.",
+            "Replay the example as many times as you like."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "intervalPlayback",
+            "prompt": "Listen, then play it back starting on C4.",
+            "notes": [
+              "C4",
+              "E4"
+            ],
+            "repetitions": 3
+          },
+          "mistakeTips": [
+            "This is a 3rd: count C D E.",
+            "A major 3rd is 4 half steps."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "intervalPlayback",
+            "prompt": "Listen, then play it back starting on G4.",
+            "notes": [
+              "G4",
+              "C5"
+            ],
+            "repetitions": 3
+          },
+          "mistakeTips": [
+            "This is a 4th: count G A B C.",
+            "A perfect 4th is 5 half steps."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "C to A is what interval?",
+              "choices": [
+                "Major 6th",
+                "Perfect 5th",
+                "Minor 6th",
+                "Major 7th"
+              ],
+              "answerIndex": 0,
+              "explanation": "C D E F G A = 6 letters; 9 half steps = major 6th."
+            },
+            {
+              "prompt": "How many half steps are in a perfect 5th?",
+              "choices": [
+                "7",
+                "5",
+                "8",
+                "6"
+              ],
+              "answerIndex": 0,
+              "explanation": "C–G spans 7 half steps."
+            },
+            {
+              "prompt": "D to F is what interval?",
+              "choices": [
+                "Minor 3rd",
+                "Major 3rd",
+                "Major 2nd",
+                "Perfect 4th"
+              ],
+              "answerIndex": 0,
+              "explanation": "D E F = 3rd; D–F is 3 half steps, so minor."
+            },
+            {
+              "prompt": "E to A is what interval?",
+              "choices": [
+                "Perfect 4th",
+                "Perfect 5th",
+                "Major 3rd",
+                "Tritone"
+              ],
+              "answerIndex": 0,
+              "explanation": "E F G A = 4th; 5 half steps = perfect."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Name the interval",
+          "generator": {
+            "kind": "intervalByName",
+            "params": {
+              "intervals": "M2,m3,M3,P4,P5,M6,P8",
+              "range": "C4-C5"
+            }
+          },
+          "count": 6
+        },
+        {
+          "type": "quiz",
+          "title": "Intervals by ear",
+          "generator": {
+            "kind": "intervalByEar",
+            "params": {
+              "intervals": "M2,M3,P4,P5,P8",
+              "range": "C3-C6"
+            }
+          },
+          "count": 6
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s4.l5.r1",
+          "kind": "earInterval",
+          "prompt": "Name the interval.",
+          "answer": "Perfect 5th",
+          "playback": {
+            "notes": [
+              [
+                "D4"
+              ],
+              [
+                "A4"
+              ]
+            ],
+            "bpm": 60
+          }
+        },
+        {
+          "id": "piano.s4.l5.r2",
+          "kind": "earInterval",
+          "prompt": "Name the interval.",
+          "answer": "Major 3rd",
+          "playback": {
+            "notes": [
+              [
+                "F4"
+              ],
+              [
+                "A4"
+              ]
+            ],
+            "bpm": 60
+          }
+        },
+        {
+          "id": "piano.s4.l5.r3",
+          "kind": "fact",
+          "prompt": "How many half steps in a major 3rd, perfect 4th, and perfect 5th?",
+          "answer": "4, 5, and 7."
+        }
+      ],
+      "glossaryTerms": [
+        "Interval",
+        "Unison",
+        "Octave",
+        "Major interval",
+        "Minor interval",
+        "Perfect interval",
+        "Tritone"
+      ]
+    },
+    {
+      "id": "piano.s4.l6",
+      "title": "Stage 4 review: Minuet in G",
+      "summary": "Scales, intervals, and a real piece in G major.",
+      "minutes": 14,
+      "steps": [
+        {
+          "type": "quiz",
+          "title": "Stage 4 check: scales",
+          "generator": {
+            "kind": "scaleSpelling",
+            "params": {
+              "keys": "C,G,D,F",
+              "type": "major"
+            }
+          },
+          "count": 4
+        },
+        {
+          "type": "quiz",
+          "title": "Stage 4 check: intervals by ear",
+          "generator": {
+            "kind": "intervalByEar",
+            "params": {
+              "intervals": "M2,m3,M3,P4,P5,M6,P8",
+              "range": "C3-C6"
+            }
+          },
+          "count": 6
+        },
+        {
+          "type": "quiz",
+          "title": "Stage 4 check: fingering and intervals",
+          "questions": [
+            {
+              "prompt": "Which scale uses right-hand fingering 1 2 3 4 1 2 3 4?",
+              "choices": [
+                "F major",
+                "C major",
+                "G major",
+                "D major"
+              ],
+              "answerIndex": 0,
+              "explanation": "F major keeps the thumb off B♭."
+            },
+            {
+              "prompt": "How many half steps are in a major 6th?",
+              "choices": [
+                "9",
+                "8",
+                "10",
+                "7"
+              ],
+              "answerIndex": 0,
+              "explanation": "C to A: 9 half steps."
+            }
+          ]
+        },
+        {
+          "type": "song",
+          "title": "Minuet in G (Petzold), first section",
+          "caption": "Right hand, 3/4 time, key of G major (every F is F♯). Formerly credited to J. S. Bach; now attributed to Christian Petzold. Start slowly: the eighth-note runs are scale fragments. Suggested start: finger 5 on D5, then 1 on G4.",
+          "notes": [
+            [
+              "D5"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "D5"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "E5"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "D5"
+            ],
+            [
+              "E5"
+            ],
+            [
+              "F#5"
+            ],
+            [
+              "G5"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "D5"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "F#4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "D5"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "D5"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "E5"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "D5"
+            ],
+            [
+              "E5"
+            ],
+            [
+              "F#5"
+            ],
+            [
+              "G5"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "D5"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "C5"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "B4"
+            ],
+            [
+              "A4"
+            ],
+            [
+              "G4"
+            ],
+            [
+              "F#4"
+            ],
+            [
+              "G4"
+            ]
+          ],
+          "rhythm": "q e e e e q q q q e e e e q q q q e e e e q e e e e q e e e e h. q e e e e q q q q e e e e q q q q e e e e q e e e e q e e e e h.",
+          "bpm": 76,
+          "beatsPerMeasure": 3
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s4.l6.r1",
+          "kind": "fact",
+          "prompt": "Which note is always sharp in G major?",
+          "answer": "F♯"
+        }
+      ],
+      "glossaryTerms": [
+        "Minuet",
+        "Key"
+      ]
+    }
+  ]
+}

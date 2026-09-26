@@ -1,0 +1,2965 @@
+{
+  "id": "guitar.s3",
+  "instrument": "guitar",
+  "order": 3,
+  "title": "First chords",
+  "summary": "How chords are built from a root, third, and fifth; major versus minor; the open chords E, Em, A, Am, D, G, and C; chord changes and strumming.",
+  "lessons": [
+    {
+      "id": "guitar.s3.l1",
+      "title": "What a chord is: root, third, fifth",
+      "summary": "Build major and minor triads from a root, a third, and a fifth, and play your first two chords: Em and E.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Chords and triads",
+          "body": "A **chord** is three or more different notes sounding together. The most common kind is the **triad**: three notes built by skipping every other letter.\n\nStart on any letter, the **root**, and count letters: 1 (root), skip one, **3** (the **third**), skip one, **5** (the **fifth**). From E: **E** F **G** A **B**. So an E chord is built from E, some kind of G, and B.\n\nOn guitar you strum six strings but a triad has only three different notes. The extra strings repeat those notes in other octaves. The arrangement of notes on the strings is called a **voicing**."
+        },
+        {
+          "type": "explain",
+          "title": "Major or minor: the third decides",
+          "body": "The distance from the root to the third changes the character of the chord:\n\n- **Major third** = 4 half steps. E to **G#**. The chord is **E major**, written **E**. It usually sounds bright.\n- **Minor third** = 3 half steps. E to **G**. The chord is **E minor**, written **Em**. It usually sounds darker.\n\nBoth have a **perfect fifth**: 7 half steps from the root. E to B.\n\n| Chord | Root | Third | Fifth |\n|---|---|---|---|\n| E | E | G# (4 half steps) | B (7) |\n| Em | E | G (3 half steps) | B (7) |\n\nMajor and minor differ by a single note, one half step apart. On the guitar that is one fret on one string.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "5:2",
+              "4:2",
+              "3:0",
+              "2:0",
+              "1:0"
+            ],
+            "chord": "Em",
+            "labels": "intervals",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "Em: root, minor third, fifth."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Playing Em",
+          "body": "Em uses two fingers:\n\n- Middle finger (**2**) on string 5, fret 2.\n- Ring finger (**3**) on string 4, fret 2.\n\nStrum all six strings from the low E down. Every string should ring; if one sounds dull, a finger is touching it. Arch your fingers so you press with the tips.\n\nFingers are numbered 1 (index) to 4 (little finger). These **finger numbers** appear on chord diagrams.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "5:2",
+              "4:2",
+              "3:0",
+              "2:0",
+              "1:0"
+            ],
+            "chord": "Em",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "Em: fingers 2 and 3 at fret 2."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Playing E",
+          "body": "Keep the Em fingers down and add your index finger (**1**) on string 3, fret 1. That raises G to G#: the minor third becomes a major third, and Em becomes **E**.\n\nStrum all six strings.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "5:2",
+              "4:2",
+              "3:1",
+              "2:0",
+              "1:0"
+            ],
+            "chord": "E",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "E: add finger 1 on string 3, fret 1."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "Em, then E",
+          "caption": "Listen for the one note that changes. Em, E, Em, E.",
+          "playback": {
+            "notes": [
+              [
+                "E2",
+                "B2",
+                "E3",
+                "G3",
+                "B3",
+                "E4"
+              ],
+              [
+                "E2",
+                "B2",
+                "E3",
+                "G#3",
+                "B3",
+                "E4"
+              ],
+              [
+                "E2",
+                "B2",
+                "E3",
+                "G3",
+                "B3",
+                "E4"
+              ],
+              [
+                "E2",
+                "B2",
+                "E3",
+                "G#3",
+                "B3",
+                "E4"
+              ]
+            ],
+            "bpm": 40,
+            "style": "strum"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Strum Em, then E, then Em. Let each chord ring until the app accepts it.",
+            "chords": [
+              "Em",
+              "E",
+              "Em"
+            ],
+            "diagram": {
+              "kind": "fretboard",
+              "notes": [
+                "6:0",
+                "5:2",
+                "4:2",
+                "3:1",
+                "2:0",
+                "1:0"
+              ],
+              "chord": "E",
+              "labels": "noteNames",
+              "fretRange": [
+                0,
+                4
+              ]
+            }
+          },
+          "mistakeTips": [
+            "Press with the fingertips, right behind the fret. Flat fingers mute neighboring strings.",
+            "Pick each string one at a time to find any that buzz or are muted.",
+            "Keep your fretting-hand thumb behind the neck, not wrapped over the top.",
+            "If only E fails, check that finger 1 is not touching the open B string."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Major or minor?",
+          "questions": [
+            {
+              "prompt": "How many half steps is a major third?",
+              "choices": [
+                "3",
+                "4",
+                "7"
+              ],
+              "answerIndex": 1,
+              "explanation": "Major third = 4 half steps; minor third = 3."
+            },
+            {
+              "prompt": "Which notes make an E minor triad?",
+              "choices": [
+                "E G B",
+                "E G# B",
+                "E A B",
+                "E G C"
+              ],
+              "answerIndex": 0,
+              "explanation": "Root E, minor third G (3 half steps), fifth B."
+            },
+            {
+              "prompt": "Which note turns Em into E?",
+              "choices": [
+                "G becomes G#",
+                "B becomes C",
+                "E becomes F"
+              ],
+              "answerIndex": 0,
+              "explanation": "Raising the third by a half step makes it a major third."
+            },
+            {
+              "prompt": "What is a triad?",
+              "choices": [
+                "A three-note chord of root, third, and fifth",
+                "Any three strings",
+                "A chord with three fingers"
+              ],
+              "answerIndex": 0,
+              "explanation": "Triads are built by stacking every other letter: 1, 3, 5."
+            },
+            {
+              "prompt": "Listen. Major or minor?",
+              "choices": [
+                "Major",
+                "Minor"
+              ],
+              "answerIndex": 1,
+              "explanation": "That was Em. Minor chords often sound darker.",
+              "playback": {
+                "notes": [
+                  [
+                    "E2",
+                    "B2",
+                    "E3",
+                    "G3",
+                    "B3",
+                    "E4"
+                  ]
+                ],
+                "style": "strum"
+              }
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Major or minor by ear",
+          "generator": {
+            "kind": "chordQualityByEar",
+            "params": {
+              "qualities": "maj,min"
+            }
+          },
+          "count": 6
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s3.l1.r1",
+          "kind": "fact",
+          "prompt": "Formula for a major triad in half steps from the root?",
+          "answer": "Root, 4 (major third), 7 (perfect fifth)."
+        },
+        {
+          "id": "guitar.s3.l1.r2",
+          "kind": "fact",
+          "prompt": "Formula for a minor triad in half steps from the root?",
+          "answer": "Root, 3 (minor third), 7 (perfect fifth)."
+        },
+        {
+          "id": "guitar.s3.l1.r3",
+          "kind": "earQuality",
+          "prompt": "Major or minor?",
+          "answer": "Major",
+          "playback": {
+            "notes": [
+              [
+                "E2",
+                "B2",
+                "E3",
+                "G#3",
+                "B3",
+                "E4"
+              ]
+            ],
+            "style": "strum"
+          }
+        },
+        {
+          "id": "guitar.s3.l1.r4",
+          "kind": "playChord",
+          "prompt": "Play Em.",
+          "answer": "Em",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:0",
+              "5:2",
+              "4:2",
+              "3:0",
+              "2:0",
+              "1:0"
+            ],
+            "chord": "Em",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        }
+      ],
+      "glossaryTerms": [
+        "chord",
+        "triad",
+        "root",
+        "third",
+        "fifth",
+        "major third",
+        "minor third",
+        "perfect fifth",
+        "major chord",
+        "minor chord",
+        "voicing",
+        "finger numbers"
+      ]
+    },
+    {
+      "id": "guitar.s3.l2",
+      "title": "Reading chord diagrams: A and D",
+      "summary": "Read chord diagrams, learn A and D, and practice switching between them.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "How to read a chord diagram",
+          "body": "A **chord diagram** is a picture of the fretboard.\n\n- In printed chord boxes, the neck stands upright: vertical lines are strings (string 6 on the left) and horizontal lines are frets. The top line is the nut. In this app's fretboard view the neck lies sideways, with string 6 at the bottom.\n- Dots show where fingers press. A number in or beside a dot is the finger to use.\n- **O** above a string means play it open. **X** means do not play it.\n\nAlways check which strings to strum. Hitting an X string is the most common beginner chord mistake."
+        },
+        {
+          "type": "explain",
+          "title": "The A chord",
+          "body": "A major = **A C# E**. Fingers 1, 2, and 3 sit side by side at fret 2:\n\n- Finger 1: string 4, fret 2.\n- Finger 2: string 3, fret 2.\n- Finger 3: string 2, fret 2.\n\nStrum from **string 5** down. String 6 is X. The three fingers are crowded; angle them slightly so they fit.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:0",
+              "4:2",
+              "3:2",
+              "2:2",
+              "1:0"
+            ],
+            "chord": "A",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "A: strum strings 5 to 1."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "The D chord",
+          "body": "D major = **D F# A**. Its fingers form a small triangle:\n\n- Finger 1: string 3, fret 2.\n- Finger 3: string 2, fret 3.\n- Finger 2: string 1, fret 2.\n\nStrum from **string 4** down. Strings 6 and 5 are X. Start the strum from the D string on purpose.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "4:0",
+              "3:2",
+              "2:3",
+              "1:2"
+            ],
+            "chord": "D",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "D: strum strings 4 to 1."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "A and D",
+          "caption": "A, then D, twice. Notice how D is higher and thinner because it uses only four strings.",
+          "playback": {
+            "notes": [
+              [
+                "A2",
+                "E3",
+                "A3",
+                "C#4",
+                "E4"
+              ],
+              [
+                "D3",
+                "A3",
+                "D4",
+                "F#4"
+              ],
+              [
+                "A2",
+                "E3",
+                "A3",
+                "C#4",
+                "E4"
+              ],
+              [
+                "D3",
+                "A3",
+                "D4",
+                "F#4"
+              ]
+            ],
+            "bpm": 40,
+            "style": "strum"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Play A, then D. Check each string rings before moving on.",
+            "chords": [
+              "A",
+              "D"
+            ]
+          },
+          "mistakeTips": [
+            "A: if string 1 is muted, finger 3 is leaning on it. Lift the knuckle.",
+            "D: start the strum on string 4. A low A or E string makes it sound muddy.",
+            "Press close to the fret wire for less buzzing and less effort."
+          ]
+        },
+        {
+          "type": "explain",
+          "title": "One-minute changes",
+          "body": "A **chord change** is moving from one chord to the next in time. Clean changes matter more than fast strumming.\n\nThe exercise: switch between two chords for one minute and count how many clean changes you make. Strum once per chord. Your score will climb fast over a few days, and that improvement carries into songs.\n\nMove all the fingers together as one unit instead of placing them one by one. Look for the next chord's position with your eyes before you move."
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "One-minute changes: A to D and back, one strum per chord.",
+            "chords": [
+              "A",
+              "D"
+            ],
+            "durationSec": 60,
+            "passAccuracy": 0.7
+          },
+          "mistakeTips": [
+            "Finger 1 moves from string 4 to string 3 at the same fret. Let it slide gently rather than lift high.",
+            "Lift the fingers only a little. The closer they stay to the strings, the faster the change.",
+            "Accuracy first. Ten clean changes beat thirty muddy ones."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "A and D",
+          "questions": [
+            {
+              "prompt": "What does an X above a string mean?",
+              "choices": [
+                "Do not play that string",
+                "Play it open",
+                "Use finger 10"
+              ],
+              "answerIndex": 0,
+              "explanation": "X = mute or avoid. O = play open."
+            },
+            {
+              "prompt": "Which strings do you strum for D?",
+              "choices": [
+                "4 to 1",
+                "5 to 1",
+                "6 to 1"
+              ],
+              "answerIndex": 0,
+              "explanation": "D starts on the open D string, string 4."
+            },
+            {
+              "prompt": "What are the notes of an A major triad?",
+              "choices": [
+                "A C E",
+                "A C# E",
+                "A D E"
+              ],
+              "answerIndex": 1,
+              "explanation": "A to C# is a major third (4 half steps). E is the fifth."
+            },
+            {
+              "prompt": "What are the notes of a D major triad?",
+              "choices": [
+                "D F A",
+                "D F# A",
+                "D G A"
+              ],
+              "answerIndex": 1,
+              "explanation": "D to F# is 4 half steps: a major third."
+            },
+            {
+              "prompt": "Which finger number is the ring finger?",
+              "choices": [
+                "2",
+                "3",
+                "4"
+              ],
+              "answerIndex": 1,
+              "explanation": "1 index, 2 middle, 3 ring, 4 little."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s3.l2.r1",
+          "kind": "playChord",
+          "prompt": "Play A.",
+          "answer": "A",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:0",
+              "4:2",
+              "3:2",
+              "2:2",
+              "1:0"
+            ],
+            "chord": "A",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "id": "guitar.s3.l2.r2",
+          "kind": "playChord",
+          "prompt": "Play D.",
+          "answer": "D",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "4:0",
+              "3:2",
+              "2:3",
+              "1:2"
+            ],
+            "chord": "D",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "id": "guitar.s3.l2.r3",
+          "kind": "fact",
+          "prompt": "Spell a D major triad.",
+          "answer": "D F# A"
+        }
+      ],
+      "glossaryTerms": [
+        "chord diagram",
+        "finger numbers",
+        "chord change"
+      ]
+    },
+    {
+      "id": "guitar.s3.l3",
+      "title": "Am: switching major to minor",
+      "summary": "Learn Am, compare it with A, and change between E and Am.",
+      "minutes": 10,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "The Am chord",
+          "body": "A minor = **A C E**. A to C is 3 half steps: a minor third.\n\n- Finger 1: string 2, fret 1.\n- Finger 2: string 4, fret 2.\n- Finger 3: string 3, fret 2.\n\nStrum from string 5. It is the same finger layout as E, moved over one string toward the floor.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:0",
+              "4:2",
+              "3:2",
+              "2:1",
+              "1:0"
+            ],
+            "chord": "Am",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "Am: strum strings 5 to 1."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "A versus Am",
+          "body": "Compare the B string (string 2):\n\n- In **A**, string 2 is at fret 2: **C#**, the major third.\n- In **Am**, string 2 is at fret 1: **C**, the minor third.\n\nSame root, same fifth, one note a half step lower. This is the same thing you saw between E and Em, on a different string.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:0",
+              "4:2",
+              "3:2",
+              "2:1",
+              "1:0"
+            ],
+            "chord": "Am",
+            "labels": "intervals",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "Am: root, minor third, fifth."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "A, Am, E, Am",
+          "caption": "Listen for major, minor, major, minor.",
+          "playback": {
+            "notes": [
+              [
+                "A2",
+                "E3",
+                "A3",
+                "C#4",
+                "E4"
+              ],
+              [
+                "A2",
+                "E3",
+                "A3",
+                "C4",
+                "E4"
+              ],
+              [
+                "E2",
+                "B2",
+                "E3",
+                "G#3",
+                "B3",
+                "E4"
+              ],
+              [
+                "A2",
+                "E3",
+                "A3",
+                "C4",
+                "E4"
+              ]
+            ],
+            "bpm": 40,
+            "style": "strum"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Play A, then Am, then E, then Am.",
+            "chords": [
+              "A",
+              "Am",
+              "E",
+              "Am"
+            ]
+          },
+          "mistakeTips": [
+            "Am: keep finger 1 arched so the open E on string 1 rings.",
+            "E to Am: keep the same finger layout and move it one string toward the floor."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "One-minute changes: E to Am and back.",
+            "chords": [
+              "E",
+              "Am"
+            ],
+            "durationSec": 60,
+            "passAccuracy": 0.7
+          },
+          "mistakeTips": [
+            "Move all three fingers together as a block, one string over.",
+            "Remember: E strums all six strings, Am starts from string 5.",
+            "Glance at string 5 before you strum Am so you skip the low E."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Major and minor",
+          "questions": [
+            {
+              "prompt": "Which note is the third of Am?",
+              "choices": [
+                "C#",
+                "C",
+                "E"
+              ],
+              "answerIndex": 1,
+              "explanation": "A to C is a minor third."
+            },
+            {
+              "prompt": "Which note changes when A becomes Am?",
+              "choices": [
+                "C# becomes C",
+                "E becomes Eb",
+                "A becomes Ab"
+              ],
+              "answerIndex": 0,
+              "explanation": "Lower the third by a half step."
+            },
+            {
+              "prompt": "Which chord has the same finger layout as E, one string over?",
+              "choices": [
+                "Am",
+                "A",
+                "D"
+              ],
+              "answerIndex": 0,
+              "explanation": "Am uses fingers 1, 2, 3 in the same arrangement as E."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Major or minor by ear",
+          "generator": {
+            "kind": "chordQualityByEar",
+            "params": {
+              "qualities": "maj,min"
+            }
+          },
+          "count": 6
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s3.l3.r1",
+          "kind": "playChord",
+          "prompt": "Play Am.",
+          "answer": "Am",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:0",
+              "4:2",
+              "3:2",
+              "2:1",
+              "1:0"
+            ],
+            "chord": "Am",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "id": "guitar.s3.l3.r2",
+          "kind": "earQuality",
+          "prompt": "Major or minor?",
+          "answer": "Minor",
+          "playback": {
+            "notes": [
+              [
+                "A2",
+                "E3",
+                "A3",
+                "C4",
+                "E4"
+              ]
+            ],
+            "style": "strum"
+          }
+        },
+        {
+          "id": "guitar.s3.l3.r3",
+          "kind": "fact",
+          "prompt": "Spell an A minor triad.",
+          "answer": "A C E"
+        }
+      ],
+      "glossaryTerms": [
+        "minor chord",
+        "minor third",
+        "chord change"
+      ]
+    },
+    {
+      "id": "guitar.s3.l4",
+      "title": "G and C",
+      "summary": "Learn G and C, use anchor fingers, and practice the changes that appear in countless songs.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "The G chord",
+          "body": "G major = **G B D**. A common beginner fingering:\n\n- Finger 2: string 6, fret 3.\n- Finger 1: string 5, fret 2.\n- Finger 3: string 1, fret 3.\n\nStrum all six strings. Strings 4, 3, and 2 are open. Keep fingers arched so they do not touch the open strings.\n\n(Many players use fingers 3, 2, and 4 instead. That frees finger 1 and makes some later changes easier. Either is fine.)",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:3",
+              "5:2",
+              "4:0",
+              "3:0",
+              "2:0",
+              "1:3"
+            ],
+            "chord": "G",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "G: strum all six strings."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "The C chord",
+          "body": "C major = **C E G**.\n\n- Finger 3: string 5, fret 3.\n- Finger 2: string 4, fret 2.\n- Finger 1: string 2, fret 1.\n\nStrum from **string 5**. The low E is X. The stretch from fret 1 to fret 3 across strings is the hard part. Keep the wrist low and the thumb behind the neck.",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:3",
+              "4:2",
+              "3:0",
+              "2:1",
+              "1:0"
+            ],
+            "chord": "C",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ],
+            "caption": "C: strum strings 5 to 1."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "Anchor fingers",
+          "body": "An **anchor finger** stays on the same string and fret between two chords. Leave it down, and move only the others.\n\n**C to Am:** fingers 1 (string 2, fret 1) and 2 (string 4, fret 2) are in the same place in both chords. Only finger 3 moves, from string 5 fret 3 to string 3 fret 2.\n\n**G to C:** no finger stays in place, so all three move: finger 1 from string 5 fret 2 to string 2 fret 1, finger 2 from string 6 fret 3 to string 4 fret 2, and finger 3 from string 1 fret 3 to string 5 fret 3. Practice this one slowly; it is a common stumbling point."
+        },
+        {
+          "type": "demo",
+          "title": "G, C, Am, C",
+          "caption": "Listen, then look at which fingers move for each change.",
+          "playback": {
+            "notes": [
+              [
+                "G2",
+                "B2",
+                "D3",
+                "G3",
+                "B3",
+                "G4"
+              ],
+              [
+                "C3",
+                "E3",
+                "G3",
+                "C4",
+                "E4"
+              ],
+              [
+                "A2",
+                "E3",
+                "A3",
+                "C4",
+                "E4"
+              ],
+              [
+                "C3",
+                "E3",
+                "G3",
+                "C4",
+                "E4"
+              ]
+            ],
+            "bpm": 40,
+            "style": "strum"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Play G, then C.",
+            "chords": [
+              "G",
+              "C"
+            ]
+          },
+          "mistakeTips": [
+            "G: if string 5 is muted, finger 2 on string 6 is leaning on it. Arch the finger.",
+            "C: if string 1 is muted, finger 1 is too flat. Come up onto the tip.",
+            "C: skip the low E string when you strum."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "One-minute changes: C to Am. Keep fingers 1 and 2 down.",
+            "chords": [
+              "C",
+              "Am"
+            ],
+            "durationSec": 60,
+            "passAccuracy": 0.7
+          },
+          "mistakeTips": [
+            "Only finger 3 moves. Lift it just enough to clear the strings.",
+            "Both chords strum from string 5."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "One-minute changes: G to C.",
+            "chords": [
+              "G",
+              "C"
+            ],
+            "durationSec": 60,
+            "passAccuracy": 0.7
+          },
+          "mistakeTips": [
+            "Move all three fingers at once, landing the bass note (string 5, fret 3) first.",
+            "Practice the motion slowly without strumming a few times before starting the timer.",
+            "If one finger always lands late, place that finger first and let the others follow."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "G and C",
+          "questions": [
+            {
+              "prompt": "Spell a C major triad.",
+              "choices": [
+                "C E G",
+                "C Eb G",
+                "C F A"
+              ],
+              "answerIndex": 0,
+              "explanation": "C to E is a major third, C to G a perfect fifth."
+            },
+            {
+              "prompt": "Spell a G major triad.",
+              "choices": [
+                "G B D",
+                "G Bb D",
+                "G C D"
+              ],
+              "answerIndex": 0,
+              "explanation": "G to B is a major third, G to D a perfect fifth."
+            },
+            {
+              "prompt": "Which string do you not strum on C?",
+              "choices": [
+                "String 6",
+                "String 1",
+                "String 4"
+              ],
+              "answerIndex": 0,
+              "explanation": "C starts from string 5; the low E is X."
+            },
+            {
+              "prompt": "Which fingers stay down between C and Am?",
+              "choices": [
+                "1 and 2",
+                "2 and 3",
+                "None"
+              ],
+              "answerIndex": 0,
+              "explanation": "Fingers 1 and 2 are in the same place in both chords."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s3.l4.r1",
+          "kind": "playChord",
+          "prompt": "Play G.",
+          "answer": "G",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "6:3",
+              "5:2",
+              "4:0",
+              "3:0",
+              "2:0",
+              "1:3"
+            ],
+            "chord": "G",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "id": "guitar.s3.l4.r2",
+          "kind": "playChord",
+          "prompt": "Play C.",
+          "answer": "C",
+          "diagram": {
+            "kind": "fretboard",
+            "notes": [
+              "5:3",
+              "4:2",
+              "3:0",
+              "2:1",
+              "1:0"
+            ],
+            "chord": "C",
+            "labels": "noteNames",
+            "fretRange": [
+              0,
+              4
+            ]
+          }
+        },
+        {
+          "id": "guitar.s3.l4.r3",
+          "kind": "fact",
+          "prompt": "Spell a G major triad.",
+          "answer": "G B D"
+        }
+      ],
+      "glossaryTerms": [
+        "anchor finger",
+        "chord change"
+      ]
+    },
+    {
+      "id": "guitar.s3.l5",
+      "title": "Strumming patterns",
+      "summary": "Strum in time with a relaxed down-up motion and learn a pattern that fits most songs in 4/4.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "The strumming motion",
+          "body": "A **strum** brushes the pick across several strings in one motion. Move from the wrist and forearm, like shaking water off your hand, and keep the pick grip loose enough that it can flex.\n\nUse the same pendulum as alternate picking: **down on the beats, up on the \"&\"s**. Downstrokes hit the low strings first, and upstrokes mainly catch the higher strings. That is normal."
+        },
+        {
+          "type": "explain",
+          "title": "A pattern for most songs",
+          "body": "Keep the hand moving down-up in eighth notes all the time. Strum on some motions and miss the strings on others:\n\n| Count | 1 | & | 2 | & | 3 | & | 4 | & |\n|---|---|---|---|---|---|---|---|---|\n| Hand | D | u | D | U | d | U | D | U |\n| Strum? | yes | – | yes | yes | – | yes | yes | yes |\n\nSaid aloud: **\"Down, down-up, up-down-up.\"** The missed downstroke on beat 3 is what gives the pattern its lift. The hand still moves down there; it just passes over the strings.",
+          "diagram": {
+            "kind": "rhythm",
+            "rhythm": "q e e er e e e",
+            "caption": "D, D U, (miss) U, D U"
+          }
+        },
+        {
+          "type": "demo",
+          "title": "The pattern on G",
+          "caption": "Two measures of the pattern on a G chord at 70 BPM.",
+          "playback": {
+            "notes": [
+              [
+                "G2",
+                "B2",
+                "D3",
+                "G3",
+                "B3",
+                "G4"
+              ],
+              [
+                "G2",
+                "B2",
+                "D3",
+                "G3",
+                "B3",
+                "G4"
+              ],
+              [
+                "G2",
+                "B2",
+                "D3",
+                "G3",
+                "B3",
+                "G4"
+              ],
+              [],
+              [
+                "G2",
+                "B2",
+                "D3",
+                "G3",
+                "B3",
+                "G4"
+              ],
+              [
+                "G2",
+                "B2",
+                "D3",
+                "G3",
+                "B3",
+                "G4"
+              ],
+              [
+                "G2",
+                "B2",
+                "D3",
+                "G3",
+                "B3",
+                "G4"
+              ],
+              [
+                "G2",
+                "B2",
+                "D3",
+                "G3",
+                "B3",
+                "G4"
+              ],
+              [
+                "G2",
+                "B2",
+                "D3",
+                "G3",
+                "B3",
+                "G4"
+              ],
+              [
+                "G2",
+                "B2",
+                "D3",
+                "G3",
+                "B3",
+                "G4"
+              ],
+              [],
+              [
+                "G2",
+                "B2",
+                "D3",
+                "G3",
+                "B3",
+                "G4"
+              ],
+              [
+                "G2",
+                "B2",
+                "D3",
+                "G3",
+                "B3",
+                "G4"
+              ],
+              [
+                "G2",
+                "B2",
+                "D3",
+                "G3",
+                "B3",
+                "G4"
+              ]
+            ],
+            "rhythm": "q e e er e e e q e e er e e e",
+            "bpm": 70,
+            "style": "strum"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "strumRhythm",
+            "prompt": "Four downstrokes per measure: G for one measure, Em for one measure, C, then D. Change chords on beat 1.",
+            "chords": [
+              "G",
+              "Em",
+              "C",
+              "D"
+            ],
+            "rhythm": "q q q q",
+            "bpm": 70,
+            "repetitions": 2,
+            "tempoSteps": [
+              70,
+              80,
+              90
+            ]
+          },
+          "mistakeTips": [
+            "Keep strumming even if a chord is not ready. Staying in time matters more than a perfect chord.",
+            "Start moving to the next chord on beat 4. Lifting fingers a little early is fine.",
+            "D starts on string 4 and C on string 5; G and Em use all six strings. With practice your strum will aim itself."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "strumRhythm",
+            "prompt": "The pattern \"down, down-up, up-down-up\": G, Em, C, D, one measure each.",
+            "chords": [
+              "G",
+              "Em",
+              "C",
+              "D"
+            ],
+            "rhythm": "q e e er e e e",
+            "bpm": 60,
+            "repetitions": 2,
+            "tempoSteps": [
+              60,
+              70,
+              80
+            ]
+          },
+          "mistakeTips": [
+            "Say \"1, 2 &, & 4 &\" as you strum. Beat 3 is silent but the hand still moves down.",
+            "Upstrokes only need to catch the top three or four strings.",
+            "Relax the grip; a stiff pick makes upstrokes snag."
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Strumming",
+          "questions": [
+            {
+              "prompt": "In the down-up strumming motion, when does the hand move down?",
+              "choices": [
+                "On the beats",
+                "On the \"&\"s",
+                "Only on beat 1"
+              ],
+              "answerIndex": 0,
+              "explanation": "Down on 1 2 3 4, up on the \"&\"s, whether or not you hit the strings."
+            },
+            {
+              "prompt": "In \"down, down-up, up-down-up\", which beat is not strummed?",
+              "choices": [
+                "Beat 1",
+                "Beat 3",
+                "Beat 4"
+              ],
+              "answerIndex": 1,
+              "explanation": "The hand moves down on beat 3 but misses the strings."
+            },
+            {
+              "prompt": "If a chord is not ready in time, what should you do?",
+              "choices": [
+                "Keep strumming in time",
+                "Stop and fix it",
+                "Slow down for that measure"
+              ],
+              "answerIndex": 0,
+              "explanation": "Timing holds the music together. Fix the change in separate practice."
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s3.l5.r1",
+          "kind": "fact",
+          "prompt": "Say the common strumming pattern and its counts.",
+          "answer": "Down, down-up, up-down-up: 1, 2 &, & 4 &."
+        }
+      ],
+      "glossaryTerms": [
+        "strum",
+        "strumming pattern",
+        "downstroke",
+        "upstroke",
+        "progression"
+      ]
+    },
+    {
+      "id": "guitar.s3.l6",
+      "title": "First chords review: Amazing Grace",
+      "summary": "Review triads and the seven open chords, then accompany Amazing Grace in 3/4.",
+      "minutes": 15,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "What you know now",
+          "body": "- A **triad** is root, third, and fifth. Major = 4 + 3 half steps; minor = 3 + 4.\n- Open chords: **E, Em, A, Am, D, G, C**.\n- Change chords as a unit and use **anchor fingers**.\n- Keep the strumming hand moving; timing comes first."
+        },
+        {
+          "type": "quiz",
+          "title": "Chord review",
+          "questions": [
+            {
+              "prompt": "Which chord is spelled A C# E?",
+              "choices": [
+                "Am",
+                "A",
+                "E"
+              ],
+              "answerIndex": 1,
+              "explanation": "A with a major third (C#)."
+            },
+            {
+              "prompt": "Which chord is spelled E G B?",
+              "choices": [
+                "E",
+                "Em",
+                "G"
+              ],
+              "answerIndex": 1,
+              "explanation": "E with a minor third (G)."
+            },
+            {
+              "prompt": "What is the fifth of a C major chord?",
+              "choices": [
+                "E",
+                "G",
+                "F"
+              ],
+              "answerIndex": 1,
+              "explanation": "C D E F G: G is the fifth letter, 7 half steps up."
+            },
+            {
+              "prompt": "Which chords use all six strings?",
+              "choices": [
+                "E, Em, G",
+                "A, Am, C",
+                "D, A, C"
+              ],
+              "answerIndex": 0,
+              "explanation": "E, Em, and G strum from the low E. A, Am, and C start on string 5. D starts on string 4."
+            },
+            {
+              "prompt": "Listen. Major or minor?",
+              "choices": [
+                "Major",
+                "Minor"
+              ],
+              "answerIndex": 0,
+              "explanation": "That was D major.",
+              "playback": {
+                "notes": [
+                  [
+                    "D3",
+                    "A3",
+                    "D4",
+                    "F#4"
+                  ]
+                ],
+                "style": "strum"
+              }
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Spell the chord",
+          "generator": {
+            "kind": "chordSpelling",
+            "params": {
+              "qualities": "maj,min",
+              "roots": "C,D,E,G,A"
+            }
+          },
+          "count": 5
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Chord check: play each of the seven chords once.",
+            "chords": [
+              "E",
+              "Em",
+              "A",
+              "Am",
+              "D",
+              "G",
+              "C"
+            ],
+            "passAccuracy": 0.85
+          },
+          "mistakeTips": [
+            "Take your time. This checks each chord, not speed.",
+            "Pick through the strings slowly if a chord is not accepted, and listen for dead strings."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "Chord Change Sprint: G to D for one minute.",
+            "chords": [
+              "G",
+              "D"
+            ],
+            "durationSec": 60,
+            "passAccuracy": 0.7
+          },
+          "mistakeTips": [
+            "Finger 3 is on the high strings in both chords: string 1 fret 3 for G, string 2 fret 3 for D. Slide it one string.",
+            "D strums from string 4; G strums all six."
+          ]
+        },
+        {
+          "type": "explain",
+          "title": "Amazing Grace",
+          "body": "\"Amazing Grace\" (words by John Newton, 1779; the usual tune \"New Britain\" dates from 1829) is in the public domain. It is in **3/4**: count \"**1** 2 3\".\n\nStrum a downstroke on beat 1 and let it ring through beat 2, then strum again on beat 3. Each chord below lasts one measure:\n\n**G G C G | G G D D | G G C G | G D G G**\n\nThe melody starts with a single pickup note (\"A-\") before the first measure; start your strumming on \"-ma-\"."
+        },
+        {
+          "type": "song",
+          "title": "Amazing Grace (traditional), chords in G",
+          "caption": "16 measures of 3/4. Strum on beats 1 and 3.",
+          "chords": [
+            "G",
+            "G",
+            "G",
+            "G",
+            "C",
+            "C",
+            "G",
+            "G",
+            "G",
+            "G",
+            "G",
+            "G",
+            "D",
+            "D",
+            "D",
+            "D",
+            "G",
+            "G",
+            "G",
+            "G",
+            "C",
+            "C",
+            "G",
+            "G",
+            "G",
+            "G",
+            "D",
+            "D",
+            "G",
+            "G",
+            "G",
+            "G"
+          ],
+          "rhythm": "h q h q h q h q h q h q h q h q h q h q h q h q h q h q h q h q",
+          "bpm": 90,
+          "beatsPerMeasure": 3
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "guitar.s3.l6.r1",
+          "kind": "playChord",
+          "prompt": "Play C, then G.",
+          "answer": "C, G"
+        },
+        {
+          "id": "guitar.s3.l6.r2",
+          "kind": "earQuality",
+          "prompt": "Major or minor?",
+          "answer": "Minor",
+          "playback": {
+            "notes": [
+              [
+                "E2",
+                "B2",
+                "E3",
+                "G3",
+                "B3",
+                "E4"
+              ]
+            ],
+            "style": "strum"
+          }
+        }
+      ],
+      "glossaryTerms": [
+        "triad",
+        "progression",
+        "chord change"
+      ]
+    }
+  ],
+  "branches": [
+    {
+      "id": "guitar.b.finger",
+      "title": "Fingerstyle basics",
+      "summary": "Play with thumb and fingers: arpeggios, pinches, and alternating bass. Optional.",
+      "unlocksAfter": "guitar.s3.l6",
+      "lessons": [
+        {
+          "id": "guitar.b.finger.l1",
+          "title": "Thumb and fingers",
+          "summary": "Assign thumb and fingers to strings and play your first arpeggio pattern.",
+          "minutes": 10,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "Who plays what",
+              "body": "In **fingerstyle** you pluck with the thumb and fingers. Classical guitar names the fingers with Spanish letters, **p i m a**: p = thumb (pulgar), i = index, m = middle, a = ring.\n\nA simple default:\n\n- **p** plays the bass strings: 6, 5, and 4.\n- **i** plays string 3.\n- **m** plays string 2.\n- **a** plays string 1.\n\nRest the hand over the soundhole. The thumb pushes down and slightly forward; the fingers pull up into the palm."
+            },
+            {
+              "type": "explain",
+              "title": "Your first arpeggio",
+              "body": "An **arpeggio** is a chord played one note at a time. Hold Am and play: **p i m a m i**: string 5, 3, 2, 1, 2, 3.\n\nThat gives A2, A3, C4, E4, C4, A3. Six eighth notes: \"1 & 2 & 3 &\" in 3/4, or loop it however you like.",
+              "diagram": {
+                "kind": "fretboard",
+                "notes": [
+                  "5:0",
+                  "4:2",
+                  "3:2",
+                  "2:1",
+                  "1:0"
+                ],
+                "chord": "Am",
+                "labels": "fingers",
+                "fretRange": [
+                  0,
+                  4
+                ]
+              }
+            },
+            {
+              "type": "demo",
+              "title": "p i m a m i on Am",
+              "caption": "Twice through the pattern.",
+              "playback": {
+                "notes": [
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "C4"
+                  ],
+                  [
+                    "E4"
+                  ],
+                  [
+                    "C4"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "C4"
+                  ],
+                  [
+                    "E4"
+                  ],
+                  [
+                    "C4"
+                  ],
+                  [
+                    "A3"
+                  ]
+                ],
+                "rhythm": "e e e e e e e e e e e e",
+                "bpm": 70
+              },
+              "diagram": {
+                "kind": "fretboard",
+                "notes": [
+                  "5:0",
+                  "4:2",
+                  "3:2",
+                  "2:1",
+                  "1:0"
+                ],
+                "chord": "Am",
+                "labels": "noteNames",
+                "fretRange": [
+                  0,
+                  4
+                ]
+              }
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "playSequence",
+                "prompt": "Hold Am. Play p i m a m i three times.",
+                "notes": [
+                  "A2",
+                  "A3",
+                  "C4",
+                  "E4",
+                  "C4",
+                  "A3",
+                  "A2",
+                  "A3",
+                  "C4",
+                  "E4",
+                  "C4",
+                  "A3",
+                  "A2",
+                  "A3",
+                  "C4",
+                  "E4",
+                  "C4",
+                  "A3"
+                ],
+                "bpm": 60,
+                "rhythm": "e e e e e e e e e e e e e e e e e e",
+                "tempoSteps": [
+                  60,
+                  70,
+                  80
+                ]
+              },
+              "mistakeTips": [
+                "Keep each finger over its own string so you do not have to look.",
+                "Let every note ring. Hold the whole chord, not just the note you are playing.",
+                "Play softly and evenly first. Volume control comes later."
+              ]
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "playSequence",
+                "prompt": "Same pattern on C: p on string 5, then i m a m i.",
+                "notes": [
+                  "C3",
+                  "G3",
+                  "C4",
+                  "E4",
+                  "C4",
+                  "G3",
+                  "C3",
+                  "G3",
+                  "C4",
+                  "E4",
+                  "C4",
+                  "G3"
+                ],
+                "rhythm": "e e e e e e e e e e e e",
+                "bpm": 60,
+                "tempoSteps": [
+                  60,
+                  70,
+                  80
+                ],
+                "diagram": {
+                  "kind": "fretboard",
+                  "notes": [
+                    "5:3",
+                    "4:2",
+                    "3:0",
+                    "2:1",
+                    "1:0"
+                  ],
+                  "chord": "C",
+                  "labels": "noteNames",
+                  "fretRange": [
+                    0,
+                    4
+                  ]
+                }
+              },
+              "mistakeTips": [
+                "The thumb stays on string 5 for C, just like Am.",
+                "Only the chord changes; the right hand does the same thing."
+              ]
+            },
+            {
+              "type": "quiz",
+              "title": "Fingerstyle names",
+              "questions": [
+                {
+                  "prompt": "In p i m a, which letter is the thumb?",
+                  "choices": [
+                    "p",
+                    "i",
+                    "a"
+                  ],
+                  "answerIndex": 0,
+                  "explanation": "p = thumb, i = index, m = middle, a = ring."
+                },
+                {
+                  "prompt": "Which finger usually plays string 2?",
+                  "choices": [
+                    "i",
+                    "m",
+                    "a"
+                  ],
+                  "answerIndex": 1,
+                  "explanation": "i on 3, m on 2, a on 1."
+                },
+                {
+                  "prompt": "What is an arpeggio?",
+                  "choices": [
+                    "A chord played one note at a time",
+                    "A fast strum",
+                    "A kind of pick"
+                  ],
+                  "answerIndex": 0,
+                  "explanation": "The chord's notes one after another."
+                }
+              ]
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "guitar.b.finger.l1.r1",
+              "kind": "fact",
+              "prompt": "What do p, i, m, a mean?",
+              "answer": "Thumb, index, middle, ring."
+            }
+          ],
+          "glossaryTerms": [
+            "fingerstyle",
+            "p i m a",
+            "arpeggio"
+          ]
+        },
+        {
+          "id": "guitar.b.finger.l2",
+          "title": "Pinches and alternating bass",
+          "summary": "Play thumb and finger together, and alternate the bass between two strings.",
+          "minutes": 12,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "Pinches",
+              "body": "A **pinch** is the thumb and a finger plucking at the same moment: a bass note and a treble note together. Many folk patterns start each measure with a pinch."
+            },
+            {
+              "type": "explain",
+              "title": "Alternating bass",
+              "body": "In an **alternating bass**, the thumb plays on every beat, switching between two bass strings. The fingers fill in between.\n\nOn **C**: thumb alternates string 5 (C) and string 4 (E).\n\nOn **G**: thumb alternates string 6 (G) and string 4 (D).\n\nA typical measure in eighth notes puts the thumb on each beat and a finger between: **p i p m p i p m**. Adding a finger to the first thumb note makes a pinch that marks the start of the measure.",
+              "diagram": {
+                "kind": "fretboard",
+                "notes": [
+                  "5:3",
+                  "4:2",
+                  "3:0",
+                  "2:1",
+                  "1:0"
+                ],
+                "chord": "C",
+                "labels": "noteNames",
+                "fretRange": [
+                  0,
+                  4
+                ]
+              }
+            },
+            {
+              "type": "demo",
+              "title": "Alternating bass on C",
+              "caption": "Thumb on strings 5 and 4 on each beat, fingers on 3 and 2 between.",
+              "playback": {
+                "notes": [
+                  [
+                    "C3",
+                    "E4"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "E3"
+                  ],
+                  [
+                    "C4"
+                  ],
+                  [
+                    "C3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "E3"
+                  ],
+                  [
+                    "C4"
+                  ]
+                ],
+                "rhythm": "e e e e e e e e",
+                "bpm": 70
+              }
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "playSequence",
+                "prompt": "On C, play p i p m: string 5, string 3, string 4, string 2. Four times.",
+                "notes": [
+                  "C3",
+                  "G3",
+                  "E3",
+                  "C4",
+                  "C3",
+                  "G3",
+                  "E3",
+                  "C4",
+                  "C3",
+                  "G3",
+                  "E3",
+                  "C4",
+                  "C3",
+                  "G3",
+                  "E3",
+                  "C4"
+                ],
+                "rhythm": "e e e e e e e e e e e e e e e e",
+                "bpm": 60,
+                "tempoSteps": [
+                  60,
+                  70,
+                  80
+                ]
+              },
+              "mistakeTips": [
+                "The thumb notes fall on the beats: 1, 2, 3, 4.",
+                "Keep the thumb steady and let the fingers fit around it.",
+                "Say \"thumb-and-thumb-and\" to lock in the bass."
+              ]
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "playSequence",
+                "prompt": "On G, play p i p m: string 6, string 3, string 4, string 2. Four times.",
+                "notes": [
+                  "G2",
+                  "G3",
+                  "D3",
+                  "B3",
+                  "G2",
+                  "G3",
+                  "D3",
+                  "B3",
+                  "G2",
+                  "G3",
+                  "D3",
+                  "B3",
+                  "G2",
+                  "G3",
+                  "D3",
+                  "B3"
+                ],
+                "rhythm": "e e e e e e e e e e e e e e e e",
+                "bpm": 60,
+                "tempoSteps": [
+                  60,
+                  70,
+                  80
+                ],
+                "diagram": {
+                  "kind": "fretboard",
+                  "notes": [
+                    "6:3",
+                    "5:2",
+                    "4:0",
+                    "3:0",
+                    "2:0",
+                    "1:3"
+                  ],
+                  "chord": "G",
+                  "labels": "noteNames",
+                  "fretRange": [
+                    0,
+                    4
+                  ]
+                }
+              },
+              "mistakeTips": [
+                "The thumb jumps from string 6 to string 4, skipping string 5.",
+                "Keep your G fingers pressed the whole time so every string rings."
+              ]
+            },
+            {
+              "type": "song",
+              "title": "Alternating Bass Etude",
+              "caption": "An original etude: C, Am, G, C. The first note of each measure is a pinch. The last measure ends with a held pinch.",
+              "notes": [
+                [
+                  "C3",
+                  "E4"
+                ],
+                [
+                  "G3"
+                ],
+                [
+                  "E3"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "C3"
+                ],
+                [
+                  "G3"
+                ],
+                [
+                  "E3"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "A2",
+                  "E4"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "E3"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "A2"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "E3"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "G2",
+                  "G4"
+                ],
+                [
+                  "G3"
+                ],
+                [
+                  "D3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "G2"
+                ],
+                [
+                  "G3"
+                ],
+                [
+                  "D3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "C3",
+                  "E4"
+                ],
+                [
+                  "G3"
+                ],
+                [
+                  "E3"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "C3",
+                  "C4"
+                ]
+              ],
+              "rhythm": "e e e e e e e e e e e e e e e e e e e e e e e e e e e e h",
+              "bpm": 60
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "guitar.b.finger.l2.r1",
+              "kind": "fact",
+              "prompt": "What is a pinch?",
+              "answer": "Thumb and a finger plucking at the same moment."
+            }
+          ],
+          "glossaryTerms": [
+            "pinch",
+            "alternating bass",
+            "p i m a"
+          ]
+        },
+        {
+          "id": "guitar.b.finger.l3",
+          "title": "Arpeggiated progression: House of the Rising Sun",
+          "summary": "Use p i m a m i through a traditional minor progression, with Fmaj7 as an easy stand-in for F.",
+          "minutes": 15,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "The progression",
+              "body": "\"House of the Rising Sun\" is a traditional folk song. Its chords, one per measure, are:\n\n**Am C D F | Am C E E**\n\nF normally needs a barre, which you will learn in Stage 7. For now use **Fmaj7**: finger 3 on string 4 fret 3, finger 2 on string 3 fret 2, finger 1 on string 2 fret 1, string 1 open. Strum or pick strings 4 to 1. It adds an E to the F triad (F A C E) and sounds close enough in this pattern.",
+              "diagram": {
+                "kind": "fretboard",
+                "notes": [
+                  "4:3",
+                  "3:2",
+                  "2:1",
+                  "1:0"
+                ],
+                "chord": "Fmaj7",
+                "labels": "noteNames",
+                "fretRange": [
+                  0,
+                  4
+                ],
+                "caption": "Fmaj7: strings 4 to 1."
+              }
+            },
+            {
+              "type": "explain",
+              "title": "The right hand",
+              "body": "Use one bass note and **i m a m i** in each measure: six eighth notes, counted \"1 & 2 & 3 &\" in 3/4.\n\n- Am, C: thumb on string 5.\n- D, Fmaj7: thumb on string 4.\n- E: thumb on string 6.\n\nThe fingers always play strings 3, 2, 1, 2, 3."
+            },
+            {
+              "type": "demo",
+              "title": "One time through",
+              "caption": "Eight measures at 70 BPM.",
+              "playback": {
+                "notes": [
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "C4"
+                  ],
+                  [
+                    "E4"
+                  ],
+                  [
+                    "C4"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "C3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "C4"
+                  ],
+                  [
+                    "E4"
+                  ],
+                  [
+                    "C4"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "D3"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "D4"
+                  ],
+                  [
+                    "F#4"
+                  ],
+                  [
+                    "D4"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "F3"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "C4"
+                  ],
+                  [
+                    "E4"
+                  ],
+                  [
+                    "C4"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "A2"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "C4"
+                  ],
+                  [
+                    "E4"
+                  ],
+                  [
+                    "C4"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "C3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "C4"
+                  ],
+                  [
+                    "E4"
+                  ],
+                  [
+                    "C4"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "E2"
+                  ],
+                  [
+                    "G#3"
+                  ],
+                  [
+                    "B3"
+                  ],
+                  [
+                    "E4"
+                  ],
+                  [
+                    "B3"
+                  ],
+                  [
+                    "G#3"
+                  ],
+                  [
+                    "E2"
+                  ],
+                  [
+                    "G#3"
+                  ],
+                  [
+                    "B3"
+                  ],
+                  [
+                    "E4"
+                  ],
+                  [
+                    "B3"
+                  ],
+                  [
+                    "G#3"
+                  ]
+                ],
+                "rhythm": "e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e",
+                "bpm": 70
+              }
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "chordChanges",
+                "prompt": "Before picking, strum the changes: Am, C, D, Fmaj7, E. One strum each, one minute.",
+                "chords": [
+                  "Am",
+                  "C",
+                  "D",
+                  "Fmaj7",
+                  "E"
+                ],
+                "durationSec": 60,
+                "passAccuracy": 0.7
+              },
+              "mistakeTips": [
+                "C to D: every finger moves. Aim finger 3 at string 2, fret 3 first and let the others fall around it.",
+                "D to Fmaj7: both chords press string 3 at fret 2, so your hand stays in the same area. Move the fingers as a group.",
+                "Fmaj7 to E: all fingers move; practice that change alone first."
+              ]
+            },
+            {
+              "type": "song",
+              "title": "House of the Rising Sun (traditional), arpeggiated",
+              "caption": "Am C D Fmaj7 Am C E E, one measure each, bass note then i m a m i.",
+              "notes": [
+                [
+                  "A2"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "C3"
+                ],
+                [
+                  "G3"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "G3"
+                ],
+                [
+                  "D3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "F#4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "F3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "A2"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "C3"
+                ],
+                [
+                  "G3"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "G3"
+                ],
+                [
+                  "E2"
+                ],
+                [
+                  "G#3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "G#3"
+                ],
+                [
+                  "E2"
+                ],
+                [
+                  "G#3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "G#3"
+                ]
+              ],
+              "rhythm": "e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e",
+              "bpm": 66,
+              "beatsPerMeasure": 3
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "guitar.b.finger.l3.r1",
+              "kind": "playChord",
+              "prompt": "Play Fmaj7.",
+              "answer": "Fmaj7",
+              "diagram": {
+                "kind": "fretboard",
+                "notes": [
+                  "4:3",
+                  "3:2",
+                  "2:1",
+                  "1:0"
+                ],
+                "chord": "Fmaj7",
+                "labels": "noteNames",
+                "fretRange": [
+                  0,
+                  4
+                ]
+              }
+            }
+          ],
+          "glossaryTerms": [
+            "arpeggio",
+            "progression"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "guitar.b.songs",
+      "title": "Songs you know",
+      "summary": "Use the chords you know on songs in your library, and practice melodies and accompaniment on public-domain tunes. Optional.",
+      "unlocksAfter": "guitar.s3.l6",
+      "lessons": [
+        {
+          "id": "guitar.b.songs.l1",
+          "title": "Songs from your library",
+          "summary": "Find library songs that use chords you know, and practice them with Wait mode, Play-along, and loops.",
+          "minutes": 10,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "Songs you can already play",
+              "body": "Many songs use only a handful of open chords. The tutor reads the chord data in your library and suggests songs whose chords you have already learned: after this stage, songs using **E, Em, A, Am, D, G, and C**.\n\nSuggestions depend on the songs you have imported and on how clean their chord data is. A song with a wrong chord in its tab will still show that chord."
+            },
+            {
+              "type": "explain",
+              "title": "How to practice a library song",
+              "body": "Open a song and choose **Practice**.\n\n- **Wait mode**: the cursor waits until the app hears the right note or chord. Best for learning.\n- **Play-along**: the cursor moves at a set tempo with a visual count-in and beat pulse. Use a lower tempo percentage at first.\n- **Loop**: select a few measures and repeat them. Short loops of hard spots work better than playing the whole song again.\n\nAfter a take, the review screen shows which notes you hit, which you missed, and whether you rushed or dragged."
+            },
+            {
+              "type": "explain",
+              "title": "A good routine",
+              "body": "1. Play through the chord changes slowly without the song.\n2. Loop the hardest two measures in Wait mode until they feel easy.\n3. Switch to Play-along at 70% tempo. Raise it after two clean takes.\n4. Play the whole song. Check the review screen for the weakest measures and loop those."
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "chordChanges",
+                "prompt": "Warm-up for most folk and pop songs: G, C, D, one strum each, one minute.",
+                "chords": [
+                  "G",
+                  "C",
+                  "D"
+                ],
+                "durationSec": 60,
+                "passAccuracy": 0.7
+              },
+              "mistakeTips": [
+                "G to C to D covers a huge number of songs. Clean changes here pay off everywhere.",
+                "D strums from string 4, C from string 5, G from string 6."
+              ]
+            },
+            {
+              "type": "quiz",
+              "title": "Practicing songs",
+              "questions": [
+                {
+                  "prompt": "Which mode waits for you to play the right chord?",
+                  "choices": [
+                    "Wait mode",
+                    "Play-along",
+                    "Tuner"
+                  ],
+                  "answerIndex": 0,
+                  "explanation": "Wait mode advances only when it hears the expected notes."
+                },
+                {
+                  "prompt": "A song keeps falling apart in measures 9–12. What is the best next step?",
+                  "choices": [
+                    "Loop measures 9–12 slowly",
+                    "Play the whole song faster",
+                    "Skip those measures"
+                  ],
+                  "answerIndex": 0,
+                  "explanation": "Short loops of the hard part fix it fastest."
+                },
+                {
+                  "prompt": "Why might a suggested song still have a chord you do not know?",
+                  "choices": [
+                    "The song's tab data may be wrong or incomplete",
+                    "The app ignores chords",
+                    "Every song has a barre chord"
+                  ],
+                  "answerIndex": 0,
+                  "explanation": "Suggestions come from your library's chord data, which can contain mistakes."
+                }
+              ]
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "guitar.b.songs.l1.r1",
+              "kind": "fact",
+              "prompt": "Name the three practice tools for a library song.",
+              "answer": "Wait mode, Play-along, and loops."
+            }
+          ],
+          "glossaryTerms": [
+            "practice mode",
+            "wait mode",
+            "play-along",
+            "loop"
+          ]
+        },
+        {
+          "id": "guitar.b.songs.l2",
+          "title": "Playing melodies: Mary Had a Little Lamb",
+          "summary": "Play a simple melody on the G and B strings and learn how melodies relate to note names.",
+          "minutes": 10,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "Four notes on two strings",
+              "body": "A **melody** is a tune made of single notes. \"Mary Had a Little Lamb\" (1830s, public domain) uses four notes, all near the nut:\n\n- **G** – string 3 open\n- **A** – string 3, fret 2\n- **B** – string 2 open\n- **D** – string 2, fret 3\n\nUse finger 2 for fret 2 and finger 3 for fret 3.",
+              "diagram": {
+                "kind": "fretboard",
+                "notes": [
+                  "3:0",
+                  "3:2",
+                  "2:0",
+                  "2:3"
+                ],
+                "labels": "noteNames",
+                "fretRange": [
+                  0,
+                  5
+                ]
+              }
+            },
+            {
+              "type": "demo",
+              "title": "Mary Had a Little Lamb",
+              "caption": "The full melody at 90 BPM.",
+              "playback": {
+                "notes": [
+                  [
+                    "B3"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "B3"
+                  ],
+                  [
+                    "B3"
+                  ],
+                  [
+                    "B3"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "B3"
+                  ],
+                  [
+                    "D4"
+                  ],
+                  [
+                    "D4"
+                  ],
+                  [
+                    "B3"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "G3"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "B3"
+                  ],
+                  [
+                    "B3"
+                  ],
+                  [
+                    "B3"
+                  ],
+                  [
+                    "B3"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "B3"
+                  ],
+                  [
+                    "A3"
+                  ],
+                  [
+                    "G3"
+                  ]
+                ],
+                "rhythm": "q q q q q q h q q h q q h q q q q q q q q q q q q w",
+                "bpm": 90
+              }
+            },
+            {
+              "type": "practice",
+              "exercise": {
+                "kind": "playSequence",
+                "prompt": "First phrase in Wait mode: B A G A B B B.",
+                "notes": [
+                  "B3",
+                  "A3",
+                  "G3",
+                  "A3",
+                  "B3",
+                  "B3",
+                  "B3"
+                ]
+              },
+              "mistakeTips": [
+                "B is the open second string; A is string 3, fret 2.",
+                "Let each note ring until the next one."
+              ]
+            },
+            {
+              "type": "song",
+              "title": "Mary Had a Little Lamb (traditional)",
+              "notes": [
+                [
+                  "B3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "G3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "G3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "G3"
+                ]
+              ],
+              "rhythm": "q q q q q q h q q h q q h q q q q q q q q q q q q w",
+              "bpm": 90
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "guitar.b.songs.l2.r1",
+              "kind": "playNote",
+              "prompt": "Play D on string 2.",
+              "answer": "D4 (string 2, fret 3)"
+            }
+          ],
+          "glossaryTerms": [
+            "melody"
+          ]
+        },
+        {
+          "id": "guitar.b.songs.l3",
+          "title": "Melody and chords: Twinkle, Twinkle",
+          "summary": "Play a melody, then accompany the same song with chords, and see how the melody notes fit inside the chords.",
+          "minutes": 12,
+          "steps": [
+            {
+              "type": "explain",
+              "title": "The melody in G",
+              "body": "\"Twinkle, Twinkle, Little Star\" (an 18th-century French tune, public domain) uses six notes near the nut:\n\n**G** (3 open), **A** (3 fret 2), **B** (2 open), **C** (2 fret 1), **D** (2 fret 3), **E** (1 open).",
+              "diagram": {
+                "kind": "fretboard",
+                "notes": [
+                  "3:0",
+                  "3:2",
+                  "2:0",
+                  "2:1",
+                  "2:3",
+                  "1:0"
+                ],
+                "labels": "noteNames",
+                "fretRange": [
+                  0,
+                  5
+                ]
+              }
+            },
+            {
+              "type": "song",
+              "title": "Twinkle, Twinkle, Little Star (traditional), melody",
+              "notes": [
+                [
+                  "G3"
+                ],
+                [
+                  "G3"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "G3"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "G3"
+                ],
+                [
+                  "G3"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "E4"
+                ],
+                [
+                  "D4"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "C4"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "B3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "A3"
+                ],
+                [
+                  "G3"
+                ]
+              ],
+              "rhythm": "q q q q q q h q q q q q q h q q q q q q h q q q q q q h q q q q q q h q q q q q q h",
+              "bpm": 90
+            },
+            {
+              "type": "explain",
+              "title": "Why the chords fit",
+              "body": "Each chord is chosen so the main melody notes are chord tones. \"Twin-kle twin-kle\" is G G D D: both G and D are in a **G** chord (G B D). \"Lit-tle\" is E E, which belongs to **C** (C E G).\n\nChords, two beats each:\n\n**G G | C G | C G | D G**\n**G C | G D | G C | G D**\n**G G | C G | C G | D G**"
+            },
+            {
+              "type": "song",
+              "title": "Twinkle, Twinkle, Little Star (traditional), chords",
+              "caption": "One strum every two beats.",
+              "chords": [
+                "G",
+                "G",
+                "C",
+                "G",
+                "C",
+                "G",
+                "D",
+                "G",
+                "G",
+                "C",
+                "G",
+                "D",
+                "G",
+                "C",
+                "G",
+                "D",
+                "G",
+                "G",
+                "C",
+                "G",
+                "C",
+                "G",
+                "D",
+                "G"
+              ],
+              "rhythm": "h h h h h h h h h h h h h h h h h h h h h h h h",
+              "bpm": 90
+            },
+            {
+              "type": "quiz",
+              "title": "Chords and melody",
+              "questions": [
+                {
+                  "prompt": "The melody note is E. Which chord contains E?",
+                  "choices": [
+                    "G",
+                    "C",
+                    "D"
+                  ],
+                  "answerIndex": 1,
+                  "explanation": "C = C E G. G = G B D. D = D F# A."
+                },
+                {
+                  "prompt": "The melody note is A. Which chord contains A?",
+                  "choices": [
+                    "G",
+                    "C",
+                    "D"
+                  ],
+                  "answerIndex": 2,
+                  "explanation": "D = D F# A."
+                }
+              ]
+            }
+          ],
+          "reviewItems": [
+            {
+              "id": "guitar.b.songs.l3.r1",
+              "kind": "fact",
+              "prompt": "Which of G, C, and D contain the note G?",
+              "answer": "G (G B D) and C (C E G)."
+            }
+          ],
+          "glossaryTerms": [
+            "melody",
+            "chord"
+          ]
+        }
+      ]
+    }
+  ]
+}

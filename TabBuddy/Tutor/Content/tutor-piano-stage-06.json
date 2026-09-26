@@ -1,0 +1,1030 @@
+{
+  "id": "piano.s6",
+  "instrument": "piano",
+  "order": 6,
+  "title": "Keys, Roman numerals, and progressions",
+  "summary": "Read key signatures, name the chords in a key with Roman numerals, and play I–IV–V–I and I–V–vi–IV with smooth voice leading.",
+  "lessons": [
+    {
+      "id": "piano.s6.l1",
+      "title": "Keys and key signatures",
+      "summary": "What a key is, how key signatures work, and the circle of fifths.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "What a key is",
+          "body": "A piece is **in a key** when it uses mostly the notes of one scale and sounds \"at home\" on that scale's tonic. A song in G major uses the G major scale (with F♯) and tends to end on G.\n\nInstead of writing ♯ on every F, sheet music puts a **key signature** at the start of each staff line: the sharps or flats that apply to every note of that letter, in every octave, throughout the piece."
+        },
+        {
+          "type": "explain",
+          "title": "Common major keys",
+          "body": "| Key | Signature | Sharps or flats |\n|---|---|---|\n| C major | none | — |\n| G major | 1 sharp | F♯ |\n| D major | 2 sharps | F♯ C♯ |\n| A major | 3 sharps | F♯ C♯ G♯ |\n| F major | 1 flat | B♭ |\n| B♭ major | 2 flats | B♭ E♭ |\n\nSharps always appear in the order **F C G D A E B**; flats in the reverse order, **B E A D G C F**.\n\nShortcuts for major keys:\n- **Sharp keys:** the tonic is a half step above the last sharp (last sharp C♯ → D major).\n- **Flat keys:** the tonic is the second-to-last flat (B♭ E♭ → B♭ major). One flat is F major.",
+          "diagram": {
+            "kind": "staff",
+            "key": "D major",
+            "caption": "D major key signature: F♯ and C♯."
+          }
+        },
+        {
+          "type": "explain",
+          "title": "The circle of fifths",
+          "body": "Arrange the keys so each is a **perfect 5th** above the last: C → G → D → A → E → B …. Each step clockwise **adds one sharp**. Going the other way (down a 5th each time: C → F → B♭ → E♭ …) **adds one flat**.\n\nNeighbors on the circle share all but one note, which is why music often moves between them.",
+          "diagram": {
+            "kind": "circleOfFifths",
+            "key": "C major",
+            "caption": "Clockwise adds sharps; counterclockwise adds flats."
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playSequence",
+            "prompt": "Play A major with the right hand, A3 to A4 and back (three sharps: F♯, C♯, G♯). Fingering is the same as C major: up 1 2 3 1 2 3 4 5.",
+            "notes": [
+              "A3",
+              "B3",
+              "C#4",
+              "D4",
+              "E4",
+              "F#4",
+              "G#4",
+              "A4",
+              "G#4",
+              "F#4",
+              "E4",
+              "D4",
+              "C#4",
+              "B3",
+              "A3"
+            ],
+            "rhythm": "q q q q q q q q q q q q q q h",
+            "bpm": 60,
+            "tempoSteps": [
+              60,
+              72,
+              84
+            ]
+          },
+          "mistakeTips": [
+            "C♯ (finger 3) is the first black key; the thumb then passes under to D.",
+            "F♯ (finger 3) and G♯ (finger 4) are both black keys.",
+            "Every F, C, and G in this key is sharp."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "How many sharps are in D major?",
+              "choices": [
+                "2",
+                "1",
+                "3",
+                "0"
+              ],
+              "answerIndex": 0,
+              "explanation": "D major: F♯ and C♯."
+            },
+            {
+              "prompt": "Which key has one flat?",
+              "choices": [
+                "F major",
+                "B♭ major",
+                "G major",
+                "D major"
+              ],
+              "answerIndex": 0,
+              "explanation": "F major has B♭."
+            },
+            {
+              "prompt": "What is the order of sharps?",
+              "choices": [
+                "F C G D A E B",
+                "B E A D G C F",
+                "C G D A E B F",
+                "F G A B C D E"
+              ],
+              "answerIndex": 0,
+              "explanation": "Flats run in the reverse order."
+            },
+            {
+              "prompt": "Moving clockwise on the circle of fifths…",
+              "choices": [
+                "Adds one sharp each step",
+                "Adds one flat each step",
+                "Moves up a half step",
+                "Changes major to minor"
+              ],
+              "answerIndex": 0,
+              "explanation": "C → G (1 sharp) → D (2 sharps)…"
+            },
+            {
+              "prompt": "A key signature with F♯, C♯, and G♯ is which major key?",
+              "choices": [
+                "A major",
+                "G major",
+                "E major",
+                "D major"
+              ],
+              "answerIndex": 0,
+              "explanation": "A half step above the last sharp (G♯) is A."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Name the key signature",
+          "generator": {
+            "kind": "keySignature",
+            "params": {
+              "keys": "C,G,D,A,F,Bb",
+              "mode": "major"
+            }
+          },
+          "count": 6
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s6.l1.r1",
+          "kind": "fact",
+          "prompt": "Order of sharps?",
+          "answer": "F C G D A E B"
+        },
+        {
+          "id": "piano.s6.l1.r2",
+          "kind": "fact",
+          "prompt": "Key signature of D major?",
+          "answer": "Two sharps: F♯ and C♯."
+        },
+        {
+          "id": "piano.s6.l1.r3",
+          "kind": "fact",
+          "prompt": "Key signature of B♭ major?",
+          "answer": "Two flats: B♭ and E♭."
+        }
+      ],
+      "glossaryTerms": [
+        "Key",
+        "Key signature",
+        "Circle of fifths",
+        "Order of sharps",
+        "Order of flats",
+        "Tonic"
+      ]
+    },
+    {
+      "id": "piano.s6.l2",
+      "title": "Chords in a key: Roman numerals",
+      "summary": "Build a triad on every degree of a major scale and label it with a Roman numeral.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Diatonic triads",
+          "body": "**Diatonic** means \"using only the notes of the key.\" Build a triad on each degree of a major scale and you always get the same pattern of qualities:\n\n**major, minor, minor, major, major, minor, diminished**\n\nMusicians label them with **Roman numerals**: uppercase = major, lowercase = minor, lowercase with ° = diminished.\n\n**I ii iii IV V vi vii°**",
+          "diagram": {
+            "kind": "keyboard",
+            "scale": "C major",
+            "labels": "degrees",
+            "pitchRange": [
+              "C4",
+              "B5"
+            ]
+          }
+        },
+        {
+          "type": "explain",
+          "title": "The same numerals in four keys",
+          "body": "| | I | ii | iii | IV | V | vi | vii° |\n|---|---|---|---|---|---|---|---|\n| C | C | Dm | Em | F | G | Am | B° |\n| G | G | Am | Bm | C | D | Em | F♯° |\n| D | D | Em | F♯m | G | A | Bm | C♯° |\n| F | F | Gm | Am | B♭ | C | Dm | E° |\n\nRoman numerals let you describe a progression once and play it in any key. The **I** (tonic) sounds like home, **V** (dominant) pulls strongly back to I, and **IV** (subdominant) moves away from home more gently."
+        },
+        {
+          "type": "demo",
+          "title": "The diatonic triads of G major",
+          "caption": "G, Am, Bm, C, D, Em, F♯°, G.",
+          "playback": {
+            "chords": [
+              "G",
+              "Am",
+              "Bm",
+              "C",
+              "D",
+              "Em",
+              "F#dim",
+              "G"
+            ],
+            "bpm": 60,
+            "style": "block"
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "playChord",
+            "prompt": "Right hand 1 3 5: play every diatonic triad in G major from G4: G, Am, Bm, C, D, Em, F♯°, G.",
+            "chords": [
+              "G",
+              "Am",
+              "Bm",
+              "C",
+              "D",
+              "Em",
+              "F#dim",
+              "G"
+            ]
+          },
+          "mistakeTips": [
+            "Every F is F♯ in G major, so Bm is B D F♯ and D is D F♯ A.",
+            "F♯° is F♯ A C.",
+            "Keep the hand frame and move one key at a time."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "In C major, what is the vi chord?",
+              "choices": [
+                "Am",
+                "A",
+                "F",
+                "Em"
+              ],
+              "answerIndex": 0,
+              "explanation": "The 6th degree is A; the triad A C E is minor."
+            },
+            {
+              "prompt": "In G major, what is the V chord?",
+              "choices": [
+                "D",
+                "Dm",
+                "C",
+                "Em"
+              ],
+              "answerIndex": 0,
+              "explanation": "The 5th degree of G is D; D F♯ A is major."
+            },
+            {
+              "prompt": "In F major, what is the IV chord?",
+              "choices": [
+                "B♭",
+                "Bm",
+                "B°",
+                "C"
+              ],
+              "answerIndex": 0,
+              "explanation": "The 4th degree of F major is B♭; B♭ D F is major."
+            },
+            {
+              "prompt": "What does lowercase \"ii\" tell you?",
+              "choices": [
+                "The chord on degree 2 is minor",
+                "The chord on degree 2 is major",
+                "Play it twice",
+                "It is diminished"
+              ],
+              "answerIndex": 0,
+              "explanation": "Uppercase = major, lowercase = minor."
+            },
+            {
+              "prompt": "Which degree has the diminished triad in a major key?",
+              "choices": [
+                "7th",
+                "2nd",
+                "4th",
+                "6th"
+              ],
+              "answerIndex": 0,
+              "explanation": "vii°: B D F in C major."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Name the Roman numeral",
+          "generator": {
+            "kind": "romanNumeral",
+            "params": {
+              "keys": "C,G,D,F",
+              "mode": "major"
+            }
+          },
+          "count": 8
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s6.l2.r1",
+          "kind": "fact",
+          "prompt": "Triad qualities in a major key, I to vii°?",
+          "answer": "major, minor, minor, major, major, minor, diminished"
+        },
+        {
+          "id": "piano.s6.l2.r2",
+          "kind": "fact",
+          "prompt": "I, IV, and V in G major?",
+          "answer": "G, C, D"
+        },
+        {
+          "id": "piano.s6.l2.r3",
+          "kind": "fact",
+          "prompt": "ii, iii, and vi in F major?",
+          "answer": "Gm, Am, Dm"
+        }
+      ],
+      "glossaryTerms": [
+        "Diatonic",
+        "Roman numerals",
+        "Tonic",
+        "Dominant",
+        "Subdominant"
+      ]
+    },
+    {
+      "id": "piano.s6.l3",
+      "title": "I–IV–V–I with smooth voice leading",
+      "summary": "The most common progression in Western music, with the closest right-hand inversions.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "A progression",
+          "body": "A **progression** is a sequence of chords. **I–IV–V–I** moves from home (I) away (IV) to tension (V) and back home (I). The move V→I is called a **cadence**: a musical resting point.\n\nPlay it with the closest inversions so the hand hardly moves:\n\n- **C major:** C (C4 E4 G4) → F/C (C4 F4 A4) → G/B (B3 D4 G4) → C (C4 E4 G4)\n- **G major:** G (G4 B4 D5) → C/G (G4 C5 E5) → D/F♯ (F♯4 A4 D5) → G (G4 B4 D5)\n\nNotice the **common tones**: C stays through C and F/C; G stays through C and G/B.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "B3",
+              "C4",
+              "D4",
+              "E4",
+              "F4",
+              "G4",
+              "A4"
+            ],
+            "pitchRange": [
+              "G3",
+              "C5"
+            ],
+            "caption": "C → F/C → G/B → C, right hand."
+          }
+        },
+        {
+          "type": "demo",
+          "title": "I–IV–V–I in C",
+          "caption": "Closest right-hand inversions, with the bass note in the left hand.",
+          "playback": {
+            "notes": [
+              [
+                "C3",
+                "C4",
+                "E4",
+                "G4"
+              ],
+              [
+                "F2",
+                "C4",
+                "F4",
+                "A4"
+              ],
+              [
+                "G2",
+                "B3",
+                "D4",
+                "G4"
+              ],
+              [
+                "C3",
+                "C4",
+                "E4",
+                "G4"
+              ]
+            ],
+            "bpm": 60
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "Right hand: C → F/C → G/B → C, repeating, for 60 seconds.",
+            "chords": [
+              "C",
+              "F/C",
+              "G/B",
+              "C"
+            ],
+            "durationSec": 60
+          },
+          "mistakeTips": [
+            "RH fingering: C = 1 3 5, F/C = 1 3 5 (C F A), G/B = 1 2 5 (B D G).",
+            "Keep the thumb on C for the first two chords, then move it down a half step to B.",
+            "Say the Roman numerals as you play: one, four, five, one."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "Right hand in G major: G → C/G → D/F♯ → G, repeating, for 60 seconds.",
+            "chords": [
+              "G",
+              "C/G",
+              "D/F#",
+              "G"
+            ],
+            "durationSec": 60
+          },
+          "mistakeTips": [
+            "The thumb stays on G4 for G and C/G, then moves down to F♯4 for D/F♯.",
+            "D/F♯ = F♯4 A4 D5, fingers 1 2 5."
+          ]
+        },
+        {
+          "type": "explain",
+          "title": "Adding the 7th: V7",
+          "body": "The **dominant seventh** chord (**V7**) adds a 4th note to V, a minor 7th above the root. In C major, **G7 = G B D F**. Its F pulls down to E, and its B pulls up to C, which makes V7→I even more final.\n\nA close right-hand version from F/C: **B3 F4 G4** (leave out D). C→B, F stays, A→G. Then resolve to C (C4 E4 G4).",
+          "playback": {
+            "notes": [
+              [
+                "C4",
+                "F4",
+                "A4"
+              ],
+              [
+                "B3",
+                "F4",
+                "G4"
+              ],
+              [
+                "C4",
+                "E4",
+                "G4"
+              ]
+            ],
+            "bpm": 60
+          }
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "In D major, I–IV–V–I is…",
+              "choices": [
+                "D–G–A–D",
+                "D–E–F♯–D",
+                "D–G–Am–D",
+                "D–A–G–D"
+              ],
+              "answerIndex": 0,
+              "explanation": "I = D, IV = G, V = A."
+            },
+            {
+              "prompt": "In F major, what is V7?",
+              "choices": [
+                "C7",
+                "Cmaj7",
+                "B♭7",
+                "F7"
+              ],
+              "answerIndex": 0,
+              "explanation": "The 5th degree of F is C; the dominant seventh is C E G B♭."
+            },
+            {
+              "prompt": "Which note do C and F/C share?",
+              "choices": [
+                "C",
+                "E",
+                "G",
+                "A"
+              ],
+              "answerIndex": 0,
+              "explanation": "C E G and C F A share C."
+            },
+            {
+              "prompt": "A cadence is…",
+              "choices": [
+                "A musical resting point, such as V→I",
+                "A type of scale",
+                "A fast tempo",
+                "A left-hand pattern"
+              ],
+              "answerIndex": 0,
+              "explanation": "V→I is the strongest cadence."
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Hear the progression",
+          "questions": [
+            {
+              "prompt": "Listen. Which progression is this?",
+              "choices": [
+                "I–IV–V–I",
+                "I–V–IV–I",
+                "I–IV–I–V",
+                "I–vi–IV–V"
+              ],
+              "answerIndex": 0,
+              "explanation": "Home, away, tension, home.",
+              "playback": {
+                "chords": [
+                  "C",
+                  "F",
+                  "G",
+                  "C"
+                ],
+                "bpm": 60,
+                "style": "block"
+              }
+            },
+            {
+              "prompt": "Listen. Is the last chord I or V?",
+              "choices": [
+                "V",
+                "I"
+              ],
+              "answerIndex": 0,
+              "explanation": "It ends on the tension chord, which wants to return home.",
+              "playback": {
+                "chords": [
+                  "C",
+                  "F",
+                  "C",
+                  "G"
+                ],
+                "bpm": 60,
+                "style": "block"
+              }
+            }
+          ]
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s6.l3.r1",
+          "kind": "fact",
+          "prompt": "Closest RH inversions for I–IV–V–I in C?",
+          "answer": "C4 E4 G4 → C4 F4 A4 → B3 D4 G4 → C4 E4 G4"
+        },
+        {
+          "id": "piano.s6.l3.r2",
+          "kind": "fact",
+          "prompt": "Spell G7.",
+          "answer": "G B D F"
+        }
+      ],
+      "glossaryTerms": [
+        "Chord progression",
+        "Cadence",
+        "Common tone",
+        "Voice leading",
+        "Dominant seventh chord"
+      ]
+    },
+    {
+      "id": "piano.s6.l4",
+      "title": "I–V–vi–IV",
+      "summary": "A four-chord progression heard in countless pop songs, played with smooth inversions.",
+      "minutes": 11,
+      "steps": [
+        {
+          "type": "explain",
+          "title": "Four chords",
+          "body": "**I–V–vi–IV** is one of the most-used progressions in pop music. In C major: **C – G – Am – F**. In G major: **G – D – Em – C**.\n\nClosest right-hand voicings:\n\n- **C:** C (C4 E4 G4) → G/B (B3 D4 G4) → Am/C (C4 E4 A4) → F/C (C4 F4 A4)\n- **G:** G (G4 B4 D5) → D/F♯ (F♯4 A4 D5) → Em/G (G4 B4 E5) → C/G (G4 C5 E5)\n\nEach change moves at most one or two notes by a step, and at least one note stays put.",
+          "diagram": {
+            "kind": "keyboard",
+            "notes": [
+              "B3",
+              "C4",
+              "D4",
+              "E4",
+              "F4",
+              "G4",
+              "A4"
+            ],
+            "pitchRange": [
+              "G3",
+              "C5"
+            ],
+            "caption": "C → G/B → Am/C → F/C"
+          }
+        },
+        {
+          "type": "demo",
+          "title": "I–V–vi–IV in C",
+          "caption": "With a left-hand bass note on each root.",
+          "playback": {
+            "notes": [
+              [
+                "C3",
+                "C4",
+                "E4",
+                "G4"
+              ],
+              [
+                "G2",
+                "B3",
+                "D4",
+                "G4"
+              ],
+              [
+                "A2",
+                "C4",
+                "E4",
+                "A4"
+              ],
+              [
+                "F2",
+                "C4",
+                "F4",
+                "A4"
+              ]
+            ],
+            "bpm": 60
+          }
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "Right hand: C → G/B → Am/C → F/C, repeating, for 60 seconds.",
+            "chords": [
+              "C",
+              "G/B",
+              "Am/C",
+              "F/C"
+            ],
+            "durationSec": 60
+          },
+          "mistakeTips": [
+            "G/B uses fingers 1 2 5; Am/C and F/C use 1 3 5 or 1 2 5, whichever keeps your hand still.",
+            "From G/B to Am/C every note moves up one step: B→C, D→E, G→A.",
+            "Aim for no gap between chords."
+          ]
+        },
+        {
+          "type": "practice",
+          "exercise": {
+            "kind": "chordChanges",
+            "prompt": "Right hand in G: G → D/F♯ → Em/G → C/G, repeating, for 60 seconds.",
+            "chords": [
+              "G",
+              "D/F#",
+              "Em/G",
+              "C/G"
+            ],
+            "durationSec": 60
+          },
+          "mistakeTips": [
+            "The top note goes D5 → D5 → E5 → E5.",
+            "Em/G = G4 B4 E5; C/G = G4 C5 E5."
+          ]
+        },
+        {
+          "type": "quiz",
+          "questions": [
+            {
+              "prompt": "I–V–vi–IV in G major is…",
+              "choices": [
+                "G–D–Em–C",
+                "G–D–E–C",
+                "G–C–Em–D",
+                "G–Em–C–D"
+              ],
+              "answerIndex": 0,
+              "explanation": "I = G, V = D, vi = Em, IV = C."
+            },
+            {
+              "prompt": "I–V–vi–IV in F major is…",
+              "choices": [
+                "F–C–Dm–B♭",
+                "F–C–D–B♭",
+                "F–B♭–Dm–C",
+                "F–C–Gm–B♭"
+              ],
+              "answerIndex": 0,
+              "explanation": "I = F, V = C, vi = Dm, IV = B♭."
+            },
+            {
+              "prompt": "What is Am/C?",
+              "choices": [
+                "C E A",
+                "A C E",
+                "E A C",
+                "C E G"
+              ],
+              "answerIndex": 0,
+              "explanation": "A minor (A C E) with C in the bass."
+            },
+            {
+              "prompt": "Listen. Which progression is this?",
+              "choices": [
+                "I–V–vi–IV",
+                "I–IV–V–I",
+                "I–vi–IV–V",
+                "vi–IV–I–V"
+              ],
+              "answerIndex": 0,
+              "explanation": "Home, dominant, relative minor, subdominant.",
+              "playback": {
+                "chords": [
+                  "C",
+                  "G",
+                  "Am",
+                  "F"
+                ],
+                "bpm": 60,
+                "style": "block"
+              }
+            }
+          ]
+        },
+        {
+          "type": "quiz",
+          "title": "Roman numerals: I, IV, V, vi",
+          "generator": {
+            "kind": "romanNumeral",
+            "params": {
+              "keys": "C,G,D,F",
+              "mode": "major",
+              "numerals": "I,IV,V,vi"
+            }
+          },
+          "count": 6
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s6.l4.r1",
+          "kind": "fact",
+          "prompt": "I–V–vi–IV in C?",
+          "answer": "C – G – Am – F"
+        },
+        {
+          "id": "piano.s6.l4.r2",
+          "kind": "fact",
+          "prompt": "I–V–vi–IV in D?",
+          "answer": "D – A – Bm – G"
+        }
+      ],
+      "glossaryTerms": [
+        "Chord progression",
+        "Slash chord"
+      ]
+    },
+    {
+      "id": "piano.s6.l5",
+      "title": "Stage 6 review: progressions",
+      "summary": "Key signatures, Roman numerals, and two progression pieces.",
+      "minutes": 12,
+      "steps": [
+        {
+          "type": "quiz",
+          "title": "Stage 6 check: key signatures",
+          "generator": {
+            "kind": "keySignature",
+            "params": {
+              "keys": "C,G,D,A,F,Bb",
+              "mode": "major"
+            }
+          },
+          "count": 4
+        },
+        {
+          "type": "quiz",
+          "title": "Stage 6 check: Roman numerals",
+          "generator": {
+            "kind": "romanNumeral",
+            "params": {
+              "keys": "C,G,D,F",
+              "mode": "major"
+            }
+          },
+          "count": 6
+        },
+        {
+          "type": "song",
+          "title": "Home and Away (original), I–IV–V–I in C and G",
+          "caption": "Right hand. C: I–IV–V–V7–I, then G: I–IV–V–I. The fourth chord is G7 without its D (B3 F4 G4).",
+          "notes": [
+            [
+              "C4",
+              "E4",
+              "G4"
+            ],
+            [
+              "C4",
+              "E4",
+              "G4"
+            ],
+            [
+              "C4",
+              "F4",
+              "A4"
+            ],
+            [
+              "C4",
+              "F4",
+              "A4"
+            ],
+            [
+              "B3",
+              "D4",
+              "G4"
+            ],
+            [
+              "B3",
+              "F4",
+              "G4"
+            ],
+            [
+              "C4",
+              "E4",
+              "G4"
+            ],
+            [
+              "G4",
+              "B4",
+              "D5"
+            ],
+            [
+              "G4",
+              "B4",
+              "D5"
+            ],
+            [
+              "G4",
+              "C5",
+              "E5"
+            ],
+            [
+              "G4",
+              "C5",
+              "E5"
+            ],
+            [
+              "F#4",
+              "A4",
+              "D5"
+            ],
+            [
+              "F#4",
+              "A4",
+              "D5"
+            ],
+            [
+              "G4",
+              "B4",
+              "D5"
+            ]
+          ],
+          "rhythm": "h h h h h h w h h h h h h w",
+          "bpm": 72
+        },
+        {
+          "type": "song",
+          "title": "Four-Chord Groove (original), I–V–vi–IV",
+          "caption": "Right hand, rhythm \"long, short, short\" in each bar: C, G/B, Am/C, F/C twice, then F/C–G/B–C to finish.",
+          "notes": [
+            [
+              "C4",
+              "E4",
+              "G4"
+            ],
+            [
+              "C4",
+              "E4",
+              "G4"
+            ],
+            [
+              "C4",
+              "E4",
+              "G4"
+            ],
+            [
+              "B3",
+              "D4",
+              "G4"
+            ],
+            [
+              "B3",
+              "D4",
+              "G4"
+            ],
+            [
+              "B3",
+              "D4",
+              "G4"
+            ],
+            [
+              "C4",
+              "E4",
+              "A4"
+            ],
+            [
+              "C4",
+              "E4",
+              "A4"
+            ],
+            [
+              "C4",
+              "E4",
+              "A4"
+            ],
+            [
+              "C4",
+              "F4",
+              "A4"
+            ],
+            [
+              "C4",
+              "F4",
+              "A4"
+            ],
+            [
+              "C4",
+              "F4",
+              "A4"
+            ],
+            [
+              "C4",
+              "E4",
+              "G4"
+            ],
+            [
+              "C4",
+              "E4",
+              "G4"
+            ],
+            [
+              "C4",
+              "E4",
+              "G4"
+            ],
+            [
+              "B3",
+              "D4",
+              "G4"
+            ],
+            [
+              "B3",
+              "D4",
+              "G4"
+            ],
+            [
+              "B3",
+              "D4",
+              "G4"
+            ],
+            [
+              "C4",
+              "E4",
+              "A4"
+            ],
+            [
+              "C4",
+              "E4",
+              "A4"
+            ],
+            [
+              "C4",
+              "E4",
+              "A4"
+            ],
+            [
+              "C4",
+              "F4",
+              "A4"
+            ],
+            [
+              "B3",
+              "D4",
+              "G4"
+            ],
+            [
+              "C4",
+              "E4",
+              "G4"
+            ]
+          ],
+          "rhythm": "h q q h q q h q q h q q h q q h q q h q q h h w",
+          "bpm": 80
+        }
+      ],
+      "reviewItems": [
+        {
+          "id": "piano.s6.l5.r1",
+          "kind": "fact",
+          "prompt": "vi chord in D major?",
+          "answer": "Bm"
+        }
+      ],
+      "glossaryTerms": [
+        "Chord progression",
+        "Roman numerals"
+      ]
+    }
+  ]
+}
