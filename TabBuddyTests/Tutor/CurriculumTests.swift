@@ -486,19 +486,23 @@ final class CurriculumTests: XCTestCase {
         return Course(instrument: .guitar, title: "Guitar", stages: [s0, s1])
     }
 
-    func testPathUnlocking() {
+    func testPathIsOpenInRecommendedOrder() {
         let course = Self.course()
         let fresh = PathProgress(course: course, statuses: [:])
         XCTAssertEqual(fresh.state(of: "l1"), .available)
-        XCTAssertEqual(fresh.state(of: "l2"), .locked)
-        XCTAssertEqual(fresh.state(of: "b1.l1"), .locked)
+        XCTAssertEqual(fresh.state(of: "l4"), .available)
+        XCTAssertEqual(fresh.state(of: "b1.l2"), .available)
         XCTAssertEqual(fresh.continueTarget?.id, "l1")
+
+        // Skipping ahead leaves the recommended next lesson on the first gap.
+        let skipped = PathProgress(course: course, statuses: ["l3": .completed])
+        XCTAssertEqual(skipped.continueTarget?.id, "l1")
 
         let p = PathProgress(course: course, statuses: ["l1": .completed, "l2": .inProgress])
         XCTAssertEqual(p.state(of: "l2"), .inProgress)
-        XCTAssertEqual(p.state(of: "l3"), .locked)
+        XCTAssertEqual(p.state(of: "l3"), .available)
         XCTAssertEqual(p.state(of: "b1.l1"), .available)
-        XCTAssertEqual(p.state(of: "b1.l2"), .locked)
+        XCTAssertEqual(p.state(of: "b1.l2"), .available)
         XCTAssertEqual(p.continueTarget?.id, "l2")
         XCTAssertEqual(p.completion(of: course.stages[0]), 0.5)
 

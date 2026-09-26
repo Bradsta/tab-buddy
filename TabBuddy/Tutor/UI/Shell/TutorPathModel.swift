@@ -78,43 +78,24 @@ struct TutorPathModel {
     init(course: Course, progress: PathProgress) {
         self.course = course
         self.progress = progress
-        let main = course.mainPathLessons
         let titles = Dictionary(course.allLessonLocations.map { ($0.lesson.id, $0.lesson.title) },
                                 uniquingKeysWith: { a, _ in a })
         let currentID = progress.continueTarget?.id
-        var previousMain: [String: Lesson] = [:]
-        for (i, lesson) in main.enumerated() where i > 0 { previousMain[lesson.id] = main[i - 1] }
 
         sections = course.stages.map { stage in
             let nodes = stage.lessons.enumerated().map { index, lesson -> TutorPathNode in
                 let state = progress.state(of: lesson.id)
-                var reason: String?
-                if state == .locked {
-                    if let prev = previousMain[lesson.id] {
-                        reason = "Finish “\(prev.title)” to unlock this lesson."
-                    } else {
-                        reason = "Finish the earlier lessons to unlock this one."
-                    }
-                }
                 return TutorPathNode(lesson: lesson, state: state, number: index + 1, isBranch: false,
-                                     isCurrent: lesson.id == currentID, lockedReason: reason)
+                                     isCurrent: lesson.id == currentID, lockedReason: nil)
             }
             let stageLessonIDs = Set(stage.lessons.map(\.id))
             let branches = stage.branches.map { branch -> TutorBranchSection in
                 let unlocked = progress.isUnlocked(branch)
                 let anchorTitle = titles[branch.unlocksAfter] ?? "an earlier lesson"
-                let hint = "Unlocks after “\(anchorTitle)”."
-                var previous: Lesson?
+                let hint = "Suggested after “\(anchorTitle)”."
                 let branchNodes = branch.lessons.enumerated().map { index, lesson -> TutorPathNode in
-                    let state = progress.state(of: lesson.id)
-                    var reason: String?
-                    if state == .locked {
-                        if !unlocked { reason = "Optional detour. " + hint }
-                        else if let previous { reason = "Finish “\(previous.title)” in this detour first." }
-                    }
-                    previous = lesson
-                    return TutorPathNode(lesson: lesson, state: state, number: index + 1, isBranch: true,
-                                         isCurrent: false, lockedReason: reason)
+                    TutorPathNode(lesson: lesson, state: progress.state(of: lesson.id), number: index + 1,
+                                  isBranch: true, isCurrent: false, lockedReason: nil)
                 }
                 let anchor = stageLessonIDs.contains(branch.unlocksAfter)
                     ? branch.unlocksAfter : (stage.lessons.last?.id ?? branch.unlocksAfter)

@@ -46,29 +46,30 @@ final class TutorShellTests: XCTestCase {
                                                            "g.s1.l1": .inProgress])
         let model = TutorPathModel(course: c, progress: progress)
         XCTAssertEqual(model.sections.map { $0.nodes.map(\.state) },
-                       [[.completed, .completed], [.inProgress, .locked]])
+                       [[.completed, .completed], [.inProgress, .available]])
         XCTAssertEqual(model.sections[0].completion, 1)
         XCTAssertTrue(model.sections[1].isCurrent)
         XCTAssertTrue(model.node(for: "g.s1.l1")!.isCurrent)
-        XCTAssertEqual(model.node(for: "g.s1.l2")!.lockedReason, "Finish “Three” to unlock this lesson.")
+        XCTAssertNil(model.node(for: "g.s1.l2")!.lockedReason)
 
         let branch = model.sections[0].branches[0]
         XCTAssertTrue(branch.isUnlocked)
         XCTAssertEqual(branch.anchorLessonID, "g.s0.l2")
         XCTAssertEqual(model.sections[0].branches(after: "g.s0.l2").map(\.id), ["g.b.x"])
-        XCTAssertEqual(branch.nodes.map(\.state), [.available, .locked])
+        XCTAssertEqual(branch.nodes.map(\.state), [.available, .available])
         XCTAssertTrue(branch.nodes.allSatisfy(\.isBranch))
-        XCTAssertEqual(branch.nodes[1].lockedReason, "Finish “Side A” in this detour first.")
+        XCTAssertNil(branch.nodes[1].lockedReason)
     }
 
-    func testLockedBranchExplainsUnlockAndNeverBlocksMainPath() {
+    func testBranchIsOpenBeforeItsSuggestedPointAndNeverBlocksMainPath() {
         let c = course()
         let progress = PathProgress(course: c, statuses: ["g.s0.l1": .completed])
         let model = TutorPathModel(course: c, progress: progress)
         let branch = model.sections[0].branches[0]
         XCTAssertFalse(branch.isUnlocked)
-        XCTAssertEqual(branch.unlockHint, "Unlocks after “Two”.")
-        XCTAssertEqual(branch.nodes[0].lockedReason, "Optional detour. Unlocks after “Two”.")
+        XCTAssertEqual(branch.unlockHint, "Suggested after “Two”.")
+        XCTAssertEqual(branch.nodes[0].state, .available)
+        XCTAssertNil(branch.nodes[0].lockedReason)
 
         // Completing the main path without touching the branch finishes it.
         let done = PathProgress(course: c, statuses: ["g.s0.l1": .completed, "g.s0.l2": .completed,
@@ -93,6 +94,23 @@ final class TutorShellTests: XCTestCase {
 
         XCTAssertEqual(TutorPathModel.actionTitle(for: .completed), "Review lesson")
         XCTAssertNil(TutorPathModel.actionTitle(for: .locked))
+    }
+
+    @MainActor
+    func testMarkingLessonsDoneSkipsAheadAndUndoes() throws {
+        let store = try TutorStore.inMemory()
+        try store.setLessonCompleted(lessonID: "g.s0.l1", instrument: .guitar, completed: true)
+        try store.setLessonCompleted(lessonID: "g.s0.l2", instrument: .guitar, completed: true)
+        let c = course()
+        var progress = PathProgress(course: c, store: store)
+        XCTAssertEqual(progress.continueTarget?.id, "g.s1.l1")
+        XCTAssertEqual(store.progress(lessonID: "g.s0.l1", instrument: .guitar)?.attempts, 0)
+        XCTAssertTrue(store.dueReviewCards(instrument: .guitar, asOf: .distantFuture, limit: 10).isEmpty)
+
+        try store.setLessonCompleted(lessonID: "g.s0.l1", instrument: .guitar, completed: false)
+        progress = PathProgress(course: c, store: store)
+        XCTAssertEqual(progress.state(of: "g.s0.l1"), .available)
+        XCTAssertEqual(progress.continueTarget?.id, "g.s0.l1")
     }
 
     func testStepSummaries() {

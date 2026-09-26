@@ -108,7 +108,8 @@ struct TutorRootView: View {
         Group {
             if let model = state.pathModel {
                 TutorPathView(model: model, instrument: state.instrument, isCompact: true,
-                              scrollTarget: $scrollTarget, onStart: start) {
+                              scrollTarget: $scrollTarget, onStart: start,
+                              onSetDone: { state.setLessonDone($0, done: $1) }) {
                     VStack(alignment: .leading, spacing: 16) {
                         TutorInstrumentPicker()
                         pathHeader(model)
@@ -157,7 +158,8 @@ struct TutorRootView: View {
         case .path:
             if let model = state.pathModel {
                 TutorPathView(model: model, instrument: state.instrument, isCompact: isCompact,
-                              scrollTarget: $scrollTarget, onStart: start) {
+                              scrollTarget: $scrollTarget, onStart: start,
+                              onSetDone: { state.setLessonDone($0, done: $1) }) {
                     pathHeader(model)
                 }
             } else {

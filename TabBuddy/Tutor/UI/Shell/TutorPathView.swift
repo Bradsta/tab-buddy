@@ -2,11 +2,12 @@
 //  TutorPathView.swift
 //  TabBuddy
 //
-//  The fixed learning path: a "Continue" hero card, summary cards (reviews,
-//  songs, today), then each stage as a header followed by its lesson nodes on
-//  a vertical rail. Optional side branches hang off the rail after the lesson
-//  that unlocks them and never block the main path. Tapping a node opens the
-//  lesson detail (popover on iPad, sheet on iPhone).
+//  The learning path: a "Continue" hero card, summary cards (reviews, songs,
+//  today), then each stage as a header followed by its lesson nodes on a
+//  vertical rail. The order is a recommendation; every lesson opens, and the
+//  lesson detail can mark a lesson done to skip it. Optional side branches
+//  hang off the rail after the lesson they suggest following. Tapping a node
+//  opens the lesson detail (popover on iPad, sheet on iPhone).
 //
 
 import SwiftUI
@@ -18,6 +19,8 @@ struct TutorPathView<Header: View>: View {
     /// Stage id to scroll to (sidebar selection); cleared after scrolling.
     @Binding var scrollTarget: String?
     var onStart: (Lesson) -> Void
+    /// Marks a lesson done (skip ahead) or not done.
+    var onSetDone: (Lesson, Bool) -> Void = { _, _ in }
     @ViewBuilder var header: Header
 
     @State private var selectedLessonID: String?
@@ -157,6 +160,10 @@ struct TutorPathView<Header: View>: View {
                                       selectedLessonID = nil
                                       onStart(lesson)
                                   },
+                                  onSetDone: { lesson, done in
+                                      selectedLessonID = nil
+                                      onSetDone(lesson, done)
+                                  },
                                   onClose: { selectedLessonID = nil })
                 .frame(idealWidth: 440, idealHeight: 560)
                 .presentationDetents([.medium, .large])
@@ -207,21 +214,19 @@ struct TutorPathView<Header: View>: View {
                     TutorShellChip(text: "Optional detour", systemImage: "arrow.triangle.branch",
                               fill: DS.surfaceInset, foreground: DS.fg2)
                     Spacer()
-                    if branch.isUnlocked {
-                        Text("\(Int((branch.completion * 100).rounded()))%")
-                            .font(.subheadline.monospacedDigit())
-                            .foregroundStyle(DS.fg2)
-                    }
+                    Text("\(Int((branch.completion * 100).rounded()))%")
+                        .font(.subheadline.monospacedDigit())
+                        .foregroundStyle(DS.fg2)
                 }
                 Text(branch.branch.title)
                     .font(.headline)
-                    .foregroundStyle(branch.isUnlocked ? DS.fg1 : DS.fg2)
+                    .foregroundStyle(DS.fg1)
                 Text(branch.branch.summary)
                     .font(.subheadline)
                     .foregroundStyle(DS.fg2)
                     .fixedSize(horizontal: false, vertical: true)
                 if !branch.isUnlocked {
-                    Label(branch.unlockHint, systemImage: "lock")
+                    Label(branch.unlockHint, systemImage: "signpost.right")
                         .font(.subheadline)
                         .foregroundStyle(DS.fg3)
                 }
@@ -270,6 +275,10 @@ struct TutorPathView<Header: View>: View {
                                   onStart: { lesson in
                                       selectedLessonID = nil
                                       onStart(lesson)
+                                  },
+                                  onSetDone: { lesson, done in
+                                      selectedLessonID = nil
+                                      onSetDone(lesson, done)
                                   },
                                   onClose: { selectedLessonID = nil })
                 .frame(idealWidth: 440, idealHeight: 560)
@@ -372,6 +381,7 @@ struct TutorLessonDetailView: View {
     let stage: Stage
     let instrument: TutorInstrument
     var onStart: (Lesson) -> Void
+    var onSetDone: (Lesson, Bool) -> Void = { _, _ in }
     var onClose: () -> Void
 
     var body: some View {
@@ -448,16 +458,30 @@ struct TutorLessonDetailView: View {
         }
         .safeAreaInset(edge: .bottom) {
             if let title = TutorPathModel.actionTitle(for: node.state) {
-                Button {
-                    onStart(lesson)
-                } label: {
-                    Text(title)
-                        .font(.headline)
-                        .frame(maxWidth: .infinity, minHeight: 36)
+                VStack(spacing: 10) {
+                    Button {
+                        onStart(lesson)
+                    } label: {
+                        Text(title)
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, minHeight: 36)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .keyboardShortcut(.defaultAction)
+                    let done = node.state == .completed
+                    Button {
+                        onSetDone(lesson, !done)
+                    } label: {
+                        Label(done ? "Mark as not done" : "Mark as done (skip)",
+                              systemImage: done ? "arrow.uturn.backward" : "forward.end")
+                            .frame(maxWidth: .infinity, minHeight: 28)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                    .accessibilityHint(done ? "Returns this lesson to your path."
+                                            : "Skips this lesson. You can still open it any time.")
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .keyboardShortcut(.defaultAction)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 16)
                 .background(DS.surfaceRaised)

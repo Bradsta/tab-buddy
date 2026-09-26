@@ -2,10 +2,11 @@
 //  PathProgress.swift
 //  TabBuddy
 //
-//  Lesson states along a course's fixed path. Main-path lessons unlock in
-//  order across stages. Branch lessons unlock once their `unlocksAfter`
-//  lesson is completed, run in order within the branch, and never block the
-//  main path.
+//  Lesson states along a course's path. Every lesson is open: the path is a
+//  recommended order, and learners may skip ahead or mark lessons done.
+//  Branches are optional detours suggested after their `unlocksAfter`
+//  lesson and never block the main path. `.locked` remains in the enum for
+//  stored-state compatibility but is no longer produced.
 //
 
 import Foundation
@@ -26,26 +27,16 @@ struct PathProgress: Sendable {
         self.course = course
         self.statuses = statuses
         var states: [String: LessonState] = [:]
-        func resolve(_ id: String, previousCompleted: Bool) -> LessonState {
+        func resolve(_ id: String) -> LessonState {
             switch statuses[id] ?? .notStarted {
             case .completed: return .completed
             case .inProgress: return .inProgress
-            case .notStarted: return previousCompleted ? .available : .locked
+            case .notStarted: return .available
             }
         }
-        var previousDone = true
-        for lesson in course.mainPathLessons {
-            let state = resolve(lesson.id, previousCompleted: previousDone)
-            states[lesson.id] = state
-            previousDone = state == .completed
-        }
+        for lesson in course.mainPathLessons { states[lesson.id] = resolve(lesson.id) }
         for branch in course.allBranches {
-            var done = statuses[branch.unlocksAfter] == .completed
-            for lesson in branch.lessons {
-                let state = resolve(lesson.id, previousCompleted: done)
-                states[lesson.id] = state
-                done = state == .completed
-            }
+            for lesson in branch.lessons { states[lesson.id] = resolve(lesson.id) }
         }
         self.states = states
     }
@@ -58,11 +49,13 @@ struct PathProgress: Sendable {
                                                        uniquingKeysWith: { a, b in a == .completed ? a : b }))
     }
 
-    func state(of lessonID: String) -> LessonState { states[lessonID] ?? .locked }
+    func state(of lessonID: String) -> LessonState { states[lessonID] ?? .available }
 
+    /// Branches are always open; this reports whether the suggested point
+    /// (`unlocksAfter`) has been reached.
     func isUnlocked(_ branch: Branch) -> Bool { statuses[branch.unlocksAfter] == .completed }
 
-    /// First in-progress or available main-path lesson; nil when the path is finished.
+    /// First main-path lesson that is not completed; nil when the path is finished.
     var continueTarget: Lesson? {
         course.mainPathLessons.first { [.inProgress, .available].contains(state(of: $0.id)) }
     }

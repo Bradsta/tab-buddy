@@ -6,7 +6,7 @@ Decisions that bind all packages:
 - Guitar (acoustic) and piano are both taught through **microphone listening only**. There is no MIDI input.
 - **App audio output is muted while listening.** Timing cues during graded play are visual: beat pulse, visual count-in, and score cursor.
 - **Fully offline.** There are no network calls, no LLM, and no downloaded models. Everything ships in the bundle.
-- The learning track is a **fixed path with optional side branches**.
+- The learning track is a **recommended path with optional side branches**. (Changed 2026-09-25 at the user's request: every lesson is open and can be marked done to skip it; originally lessons unlocked in order.)
 - **iPad is the primary device.** Every tutor and practice screen must be first class on iPad:
   - Use regular-width layouts: split/sidebar navigation, a diagram beside the explanation, and the review overlay beside the stats. Don't stretch phone layouts.
   - Support all orientations, Split View / Stage Manager resizing, and pointer + hardware keyboard (space = start/stop listening, arrows = step navigation).
@@ -136,7 +136,7 @@ Pure Swift. No UI or audio imports. All types are `Codable, Hashable, Sendable`.
 
 - Entry: `AppPage.tutor` in `ContentView`, and a **Tutor** item (`graduationcap`) in the `FileBrowserView` toolbar next to Tuner.
 - *As built — shell:* `TutorRootView` draws its own sidebar (300 pt) plus detail pane in regular width, inside the app's `NavigationStack`. It does not use `NavigationSplitView`, which cannot nest there. Compact width uses one scrolling home whose sections push onto the app stack. Sections are Path, Reviews, Songs you know, Games, Glossary, Calibration, and Tutor settings. Lessons, reviews, and games are full-screen covers. There is no separate `TutorHomeView`; the home is `TutorPathView` with a Continue hero and summary cards.
-- `TutorHomeView`: instrument switch (Guitar | Piano). A path map shows stages as a vertical path with lesson nodes (locked/available/done) and side-branch nodes off the path. Also includes a "Reviews due (n)" card, a "Continue" button, and access to Glossary and Calibration.
+- `TutorHomeView`: instrument switch (Guitar | Piano). A path map shows stages as a vertical path with lesson nodes (available/in progress/done; none locked, with Mark as done to skip) and side-branch nodes off the path. Also includes a "Reviews due (n)" card, a "Continue" button, and access to Glossary and Calibration.
 - `LessonPlayerView`: step pager with progress, and one renderer per step type:
   - `ExplainStepView` (markdown + `DiagramView`)
   - `DemoStepView` (plays via `TutorSynth`, highlights diagram in sync)

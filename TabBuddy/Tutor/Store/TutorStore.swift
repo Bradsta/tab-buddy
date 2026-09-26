@@ -125,6 +125,28 @@ final class TutorStore {
         return record
     }
 
+    /// Marks a lesson done (skipped ahead) or back to not started without
+    /// recording an attempt. Best score and attempt count are kept.
+    @discardableResult
+    func setLessonCompleted(lessonID: String, instrument: TutorInstrument, completed: Bool,
+                            date: Date = Date()) throws -> LessonProgressRecord {
+        let record = progress(lessonID: lessonID, instrument: instrument) ?? {
+            let r = LessonProgressRecord(lessonID: lessonID, instrument: instrument)
+            context.insert(r)
+            return r
+        }()
+        record.updatedAt = date
+        if completed {
+            if record.progressStatus != .completed { record.completedAt = date }
+            record.progressStatus = .completed
+        } else {
+            record.completedAt = nil
+            record.progressStatus = record.attempts > 0 ? .inProgress : .notStarted
+        }
+        try save()
+        return record
+    }
+
     // MARK: - Review cards
 
     func reviewCard(itemID: String, instrument: TutorInstrument) -> ReviewCardRecord? {

@@ -37,7 +37,7 @@ See [PROJECT.md](PROJECT.md) for the current feature inventory, product intent, 
 - **Reading progress**: Tracks last opened time and reading position
 
 ### 🎓 Tutor and Practice
-- **Tutor**: guitar and piano lessons on a fixed path with optional side branches, spaced-repetition reviews, ear and fretboard games, and a glossary
+- **Tutor**: guitar and piano lessons in a recommended order you can skip through, with optional side branches, spaced-repetition reviews, ear and fretboard games, and a glossary
 - **Practice a library song**: TabBuddy listens through the microphone, compares what you play with the score, and reviews accuracy and tempo
 - **Offline and on device**: no account, network, or MIDI cable needed
 
@@ -103,7 +103,7 @@ Bass, ukulele, and extended-range guitar tabs retain their string counts. Smooth
 ### Tutor
 Tap **Tutor** (graduation cap) in the library toolbar. Choose **Guitar** or **Piano** at the top of the sidebar (iPad) or home screen (iPhone). The tutor is written for an acoustic guitar or an acoustic/digital piano played into the device microphone.
 
-- **Path**: stages 0–8 unlock in order. **Continue** opens the next lesson. Side branches such as Rhythm reading, Fingerstyle basics, Blues shuffle, Reading the grand staff, and Pedal basics open after a named lesson. They are optional and never block the path. Tap a locked lesson to see what unlocks it.
+- **Path**: stages 0–8 are a recommended order, not a gate. Tap any lesson to start it, or choose **Mark as done (skip)** in its detail to skip it (**Mark as not done** undoes this). **Continue** opens the first lesson you haven't finished. Side branches such as Rhythm reading, Fingerstyle basics, Blues shuffle, Reading the grand staff, and Pedal basics are optional detours suggested after a named lesson.
 - **Lessons**: steps include reading with diagrams, listening demos, playing exercises the microphone checks, quizzes, and short song excerpts. Use ← / → to move between steps, Space to start or stop listening, and 1–4 to answer. Without microphone access, choose **Skip for now** on playing steps; quizzes still work.
 - **Reviews**: finished lessons add review cards. **Reviews** shows what is due. Grade facts yourself (Again / Hard / Good / Easy); multiple-choice and play cards are graded for you.
 - **Games**: Fretboard Hunt / Key Hunt, Chord Change Sprint, Interval Duel, Name That Quality, Rhythm Tapper, Scale Runner, and Note Rush. Each keeps a personal best; there are no streaks.

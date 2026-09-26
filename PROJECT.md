@@ -28,7 +28,7 @@ Defaults should work without choosing a directory, having an iCloud account, or 
 
 Both features listen through the device microphone only (no MIDI input), work fully offline (no network calls, LLM, or downloaded models), and mute all app audio while listening; timing cues are visual (count-in, beat pulse, cursor). Grading checks sounding pitch, not string or fret. A detection the listener cannot decide is graded `uncertain` and shown as a neutral "not sure", never as a wrong note, and is excluded from accuracy.
 
-- **Tutor** (graduation-cap **Tutor** button in the library toolbar beside Tuner; `AppPage.tutor`): acoustic guitar and piano courses, each a fixed path of stages 0–8 with optional side branches that unlock after a named lesson and never block the path.
+- **Tutor** (graduation-cap **Tutor** button in the library toolbar beside Tuner; `AppPage.tutor`): acoustic guitar and piano courses, each a recommended path of stages 0–8 with optional side branches suggested after a named lesson. Every lesson is open: learners can start any lesson or use **Mark as done (skip)** in the lesson detail (undo: **Mark as not done**). Skipping records completion without an attempt and does not seed review cards. **Continue** points to the first main-path lesson that is not done.
   - Guitar: 56 main-path lessons and 4 branches (Rhythm reading, Fingerstyle basics, Songs you know, Blues shuffle; 12 lessons).
   - Piano: 45 main-path lessons and 2 branches (Reading the grand staff, Pedal basics; 7 lessons).
   - `tutor-glossary.json` has 253 terms.
@@ -176,7 +176,7 @@ Local discovery-source acquisition is documented in `Tools/TAB_CORPUS.md`. `Tool
 - Tutor/Practice tests (`TabBuddyTests/Tutor`) cover:
   - the theory core
   - curriculum decoding, plus the content validator run on every bundled JSON file
-  - generators, SRS math, and path unlocking
+  - generators, SRS math, and path progress (open path, skip/undo)
   - the detectors on synthetic audio (Karplus–Strong strings, additive inharmonic piano, room noise, silence)
   - alignment and tempo on synthetic timelines
   - store CRUD and take-audio pruning

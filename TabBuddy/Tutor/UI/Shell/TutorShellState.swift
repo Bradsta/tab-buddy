@@ -86,6 +86,13 @@ final class TutorShellState: ObservableObject {
         refresh()
     }
 
+    /// Skips a lesson (marks it done) or undoes that. Review cards are not
+    /// seeded for skipped lessons.
+    func setLessonDone(_ lesson: Lesson, done: Bool) {
+        try? store.setLessonCompleted(lessonID: lesson.id, instrument: instrument, completed: done, date: now())
+        refresh()
+    }
+
     /// Called when the lesson player closes. Records completion if the player did not.
     func lessonDidExit(_ lesson: Lesson, completed: Bool) {
         if completed, store.progress(lessonID: lesson.id, instrument: instrument)?.progressStatus != .completed {
