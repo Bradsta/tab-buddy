@@ -6,6 +6,22 @@ it lives, and what's next. Newest first.
 
 ---
 
+## 2026-09-25 — Library options: Local only, iCloud only, Hybrid
+
+- **Model**: `LibraryStorageOption` (device-local `library.storageOption`) replaces the sync toggle; `library.syncEnabled` is kept equal to `option.syncsMetadata`. One-time migration: sync on → iCloud only; sync off (app-local or chosen folder) → Local only; a chosen folder is never switched to Hybrid automatically. CloudKit mirroring = iCloud only or Hybrid, and an available account; the existing same-store-URL connection reload is reused.
+- **No copying on option changes**: each option remembers its own location per device (`LibraryOptionLocation`); switching repoints the device-local mount and schedules a catalog scan. The verified-copy migration no longer runs on option changes; Copy Library to New Folder remains as the explicit copy under More Storage Options.
+- **Hybrid**: songs read in place from a chosen folder, library info mirrored. Songs not in this device's folder are hidden, never deleted (missing after a full scan in every option; unconfirmed synced records in Hybrid until `verifyUnknownPresence` checks the folder). iCloud Drive `.Name.ext.icloud` placeholders now count as present in scans and presence checks. An unauthorized synced folder shows "Choose This Folder on This Device".
+- **Duplicate merge**: `LibraryDuplicateMerger` merges records sharing (library, normalized path) and, for missing files, a unique present fingerprint match. Deterministic survivor (earliest `importedAt`, then UUID string); tags union, favorite OR, play count and recency max, edited details preserved, practice settings from the most recently opened copy, valid/newer canonical data. It re-keys presence, offline-cache IDs, Tutor practice takes (`TutorStore.rekeyTakes(from:to:)`), and per-file `UserDefaults` keys, adjusts tag counts incrementally, dedups `LibraryDescriptor` rows, and skips the score open in the reader. Runs after CloudKit import events (debounced), bootstrap with mirroring, and completed scans. Discovery checks the store before inserting a path.
+- **Removal**: confirmations state the scope (chosen folder keeps files; iCloud only and Hybrid remove library info on all devices; app-local deletes files). Hybrid bulk removal skips songs hidden on this device.
+- **Settings UI**: one option list with one-line descriptions, a Current Location section (Choose/Change Folder, Use App Folder Instead), a confirmation alert per switch, and a collapsed More Storage Options area (offline copies for iCloud-backed folders, Reconnect Folder, Copy Library to New Folder). First run offers the same list. DEBUG launch arguments `-LibraryAutoSetupLocal`, `-LibrarySettingsOpen`, `-LibraryMoreOptionsOpen`.
+- **Validation** (unsigned simulator, `CODE_SIGNING_ALLOWED=NO`, CloudKit disabled):
+  - Targeted: LibraryArchitectureTests 37, LibraryStorageOptionTests 17 (new), TutorStoreTests 19, PracticeTests 7 — 80 tests, 0 failures.
+  - Whole `TabBuddyTests` suite: 354 tests, 8 skipped (snapshot tests without output directories), 0 failures.
+  - 10,000 duplicate pairs (20,000 in-memory records) merged in about 6.7 s; the longest main-actor gap measured by a 5 ms ticker was about 66 ms. Incremental tag counts matched a full rebuild.
+  - "Two devices" were simulated with separate in-memory stores holding the same records in different orders; both reached the same survivor and values.
+  - UI checked by screenshots on the iPad (985EC883) and iPhone (FD447CDF) simulators: first run, Settings in Local only, More Storage Options expanded. Simulator taps from the automation tool did not register, so the switch alert was checked by unit tests only, not on screen.
+- **Not verified**: live two-device CloudKit sync has not been tested, including Hybrid between an iPad and iPhone, CloudKit import-event timing, and the first-enable merge of two 10,000-song catalogs on real CloudKit (upload volume, conflict behavior, and time to converge). Real iCloud Drive placeholder naming on current iOS was not observed; both `.icloud` placeholders and dataless files are handled in code.
+
 ## 2026-09-25 — Tutor and library Practice mode
 
 - **Tutor**: added a guitar and piano learning track (Library toolbar → Tutor). Content:

@@ -12,12 +12,14 @@ import UniformTypeIdentifiers
 /// fileExporter) per view, so the picker is funneled through one importer
 /// keyed on this enum rather than several stacked importers.
 enum ImportTarget: Equatable {
-    case files, folder, existingLibrary, externalLibrary, moveDestination, backup
+    /// localFolder / hybridFolder adopt a folder in place for that option; externalLibrary
+    /// reconnects the current folder; moveDestination is the explicit copy.
+    case files, folder, localFolder, hybridFolder, externalLibrary, moveDestination, backup
 
     var contentTypes: [UTType] {
         switch self {
         case .files: return [.pdf, .plainText] + GuitarProFileType.contentTypes
-        case .folder, .existingLibrary, .externalLibrary, .moveDestination: return [.folder]
+        case .folder, .localFolder, .hybridFolder, .externalLibrary, .moveDestination: return [.folder]
         case .backup: return [.json]
         }
     }
@@ -187,7 +189,7 @@ struct FileBrowserView: View {
     @State private var importAfterDiscovery = false
     @AppStorage("browser.instrumentFilter") private var instrumentFilter = ""
     @State private var storagePickerTarget: ImportTarget?
-    @State private var preferICloud = true
+    @State private var firstRunOption: LibraryStorageOption?
     
     // Live list, auto-refreshes when you insert / delete / edit
     @Query private var items: [FileItem]
@@ -252,8 +254,15 @@ struct FileBrowserView: View {
         Task { await libraryManager.removeItems([file], context: context) }
     }
 
+    /// Every catalog entry of the active library, including songs hidden because their
+    /// file is missing. In Hybrid, removal itself skips songs not in this device's folder.
+    private var removableLibraryItems: [FileItem] {
+        let active = libraryManager.activeLibraryID
+        return items.filter { $0.libraryID == nil || $0.libraryID == active }
+    }
+
     private func clearAll() {
-        let snapshot = libraryItems
+        let snapshot = removableLibraryItems
         Task { await libraryManager.removeItems(snapshot, context: context) }
     }
 
@@ -621,6 +630,20 @@ struct FileBrowserView: View {
         } label: { Image(systemName: "ellipsis.circle") }
     }
 
+    /// DEBUG launch arguments for simulator checks: `-LibraryAutoSetupLocal` creates the
+    /// app-local library on a fresh install; `-LibrarySettingsOpen` presents Settings.
+    private func runDebugLaunchArguments() async {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("-LibraryAutoSetupLocal") && !libraryManager.isConfigured && LibraryStorageOption.stored() == nil {
+            // Wait for the storage availability check that gates setup.
+            for _ in 0..<50 where libraryManager.iCloudAvailable == nil { try? await Task.sleep(for: .milliseconds(100)) }
+            libraryManager.configureManaged(context: context, useICloud: false)
+        }
+        if arguments.contains("-LibrarySettingsOpen") { showStorageSettings = true }
+        #endif
+    }
+
     private func performSettingsAction(_ action: LibrarySettingsAction) {
         // Start new presentations only after Settings has fully dismissed.
         switch action {
@@ -692,7 +715,9 @@ struct FileBrowserView: View {
             .task(id: catalogRevision) {
                 guard scheduledCatalogRevision != catalogRevision else { return }
                 scheduledCatalogRevision = catalogRevision
-                browserIndex.scheduleRebuild(items, libraryID: libraryManager.activeLibraryID)
+                let manager = libraryManager
+                browserIndex.scheduleRebuild(items, libraryID: libraryManager.activeLibraryID,
+                                             isShown: { manager.isShownOnThisDevice($0) })
             }
             .task(id: browserRequest) {
                 await browserIndex.filter(browserRequest)
@@ -709,9 +734,14 @@ struct FileBrowserView: View {
                 browserIndex.clear()
                 catalogRevision += 1
             }
+            // Songs appear or hide as this device learns which files are in its folder.
+            .onReceive(libraryManager.$availabilityByFileID.dropFirst()) { _ in catalogRevision += 1 }
+            .onChange(of: libraryManager.storageOption) { _, _ in catalogRevision += 1 }
+            .task { await runDebugLaunchArguments() }
             .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { notification in
                 guard let savedContext = notification.object as? ModelContext, savedContext === context else { return }
-                if !browserIndex.applySavedChanges(notification, context: context, libraryID: libraryManager.activeLibraryID) {
+                if !browserIndex.applySavedChanges(notification, context: context, libraryID: libraryManager.activeLibraryID,
+                                                   isShown: { libraryManager.isShownOnThisDevice($0) }) {
                     catalogRevision += 1
                 }
             }
@@ -793,39 +823,43 @@ struct FileBrowserView: View {
     @ViewBuilder
     private var libraryStatusBanner: some View {
         if !libraryManager.isConfigured {
+            let available = libraryManager.iCloudAvailable == true
+            let choice = firstRunOption ?? (available ? .iCloudOnly : .localOnly)
             VStack(alignment: .leading, spacing: 10) {
                 Text("Your Tab Buddy Library").font(.headline)
-                Text("Imported songs are copied into your library. The original files stay where they are.")
+                Text("Choose where your songs live. You can change this later in Settings; changing never copies songs.")
                     .font(.subheadline).foregroundStyle(.secondary)
-                Toggle("Sync library with iCloud", isOn: Binding(get: { preferICloud && libraryManager.iCloudAvailable == true }, set: { preferICloud = $0 }))
-                    .disabled(libraryManager.iCloudAvailable != true)
-                Text(libraryManager.iCloudAvailable == true
-                     ? "Keep songs, tags, favorites, and recent activity in sync. You can change this in Library Storage."
-                     : "Your library can stay on this device. You can enable iCloud later.")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                LibraryStorageOptionList(selected: choice, iCloudAvailable: available,
+                                         isDisabled: libraryManager.isConfiguring) { firstRunOption = $0 }
                 if let error = libraryManager.lastError { Text(error).font(.caption).foregroundStyle(.red) }
-                Button(libraryManager.isConfiguring ? "Creating Library…" : "Get Started") {
-                    libraryManager.configureManaged(context: context, useICloud: preferICloud)
+                Button(libraryManager.isConfiguring ? "Setting Up Library…" : (choice == .hybrid ? "Choose Folder…" : "Get Started")) {
+                    switch choice {
+                    case .hybrid: activeImport = .hybridFolder
+                    case .iCloudOnly: libraryManager.configureManaged(context: context, useICloud: true)
+                    case .localOnly: libraryManager.configureManaged(context: context, useICloud: false)
+                    }
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(libraryManager.isConfiguring || libraryManager.iCloudAvailable == nil)
             }
             .padding()
+            .frame(maxWidth: 640, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(.secondarySystemGroupedBackground))
         } else if libraryManager.accessNeeded {
             HStack {
                 Image(systemName: "folder.badge.questionmark")
                 VStack(alignment: .leading) {
-                    Text(libraryManager.mode == .managedICloud ? "iCloud Unavailable" : "Access Needed").font(.headline)
+                    Text(libraryManager.mode == .managedICloud ? "iCloud Unavailable" : "Choose This Folder on This Device").font(.headline)
                     Text(libraryManager.mode == .managedICloud
                          ? "Your library stays in iCloud. Check iCloud Drive in device Settings, then retry."
-                         : "Connect the matching library folder on this device.")
+                         : "“\(libraryManager.libraryName ?? "Library")” holds this library’s songs. Choose the same folder in Files to show them here. Library info is kept.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
                 if libraryManager.mode == .externalFolder {
-                    Button("Connect") { activeImport = .externalLibrary }
+                    Button("Choose Folder…") { activeImport = .externalLibrary }
                 } else {
                     Button("Retry") { libraryManager.bootstrap(context: context); libraryManager.rescan(context: context) }
                 }
@@ -1002,6 +1036,16 @@ private struct BrowserDialogs: ViewModifier {
     let folderImporter: FolderImporter
     let libraryManager: LibraryManager
 
+    private var removeAllConfirmation: LibraryManager.RemovalConfirmation {
+        let active = libraryManager.activeLibraryID
+        let count = items.filter { ($0.libraryID == nil || $0.libraryID == active) && libraryManager.isShownOnThisDevice($0) }.count
+        return libraryManager.removalConfirmation(count: count, all: true)
+    }
+
+    private var removeSelectedConfirmation: LibraryManager.RemovalConfirmation {
+        libraryManager.removalConfirmation(count: selectedFiles.count, all: false)
+    }
+
     // Bridges the optional `activeImport` to the Bool the importer expects.
     private var isImporting: Binding<Bool> {
         Binding(get: { activeImport != nil },
@@ -1015,22 +1059,21 @@ private struct BrowserDialogs: ViewModifier {
         let currentImport = activeImport
         return content
             // Alert-style presentations stack safely on a single view.
-            .confirmationDialog("Remove all imported files?",
-                                isPresented: $showClearConfirmation,
-                                titleVisibility: .visible) {
-                Button("Remove All Files", role: .destructive, action: clearAll)
+            .alert(removeAllConfirmation.title, isPresented: $showClearConfirmation) {
+                Button(removeAllConfirmation.button, role: .destructive, action: clearAll)
                 Button("Cancel", role: .cancel) { }
+            } message: {
+                Text(removeAllConfirmation.message)
             }
-            .alert(libraryManager.mode == .externalFolder ? "Remove \(selectedFiles.count) library references?" : "Delete \(selectedFiles.count) selected files?",
-                   isPresented: $showDeleteSelectedConfirmation) {
-                Button(libraryManager.mode == .externalFolder ? "Remove References" : "Delete", role: .destructive) {
+            .alert(removeSelectedConfirmation.title, isPresented: $showDeleteSelectedConfirmation) {
+                Button(removeSelectedConfirmation.button, role: .destructive) {
                     let filesToDelete = items.filter { selectedFiles.contains($0.id) }
                     Task { await libraryManager.removeItems(filesToDelete, context: context) }
                     selectedFiles.removeAll()
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text(libraryManager.mode == .externalFolder ? "Source files stay in your folder. A later rescan will restore references for files that still exist there." : "This deletes the selected song files from your managed library, including songs in selected subfolders.")
+                Text(removeSelectedConfirmation.message)
             }
             .confirmationDialog("Copy files to your library?",
                                 isPresented: $showCopyToLibraryPrompt,
@@ -1087,8 +1130,10 @@ private struct BrowserDialogs: ViewModifier {
                 return
             }
             folderImporter.start(urls: urls, context: context)
-        case .existingLibrary:
-            if let url = urls.first { libraryManager.useExistingFolder(url: url, context: context) }
+        case .localFolder:
+            if let url = urls.first { libraryManager.useExistingFolder(url: url, context: context, option: .localOnly) }
+        case .hybridFolder:
+            if let url = urls.first { libraryManager.useExistingFolder(url: url, context: context, option: .hybrid) }
         case .externalLibrary:
             if let url = urls.first {
                 libraryManager.configureExternal(url: url, context: context)

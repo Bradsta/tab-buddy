@@ -6,6 +6,18 @@ Implementation spec for the TabBuddy iOS app (SwiftUI). Reference mockups:
 `templates/tab-buddy-revamp/TabBuddyRevamp.dc.html` — option **1b** (iPad, 834×1194) and **2a** (iPhone, 390×844).
 Design tokens live in the Gamic Arts design-system folder (`tokens/*.css`, entry `styles.css`); hex conversions for Swift are below.
 
+## Library options: Local only, iCloud only, Hybrid (2026-09-25)
+
+Supersedes the single **Sync library with iCloud** switch and the Advanced **Use Existing Folder** entry (see "Library sync and offline access" and "Existing folders and library moves" below, now historical).
+
+- **One list, three options**, each with a one-line description and a checkmark: Local only ("Songs and library info stay on this device."), iCloud only ("Songs in TabBuddy's iCloud library. Library info syncs."), Hybrid ("Songs stay in a folder you choose. Library info syncs."). The same list is the first-run choice, with iCloud only suggested when available. iCloud only is dimmed with "Needs iCloud Drive on this device." when unavailable. The footer defines "library info".
+- **Switching never copies.** Each option shows its own location; a short alert confirms the change and names both locations ("Songs aren't copied. The library will show songs in … Songs in … stay where they are."). When the folder stays the same (Local only ↔ Hybrid) the alert says only library info changes. A copy is never a side effect of choosing an option.
+- **Current Location** section: Songs and Library info rows, plus Choose/Change Folder for Local only and Hybrid and Use App Folder Instead for a chosen Local only folder. Hybrid's footer says to choose the same folder on each device and that songs missing here are hidden, not deleted.
+- **More Storage Options** (collapsed DisclosureGroup below Remove All Files) holds rarely used actions: Keep available offline (only for iCloud-backed folders), Reconnect Folder, and Copy Library to New Folder, the only explicit copy. Maintenance, backup, and Remove All Files stay where they were.
+- **Unauthorized Hybrid folder on this device** shows a banner "Choose This Folder on This Device" naming the folder, with a Choose Folder… button, rather than an empty or broken library.
+- **Removal wording states the scope**: chosen-folder removal says files stay in the folder; iCloud only and Hybrid say library info is removed on all devices; app-local deletion says files are deleted on this device.
+- iPad-first sheet; rows and descriptions wrap in compact width. Screenshots checked on the iPad and iPhone simulators (unconfigured and Local only states).
+
 ## Tutor and Practice interface (2026-09-25)
 
 iPad is the primary device; iPhone and narrow Split View/Stage Manager windows must still work in compact width.
@@ -27,7 +39,7 @@ iPad is the primary device; iPhone and narrow Split View/Stage Manager windows m
 
 Bulk removal displays processed/total progress, yields between batches, and reports failures. Catalog scanning publishes availability once rather than redrawing the library for every score. Existing external-folder versus managed-file deletion semantics remain distinct.
 
-## Existing folders and library moves (2026-09-06)
+## Existing folders and library moves (2026-09-06; option entry superseded 2026-09-25)
 
 Advanced separates **Use Existing Folder** (adopt the exact selected directory and scan in place) from **Copy Library to New Folder** (create a named child folder and copy the current library). A generic Choose Folder action must not silently choose between these operations. Switching to another existing collection retains the previous catalog and files; backup restoration targets only the selected collection.
 
@@ -221,7 +233,7 @@ Library discovery centers on recents, most played, search, and tags. Tuning labe
 Both native tabs and Guitar Pro expose Smooth scroll and Follow measures directly above their transport. Smooth scroll is the initial preference and uses a separate scrolling speed, pause, back-to-top, and loop-to-top; it does not start synthesized audio. Follow measures uses score timing, bar seeking, and practice loops. Sound remains an optional setting; Guitar Pro sound defaults off. Switching navigation modes pauses motion. Manual dragging temporarily takes precedence over automatic scrolling.
 
 
-## Library sync and offline access
+## Library sync and offline access (historical; superseded 2026-09-25)
 
 Use one primary **Sync library with iCloud** switch for songs and library metadata together. “Local” must not silently continue syncing tags, favorites, or recents. First-run setup offers iCloud when available and a usable local library otherwise. Changing the connection briefly returns the user to the library after saved changes and verified file copying.
 

@@ -19,7 +19,7 @@ See [PROJECT.md](PROJECT.md) for the current feature inventory, product intent, 
 - **Import files and folders**: Support for both individual files and entire folder hierarchies
 - **File browser**: Clean, organized view of all your imported documents
 - **App-managed library**: Imports are copied into the app library; originals remain untouched
-- **Storage choice**: iCloud sync when available, local storage without an iCloud account, and a custom folder under Advanced
+- **Storage choice**: three library options (Local only, iCloud only, Hybrid). Changing options never copies songs
 - **Favorites**: Mark frequently used files as favorites for quick access
 
 ### 🏷️ Smart Tagging System
@@ -78,17 +78,25 @@ If you used the older development app, keep it installed: the new registered app
 ### Library Storage
 
 The **Settings** sheet also contains Generate Tab Data, metadata backup export/restore, and Remove All Files. Removal still requires confirmation.
-On first launch, tap **Get Started** to create the app library. iCloud sync is selected when available; otherwise the library uses this device’s Documents folder. No folder picker is required.
+On first launch, choose one of three library options, then tap **Get Started** (or **Choose Folder…** for Hybrid). iCloud only is suggested when iCloud Drive is available.
 
-Open **… → Settings → Library Storage** to change between iCloud Drive and local storage. The app copies and verifies songs before switching and keeps the previous copies. Under **Advanced**, choose **Use Existing Folder** to read the scores directly from the folder you select. Choose **Copy Library to New Folder** only when you want a new Tab Buddy Library subfolder containing copies of your current songs. If an existing iCloud library becomes unavailable, it stays selected and shows a retry message instead of silently creating an empty replacement.
+- **Local only**: songs are in a folder on this device (the app's own library, or a folder you choose); library info (tags, favorites, recents, play counts, score details) stays on this device.
+- **iCloud only**: songs are in TabBuddy's iCloud library; library info syncs through iCloud.
+- **Hybrid**: songs are read in place from a folder you choose, for example your own iCloud Drive folder; library info syncs through iCloud between your devices. Choose the same folder on each device.
 
-**Sync library with iCloud** controls both song files and library metadata (tags, favorites, and recent activity). Turning it off keeps a local library and stops metadata sync on this device while preserving existing cloud data. The library screen briefly reloads as the database connection changes.
+Open **… → Settings → Library** to change options. **Changing options never copies, moves, or deletes songs.** Each option shows the songs in its own location; songs in the previous location stay where they are and reappear when you switch back. A short confirmation says which location the library will show. Local only and Hybrid show the current folder with **Choose Folder…** / **Change Folder…**; Local only with a chosen folder also offers **Use App Folder Instead**. Switching between Local only and Hybrid keeps the same folder and only changes whether library info syncs. The library screen briefly reloads when library-info sync turns on or off. If an existing iCloud library becomes unavailable, it stays selected and shows a retry message instead of silently creating an empty replacement.
+
+In Hybrid, a song whose file is not in this device's folder is hidden on this device, not deleted; its library info stays for your other devices. When the same song was catalogued on two devices before syncing, TabBuddy merges the two entries automatically (matching by path inside the folder, then by file fingerprint for renamed files), keeping tags, favorites, play counts, and practice history. If this device hasn't opened the Hybrid folder yet, the library asks you to **Choose This Folder on This Device**.
+
+Less common actions are under **More Storage Options**: **Keep available offline** (iCloud-backed folders only), **Reconnect Folder…**, and **Copy Library to New Folder…**, the one explicit action that copies songs (into a new Tab Buddy Library subfolder you pick).
 
 Opening the app uses your saved library without rescanning the folder. After changing files outside TabBuddy, choose **… → Settings → Rescan Library**. You can keep browsing and opening songs while it runs; progress and Cancel appear in a bottom overlay without moving the library, with found, checked, newly added, and existing file counts. A summary remains after the scan.
 
-**Keep available offline** is a separate option for a synced library. It downloads additional local song copies while sync stays enabled. Downloads refresh after scans/imports and can be retried from Library Storage. Turning it off removes only those extra copies. Advanced custom folders use local metadata; their storage provider may sync files independently.
+**Keep available offline** (More Storage Options, iCloud-backed folders only) downloads additional local song copies. Downloads refresh after scans/imports and can be retried with Refresh Downloads. Turning it off removes only those extra copies.
 
-Signing uses `com.gamicarts.TabBuddy` and the `iCloud.com.gamicarts.TabBuddy.library` container. Simulator tests cover local fallback, metadata connection changes, migration, and offline copies through isolated storage roots; a signed build on two devices signed into the same iCloud account is needed to verify live synchronization.
+**Remove All Files** and Delete Selected say what they do before you confirm: for a chosen folder (Local only or Hybrid) they remove catalog entries only and your files stay in the folder; in Hybrid and iCloud only the removed library info is removed on all your devices; the app's own libraries delete the song files. In Hybrid, songs hidden on this device are never removed from it.
+
+Signing uses `com.gamicarts.TabBuddy` and the `iCloud.com.gamicarts.TabBuddy.library` container. Simulator tests cover local fallback, option switching without copying, metadata connection changes, duplicate merging with simulated two-device stores, and offline copies through isolated storage roots. They do not use CloudKit; a signed build on two devices signed into the same iCloud account is needed to verify live synchronization.
 
 ### Finding Music and Choosing an Instrument
 Open **Add (+) → Find music online** in the library. Choose an instrument and enter a song, composer, artist, or game. Tap a source to open its web search; with an empty query, the source homepage opens. Free and purchase sources show the file formats to look for. Download a supported file, then use **Import Downloaded Files** or share it to TabBuddy.

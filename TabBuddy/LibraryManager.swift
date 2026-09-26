@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import CoreData
 
 @MainActor
 final class LibraryManager: ObservableObject {
@@ -65,14 +66,42 @@ final class LibraryManager: ObservableObject {
     @Published var moveProcessed = 0
     @Published var moveTotal = 0
     @Published private(set) var availabilityByFileID: [UUID: FileAvailability] = [:]
+    /// Device-local library choice (nil until the library is set up on this device).
+    @Published private(set) var storageOption: LibraryStorageOption?
+    /// True when the active songs folder is iCloud-backed (TabBuddy's iCloud library or
+    /// a chosen iCloud Drive folder), so extra offline copies are meaningful.
+    @Published private(set) var isCloudBackedLocation = false
+    @Published private(set) var isMergingDuplicates = false
+    private var mergeTask: Task<LibraryDuplicateMerger.Summary, Never>?
+    private var mergeScheduleTask: Task<Void, Never>?
+    private var mergeRequestedAt: Date?
+    private weak var observedContext: ModelContext?
+    private var remoteObservers: [NSObjectProtocol] = []
+    /// The score open in the reader. Duplicate merging leaves its group for a later pass.
+    var readerFileID: UUID?
+    /// Moves Tutor practice takes when a duplicate catalog entry is merged away.
+    var rekeyPracticeTakes: @MainActor (_ from: String, _ to: String) -> Void = { from, to in
+        _ = try? TutorStore.shared.rekeyTakes(from: from, to: to)
+    }
+    private static let pendingScanKey = "library.pendingScanLibraryID"
 
     init(files: LibraryFileService = .shared, defaults: UserDefaults = .standard, automaticallyProcessesLibrary: Bool = false) {
         self.automaticallyProcessesLibrary = (defaults.object(forKey: "library.automaticPreparation") as? Bool) ?? automaticallyProcessesLibrary
         self.files = files
         self.defaults = defaults
+        // Merge duplicate catalog entries after iCloud imports another device's records.
+        remoteObservers.append(NotificationCenter.default.addObserver(
+            forName: NSPersistentCloudKitContainer.eventChangedNotification, object: nil, queue: .main
+        ) { [weak self] notification in
+            guard let event = notification.userInfo?[NSPersistentCloudKitContainer.eventNotificationUserInfoKey]
+                    as? NSPersistentCloudKitContainer.Event,
+                  event.type == .import, event.endDate != nil, event.succeeded else { return }
+            Task { @MainActor in self?.remoteChangesArrived() }
+        })
     }
 
     func bootstrap(context: ModelContext) {
+        observedContext = context
         let presences = (try? context.fetch(FetchDescriptor<FilePresence>())) ?? []
         var availability: [UUID: FileAvailability] = [:]
         for presence in presences { availability[presence.fileID] = presence.availability }
@@ -80,6 +109,7 @@ final class LibraryManager: ObservableObject {
         refreshStorageAvailability()
         if let descriptor = activeDescriptor(context: context) {
             apply(descriptor: descriptor, context: context)
+            finishBootstrap(context: context)
             return
         }
 
@@ -101,6 +131,7 @@ final class LibraryManager: ObservableObject {
                 apply(descriptor: descriptor, context: context)
                 Task { try? await files.connectExternalRoot(url, libraryID: descriptor.id,
                                                             displayName: descriptor.displayName) }
+                finishBootstrap(context: context)
                 return
             }
         }
@@ -109,17 +140,39 @@ final class LibraryManager: ObservableObject {
         Self.activeRoot = nil
         mode = nil
         accessNeeded = false
+        storageOption = LibraryStorageOption.stored(in: defaults)
+    }
+
+    /// Migrates the pre-option sync flag, remembers where this option's songs live,
+    /// resumes a scan interrupted by a database reload, and merges duplicates that
+    /// iCloud may have imported while the app was closed.
+    private func finishBootstrap(context: ModelContext) {
+        storageOption = LibraryStorageOption.migrateIfNeeded(in: defaults, activeMode: mode)
+        if let option = storageOption, let id = activeLibraryID, let mode,
+           LibraryOptionLocation.remembered(for: option, in: defaults) == nil {
+            LibraryOptionLocation.remember(.init(libraryID: id, mode: mode), for: option, in: defaults)
+        }
+        if let pending = defaults.string(forKey: Self.pendingScanKey), pending == activeLibraryID?.uuidString {
+            rescan(context: context)
+        } else if storageOption?.syncsMetadata == true {
+            scheduleDuplicateMerge(context: context, delay: .seconds(3))
+        }
+    }
+
+    private func markPendingScan(_ libraryID: UUID) {
+        defaults.set(libraryID.uuidString, forKey: Self.pendingScanKey)
     }
 
     func refreshStorageAvailability() {
         Task { iCloudAvailable = await files.isICloudAvailable() }
     }
 
-    /// Initial setup only. Changing an existing library must use verified migration.
+    /// Initial setup of the app-managed library (Local only or iCloud only). With a
+    /// library already set up, this switches options instead; switching never copies songs.
     func configureManaged(context: ModelContext, useICloud: Bool = true) {
         guard !isProcessingLibrary, !isRemoving, !isConfiguring, !isRescanning, !isMoving else { return }
         if activeDescriptor(context: context) != nil {
-            moveLibrary(to: useICloud ? .managedICloud : .managedLocal, context: context)
+            _ = switchStorageOption(to: useICloud ? .iCloudOnly : .localOnly, context: context)
             return
         }
         isConfiguring = true
@@ -134,16 +187,23 @@ final class LibraryManager: ObservableObject {
                 let root = try await files.configureManagedLibrary(id: descriptor.id, mode: mode)
                 // Publish the descriptor only after its folder is usable.
                 context.insert(descriptor)
-                context.insert(LibraryMount(libraryID: descriptor.id, authorized: true,
-                                            rootGeneration: descriptor.rootGeneration))
+                let mount = LibraryMount(libraryID: descriptor.id, authorized: true,
+                                         rootGeneration: descriptor.rootGeneration)
+                mount.modeOverrideRaw = mode.rawValue
+                context.insert(mount)
                 try context.save()
                 Self.activeRoot = root
                 accessNeeded = false
                 lastError = nil
                 markUnrootedLegacyItems(context: context)
                 apply(descriptor: descriptor, context: context)
-                rescan(context: context)
-                LibrarySyncPreference.set(mode == .managedICloud, in: defaults)
+                let option: LibraryStorageOption = mode == .managedICloud ? .iCloudOnly : .localOnly
+                LibraryOptionLocation.remember(.init(libraryID: id, mode: mode), for: option, in: defaults)
+                markPendingScan(id)
+                // Turning on mirroring rebuilds the connection; the scan then resumes from bootstrap.
+                if !option.syncsMetadata { rescan(context: context) }
+                LibraryStorageOption.set(option, in: defaults)
+                storageOption = option
                 if mode != .managedICloud { importPendingSharedFiles(context: context) }
             } catch {
                 lastError = error.localizedDescription
@@ -151,8 +211,11 @@ final class LibraryManager: ObservableObject {
         }
     }
 
-    func useExistingFolder(url: URL, context: ModelContext) {
+    /// Adopt the exact selected folder and read its songs in place, as the location of
+    /// Local only (a folder you choose) or Hybrid. Never copies or creates a child folder.
+    func useExistingFolder(url: URL, context: ModelContext, option: LibraryStorageOption = .localOnly) {
         guard !isProcessingLibrary, !isRemoving, !isConfiguring, !isMoving, !isRescanning, !isPreparingOffline, activeImports == 0 else { return }
+        let option: LibraryStorageOption = option == .iCloudOnly ? .localOnly : option
         isConfiguring = true
         let scoped = url.startAccessingSecurityScopedResource()
         Task {
@@ -181,8 +244,12 @@ final class LibraryManager: ObservableObject {
                 libraryName = url.lastPathComponent
                 lastError = nil
                 accessNeeded = false
-                rescan(context: context)
-                LibrarySyncPreference.set(false, in: defaults)
+                LibraryOptionLocation.remember(.init(libraryID: id, mode: .externalFolder), for: option, in: defaults)
+                let reloads = (LibraryStorageOption.stored(in: defaults)?.syncsMetadata ?? false) != option.syncsMetadata
+                markPendingScan(id)
+                if !reloads { rescan(context: context) }
+                LibraryStorageOption.set(option, in: defaults)
+                storageOption = option
             } catch {
                 lastError = error.localizedDescription
                 if let previous = activeDescriptor(context: context) { apply(descriptor: previous, context: context) }
@@ -190,6 +257,8 @@ final class LibraryManager: ObservableObject {
         }
     }
 
+    /// Renews this device's authorization for the current library folder (Reconnect
+    /// Folder, or choosing a synced Hybrid folder on another device). Keeps the option.
     func configureExternal(url: URL, context: ModelContext) {
         guard !isProcessingLibrary, !isRemoving, !isConfiguring, !isMoving, !isRescanning else { return }
         isConfiguring = true
@@ -228,13 +297,215 @@ final class LibraryManager: ObservableObject {
                 markUnrootedLegacyItems(context: context)
                 apply(descriptor: descriptor, context: context)
                 lastError = nil
-                LibrarySyncPreference.set(false, in: defaults)
+                let option = storageOption == .hybrid ? LibraryStorageOption.hybrid : .localOnly
+                LibraryOptionLocation.remember(.init(libraryID: descriptor.id, mode: .externalFolder), for: option, in: defaults)
+                if storageOption != option {
+                    LibraryStorageOption.set(option, in: defaults)
+                    storageOption = option
+                }
                 rescan(context: context)
             } catch {
                 lastError = error.localizedDescription
                 accessNeeded = true
             }
         }
+    }
+
+    // MARK: - Storage options
+
+    enum StorageSwitchResult: Equatable { case started, needsFolder, unavailable, busy, unchanged }
+
+    private var isBusyForStorageChange: Bool {
+        isProcessingLibrary || isRemoving || isConfiguring || isRescanning || isMoving || isPreparingOffline || activeImports > 0 || isMergingDuplicates
+    }
+
+    private var currentLocation: LibraryOptionLocation? {
+        guard let activeLibraryID, let mode else { return nil }
+        return .init(libraryID: activeLibraryID, mode: mode)
+    }
+
+    /// Where `option` would show songs on this device. nil for Hybrid means a folder must be chosen.
+    /// A managed location whose library ID is not known yet is returned with a placeholder ID.
+    func plannedLocation(for option: LibraryStorageOption) -> LibraryOptionLocation? {
+        if let remembered = LibraryOptionLocation.remembered(for: option, in: defaults) { return remembered }
+        switch option {
+        case .iCloudOnly:
+            return .init(libraryID: Self.unresolvedLibraryID, mode: .managedICloud)
+        case .localOnly:
+            if let current = currentLocation, current.mode == .externalFolder { return current }
+            return .init(libraryID: Self.unresolvedLibraryID, mode: .managedLocal)
+        case .hybrid:
+            if let current = currentLocation, current.mode == .externalFolder { return current }
+            return nil
+        }
+    }
+
+    private static let unresolvedLibraryID = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+
+    /// Human-readable songs location for confirmations and Settings.
+    func locationName(_ location: LibraryOptionLocation?, context: ModelContext) -> String {
+        guard let location else { return "a folder you choose" }
+        switch location.mode {
+        case .managedLocal: return "the app library on this device"
+        case .managedICloud: return "TabBuddy’s iCloud library"
+        case .externalFolder:
+            let descriptors = (try? context.fetch(FetchDescriptor<LibraryDescriptor>())) ?? []
+            let name = descriptors.first(where: { $0.id == location.libraryID })?.displayName
+                ?? (location.libraryID == activeLibraryID ? libraryName : nil) ?? "your folder"
+            return "“\(name)”"
+        }
+    }
+
+    /// The confirmation shown before switching. Songs are never copied.
+    func switchConfirmation(to option: LibraryStorageOption, context: ModelContext) -> String {
+        let old = locationName(currentLocation, context: context)
+        if let planned = plannedLocation(for: option), planned == currentLocation {
+            return option.syncsMetadata
+                ? "Songs aren’t copied or moved. The library keeps showing songs in \(old), and library info syncs through iCloud."
+                : "Songs aren’t copied or moved. The library keeps showing songs in \(old), and library info stays on this device."
+        }
+        guard let planned = plannedLocation(for: option) else {
+            return "Songs aren’t copied. Choose the folder that holds your songs; the library will show the songs in it. Songs in \(old) stay where they are."
+        }
+        return "Songs aren’t copied. The library will show songs in \(locationName(planned, context: context)). Songs in \(old) stay where they are."
+    }
+
+    /// Switch this device's library option. Each option shows the songs in its own
+    /// location; nothing is copied, moved, or deleted. Library info mirroring follows
+    /// the option (the database connection reloads against the same store files).
+    @discardableResult
+    func switchStorageOption(to option: LibraryStorageOption, context: ModelContext) -> StorageSwitchResult {
+        guard !isBusyForStorageChange else { return .busy }
+        guard option != storageOption else { return .unchanged }
+        if option == .iCloudOnly && iCloudAvailable != true {
+            lastError = LibraryFileError.iCloudUnavailable.localizedDescription
+            return .unavailable
+        }
+        guard let planned = plannedLocation(for: option) else { return .needsFolder }
+        let previous = currentLocation
+        isConfiguring = true
+        Task {
+            defer { isConfiguring = false }
+            do {
+                var location = planned
+                if location.libraryID == Self.unresolvedLibraryID {
+                    let id = try await files.existingManagedLibraryID(mode: location.mode) ?? UUID()
+                    location = .init(libraryID: id, mode: location.mode)
+                }
+                try await activate(location, context: context)
+                LibraryOptionLocation.remember(location, for: option, in: defaults)
+                let reloads = (storageOption?.syncsMetadata ?? false) != option.syncsMetadata
+                let changedLocation = location != previous
+                if changedLocation { markPendingScan(location.libraryID) }
+                if changedLocation && !reloads { rescan(context: context) }
+                LibraryStorageOption.set(option, in: defaults)
+                storageOption = option
+                lastError = nil
+            } catch {
+                lastError = error.localizedDescription
+            }
+        }
+        return .started
+    }
+
+    /// Local only: show the app's own library folder instead of a chosen folder.
+    /// The chosen folder and its songs stay as they are.
+    func useAppFolder(context: ModelContext) {
+        guard !isBusyForStorageChange, storageOption == .localOnly, mode == .externalFolder else { return }
+        isConfiguring = true
+        Task {
+            defer { isConfiguring = false }
+            do {
+                let id = try await files.existingManagedLibraryID(mode: .managedLocal) ?? UUID()
+                let location = LibraryOptionLocation(libraryID: id, mode: .managedLocal)
+                try await activate(location, context: context)
+                LibraryOptionLocation.remember(location, for: .localOnly, in: defaults)
+                markPendingScan(id)
+                rescan(context: context)
+                lastError = nil
+            } catch {
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    /// Point this device at an existing location without touching any song file.
+    private func activate(_ location: LibraryOptionLocation, context: ModelContext) async throws {
+        let descriptors = try context.fetch(FetchDescriptor<LibraryDescriptor>())
+        var descriptor = descriptors.first { $0.id == location.libraryID }
+        switch location.mode {
+        case .managedLocal, .managedICloud:
+            let root = try await files.configureManagedLibrary(id: location.libraryID, mode: location.mode)
+            if descriptor == nil {
+                let created = LibraryDescriptor(id: location.libraryID, mode: location.mode,
+                                                displayName: LibraryFileService.managedFolderName)
+                context.insert(created)
+                descriptor = created
+            }
+            Self.activeRoot = root
+        case .externalFolder:
+            guard descriptor != nil else { throw LibraryFileError.notConfigured }
+        }
+        guard let descriptor else { throw LibraryFileError.notConfigured }
+        let mounts = try context.fetch(FetchDescriptor<LibraryMount>())
+        let mount = mounts.first { $0.libraryID == location.libraryID } ?? {
+            let created = LibraryMount(libraryID: location.libraryID, authorized: location.mode != .externalFolder,
+                                       rootGeneration: descriptor.rootGeneration)
+            context.insert(created)
+            return created
+        }()
+        mount.modeOverrideRaw = location.mode.rawValue
+        if location.mode != .externalFolder { mount.authorized = true }
+        try context.save()
+        apply(descriptor: descriptor, context: context)
+    }
+
+    // MARK: - Visibility and removal
+
+    /// Songs whose file is not in this device's folder are hidden, never deleted:
+    /// a completed scan marks them missing, and in Hybrid a record synced from another
+    /// device stays hidden until this device confirms the file.
+    nonisolated static func isShown(presence: FileAvailability?, inActiveLibrary: Bool,
+                                    option: LibraryStorageOption?) -> Bool {
+        if presence == .missing { return false }
+        if presence == nil && inActiveLibrary && option == .hybrid { return false }
+        return true
+    }
+
+    func isShownOnThisDevice(_ item: FileItem) -> Bool {
+        Self.isShown(presence: availabilityByFileID[item.id],
+                     inActiveLibrary: item.libraryID != nil && item.libraryID == activeLibraryID,
+                     option: storageOption)
+    }
+
+    struct RemovalConfirmation: Equatable {
+        var title: String
+        var message: String
+        var button: String
+    }
+
+    /// Removal wording follows what actually happens: a chosen folder keeps its files
+    /// (catalog only); synced options remove library info on every device.
+    nonisolated static func removalConfirmation(count: Int, all: Bool, option: LibraryStorageOption?,
+                                                mode: LibraryMode?, folderName: String?) -> RemovalConfirmation {
+        let songs = count == 1 ? "1 song" : "\(count) songs"
+        let folder = folderName.map { "“\($0)”" } ?? "your folder"
+        if mode == .externalFolder {
+            let title = all ? "Remove all songs from the library?" : "Remove \(songs) from the library?"
+            let message = option == .hybrid
+                ? "Library info for these songs is removed on all your devices that use this library. Files stay in \(folder). Songs not in this device’s folder aren’t affected."
+                : "Files stay in \(folder). Rescan Library finds them again."
+            return .init(title: title, message: message, button: "Remove from Library")
+        }
+        let title = all ? "Delete all songs?" : "Delete \(songs)?"
+        let message = option == .iCloudOnly || mode == .managedICloud
+            ? "This deletes the song files from TabBuddy’s iCloud library and removes their library info on all your devices."
+            : "This deletes the song files from the library on this device, including songs in selected folders."
+        return .init(title: title, message: message, button: "Delete")
+    }
+
+    func removalConfirmation(count: Int, all: Bool) -> RemovalConfirmation {
+        Self.removalConfirmation(count: count, all: all, option: storageOption, mode: mode, folderName: libraryName)
     }
 
     func acquireFile(_ item: FileItem) async throws -> FileAccessLease {
@@ -363,6 +634,7 @@ final class LibraryManager: ObservableObject {
                     // Discovery only adds unknown paths. Reconcile existing metadata once,
                     // after enumeration, instead of rebuilding the whole catalog per batch.
                     let added = discovery.insert(batch, libraryID: descriptor.id, context: context)
+                    self.availabilityByFileID.merge(discovery.drainInsertedPresence()) { _, new in new }
                     if added > 0 { try context.save() }
                     self.rescanAdded += added
                     self.rescanProcessed += batch.count
@@ -390,9 +662,13 @@ final class LibraryManager: ObservableObject {
                 rescanSummary = "Scan complete: \(rescanProcessed) checked · \(rescanAdded) added to library · \(rescanProcessed - rescanAdded) existing"
                 lastSuccessfulScan = .now
                 updateMountScanDate(descriptor.id, context: context)
+                if defaults.string(forKey: Self.pendingScanKey) == descriptor.id.uuidString {
+                    defaults.removeObject(forKey: Self.pendingScanKey)
+                }
                 accessNeeded = false
                 lastError = nil
                 refreshOfflineCopies(context: context)
+                scheduleDuplicateMerge(context: context, delay: .milliseconds(500))
             } catch is CancellationError {
                 // Completed catalog batches are retained; unprocessed files are never marked missing.
                 rescanSummary = "Scan cancelled: \(rescanProcessed) checked · \(rescanAdded) added to library"
@@ -414,6 +690,11 @@ final class LibraryManager: ObservableObject {
         defer { pendingMutations -= 1 }
         pauseBackgroundProcessing()
         await processingTask?.value
+        mergeScheduleTask?.cancel()
+        if let mergeTask {
+            mergeTask.cancel()
+            _ = await mergeTask.value
+        }
         guard isRescanning else { return }
         scanTask?.cancel()
         await scanTask?.value
@@ -431,7 +712,9 @@ final class LibraryManager: ObservableObject {
         defer { isRemoving = false; activeImports -= 1 }
         lastError = nil
         let deleteFiles = mode != .externalFolder
-        let items = items.filter { $0.modelContext != nil }
+        // In Hybrid, a song hidden here may be present on another device: never remove it from here.
+        let items = items.filter { $0.modelContext != nil && (storageOption != .hybrid || isShownOnThisDevice($0)) }
+        removalTotal = items.count
         do {
             let presences = try context.fetch(FetchDescriptor<FilePresence>())
             let byFile = Dictionary(grouping: presences, by: \.fileID)
@@ -440,7 +723,8 @@ final class LibraryManager: ObservableObject {
             var firstFailure: String?
             for (index, item) in items.enumerated() {
                 do {
-                    if deleteFiles {
+                    // A song already missing from the folder has no file to delete.
+                    if deleteFiles && availability[item.id] != .missing {
                         guard let relative = item.effectiveRelativePath else { throw LibraryFileError.invalidRelativePath }
                         try await files.deleteUnderlyingFile(relativePath: relative)
                     }
@@ -565,8 +849,18 @@ final class LibraryManager: ObservableObject {
                 try context.save()
                 apply(descriptor: descriptor, context: context)
                 lastError = nil
-                if destinationMode != .managedICloud { setKeepAvailableOffline(false, context: context) }
-                LibrarySyncPreference.set(destinationMode == .managedICloud, in: defaults)
+                // Copying is explicit. The copy becomes this option's location; copying
+                // out of TabBuddy's iCloud library into a folder keeps library info syncing (Hybrid).
+                let current = storageOption ?? .localOnly
+                let option: LibraryStorageOption
+                switch destinationMode {
+                case .managedICloud: option = .iCloudOnly
+                case .managedLocal: option = .localOnly
+                case .externalFolder: option = current == .iCloudOnly ? .hybrid : current
+                }
+                LibraryOptionLocation.remember(.init(libraryID: descriptor.id, mode: destinationMode), for: option, in: defaults)
+                LibraryStorageOption.set(option, in: defaults)
+                storageOption = option
             } catch {
                 if !(error is CancellationError) {
                     lastError = error.localizedDescription
@@ -577,10 +871,109 @@ final class LibraryManager: ObservableObject {
         }
     }
 
+    // MARK: - Duplicate merging (library info synced from several devices)
+
+    private func remoteChangesArrived() {
+        guard storageOption?.syncsMetadata == true, let context = observedContext else { return }
+        scheduleDuplicateMerge(context: context, delay: .seconds(5))
+    }
+
+    /// Debounced: a burst of iCloud imports produces one pass, but a pass still runs
+    /// at least every 30 seconds while imports keep arriving.
+    func scheduleDuplicateMerge(context: ModelContext, delay: Duration = .seconds(5)) {
+        if mergeScheduleTask != nil, let requested = mergeRequestedAt, Date().timeIntervalSince(requested) > 30 { return }
+        if mergeScheduleTask == nil { mergeRequestedAt = Date() }
+        mergeScheduleTask?.cancel()
+        mergeScheduleTask = Task { [weak self] in
+            do { try await Task.sleep(for: delay) } catch { return }
+            guard let self else { return }
+            self.mergeScheduleTask = nil
+            self.mergeRequestedAt = nil
+            await self.mergeDuplicates(context: context)
+        }
+    }
+
+    /// Runs one merge pass on the main actor in bounded, yielding batches. Library
+    /// work (imports, scans, removal, storage changes) takes priority; a busy library
+    /// reschedules the pass.
+    @discardableResult
+    func mergeDuplicates(context: ModelContext) async -> LibraryDuplicateMerger.Summary? {
+        guard mergeTask == nil else { return nil }
+        // Preparation (including a user-started Prepare Library) is not interrupted; merge afterwards.
+        if isRescanning || isRemoving || isMoving || isConfiguring || isProcessingLibrary || activeImports > 0 || pendingMutations > 0 {
+            scheduleDuplicateMerge(context: context, delay: .seconds(10))
+            return nil
+        }
+        isMergingDuplicates = true
+        let presence = availabilityByFileID
+        let protected: Set<UUID> = readerFileID.map { [$0] } ?? []
+        let libraryID = activeLibraryID
+        let task = Task { @MainActor in
+            await LibraryDuplicateMerger.merge(context: context, presence: presence,
+                                               fingerprintLibraryID: libraryID, protectedIDs: protected)
+        }
+        mergeTask = task
+        let summary = await task.value
+        mergeTask = nil
+        isMergingDuplicates = false
+        applyMergeResult(summary, context: context)
+        if storageOption == .hybrid { await verifyUnknownPresence(context: context) }
+        startBackgroundProcessing(context: context)
+        return summary
+    }
+
+    /// Follow merged records everywhere a file ID is used outside the synced catalog.
+    private func applyMergeResult(_ summary: LibraryDuplicateMerger.Summary, context: ModelContext) {
+        guard !summary.remapped.isEmpty else { return }
+        let presences = (try? context.fetch(FetchDescriptor<FilePresence>())) ?? []
+        var availability: [UUID: FileAvailability] = [:]
+        for presence in presences { availability[presence.fileID] = presence.availability }
+        availabilityByFileID = availability
+        for (old, new) in summary.remapped {
+            if cachedFileIDs.remove(old) != nil { cachedFileIDs.insert(new) }
+            rekeyPracticeTakes(old.uuidString, new.uuidString)
+            for prefix in ["guitarPro.practice.", "practice.unreviewedTake."] {
+                guard let value = defaults.object(forKey: prefix + old.uuidString) else { continue }
+                if defaults.object(forKey: prefix + new.uuidString) == nil { defaults.set(value, forKey: prefix + new.uuidString) }
+                defaults.removeObject(forKey: prefix + old.uuidString)
+            }
+            if readerFileID == old { readerFileID = new }
+        }
+    }
+
+    /// In Hybrid, records synced from another device have no presence here yet. Check
+    /// whether their files are in this device's folder (downloaded or not) so present
+    /// songs show and the rest stay hidden. Nothing is deleted.
+    func verifyUnknownPresence(context: ModelContext) async {
+        guard storageOption == .hybrid, !accessNeeded, let libraryID = activeLibraryID else { return }
+        let optionalID: UUID? = libraryID
+        let items = ((try? context.fetch(FetchDescriptor<FileItem>(predicate: #Predicate { $0.libraryID == optionalID }))) ?? [])
+            .filter { availabilityByFileID[$0.id] == nil && $0.effectiveRelativePath != nil }
+        guard !items.isEmpty else { return }
+        let paths = items.compactMap(\.effectiveRelativePath)
+        guard let present = try? await files.existingPaths(paths), activeLibraryID == libraryID else { return }
+        var updated = availabilityByFileID
+        let now = Date.now
+        for item in items where item.modelContext != nil && updated[item.id] == nil {
+            let found = item.effectiveRelativePath.map(present.contains) ?? false
+            let availability: FileAvailability = found ? .available : .missing
+            context.insert(FilePresence(fileID: item.id, availability: availability, lastSeenAt: found ? now : nil))
+            updated[item.id] = availability
+        }
+        try? context.save()
+        availabilityByFileID = updated
+    }
+
     /// Reloading SwiftData must not leave work holding the previous model context.
     func finishDatabaseWork() async {
         pauseBackgroundProcessing()
         await processingTask?.value
+        mergeScheduleTask?.cancel()
+        mergeScheduleTask = nil
+        if let mergeTask {
+            mergeTask.cancel()
+            _ = await mergeTask.value
+        }
         while activeImports > 0 { try? await Task.sleep(nanoseconds: 20_000_000) }
         scanTask?.cancel()
         await scanTask?.value
@@ -618,7 +1011,7 @@ final class LibraryManager: ObservableObject {
     }
 
     func refreshOfflineCopies(context: ModelContext) {
-        guard keepAvailableOffline, mode == .managedICloud, let id = activeLibraryID else { return }
+        guard keepAvailableOffline, isCloudBackedLocation, let id = activeLibraryID else { return }
         guard !isPreparingOffline else { offlineRefreshNeeded = true; return }
         isPreparingOffline = true
         offlineProcessed = 0
@@ -693,9 +1086,8 @@ final class LibraryManager: ObservableObject {
         let effectiveMode = mount?.modeOverrideRaw.flatMap(LibraryMode.init(rawValue:)) ?? descriptor.mode
         mode = effectiveMode
         keepAvailableOffline = defaults.bool(forKey: "library.offline.\(descriptor.id.uuidString)")
-        if defaults.object(forKey: LibrarySyncPreference.key) == nil {
-            LibrarySyncPreference.set(effectiveMode == .managedICloud, in: defaults)
-        }
+        storageOption = LibraryStorageOption.stored(in: defaults)
+        isCloudBackedLocation = effectiveMode == .managedICloud
         lastSuccessfulScan = mount?.lastSuccessfulScan
         let bookmark = mount?.bookmarkData.isEmpty == false ? mount?.bookmarkData : nil
         accessNeeded = effectiveMode == .externalFolder && bookmark == nil
@@ -710,6 +1102,8 @@ final class LibraryManager: ObservableObject {
                 var stale = false
                 Self.activeRoot = try? URL(resolvingBookmarkData: bookmark, options: [],
                                            bookmarkDataIsStale: &stale)
+                let ubiquitous = await files.rootIsUbiquitous()
+                if activeLibraryID == descriptor.id { isCloudBackedLocation = ubiquitous }
             } else if effectiveMode != .externalFolder {
                 do {
                     Self.activeRoot = try await files.configureManagedLibrary(
@@ -740,7 +1134,7 @@ final class LibraryManager: ObservableObject {
 
     func startBackgroundProcessing(context: ModelContext, automatic: Bool = true) {
         guard pendingMutations == 0, processingAllowed, (!automatic || automaticallyProcessesLibrary), !isProcessingLibrary,
-              !isRescanning, !isRemoving, !isMoving, !isConfiguring, activeImports == 0,
+              !isRescanning, !isRemoving, !isMoving, !isConfiguring, !isMergingDuplicates, activeImports == 0,
               !accessNeeded, let libraryID = activeLibraryID,
               !CanonicalConverter.shared.isConverting else { return }
         let version = CanonicalConverterVersion.current
@@ -928,7 +1322,10 @@ final class LibraryManager: ObservableObject {
             if item.filename != record.filename { item.filename = record.filename }
             let folderName = parentName(of: record.relativePath)
             if item.folderName != folderName { item.folderName = folderName }
-            if item.byteSize != record.byteSize || item.sourceModificationDate != record.modificationDate {
+            // An iCloud placeholder reports no modification date; keep the known version
+            // (and its fingerprint) rather than treating eviction as a content change.
+            let unknownVersion = record.modificationDate == nil && item.sourceModificationDate != nil
+            if !unknownVersion && (item.byteSize != record.byteSize || item.sourceModificationDate != record.modificationDate) {
                 item.byteSize = record.byteSize
                 item.sourceModificationDate = record.modificationDate
                 item.metadataReadVersion = 0
@@ -1235,13 +1632,32 @@ final class LibraryScanProgress: ObservableObject {
 }
 
 @MainActor
-private final class LibraryDiscoveryIndex {
+final class LibraryDiscoveryIndex {
     private var paths: Set<String>
+    private var insertedPresence: [UUID: FileAvailability] = [:]
     init(paths: Set<String>) { self.paths = paths }
 
+    /// Adds catalog entries for unknown paths. Before inserting, it checks the store
+    /// for a record with the same library and path that iCloud may have imported from
+    /// another device since the scan started, and reuses it instead of adding a duplicate.
     func insert(_ records: [LibraryFileRecord], libraryID: UUID, context: ModelContext) -> Int {
+        let unknown = records.filter { !paths.contains($0.relativePath) }
+        guard !unknown.isEmpty else { return 0 }
+        // Optional-typed candidates keep the predicate a plain SQL `IN` (nil-coalescing is not translatable).
+        let candidates: [String?] = unknown.map(\.relativePath)
+        let optionalID: UUID? = libraryID
+        let existing = FetchDescriptor<FileItem>(predicate: #Predicate { item in
+            item.libraryID == optionalID &&
+            (candidates.contains(item.storageRelativePath) || candidates.contains(item.libraryPath))
+        })
+        for item in (try? context.fetch(existing)) ?? [] {
+            if let path = item.effectiveRelativePath {
+                paths.insert(path)
+                insertedPresence[item.id] = .available
+            }
+        }
         var added = 0
-        for record in records where paths.insert(record.relativePath).inserted {
+        for record in unknown where paths.insert(record.relativePath).inserted {
             let parent = (record.relativePath as NSString).deletingLastPathComponent
             let item = FileItem(bookmark: Data(), filename: record.filename,
                                 folderName: (parent as NSString).lastPathComponent,
@@ -1252,8 +1668,334 @@ private final class LibraryDiscoveryIndex {
             item.sourceModificationDate = record.modificationDate
             context.insert(item)
             context.insert(FilePresence(fileID: item.id, availability: .available, lastSeenAt: .now))
+            insertedPresence[item.id] = .available
             added += 1
         }
         return added
+    }
+
+    /// Presence recorded by the last inserts, for the manager's in-memory availability.
+    func drainInsertedPresence() -> [UUID: FileAvailability] {
+        defer { insertedPresence = [:] }
+        return insertedPresence
+    }
+}
+
+// MARK: - Duplicate merge
+
+/// Merges catalog records that describe the same song. They appear when two devices
+/// each catalogued the same library folder and then mirror library info through
+/// iCloud. Idempotent and deterministic: every device picks the same survivor
+/// (earliest `importedAt`, then smallest UUID string) and the same merged values.
+@MainActor
+enum LibraryDuplicateMerger {
+    struct Summary: Equatable {
+        var mergedGroups = 0
+        var removedRecords = 0
+        var removedDescriptors = 0
+        var skippedGroups = 0
+        /// Removed record ID → surviving record ID.
+        var remapped: [UUID: UUID] = [:]
+    }
+
+    struct Candidate: Sendable {
+        let index: Int
+        let id: UUID
+        let libraryID: UUID
+        let path: String?
+        let importedAt: Date
+        let hash: String?
+    }
+
+    private struct Key: Hashable { let libraryID: UUID; let path: String }
+
+    /// iCloud Drive and the default iOS volume are case-insensitive and may return
+    /// either Unicode normalization, so paths compare after both are folded.
+    nonisolated static func normalizedPath(_ path: String) -> String {
+        let normalized = (try? LibraryFileService.normalizedRelativePath(path)) ?? path
+        return normalized.precomposedStringWithCanonicalMapping.lowercased()
+    }
+
+    nonisolated static func precedes(_ lhs: (Date, UUID), _ rhs: (Date, UUID)) -> Bool {
+        lhs.0 != rhs.0 ? lhs.0 < rhs.0 : lhs.1.uuidString < rhs.1.uuidString
+    }
+
+    private nonisolated static func isPresent(_ availability: FileAvailability?) -> Bool {
+        availability == .available || availability == .downloading
+    }
+
+    /// Pure grouping. Records group by (library, normalized path). A record whose file
+    /// is missing here also joins the one present record with the same content
+    /// fingerprint (a renamed or moved file). Returns candidate indices per group,
+    /// survivor first.
+    nonisolated static func plan(_ candidates: [Candidate], presence: [UUID: FileAvailability],
+                                 fingerprintLibraryID: UUID?) -> [[Int]] {
+        var parent = Array(0..<candidates.count)
+        func find(_ x: Int) -> Int {
+            var x = x
+            while parent[x] != x { parent[x] = parent[parent[x]]; x = parent[x] }
+            return x
+        }
+        func union(_ a: Int, _ b: Int) {
+            let ra = find(a), rb = find(b)
+            if ra != rb { parent[max(ra, rb)] = min(ra, rb) }
+        }
+        var firstByKey: [Key: Int] = [:]
+        for candidate in candidates {
+            guard let path = candidate.path else { continue }
+            let key = Key(libraryID: candidate.libraryID, path: normalizedPath(path))
+            if let first = firstByKey[key] { union(first, candidate.index) } else { firstByKey[key] = candidate.index }
+        }
+        if let library = fingerprintLibraryID {
+            var presentByHash: [String: [Int]] = [:]
+            var missingByHash: [String: [Int]] = [:]
+            for candidate in candidates where candidate.libraryID == library {
+                guard let hash = candidate.hash else { continue }
+                let availability = presence[candidate.id]
+                if availability == .missing { missingByHash[hash, default: []].append(candidate.index) }
+                else if isPresent(availability) { presentByHash[hash, default: []].append(candidate.index) }
+            }
+            for (hash, missing) in missingByHash {
+                guard let present = presentByHash[hash],
+                      Set(present.map(find)).count == 1 else { continue }   // Ambiguous copies stay separate.
+                for index in missing { union(present[0], index) }
+            }
+        }
+        var groups: [Int: [Int]] = [:]
+        for candidate in candidates { groups[find(candidate.index), default: []].append(candidate.index) }
+        return groups.values.filter { $0.count > 1 }.map { members in
+            members.sorted {
+                precedes((candidates[$0].importedAt, candidates[$0].id), (candidates[$1].importedAt, candidates[$1].id))
+            }
+        }.sorted { $0[0] < $1[0] }
+    }
+
+    static func merge(context: ModelContext, presence: [UUID: FileAvailability], fingerprintLibraryID: UUID?,
+                      protectedIDs: Set<UUID> = [], batchSize: Int = 100, fetchChunk: Int = 1_000,
+                      canonicalExists: (String) -> Bool = { CanonicalStore.exists(filename: $0) }) async -> Summary {
+        var summary = Summary()
+        summary.removedDescriptors = mergeDescriptors(context: context)
+
+        // Read the catalog in bounded chunks so the main actor keeps handling UI.
+        var models: [FileItem] = []
+        var candidates: [Candidate] = []
+        var seen = Set<PersistentIdentifier>()
+        var offset = 0
+        while true {
+            var descriptor = FetchDescriptor<FileItem>(sortBy: [SortDescriptor(\.importedAt), SortDescriptor(\.filename)])
+            descriptor.fetchOffset = offset
+            descriptor.fetchLimit = fetchChunk
+            descriptor.propertiesToFetch = [\.id, \.libraryID, \.storageRelativePath, \.libraryPath, \.importedAt, \.contentHash]
+            guard let chunk = try? context.fetch(descriptor), !chunk.isEmpty else { break }
+            for item in chunk {
+                // Offset paging can repeat a row if the catalog changes meanwhile.
+                guard let libraryID = item.libraryID, seen.insert(item.persistentModelID).inserted else { continue }
+                candidates.append(Candidate(index: models.count, id: item.id, libraryID: libraryID,
+                                            path: item.effectiveRelativePath, importedAt: item.importedAt,
+                                            hash: item.contentHash))
+                models.append(item)
+            }
+            offset += chunk.count
+            if chunk.count < fetchChunk { break }
+            await Task.yield()
+            if Task.isCancelled { return summary }
+        }
+        let snapshot = candidates
+        let groups = await Task.detached(priority: .utility) {
+            plan(snapshot, presence: presence, fingerprintLibraryID: fingerprintLibraryID)
+        }.value
+        guard !groups.isEmpty else {
+            if summary.removedDescriptors > 0 { try? context.save() }
+            return summary
+        }
+
+        var tagDelta: [String: Int] = [:]
+        var presenceByFile: [UUID: [FilePresence]] = [:]
+        for record in (try? context.fetch(FetchDescriptor<FilePresence>())) ?? [] {
+            presenceByFile[record.fileID, default: []].append(record)
+        }
+        for (batchIndex, group) in groups.enumerated() {
+            let members = group.map { models[$0] }.filter { $0.modelContext != nil && !$0.isDeleted }
+            if members.count < 2 { continue }
+            if members.contains(where: { protectedIDs.contains($0.id) }) { summary.skippedGroups += 1; continue }
+            let ordered = members.sorted { precedes(($0.importedAt, $0.id), ($1.importedAt, $1.id)) }
+            guard Set(ordered.map(ObjectIdentifier.init)).count == ordered.count else { summary.skippedGroups += 1; continue }
+            let survivor = ordered[0]
+            let fileSource = ordered.first { isPresent(presence[$0.id]) } ?? survivor
+            for member in ordered { for tag in Set(member.tags) { tagDelta[tag, default: 0] -= 1 } }
+            mergeFields(into: survivor, from: ordered, fileSource: fileSource, canonicalExists: canonicalExists)
+            for tag in Set(survivor.tags) { tagDelta[tag, default: 0] += 1 }
+            // Keep the best local presence for the survivor.
+            let records = ordered.flatMap { presenceByFile[$0.id] ?? [] }
+            if let best = records.max(by: { rank($0.availability) < rank($1.availability) }) {
+                if best.fileID != survivor.id { best.fileID = survivor.id }
+                for record in records where record !== best { context.delete(record) }
+                for member in ordered { presenceByFile[member.id] = nil }
+                presenceByFile[survivor.id] = [best]
+            }
+            for loser in ordered.dropFirst() {
+                // Two rows with one UUID cannot be ordered identically on every device; keep both.
+                guard loser.id != survivor.id else { continue }
+                summary.remapped[loser.id] = survivor.id
+                context.delete(loser)
+                summary.removedRecords += 1
+            }
+            summary.mergedGroups += 1
+            if (batchIndex + 1).isMultiple(of: batchSize) {
+                try? context.save()
+                await Task.yield()
+                if Task.isCancelled { break }
+            }
+        }
+        try? context.save()
+        if summary.removedRecords > 0 { applyTagDelta(tagDelta, context: context) }
+        return summary
+    }
+
+    /// Adjust tag counts by the merge's change instead of re-reading the whole catalog.
+    /// An index that was never built is rebuilt once.
+    private static func applyTagDelta(_ delta: [String: Int], context: ModelContext) {
+        let stats = (try? context.fetch(FetchDescriptor<TagStat>())) ?? []
+        guard !stats.isEmpty else {
+            if !delta.isEmpty { TagIndexer.rebuild(in: context) }
+            return
+        }
+        var byName: [String: TagStat] = [:]
+        for stat in stats where byName[stat.name] == nil { byName[stat.name] = stat }
+        for (tag, change) in delta where change != 0 {
+            if let stat = byName[tag] {
+                stat.count += change
+                if stat.count <= 0 { context.delete(stat) }
+            } else if change > 0 {
+                context.insert(TagStat(name: tag, count: change))
+            }
+        }
+        try? context.save()
+    }
+
+    private nonisolated static func rank(_ availability: FileAvailability) -> Int {
+        switch availability {
+        case .available: return 5
+        case .downloading: return 4
+        case .accessNeeded: return 2
+        case .failed: return 1
+        case .missing: return 0
+        }
+    }
+
+    /// Two devices that adopted the same folder can each create its descriptor.
+    /// Identical duplicates cannot be ordered the same way on every device, so they stay.
+    static func mergeDescriptors(context: ModelContext) -> Int {
+        let descriptors = (try? context.fetch(FetchDescriptor<LibraryDescriptor>())) ?? []
+        var removed = 0
+        for (_, group) in Dictionary(grouping: descriptors, by: \.id) where group.count > 1 {
+            func key(_ d: LibraryDescriptor) -> (Date, String, String, Int) { (d.createdAt, d.modeRaw, d.displayName, -d.rootGeneration) }
+            let ordered = group.sorted { lhs, rhs in
+                let a = key(lhs), b = key(rhs)
+                if a.0 != b.0 { return a.0 < b.0 }
+                if a.1 != b.1 { return a.1 < b.1 }
+                if a.2 != b.2 { return a.2 < b.2 }
+                return a.3 < b.3
+            }
+            let survivor = ordered[0]
+            let generation = group.map(\.rootGeneration).max() ?? survivor.rootGeneration
+            for other in ordered.dropFirst() {
+                let a = key(survivor), b = key(other)
+                guard a.0 != b.0 || a.1 != b.1 || a.2 != b.2 || a.3 != b.3 else { continue }
+                context.delete(other)
+                removed += 1
+            }
+            if survivor.rootGeneration != generation { survivor.rootGeneration = generation }
+        }
+        return removed
+    }
+
+    /// Merge rules (members are ordered survivor first):
+    /// tags union; favorite OR; play count max; last opened max; user-edited
+    /// descriptive fields from the first edited record (otherwise survivor, filling
+    /// blanks); loops and practice settings from the most recently opened record;
+    /// canonical tab data from the valid, newest conversion; file fields from a
+    /// record whose file is present on this device.
+    static func mergeFields(into survivor: FileItem, from ordered: [FileItem], fileSource: FileItem,
+                            canonicalExists: (String) -> Bool) {
+        func set<T: Equatable>(_ keyPath: ReferenceWritableKeyPath<FileItem, T>, _ value: T) {
+            if survivor[keyPath: keyPath] != value { survivor[keyPath: keyPath] = value }
+        }
+        // Choose sources before any survivor field changes.
+        var practice = survivor
+        for member in ordered where member.lastOpenedAt > practice.lastOpenedAt { practice = member }
+        let edited = ordered.first { $0.metadataEdited }
+        var tags = survivor.tags
+        for member in ordered.dropFirst() { for tag in member.tags where !tags.contains(tag) { tags.append(tag) } }
+        set(\.tags, tags)
+        set(\.isFavorite, ordered.contains { $0.isFavorite })
+        set(\.playCount, ordered.map(\.playCount).max() ?? survivor.playCount)
+        set(\.lastOpenedAt, ordered.map(\.lastOpenedAt).max() ?? survivor.lastOpenedAt)
+        set(\.importedAt, ordered.map(\.importedAt).min() ?? survivor.importedAt)
+        set(\.confidenceNoticeDismissed, ordered.contains { $0.confidenceNoticeDismissed })
+        if survivor.bookmark.isEmpty, let bookmark = ordered.first(where: { !$0.bookmark.isEmpty })?.bookmark { set(\.bookmark, bookmark) }
+
+        // Descriptive details: an edited record wins as-is; otherwise fill blanks.
+        let describing = edited ?? survivor
+        let fill = edited == nil
+        func pick(_ keyPath: ReferenceWritableKeyPath<FileItem, String?>) {
+            var value = describing[keyPath: keyPath]
+            if fill && value == nil { value = ordered.lazy.compactMap { $0[keyPath: keyPath] }.first }
+            set(keyPath, value)
+        }
+        for keyPath in [\FileItem.embeddedTitle, \.artist, \.composer, \.arranger, \.collectionTitle, \.arrangement,
+                        \.sourceName, \.sourceURL, \.sourceID, \.copyrightNotice, \.instrument, \.tuning] {
+            pick(keyPath)
+        }
+        var instruments = describing.instruments
+        if fill && instruments.isEmpty { instruments = ordered.first { !$0.instruments.isEmpty }?.instruments ?? [] }
+        set(\.instruments, instruments)
+        // A rename is a user choice even without the score-details edit flag.
+        set(\.customTitle, describing.customTitle ?? ordered.lazy.compactMap(\.customTitle).first)
+        set(\.metadataEdited, edited != nil)
+        set(\.metadataReadVersion, edited?.metadataReadVersion ?? (ordered.map(\.metadataReadVersion).max() ?? 0))
+
+        // Practice settings follow the most recently opened copy.
+        set(\.loopStartY, practice.loopStartY)
+        set(\.loopEndY, practice.loopEndY)
+        set(\.loopStartMeasure, practice.loopStartMeasure)
+        set(\.loopEndMeasure, practice.loopEndMeasure)
+        set(\.scrollSpeed, practice.scrollSpeed)
+        set(\.userBPM, practice.userBPM)
+        set(\.referenceBPM, practice.referenceBPM ?? ordered.lazy.compactMap(\.referenceBPM).first)
+        set(\.preferredTextMode, practice.preferredTextMode)
+        set(\.preferredNotation, practice.preferredNotation)
+
+        // Canonical tab data: prefer a file that exists here, then the newest converter version.
+        let converted = ordered.filter { $0.canonicalFilename != nil }
+        if let best = converted.max(by: { lhs, rhs in
+            let l = (canonicalExists(lhs.canonicalFilename!) ? 1 : 0, lhs.canonicalVersion)
+            let r = (canonicalExists(rhs.canonicalFilename!) ? 1 : 0, rhs.canonicalVersion)
+            if l != r { return l < r }
+            // Stable: earlier members win ties.
+            return (ordered.firstIndex { $0 === lhs } ?? 0) > (ordered.firstIndex { $0 === rhs } ?? 0)
+        }) {
+            set(\.canonicalFilename, best.canonicalFilename)
+            set(\.provenanceData, best.provenanceData)
+            set(\.canonicalVersion, best.canonicalVersion)
+            set(\.derivedTitle, best.derivedTitle)
+            set(\.foreword, best.foreword)
+        }
+        set(\.backgroundProcessingVersion, ordered.map(\.backgroundProcessingVersion).max() ?? 0)
+
+        // File identity comes from a copy whose file is present here.
+        if fileSource !== survivor {
+            set(\.storageRelativePath, fileSource.storageRelativePath)
+            set(\.libraryPath, fileSource.libraryPath)
+            set(\.filename, fileSource.filename)
+            set(\.folderName, fileSource.folderName)
+            set(\.byteSize, fileSource.byteSize)
+            set(\.sourceModificationDate, fileSource.sourceModificationDate)
+            set(\.contentHash, fileSource.contentHash ?? survivor.contentHash)
+            set(\.needsLibraryMigration, fileSource.needsLibraryMigration)
+        } else if survivor.contentHash == nil,
+                  let hash = ordered.first(where: { $0.contentHash != nil && $0.effectiveRelativePath == survivor.effectiveRelativePath })?.contentHash {
+            set(\.contentHash, hash)
+        }
     }
 }

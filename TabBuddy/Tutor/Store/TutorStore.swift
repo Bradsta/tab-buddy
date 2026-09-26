@@ -272,6 +272,21 @@ final class TutorStore {
         try save()
     }
 
+    /// Moves every take recorded for one library score to another score key.
+    /// Used when duplicate library catalog entries are merged, so a take history
+    /// follows the surviving `FileItem.id`. Audio files are unchanged; the
+    /// per-score audio cap is re-applied to the combined history.
+    @discardableResult
+    func rekeyTakes(from oldKey: String, to newKey: String) throws -> Int {
+        guard oldKey != newKey else { return 0 }
+        let moved = takes(forScore: oldKey)
+        guard !moved.isEmpty else { return 0 }
+        for take in moved { take.scoreKey = newKey }
+        try save()
+        try pruneTakeAudio(forScore: newKey)
+        return moved.count
+    }
+
     // MARK: - Take audio encoding
 
     /// Re-encodes a take's audio to AAC off the main thread, then points the

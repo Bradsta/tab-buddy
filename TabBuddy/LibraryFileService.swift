@@ -144,8 +144,10 @@ actor LibraryFileService {
             rootLease.close()
             return FileAccessLease(url: cached)
         }
+        let placeholder = url.deletingLastPathComponent().appendingPathComponent(".\(url.lastPathComponent).icloud")
         guard FileManager.default.fileExists(atPath: url.path) ||
-                (allowCloudPlaceholder && values?.isUbiquitousItem == true && values?.ubiquitousItemDownloadingStatus == .notDownloaded) else {
+                (allowCloudPlaceholder && values?.isUbiquitousItem == true && values?.ubiquitousItemDownloadingStatus == .notDownloaded) ||
+                (allowCloudPlaceholder && FileManager.default.fileExists(atPath: placeholder.path)) else {
             rootLease.close()
             throw LibraryFileError.fileMissing
         }
@@ -337,34 +339,61 @@ actor LibraryFileService {
         return records.sorted { $0.relativePath.localizedStandardCompare($1.relativePath) == .orderedAscending }
     }
 
+    /// The logical name of an iCloud Drive placeholder (`.Song.pdf.icloud` → `Song.pdf`), if it is one.
+    static func placeholderTarget(_ name: String) -> String? {
+        guard name.hasPrefix("."), name.hasSuffix(".icloud"), name.count > 8 else { return nil }
+        let target = String(name.dropFirst().dropLast(".icloud".count))
+        return target.isEmpty ? nil : target
+    }
+
     private static func scanManifest(at rootURL: URL, onDiscovered: (@Sendable (Int) -> Void)? = nil, onRecords: (@Sendable ([LibraryFileRecord]) -> Void)? = nil) throws -> [LibraryFileRecord] {
         let root = rootURL.standardizedFileURL
-        let keys: [URLResourceKey] = [.isRegularFileKey, .fileSizeKey,
+        let keys: [URLResourceKey] = [.isRegularFileKey, .isDirectoryKey, .isHiddenKey, .fileSizeKey,
                                      .contentModificationDateKey, .isUbiquitousItemKey]
         var enumerationError: Error?
+        // Hidden entries are filtered here rather than by the enumerator so iCloud Drive
+        // placeholders for files that are not downloaded still count as present.
         guard let enumerator = FileManager.default.enumerator(
             at: root, includingPropertiesForKeys: keys,
-            options: [.skipsHiddenFiles, .skipsPackageDescendants],
+            options: [.skipsPackageDescendants],
             errorHandler: { _, error in enumerationError = error; return false }
         ) else { throw LibraryFileError.accessDenied }
 
         var records: [LibraryFileRecord] = []
+        var seenPaths = Set<String>()
         defer {
             let remainder = records.count % 100
             if remainder > 0 { onRecords?(Array(records.suffix(remainder))) }
         }
-        for case let fileURL as URL in enumerator {
+        while let fileURL = enumerator.nextObject() as? URL {
             try Task.checkCancellation()
-            let ext = fileURL.pathExtension.lowercased()
+            let name = fileURL.lastPathComponent
+            var logicalURL = fileURL
+            var isPlaceholder = false
+            if name.hasPrefix(".") {
+                if let target = placeholderTarget(name) {
+                    logicalURL = fileURL.deletingLastPathComponent().appendingPathComponent(target)
+                    isPlaceholder = true
+                } else {
+                    let values = try? fileURL.resourceValues(forKeys: [.isDirectoryKey])
+                    if values?.isDirectory == true { enumerator.skipDescendants() }
+                    continue
+                }
+            }
+            let ext = logicalURL.pathExtension.lowercased()
             guard GuitarProFileType.supports(extension: ext) else { continue }
             let values = try? fileURL.resourceValues(forKeys: Set(keys))
-            guard values?.isRegularFile != false else { continue }
-            let relative = try Self.relativePath(of: fileURL, under: root)
+            if !isPlaceholder {
+                if values?.isHidden == true { continue }
+                guard values?.isRegularFile != false else { continue }
+            }
+            let relative = try Self.relativePath(of: logicalURL, under: root)
+            guard seenPaths.insert(relative).inserted else { continue }
             records.append(LibraryFileRecord(
                 relativePath: relative,
-                filename: fileURL.lastPathComponent,
-                byteSize: Int64(values?.fileSize ?? 0),
-                modificationDate: values?.contentModificationDate
+                filename: logicalURL.lastPathComponent,
+                byteSize: isPlaceholder ? 0 : Int64(values?.fileSize ?? 0),
+                modificationDate: isPlaceholder ? nil : values?.contentModificationDate
             ))
             if records.count.isMultiple(of: 100) {
                 onRecords?(Array(records.suffix(100)))
@@ -475,6 +504,35 @@ actor LibraryFileService {
         }
         if let coordinationError { throw coordinationError }
         return try result.get()
+    }
+
+    /// Which of these library paths have a file in the current root, including iCloud
+    /// placeholders that are not downloaded. Reads directory metadata only.
+    func existingPaths(_ relativePaths: [String]) throws -> Set<String> {
+        let lease = try acquireRoot()
+        defer { lease.close() }
+        var present = Set<String>()
+        for path in relativePaths {
+            try Task.checkCancellation()
+            guard let normalized = try? Self.normalizedRelativePath(path) else { continue }
+            let url = lease.url.appendingPathComponent(normalized)
+            let placeholder = url.deletingLastPathComponent().appendingPathComponent(".\(url.lastPathComponent).icloud")
+            if FileManager.default.fileExists(atPath: url.path) || FileManager.default.fileExists(atPath: placeholder.path) {
+                present.insert(path)
+            } else if let values = try? url.resourceValues(forKeys: [.isUbiquitousItemKey, .ubiquitousItemDownloadingStatusKey]),
+                      values.isUbiquitousItem == true, values.ubiquitousItemDownloadingStatus != nil {
+                present.insert(path)
+            }
+        }
+        return present
+    }
+
+    /// Whether the active root lives in iCloud (TabBuddy's container or iCloud Drive).
+    func rootIsUbiquitous() -> Bool {
+        guard let lease = try? acquireRoot() else { return false }
+        defer { lease.close() }
+        if configuration?.mode == .managedICloud { return true }
+        return (try? lease.url.resourceValues(forKeys: [.isUbiquitousItemKey]))?.isUbiquitousItem == true
     }
 
     func deleteUnderlyingFile(relativePath: String) throws {

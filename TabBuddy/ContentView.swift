@@ -65,6 +65,13 @@ struct ContentView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { ReaderPersistence.flush(context) }
         }
+        .onChange(of: path) { _, newPath in
+            // Duplicate merging leaves the open score's record alone until the reader closes.
+            LibraryManager.shared.readerFileID = newPath.contains(.viewer) ? currentFile?.id : nil
+        }
+        .onChange(of: currentFile?.id) { _, id in
+            if path.contains(.viewer) { LibraryManager.shared.readerFileID = id }
+        }
     }
 
     private func openFile(_ file: FileItem) {

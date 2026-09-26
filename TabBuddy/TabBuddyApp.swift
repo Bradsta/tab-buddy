@@ -64,6 +64,16 @@ struct TabBuddyApp: App {
     ///     (tags, favorites, recents, play counts follow the user across devices).
     ///   • "local" — TagStat (derived index, rebuilt on demand) and ComposedTab
     ///     (Maker documents), device-local.
+    /// Library info mirrors through CloudKit only for iCloud only and Hybrid, and
+    /// only while an iCloud account is available. Local only never mirrors.
+    static func mirrorsMetadata(option: LibraryStorageOption?, cloudAvailable: Bool) -> Bool {
+        (option?.syncsMetadata ?? false) && cloudAvailable
+    }
+
+    static func makeConfigurations(option: LibraryStorageOption?, cloudAvailable: Bool? = nil) -> [ModelConfiguration] {
+        makeConfigurations(syncEnabled: option?.syncsMetadata ?? false, cloudAvailable: cloudAvailable)
+    }
+
     static func makeConfigurations(syncEnabled: Bool, cloudAvailable: Bool? = nil) -> [ModelConfiguration] {
         let cloud = ModelConfiguration(
             "cloud",

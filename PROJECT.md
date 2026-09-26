@@ -11,8 +11,8 @@ Defaults should work without choosing a directory, having an iCloud account, or 
 ## Current features
 
 - Import PDFs, plain-text tablature, and Guitar Pro 3–8 files (`gp3`, `gp4`, `gp5`, `gpx`, `gp`). Imports copy files; source documents stay untouched. Folder imports preserve their hierarchy and duplicate filenames receive separate destinations. Imports commit the first successful file immediately, then batches of 100; completion, cancellation, and copy failures flush the remainder. Already copied songs remain in the catalog if a later file fails. The fast import phase only copies files and catalogs names/paths; metadata and text-tab preparation are opt-in through Settings → Prepare Library; automatic preparation defaults off. Files must finish copying before they are catalogued; this does not create playable placeholders before downloads finish.
-- **… → Settings** groups library storage/offline access, backup export/restore, Generate Tab Data, Rescan Library, and Remove All Files. The main menu retains Select and Settings; removal still requires confirmation.
-- Folder view supports selecting a folder and all nested scores, Select All includes folder contents, and folder context menus remove the selected references. External libraries retain source files; files still present are rediscovered on rescan. Managed libraries delete selected song files, without recursively deleting unrelated filesystem contents. Deletion waits for preparation and rescans to stop; stale conversion/fingerprint callbacks cannot write back to deleted models.
+- **… → Settings** groups the three library options (Local only, iCloud only, Hybrid) with the current location, maintenance (Prepare Library, Rescan Library, Generate Tab Data), backup export/restore, Remove All Files, and a collapsed **More Storage Options** area (offline copies, Reconnect Folder, Copy Library to New Folder). The main menu retains Select and Settings; removal still requires confirmation.
+- Folder view supports selecting a folder and all nested scores, Select All includes folder contents, and folder context menus remove the selected references. Chosen-folder libraries (Local only with a folder, Hybrid) retain source files; files still present are rediscovered on rescan. App-managed libraries delete selected song files, without recursively deleting unrelated filesystem contents. Deletion waits for preparation and rescans to stop; stale conversion/fingerprint callbacks cannot write back to deleted models.
 - Library search, instrument filtering (only instruments present in the active library, including Unspecified when needed), tags, favorites, recents, most-played sorting, folder browsing, metadata backup/restore, and share-extension imports.
 - Tile metadata hides unknown instruments/tunings. Known instruments and tunings use tag-like editable chips that open Score details; tuning supports presets, custom text, and clearing. They remain structured fields rather than free-form tags, and tuning is searchable by raw value or normalized name. Tuning edits describe the arrangement and do not retune score tracks.
 - Score details support multiple instruments, composer, arranger/transcriber, game/album/collection, arrangement description, and source name/link. Search includes these descriptive fields. Embedded descriptive fields are indexed by opt-in background preparation for locally available supported files; additional metadata is inferred when a score is opened/converted. Ambiguous instruments remain Unspecified. Saving user edits prevents automatic extraction from overwriting them. Guitar Pro instruments come from track MIDI programs and percussion flags (approximate for instruments without dedicated MIDI programs).
@@ -58,7 +58,7 @@ Both features listen through the device microphone only (no MIDI input), work fu
 
 ## Portable score metadata
 
-Score details writes title, artist, composer, arranger, collection, arrangement, instruments, tuning, source name/URL/ID, and copyright inside supported library files. Deferred preparation reads these fields without requiring a sidecar. Catalog rescans (including Use Existing Folder) skip embedded content reads to avoid blocking on file providers; text and Guitar Pro readers also extract metadata when opened. User edits take precedence over inference. Personal tags, favorites, recents, loops, and practice settings remain library data and use the existing sync/backup flow.
+Score details writes title, artist, composer, arranger, collection, arrangement, instruments, tuning, source name/URL/ID, and copyright inside supported library files. Deferred preparation reads these fields without requiring a sidecar. Catalog rescans (including adopting a chosen folder) skip embedded content reads to avoid blocking on file providers; text and Guitar Pro readers also extract metadata when opened. User edits take precedence over inference. Personal tags, favorites, recents, loops, and practice settings remain library data and use the existing sync/backup flow.
 
 - UTF-8 text: a readable `[TabBuddy Metadata v1]` header; the original body remains byte-identical. Values needing whitespace/newlines use JSON string escaping.
 - GP3–5: native descriptive fields plus a marked notes header for extra fields. Existing unedited native blocks and the entire musical suffix remain byte-identical. Long notes fields use `> ` continuation lines. Native edited fields still have the format's 255-byte limit.
@@ -69,29 +69,50 @@ Writes coordinate access to the actual source, verify the result, and replace at
 
 ## Storage and sync contract
 
-### One library sync choice
+### Three library options (2026-09-25)
 
-**Sync library with iCloud** controls song storage and CloudKit metadata mirroring together on this device. The metadata includes tags, favorites, recency, play counts, score credits/instruments/source details, and file properties stored in `FileItem`. Metadata backups use version 2; version 1 backups remain readable. Restoring metadata targets the currently selected library, preserving inactive catalogs.
+`LibraryStorageOption` (device-local, `UserDefaults` key `library.storageOption`) is the only storage choice:
 
-- First run offers sync when iCloud Drive is available. Otherwise Get Started creates an app-managed local library.
-- Local-only setup does not enable metadata mirroring merely because an Apple account exists.
-- Enabling sync copies and verifies song files into the app's iCloud library, then enables metadata mirroring.
-- Disabling sync copies and verifies the songs locally, then reopens the metadata stores without CloudKit mirroring. Existing cloud files and cloud records are retained. Disabling sync on one device does not disable other devices.
-- The app uses the same persistent-store URLs when changing the connection. It saves changes, waits for library database work, removes the old UI/model container, and rebuilds the connection. Navigation returns to the library; no user-managed app restart is required.
-- Failed file migration leaves the sync preference unchanged. Conflicting destination files are reported instead of overwritten.
-- Temporary account or iCloud availability changes do not overwrite the user's sync preference. Cached data remains local, and an unavailable existing cloud library is not silently replaced by an empty one.
+| Option | Songs | Library info (`FileItem`, `LibraryDescriptor`) |
+|---|---|---|
+| **Local only** | The app's local library (`Documents/Tab Buddy Library`) or a folder you choose, read in place | This device only (no CloudKit) |
+| **iCloud only** | TabBuddy's iCloud container (`Documents/Tab Buddy Library`) | Mirrored through CloudKit |
+| **Hybrid** | A folder you choose (for example your own iCloud Drive folder), read in place | Mirrored through CloudKit |
+
+Library info covers tags, favorites, recency, play counts, score credits/instruments/source details, loops, practice settings, and converted-tab fields. Metadata backups use version 2; version 1 backups remain readable. Restoring metadata targets the currently selected library, preserving inactive catalogs.
+
+- **Changing options never copies, moves, or deletes songs.** Each option remembers its own location per device (`library.option.<option>.location`: library ID plus mode). Switching points the device at that location (mount mode override, same store files), marks a catalog scan pending (`library.pendingScanLibraryID`), and shows the songs there. Songs in the previous location stay on disk and reappear when switching back. No `LibraryMoveJob` is created.
+- Default locations when an option has none remembered: iCloud only → the iCloud container library (reusing its marker ID); Local only → the current chosen folder if there is one, otherwise the app-local library; Hybrid → the current chosen folder, otherwise the user must choose a folder. So Local only ↔ Hybrid keeps the same folder and only changes metadata mirroring.
+- Settings shows the current folder for Local only (chosen folder) and Hybrid with Choose/Change Folder; Local only also offers Use App Folder Instead. A confirmation precedes every option change ("Songs aren't copied. The library will show songs in … Songs in … stay where they are.").
+- **Copy Library to New Folder** (More Storage Options) is the only operation that copies songs. It creates a Tab Buddy Library child folder, copies and verifies songs, and makes the copy the location of the current option (iCloud only becomes Hybrid, because the songs are then in a chosen folder). Conflicting destination files are reported instead of overwritten.
+- **Mirroring** = option is iCloud only or Hybrid **and** an iCloud account is available (`TabBuddyApp.mirrorsMetadata`). The legacy flag `library.syncEnabled` is kept equal to `option.syncsMetadata` for downgrade compatibility. When mirroring changes, the app saves, waits for library work (including a duplicate merge), removes the UI/model container, and reopens the same persistent-store URLs; the pending scan then resumes from bootstrap. Temporary account or iCloud availability changes never overwrite the option; cached data remains local, and an unavailable existing cloud library is not silently replaced by an empty one.
+- **Migration** from earlier versions (once, at launch): `syncEnabled` true → iCloud only; false (app-local library or chosen folder) → Local only. A chosen folder is never switched to Hybrid automatically.
+- **First run** offers the three options as one list; iCloud only is suggested when available, Hybrid opens the folder picker.
+
+### Hybrid across devices
+
+- Each device chooses the same folder. Its `.tabbuddy-library.json` marker carries the library ID, so both devices' `LibraryDescriptor` and `FileItem` records share `libraryID` and relative paths. Security-scoped bookmarks stay in the device-local `LibraryMount`. If the active descriptor is a folder this device has not authorized, the library shows **Choose This Folder on This Device**; choosing a folder with a different marker is rejected, and nothing is deleted meanwhile.
+- **Hidden, not deleted.** A song is hidden when this device's completed full scan marked it missing (all options) or, in Hybrid, when this device has not yet confirmed the file (a record synced from another device). After merges in Hybrid, `verifyUnknownPresence` checks unconfirmed paths in the folder (downloaded files and iCloud placeholders count as present). This device never deletes or clears a hidden record; its metadata stays for other devices. Scans count iCloud Drive placeholders (`.Name.ext.icloud`) as present under their real name; a placeholder's missing modification date does not reset a record's version or fingerprint.
+- **Duplicate merge** (`LibraryDuplicateMerger`). Two devices that each catalogued the same folder upload duplicate records when mirroring starts. A merge pass runs after CloudKit import events (debounced 5 s, at least every 30 s during bursts), after bootstrap when mirroring, and after every completed scan. It waits for scans, imports, removal, storage changes, and preparation. Rules:
+  - Group by (library ID, relative path compared case- and Unicode-normalization-insensitively). A record whose file is missing here also joins the single present record with the same content fingerprint (a renamed or moved file); ambiguous fingerprints are left alone.
+  - Survivor: earliest `importedAt`, then smallest UUID string, so every device picks the same one. Rows sharing one UUID, and a group containing the score open in the reader, are left for later.
+  - Tags union (survivor order first); favorite OR; play count max; last opened max; hidden-notice OR.
+  - Descriptive fields (title, artist, composer, arranger, collection, arrangement, instruments, tuning, source, copyright): the first user-edited record's values as-is; with no edits, the survivor's values with blanks filled from the others. A custom title is kept if any record has one.
+  - Loops, scroll speed, BPM, reader/notation preferences: from the most recently opened record (reference BPM filled if missing).
+  - Canonical tab data: a canonical file that exists on this device first, then the higher converter version. Preparation version: max.
+  - File fields come from a record whose file is present here.
+  - Losers are deleted; local presence, the offline-cache set, Tutor `PracticeTakeRecord.scoreKey` (`TutorStore.rekeyTakes`), and per-file `UserDefaults` keys (`guitarPro.practice.<id>`, `practice.unreviewedTake.<id>`) move to the survivor. Tag counts are adjusted incrementally.
+  - Duplicate `LibraryDescriptor` rows with one ID keep the earliest `createdAt` (identical rows are left alone).
+  - The pass reads the catalog in 1,000-row chunks, groups off the main actor, and applies groups in batches of 100 with a save and yield between batches. Discovery also checks the store for an existing record with the same library and path before inserting.
+- **Removal under synced library info.** Removing songs deletes their catalog records, and in iCloud only and Hybrid that removes their library info on every device (the confirmation says so). Chosen-folder removal (Local only or Hybrid) is catalog-only and never deletes the user's files; a later rescan re-adds files still present. In Hybrid, bulk removal skips songs hidden on this device. App-managed libraries delete the song files; records already missing skip file deletion.
 
 ### Offline access is separate
 
-**Keep available offline** creates additional verified song copies in Application Support, outside iCloud's evictable document storage. It leaves library sync enabled. Downloads refresh after successful library scans/imports and metadata edits while the preference is enabled; Refresh Downloads can retry a failed download.
+**Keep available offline** (More Storage Options) creates additional verified song copies in Application Support, outside iCloud's evictable document storage. It is offered only when the songs folder is iCloud-backed (iCloud only, or a chosen iCloud Drive folder). Downloads refresh after successful library scans/imports and metadata edits while the preference is enabled; Refresh Downloads can retry a failed download.
 
 A cached song can open when its cloud file is unavailable. Partial download failures retain completed copies and report the error. Disabling offline access removes only the extra cache, not the actual library. The cache is excluded from device backup because its source files remain in the library.
 
-### Advanced storage
-
-Advanced offers **Use Existing Folder**, which adopts the exact selected directory, scans scores in place, and reuses its library marker when present. It does not copy songs or create a child directory. The previous library and catalog remain intact. **Copy Library to New Folder** is a separate operation that creates a Tab Buddy Library child folder and copies/verifies current songs. **Reconnect Folder** renews authorization for the current library identity. TabBuddy's library sync is disabled when switching to custom storage; the folder's own provider may synchronize it independently. Imports still copy into that folder. Existing-folder authorization uses a device-local security-scoped bookmark.
-
-Switching storage retains the previous file copies. There is no automatic cloud purge or destructive conflict resolution.
+Share-extension imports (app group `PendingImports`) copy into the current option's songs folder in every option.
 
 ### Tutor data (local only)
 
@@ -115,8 +136,8 @@ Tutor and Practice data live in a separate SwiftData container at `Application S
 | Concern | Main code |
 |---|---|
 | SwiftData configuration and live connection reload | `TabBuddy/TabBuddyApp.swift` (`LibraryPersistence`) |
-| Device-local sync intent | `LibrarySyncPreference` in `TabBuddy/LibraryModels.swift` |
-| Library setup, catalog reconciliation, migration, offline progress | `TabBuddy/LibraryManager.swift` |
+| Device-local library option, per-option locations, legacy sync flag | `LibraryStorageOption`, `LibraryOptionLocation`, `LibrarySyncPreference` in `TabBuddy/LibraryModels.swift` |
+| Library setup, option switching, catalog reconciliation, hidden songs, duplicate merge (`LibraryDuplicateMerger`), offline progress | `TabBuddy/LibraryManager.swift` |
 | Coordinated file access, iCloud discovery, verified copying, offline cache | `TabBuddy/LibraryFileService.swift` |
 | First-run and storage controls | `TabBuddy/FileBrowserView.swift`, `TabBuddy/LibraryStorageSettings.swift`, `TabBuddy/LibraryBrowserIndex.swift` |
 | Shared player controls and scrolling | `TabBuddy/Player/TabTransportBar.swift`, `PracticeNavigation.swift` |
@@ -170,9 +191,9 @@ Local discovery-source acquisition is documented in `Tools/TAB_CORPUS.md`. `Tool
 
 - General MusicXML/MuseScore/LilyPond import and full native piano engraving are not implemented. The native staff preview is a simplified melody aid. Piano PDFs support original reading/smooth scrolling; precise measure following requires a structured supported file such as Guitar Pro. OpenScore repository files must be exported to PDF first. Source access and PDF purchase options may change; inspect the source before buying.
 - Run the `TabBuddyTests` suite using the TabBuddy Xcode scheme. The suite covers parsing/golden fixtures, rendering, imports, migration integrity, sync configuration, metadata persistence across connection reload, and offline copies.
-- Unsigned simulator tests explicitly disable real CloudKit mirroring. Temporary test roots simulate file migration and offline availability; they do not prove live iCloud synchronization.
-- Signed device builds with the registered identifiers and iCloud entitlements have succeeded. Live two-device sync, in-flight CloudKit behavior during connection changes, account changes, and production CloudKit schema deployment still require device validation.
-- Re-enabling sync after independently editing copies can encounter destination conflicts. The current policy is to report the conflict and retain both locations, not silently choose a winner.
+- Unsigned simulator tests explicitly disable real CloudKit mirroring. Temporary test roots simulate option switching, file migration, and offline availability; separate in-memory stores simulate two devices' catalogs for duplicate merging. They do not prove live iCloud synchronization.
+- Signed device builds with the registered identifiers and iCloud entitlements have succeeded. Live two-device sync (including Hybrid, the first-enable duplicate merge at 10,000 songs on real CloudKit, and CloudKit import-event timing), in-flight CloudKit behavior during connection changes, account changes, and production CloudKit schema deployment still require device validation.
+- Copy Library to New Folder can encounter destination conflicts. The policy is to report the conflict and retain both locations, not silently choose a winner. Two devices that each wrote their own marker to one folder before iCloud Drive synced it cannot be reconciled automatically.
 - Tutor/Practice tests (`TabBuddyTests/Tutor`) cover:
   - the theory core
   - curriculum decoding, plus the content validator run on every bundled JSON file
@@ -207,6 +228,9 @@ Local discovery-source acquisition is documented in `Tools/TAB_CORPUS.md`. `Tool
 | `-TutorDiagramGallery` (+ `-TutorGalleryPiano`) | Every diagram kind. |
 | `-TutorGame <id>` / `-TutorGamePhase play\|results\|countdown\|mic-off` | Open a game; a phase uses fake silent audio and an in-memory score store. |
 | `-TutorForceWidth <pt>` | Lay debug lesson/game screens out in a fixed-width column (Split View/compact check). |
+| `-LibraryAutoSetupLocal` | On a fresh install, create the app-local library (Local only) without the first-run tap. |
+| `-LibrarySettingsOpen` | Present library Settings on launch. |
+| `-LibraryMoreOptionsOpen` | Expand More Storage Options when Settings opens. |
 
 Game ids: `fretboard-hunt`, `key-hunt`, `chord-change-sprint`, `interval-duel`, `name-that-quality`, `rhythm-tapper`, `scale-runner`, `note-rush`. `PracticeDemoData` (DEBUG) supplies a scripted take for previews and snapshot tests; there is no launch argument for practice mode.
 

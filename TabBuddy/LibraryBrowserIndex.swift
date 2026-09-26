@@ -47,11 +47,13 @@ final class LibraryBrowserIndex: ObservableObject {
     private var isRebuilding = false
     private var rebuildTask: Task<Void, Never>?
     private var pendingRebuild: ([FileItem], UUID?)?
+    private var isShown: (FileItem) -> Bool = { _ in true }
     private var generation = UUID()
 
     /// A practice preference save should not re-read tens of thousands of songs.
     /// Membership changes and unknown notification payloads use the full rebuild.
-    func applySavedChanges(_ notification: Notification, context: ModelContext, libraryID: UUID?) -> Bool {
+    func applySavedChanges(_ notification: Notification, context: ModelContext, libraryID: UUID?,
+                           isShown: (FileItem) -> Bool = { _ in true }) -> Bool {
         guard hasSnapshot, !isRebuilding, rebuildTask == nil, pendingRebuild == nil else { return false }
         func value(_ key: ModelContext.NotificationKey) -> Any? {
             notification.userInfo?[key] ?? notification.userInfo?[key.rawValue]
@@ -71,7 +73,7 @@ final class LibraryBrowserIndex: ObservableObject {
         var replacements: [(Int, Row)] = []
         for id in updated {
             guard let item = context.model(for: id) as? FileItem else { continue }
-            let included = item.libraryID == nil || item.libraryID == libraryID
+            let included = (item.libraryID == nil || item.libraryID == libraryID) && isShown(item)
             guard let offset = rowOffsets[id] else {
                 if included { return false }
                 continue
@@ -99,15 +101,16 @@ final class LibraryBrowserIndex: ObservableObject {
     }
 
     // Coalesce changes without repeatedly cancelling a large snapshot halfway through.
-    func scheduleRebuild(_ files: [FileItem], libraryID: UUID?) {
+    func scheduleRebuild(_ files: [FileItem], libraryID: UUID?, isShown: @escaping (FileItem) -> Bool = { _ in true }) {
         pendingRebuild = (files, libraryID)
+        self.isShown = isShown
         guard rebuildTask == nil else { return }
         let token = generation
         rebuildTask = Task {
             defer { if generation == token { rebuildTask = nil } }
             while let next = pendingRebuild, !Task.isCancelled {
                 pendingRebuild = nil
-                await rebuild(next.0, libraryID: next.1)
+                await rebuild(next.0, libraryID: next.1, isShown: isShown)
             }
         }
     }
@@ -125,7 +128,8 @@ final class LibraryBrowserIndex: ObservableObject {
         revision += 1
     }
 
-    func rebuild(_ files: [FileItem], libraryID: UUID?) async {
+    /// `isShown` hides songs whose file is not in this device's folder (their records are kept).
+    func rebuild(_ files: [FileItem], libraryID: UUID?, isShown: (FileItem) -> Bool = { _ in true }) async {
         isRebuilding = true
         defer { isRebuilding = false }
         // Coalesce saves during batch imports. Model access remains on its owning actor.
@@ -137,7 +141,7 @@ final class LibraryBrowserIndex: ObservableObject {
         var kinds = Set<String>()
         for (index, item) in files.enumerated() {
             guard !Task.isCancelled else { return }
-            if item.modelContext != nil && !item.isDeleted && (item.libraryID == nil || item.libraryID == libraryID) {
+            if item.modelContext != nil && !item.isDeleted && (item.libraryID == nil || item.libraryID == libraryID) && isShown(item) {
                 let row = Self.snapshot(item)
                 kinds.formUnion(row.instruments)
                 offsets[item.persistentModelID] = snapshots.count
