@@ -72,16 +72,35 @@ final class LibraryManager: ObservableObject {
     /// a chosen iCloud Drive folder), so extra offline copies are meaningful.
     @Published private(set) var isCloudBackedLocation = false
     @Published private(set) var isMergingDuplicates = false
+    /// Observed only by the status panel ("Merging library info… (n)").
+    let mergeProgress = LibraryMergeProgress()
     private var mergeTask: Task<LibraryDuplicateMerger.Summary, Never>?
     private var mergeScheduleTask: Task<Void, Never>?
     private var mergeRequestedAt: Date?
+    /// A merge request that arrived while a pass was running; one more pass follows.
+    private var mergeRequestedWhileRunning = false
     private weak var observedContext: ModelContext?
     private var remoteObservers: [NSObjectProtocol] = []
     /// The score open in the reader. Duplicate merging leaves its group for a later pass.
     var readerFileID: UUID?
-    /// Moves Tutor practice takes when a duplicate catalog entry is merged away.
-    var rekeyPracticeTakes: @MainActor (_ from: String, _ to: String) -> Void = { from, to in
-        _ = try? TutorStore.shared.rekeyTakes(from: from, to: to)
+    /// Removed record → survivor, from merges on this device during this session.
+    /// The reader uses it to follow a merged-away score.
+    private(set) var mergedRecordSurvivors: [UUID: UUID] = [:]
+    /// Songs hidden because a quick path check (not a completed scan) did not find
+    /// them. They are checked again after merges and imports.
+    private var pathCheckMissingIDs: Set<UUID> = []
+    /// Relative path each missing record had when it was found missing. A record
+    /// whose current path differs (another device's merge moved it) is re-checked.
+    private var missingPathByID: [UUID: String] = [:]
+    /// Set by CloudKit imports: the next presence check re-checks every missing record.
+    private var recheckAllMissing = false
+    private var presenceVerificationNeeded = true
+    /// Posted after merges and removals change which catalog records exist.
+    static let recordsChangedNotification = Notification.Name("TabBuddy.libraryRecordsChanged")
+    /// Moves Tutor practice takes when duplicate catalog entries are merged away
+    /// (old score key → surviving score key), in one batch.
+    var rekeyPracticeTakes: @MainActor (_ map: [String: String]) -> Void = { map in
+        _ = try? TutorStore.shared.rekeyTakes(map)
     }
     private static let pendingScanKey = "library.pendingScanLibraryID"
 
@@ -102,10 +121,8 @@ final class LibraryManager: ObservableObject {
 
     func bootstrap(context: ModelContext) {
         observedContext = context
-        let presences = (try? context.fetch(FetchDescriptor<FilePresence>())) ?? []
-        var availability: [UUID: FileAvailability] = [:]
-        for presence in presences { availability[presence.fileID] = presence.availability }
-        availabilityByFileID = availability
+        _ = loadPresence(context: context)
+        presenceVerificationNeeded = true
         refreshStorageAvailability()
         if let descriptor = activeDescriptor(context: context) {
             apply(descriptor: descriptor, context: context)
@@ -118,20 +135,7 @@ final class LibraryManager: ObservableObject {
             var stale = false
             if let url = try? URL(resolvingBookmarkData: bookmark, options: [],
                                   bookmarkDataIsStale: &stale) {
-                let descriptor = LibraryDescriptor(mode: .externalFolder,
-                                                   displayName: url.lastPathComponent)
-                context.insert(descriptor)
-                let mount = LibraryMount(libraryID: descriptor.id,
-                                         bookmarkData: bookmark,
-                                         authorized: true,
-                                         rootGeneration: descriptor.rootGeneration)
-                context.insert(mount)
-                migrateLegacyItems(to: descriptor, root: url, context: context)
-                try? context.save()
-                apply(descriptor: descriptor, context: context)
-                Task { try? await files.connectExternalRoot(url, libraryID: descriptor.id,
-                                                            displayName: descriptor.displayName) }
-                finishBootstrap(context: context)
+                adoptLegacyBookmark(url: url, bookmark: bookmark, context: context)
                 return
             }
         }
@@ -141,6 +145,42 @@ final class LibraryManager: ObservableObject {
         mode = nil
         accessNeeded = false
         storageOption = LibraryStorageOption.stored(in: defaults)
+    }
+
+    /// The folder's own marker decides the library identity. The descriptor is
+    /// created only after the marker is read (downloaded if evicted) or written for
+    /// an unmarked folder; an unreadable marker or an identity mismatch is shown,
+    /// not swallowed, and nothing is created until it resolves.
+    private func adoptLegacyBookmark(url: URL, bookmark: Data, context: ModelContext) {
+        libraryName = url.lastPathComponent
+        mode = .externalFolder
+        isConfiguring = true
+        Task {
+            defer { isConfiguring = false }
+            let scoped = url.startAccessingSecurityScopedResource()
+            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+            do {
+                let markerID = try await LibraryFileService.existingLibraryID(at: url)
+                let descriptors = try context.fetch(FetchDescriptor<LibraryDescriptor>())
+                let id = markerID ?? UUID()
+                _ = try await files.connectExternalRoot(url, libraryID: id, displayName: url.lastPathComponent,
+                                                        mayCreateMarker: markerID == nil)
+                let descriptor = descriptors.first { $0.id == id }
+                    ?? LibraryDescriptor(id: id, mode: .externalFolder, displayName: url.lastPathComponent)
+                if !descriptors.contains(where: { $0.id == id }) { context.insert(descriptor) }
+                let mount = LibraryMount(libraryID: descriptor.id, bookmarkData: bookmark, authorized: true,
+                                         rootGeneration: descriptor.rootGeneration)
+                context.insert(mount)
+                migrateLegacyItems(to: descriptor, root: url, context: context)
+                try context.save()
+                apply(descriptor: descriptor, context: context)
+                lastError = nil
+                finishBootstrap(context: context)
+            } catch {
+                lastError = error.localizedDescription
+                accessNeeded = true
+            }
+        }
     }
 
     /// Migrates the pre-option sync flag, remembers where this option's songs live,
@@ -224,7 +264,10 @@ final class LibraryManager: ObservableObject {
                 isConfiguring = false
             }
             do {
-                let id = try LibraryFileService.existingLibraryID(at: url) ?? UUID()
+                // An evicted marker is downloaded first. If it cannot be read this throws
+                // (markerNotDownloaded / markerConflict); a new identity is never minted
+                // for a folder that already has a marker.
+                let id = try await LibraryFileService.existingLibraryID(at: url) ?? UUID()
                 let descriptors = try context.fetch(FetchDescriptor<LibraryDescriptor>())
                 let descriptor = descriptors.first { $0.id == id }
                     ?? LibraryDescriptor(id: id, mode: .externalFolder, displayName: url.lastPathComponent)
@@ -358,6 +401,17 @@ final class LibraryManager: ObservableObject {
 
     /// The confirmation shown before switching. Songs are never copied.
     func switchConfirmation(to option: LibraryStorageOption, context: ModelContext) -> String {
+        let base = switchLocationMessage(to: option, context: context)
+        guard option.syncsMetadata, !hasEverMirrored else { return base }
+        return base + " This is the first time library info syncs on this device: export a library backup first. While library info from your other devices merges, avoid editing songs until the status panel says it’s done."
+    }
+
+    /// Whether the switch confirmation should offer "Export a library backup first".
+    func offersBackupBeforeSwitching(to option: LibraryStorageOption) -> Bool {
+        option.syncsMetadata && !hasEverMirrored
+    }
+
+    private func switchLocationMessage(to option: LibraryStorageOption, context: ModelContext) -> String {
         let old = locationName(currentLocation, context: context)
         if let planned = plannedLocation(for: option), planned == currentLocation {
             return option.syncsMetadata
@@ -487,25 +541,41 @@ final class LibraryManager: ObservableObject {
     /// Removal wording follows what actually happens: a chosen folder keeps its files
     /// (catalog only); synced options remove library info on every device.
     nonisolated static func removalConfirmation(count: Int, all: Bool, option: LibraryStorageOption?,
-                                                mode: LibraryMode?, folderName: String?) -> RemovalConfirmation {
+                                                mode: LibraryMode?, folderName: String?,
+                                                hasMirrored: Bool = false) -> RemovalConfirmation {
         let songs = count == 1 ? "1 song" : "\(count) songs"
         let folder = folderName.map { "“\($0)”" } ?? "your folder"
+        // Local only reuses the store that mirrored before; its history is exported
+        // when mirroring resumes, so the removal reaches other devices then.
+        let laterSync = option == .localOnly && hasMirrored
+            ? " If you turn Hybrid or iCloud only back on, these removals also apply on your other devices. Songs hidden on this device aren’t affected."
+            : ""
         if mode == .externalFolder {
             let title = all ? "Remove all songs from the library?" : "Remove \(songs) from the library?"
             let message = option == .hybrid
                 ? "Library info for these songs is removed on all your devices that use this library. Files stay in \(folder). Songs not in this device’s folder aren’t affected."
-                : "Files stay in \(folder). Rescan Library finds them again."
+                : "Files stay in \(folder). Rescan Library finds them again." + laterSync
             return .init(title: title, message: message, button: "Remove from Library")
         }
         let title = all ? "Delete all songs?" : "Delete \(songs)?"
         let message = option == .iCloudOnly || mode == .managedICloud
             ? "This deletes the song files from TabBuddy’s iCloud library and removes their library info on all your devices."
-            : "This deletes the song files from the library on this device, including songs in selected folders."
+            : "This deletes the song files from the library on this device, including songs in selected folders." + laterSync
         return .init(title: title, message: message, button: "Delete")
     }
 
     func removalConfirmation(count: Int, all: Bool) -> RemovalConfirmation {
-        Self.removalConfirmation(count: count, all: all, option: storageOption, mode: mode, folderName: libraryName)
+        Self.removalConfirmation(count: count, all: all, option: storageOption, mode: mode, folderName: libraryName,
+                                 hasMirrored: hasEverMirrored)
+    }
+
+    /// Whether this device's library store has mirrored library info before.
+    var hasEverMirrored: Bool { LibraryStorageOption.hasEverMirrored(in: defaults) }
+
+    /// Removal never touches songs hidden on this device when the removal can reach
+    /// other devices: Hybrid now, or Local only on a store that mirrored before.
+    var removalSkipsHiddenSongs: Bool {
+        storageOption == .hybrid || (storageOption == .localOnly && hasEverMirrored)
     }
 
     func acquireFile(_ item: FileItem) async throws -> FileAccessLease {
@@ -527,7 +597,11 @@ final class LibraryManager: ObservableObject {
         defer { activeImports -= 1 }
         defer {
             refreshOfflineCopies(context: context)
-            Task { startBackgroundProcessing(context: context) }
+            presenceVerificationNeeded = true
+            Task {
+                if storageOption?.syncsMetadata == true { await verifyUnknownPresence(context: context) }
+                startBackgroundProcessing(context: context)
+            }
         }
         let commit: @MainActor @Sendable ([LibraryFileRecord]) async throws -> Void = { records in
             await self.reconcile(records: records, descriptor: descriptor, context: context, isCompleteScan: false, readMetadata: false)
@@ -623,8 +697,10 @@ final class LibraryManager: ObservableObject {
         scanTask = Task {
             do {
                 // Cancellation is a request, not completion. Finish the current
-                // preparation read/commit before enumerating or changing catalog state.
+                // preparation read/commit and any duplicate merge pass before
+                // enumerating or changing catalog state.
                 await processingTask?.value
+                await finishMergePass()
                 try Task.checkCancellation()
                 let initial = ((try? context.fetch(FetchDescriptor<FileItem>())) ?? []).filter { $0.libraryID == descriptor.id || $0.libraryID == nil }
                 let initialIDs = Set(initial.map(\.id))
@@ -654,7 +730,8 @@ final class LibraryManager: ObservableObject {
                 rescanTotal = records.count
                 let newPaths = Set(records.map(\.relativePath)).subtracting(initialPaths)
                 let reconciled = await reconcile(records: records, descriptor: descriptor, context: context,
-                                                 provisionalPaths: newPaths, reportProgress: false)
+                                                 provisionalPaths: newPaths, locallyCreatedIDs: discovery.insertedIDs,
+                                                 reportProgress: false)
                 try Task.checkCancellation()
                 guard reconciled else { throw LibraryFileError.copyFailed(lastError ?? "Could not save the library catalog.") }
                 rescanProcessed = records.count
@@ -690,14 +767,26 @@ final class LibraryManager: ObservableObject {
         defer { pendingMutations -= 1 }
         pauseBackgroundProcessing()
         await processingTask?.value
-        mergeScheduleTask?.cancel()
-        if let mergeTask {
-            mergeTask.cancel()
-            _ = await mergeTask.value
-        }
+        await finishMergePass()
         guard isRescanning else { return }
         scanTask?.cancel()
         await scanTask?.value
+    }
+
+    /// Stops a scheduled merge and waits for a running pass (merge, re-keying, and
+    /// presence check) to end, so catalog work never interleaves with a merge. The
+    /// interrupted merge runs again afterwards.
+    private func finishMergePass() async {
+        let hadWork = mergeScheduleTask != nil || isMergingDuplicates
+        mergeScheduleTask?.cancel()
+        mergeScheduleTask = nil
+        mergeRequestedAt = nil
+        mergeTask?.cancel()
+        if isMergingDuplicates { mergeRequestedWhileRunning = true }
+        while isMergingDuplicates { try? await Task.sleep(nanoseconds: 20_000_000) }
+        if hadWork, let context = observedContext, storageOption?.syncsMetadata == true {
+            scheduleDuplicateMerge(context: context, delay: .seconds(10))
+        }
     }
 
     /// Remove a selection with one presence lookup and one tag-index rebuild.
@@ -712,8 +801,10 @@ final class LibraryManager: ObservableObject {
         defer { isRemoving = false; activeImports -= 1 }
         lastError = nil
         let deleteFiles = mode != .externalFolder
-        // In Hybrid, a song hidden here may be present on another device: never remove it from here.
-        let items = items.filter { $0.modelContext != nil && (storageOption != .hybrid || isShownOnThisDevice($0)) }
+        // A song hidden here may be present on another device: never remove it from here
+        // when the removal can reach other devices (now or when mirroring resumes).
+        let skipsHidden = removalSkipsHiddenSongs
+        let items = items.filter { $0.modelContext != nil && !$0.isDeleted && (!skipsHidden || isShownOnThisDevice($0)) }
         removalTotal = items.count
         do {
             let presences = try context.fetch(FetchDescriptor<FilePresence>())
@@ -745,6 +836,7 @@ final class LibraryManager: ObservableObject {
             availabilityByFileID = availability
             TagIndexer.rebuild(in: context)
             removalProcessed = items.count
+            NotificationCenter.default.post(name: Self.recordsChangedNotification, object: self)
             if failures > 0 { lastError = "Could not remove \(failures) files. \(firstFailure ?? "")" }
         } catch { lastError = error.localizedDescription }
     }
@@ -875,6 +967,8 @@ final class LibraryManager: ObservableObject {
 
     private func remoteChangesArrived() {
         guard storageOption?.syncsMetadata == true, let context = observedContext else { return }
+        presenceVerificationNeeded = true
+        recheckAllMissing = true
         scheduleDuplicateMerge(context: context, delay: .seconds(5))
     }
 
@@ -895,73 +989,232 @@ final class LibraryManager: ObservableObject {
 
     /// Runs one merge pass on the main actor in bounded, yielding batches. Library
     /// work (imports, scans, removal, storage changes) takes priority; a busy library
-    /// reschedules the pass.
+    /// reschedules the pass. A request that arrives during a pass runs once afterwards.
     @discardableResult
     func mergeDuplicates(context: ModelContext) async -> LibraryDuplicateMerger.Summary? {
-        guard mergeTask == nil else { return nil }
+        guard mergeTask == nil, !isMergingDuplicates else { mergeRequestedWhileRunning = true; return nil }
         // Preparation (including a user-started Prepare Library) is not interrupted; merge afterwards.
-        if isRescanning || isRemoving || isMoving || isConfiguring || isProcessingLibrary || activeImports > 0 || pendingMutations > 0 {
+        if isLibraryBusyForMerge {
             scheduleDuplicateMerge(context: context, delay: .seconds(10))
             return nil
         }
+        // `isMergingDuplicates` covers the whole pass (merge, re-keying, presence
+        // check); scans, imports, removals, and preparation wait for it to end.
         isMergingDuplicates = true
-        let presence = availabilityByFileID
+        mergeProgress.done = 0
+        mergeProgress.total = 0
+        let caseInsensitive = await files.rootIsCaseInsensitive()
+        if isLibraryBusyForMerge {   // Work that started during the suspension goes first.
+            isMergingDuplicates = false
+            scheduleDuplicateMerge(context: context, delay: .seconds(10))
+            return nil
+        }
+        let presenceState = loadPresence(context: context)
         let protected: Set<UUID> = readerFileID.map { [$0] } ?? []
         let libraryID = activeLibraryID
+        let progress = mergeProgress
         let task = Task { @MainActor in
-            await LibraryDuplicateMerger.merge(context: context, presence: presence,
-                                               fingerprintLibraryID: libraryID, protectedIDs: protected)
+            await LibraryDuplicateMerger.merge(context: context, presence: presenceState.availability,
+                                               fingerprintLibraryID: libraryID,
+                                               scanConfirmedMissing: presenceState.scanMissing,
+                                               caseInsensitivePaths: caseInsensitive,
+                                               protectedIDs: protected,
+                                               progress: { done, total in
+                                                   progress.done = done
+                                                   progress.total = total
+                                               })
         }
         mergeTask = task
         let summary = await task.value
         mergeTask = nil
+        // Always follow deleted records, even when the pass was cancelled part-way.
+        await applyMergeResult(summary, context: context)
+        if !summary.remapped.isEmpty || summary.removedDescriptors > 0 {
+            NotificationCenter.default.post(name: Self.recordsChangedNotification, object: self)
+        }
+        if storageOption?.syncsMetadata == true {
+            await verifyUnknownPresence(context: context, insideMergePass: true)
+        }
+        // The library index refreshes once, after the whole pass.
         isMergingDuplicates = false
-        applyMergeResult(summary, context: context)
-        if storageOption == .hybrid { await verifyUnknownPresence(context: context) }
         startBackgroundProcessing(context: context)
+        if mergeRequestedWhileRunning {
+            mergeRequestedWhileRunning = false
+            scheduleDuplicateMerge(context: context, delay: .seconds(1))
+        }
         return summary
     }
 
-    /// Follow merged records everywhere a file ID is used outside the synced catalog.
-    private func applyMergeResult(_ summary: LibraryDuplicateMerger.Summary, context: ModelContext) {
-        guard !summary.remapped.isEmpty else { return }
+    private var isLibraryBusyForMerge: Bool {
+        isRescanning || isRemoving || isMoving || isConfiguring || isProcessingLibrary || activeImports > 0 || pendingMutations > 0
+    }
+
+    /// Reads device-local presence once: availability per record, the records a
+    /// completed scan confirmed missing, and those hidden only by a path check.
+    private func loadPresence(context: ModelContext) -> (availability: [UUID: FileAvailability], scanMissing: Set<UUID>) {
         let presences = (try? context.fetch(FetchDescriptor<FilePresence>())) ?? []
         var availability: [UUID: FileAvailability] = [:]
-        for presence in presences { availability[presence.fileID] = presence.availability }
+        var scanMissing = Set<UUID>()
+        var pathCheck = Set<UUID>()
+        var missingPaths: [UUID: String] = [:]
+        for presence in presences {
+            availability[presence.fileID] = presence.availability
+            guard presence.availability == .missing else { continue }
+            if let path = presence.missingPath { missingPaths[presence.fileID] = path }
+            switch presence.reason {
+            case .completedScan: scanMissing.insert(presence.fileID)
+            case .pathCheck: pathCheck.insert(presence.fileID)
+            case .notSeenHere, nil: break
+            }
+        }
         availabilityByFileID = availability
+        pathCheckMissingIDs = pathCheck
+        missingPathByID = missingPaths
+        return (availability, scanMissing)
+    }
+
+    /// Follow merged records everywhere a file ID is used outside the synced catalog:
+    /// presence, offline cache, Tutor takes (one batch), and the per-file UserDefaults
+    /// keys that actually exist (enumerated once, not looked up per record).
+    private func applyMergeResult(_ summary: LibraryDuplicateMerger.Summary, context: ModelContext) async {
+        guard !summary.remapped.isEmpty else { return }
+        presenceVerificationNeeded = true
+        _ = loadPresence(context: context)
         for (old, new) in summary.remapped {
             if cachedFileIDs.remove(old) != nil { cachedFileIDs.insert(new) }
-            rekeyPracticeTakes(old.uuidString, new.uuidString)
-            for prefix in ["guitarPro.practice.", "practice.unreviewedTake."] {
-                guard let value = defaults.object(forKey: prefix + old.uuidString) else { continue }
-                if defaults.object(forKey: prefix + new.uuidString) == nil { defaults.set(value, forKey: prefix + new.uuidString) }
-                defaults.removeObject(forKey: prefix + old.uuidString)
-            }
             if readerFileID == old { readerFileID = new }
+            mergedRecordSurvivors[old] = new
+        }
+        // A survivor that was itself merged away earlier in this session.
+        for (old, new) in mergedRecordSurvivors { if let next = summary.remapped[new] { mergedRecordSurvivors[old] = next } }
+        var takeMap: [String: String] = [:]
+        takeMap.reserveCapacity(summary.remapped.count)
+        for (old, new) in summary.remapped { takeMap[old.uuidString] = new.uuidString }
+        rekeyPracticeTakes(takeMap)
+        await Task.yield()
+        let prefixes = Self.perFileDefaultsPrefixes
+        let keys = defaults.dictionaryRepresentation().keys.filter { key in prefixes.contains { key.hasPrefix($0) } }
+        for (index, key) in keys.enumerated() {
+            guard let prefix = prefixes.first(where: { key.hasPrefix($0) }),
+                  let old = UUID(uuidString: String(key.dropFirst(prefix.count))),
+                  let new = summary.remapped[old], let value = defaults.object(forKey: key) else { continue }
+            if defaults.object(forKey: prefix + new.uuidString) == nil { defaults.set(value, forKey: prefix + new.uuidString) }
+            defaults.removeObject(forKey: key)
+            if (index + 1).isMultiple(of: 500) { await Task.yield() }
         }
     }
 
-    /// In Hybrid, records synced from another device have no presence here yet. Check
-    /// whether their files are in this device's folder (downloaded or not) so present
-    /// songs show and the rest stay hidden. Nothing is deleted.
-    func verifyUnknownPresence(context: ModelContext) async {
-        guard storageOption == .hybrid, !accessNeeded, let libraryID = activeLibraryID else { return }
+    static let perFileDefaultsPrefixes = ["guitarPro.practice.", "practice.unreviewedTake."]
+
+    /// The surviving record for a record removed by a merge on this device, if known.
+    func survivor(for id: UUID) -> UUID? { mergedRecordSurvivors[id] }
+
+    /// Re-checks, by path in this device's folder (downloaded files and iCloud
+    /// placeholders count as present), in chunks:
+    /// - Hybrid: records synced from another device with no presence here yet;
+    /// - Hybrid and iCloud only: missing records found by a quick path check, missing
+    ///   records whose current path differs from the path that was missing (another
+    ///   device's merge moved them), and after CloudKit imports every missing record.
+    /// A miss here is `pathCheck` (never joins by fingerprint) unless the record was
+    /// already missing at the same path, whose reason is kept. Nothing is deleted.
+    func verifyUnknownPresence(context: ModelContext, force: Bool = false, chunkSize: Int = 500,
+                               insideMergePass: Bool = false) async {
+        guard let option = storageOption, option.syncsMetadata, !accessNeeded, let libraryID = activeLibraryID else { return }
+        // A running merge pass checks presence itself when it ends.
+        guard insideMergePass || !isMergingDuplicates else { presenceVerificationNeeded = true; return }
+        func interrupted() -> Bool { isRescanning || isRemoving || isMoving || pendingMutations > 0 || activeLibraryID != libraryID }
+        guard !interrupted() else { presenceVerificationNeeded = true; return }
+        let recheckAll = recheckAllMissing
+        guard force || presenceVerificationNeeded || recheckAll || !pathCheckMissingIDs.isEmpty
+                || !missingPathByID.isEmpty else { return }
+        presenceVerificationNeeded = false
+        recheckAllMissing = false
+        let checksUnknown = option == .hybrid
         let optionalID: UUID? = libraryID
-        let items = ((try? context.fetch(FetchDescriptor<FileItem>(predicate: #Predicate { $0.libraryID == optionalID }))) ?? [])
-            .filter { availabilityByFileID[$0.id] == nil && $0.effectiveRelativePath != nil }
-        guard !items.isEmpty else { return }
-        let paths = items.compactMap(\.effectiveRelativePath)
-        guard let present = try? await files.existingPaths(paths), activeLibraryID == libraryID else { return }
-        var updated = availabilityByFileID
-        let now = Date.now
-        for item in items where item.modelContext != nil && updated[item.id] == nil {
-            let found = item.effectiveRelativePath.map(present.contains) ?? false
-            let availability: FileAvailability = found ? .available : .missing
-            context.insert(FilePresence(fileID: item.id, availability: availability, lastSeenAt: found ? now : nil))
-            updated[item.id] = availability
+        var candidates: [(id: UUID, path: String)] = []
+        var offset = 0
+        while true {
+            var descriptor = FetchDescriptor<FileItem>(predicate: #Predicate { $0.libraryID == optionalID },
+                                                       sortBy: [SortDescriptor(\.importedAt)])
+            descriptor.fetchOffset = offset
+            descriptor.fetchLimit = 1_000
+            descriptor.propertiesToFetch = [\.id, \.storageRelativePath, \.libraryPath]
+            guard let chunk = try? context.fetch(descriptor), !chunk.isEmpty else { break }
+            for item in chunk {
+                guard let path = item.effectiveRelativePath else { continue }
+                switch availabilityByFileID[item.id] {
+                case nil:
+                    if checksUnknown { candidates.append((item.id, path)) }
+                case .missing?:
+                    if recheckAll || pathCheckMissingIDs.contains(item.id) || missingPathByID[item.id] != path {
+                        candidates.append((item.id, path))
+                    }
+                default: break
+                }
+            }
+            offset += chunk.count
+            if chunk.count < 1_000 { break }
+            await Task.yield()
+            if interrupted() { presenceVerificationNeeded = true; return }
         }
-        try? context.save()
-        availabilityByFileID = updated
+        guard !candidates.isEmpty else { return }
+        var presenceByFile: [UUID: FilePresence] = [:]
+        for presence in (try? context.fetch(FetchDescriptor<FilePresence>())) ?? [] { presenceByFile[presence.fileID] = presence }
+        for start in stride(from: 0, to: candidates.count, by: chunkSize) {
+            let chunk = Array(candidates[start..<min(start + chunkSize, candidates.count)])
+            guard let present = try? await files.existingPaths(chunk.map(\.path)) else { return }
+            if interrupted() { presenceVerificationNeeded = true; return }
+            var updated = availabilityByFileID
+            let now = Date.now
+            for candidate in chunk {
+                let known = updated[candidate.id]
+                // A completed scan may have decided meanwhile.
+                guard known == nil || known == .missing else { continue }
+                let found = present.contains(candidate.path)
+                let presence = presenceByFile[candidate.id]
+                if found {
+                    if let presence {
+                        presence.availability = .available
+                        presence.reason = nil
+                        presence.missingPath = nil
+                        presence.seenHere = true
+                        presence.lastSeenAt = now
+                    } else {
+                        let created = FilePresence(fileID: candidate.id, availability: .available, lastSeenAt: now)
+                        context.insert(created)
+                        presenceByFile[candidate.id] = created
+                    }
+                    pathCheckMissingIDs.remove(candidate.id)
+                    missingPathByID.removeValue(forKey: candidate.id)
+                    updated[candidate.id] = .available
+                    continue
+                }
+                if let presence, presence.availability == .missing,
+                   presence.missingPath == candidate.path || (presence.missingPath == nil && presence.reason != .pathCheck) {
+                    // Still missing at the same path: keep its reason (a completed scan's stays).
+                    if presence.missingPath == nil { presence.missingPath = candidate.path }
+                    missingPathByID[candidate.id] = candidate.path
+                    continue
+                }
+                if let presence {
+                    presence.availability = .missing
+                    presence.reason = .pathCheck
+                    presence.missingPath = candidate.path
+                    presence.lastSeenAt = nil
+                } else {
+                    let created = FilePresence(fileID: candidate.id, availability: .missing, reason: .pathCheck)
+                    created.missingPath = candidate.path
+                    context.insert(created)
+                    presenceByFile[candidate.id] = created
+                }
+                pathCheckMissingIDs.insert(candidate.id)
+                missingPathByID[candidate.id] = candidate.path
+                updated[candidate.id] = .missing
+            }
+            try? context.save()
+            if updated != availabilityByFileID { availabilityByFileID = updated }
+            await Task.yield()
+        }
     }
 
     /// Reloading SwiftData must not leave work holding the previous model context.
@@ -1104,12 +1357,16 @@ final class LibraryManager: ObservableObject {
                                            bookmarkDataIsStale: &stale)
                 let ubiquitous = await files.rootIsUbiquitous()
                 if activeLibraryID == descriptor.id { isCloudBackedLocation = ubiquitous }
+                if let root = Self.activeRoot { checkMarkerInBackground(root: root, libraryID: descriptor.id, securityScoped: true) }
             } else if effectiveMode != .externalFolder {
                 do {
-                    Self.activeRoot = try await files.configureManagedLibrary(
+                    // Known library ID: never blocks on an evicted marker (offline launch).
+                    let root = try await files.configureManagedLibrary(
                         id: descriptor.id, mode: effectiveMode, displayName: descriptor.displayName
                     )
+                    Self.activeRoot = root
                     accessNeeded = false
+                    checkMarkerInBackground(root: root, libraryID: descriptor.id, securityScoped: false)
                 } catch {
                     Self.activeRoot = nil
                     accessNeeded = true
@@ -1117,6 +1374,38 @@ final class LibraryManager: ObservableObject {
                 }
             }
             startBackgroundProcessing(context: context)
+        }
+    }
+
+    /// Validates the active folder's marker after launch without blocking it. Only a
+    /// readable marker (or conflict copy) that names a different library is shown;
+    /// a marker that cannot download (offline) is not an error. Never repairs silently.
+    private func checkMarkerInBackground(root: URL, libraryID: UUID, securityScoped: Bool) {
+        Task {
+            let scoped = securityScoped && root.startAccessingSecurityScopedResource()
+            let problem = await LibraryFileService.markerProblem(at: root, expected: libraryID)
+            if scoped { root.stopAccessingSecurityScopedResource() }
+            guard activeLibraryID == libraryID else { return }
+            if case .markerConflict(let names)? = problem { markerConflictNames = names } else { markerConflictNames = nil }
+            if let problem { lastError = problem.localizedDescription }
+        }
+    }
+
+    /// Conflicting marker copies found in the active folder (Settings offers Resolve).
+    @Published private(set) var markerConflictNames: [String]?
+
+    /// Keeps the marker that names the active library; other marker copies move to
+    /// the Trash (never deleted). Runs only after the user confirms in Settings.
+    func resolveMarkerConflict() async {
+        guard let libraryID = activeLibraryID, let root = Self.activeRoot else { return }
+        let scoped = mode == .externalFolder && root.startAccessingSecurityScopedResource()
+        defer { if scoped { root.stopAccessingSecurityScopedResource() } }
+        do {
+            _ = try await LibraryFileService.resolveMarkerConflict(at: root, keep: libraryID)
+            markerConflictNames = nil
+            lastError = nil
+        } catch {
+            lastError = error.localizedDescription
         }
     }
 
@@ -1222,28 +1511,45 @@ final class LibraryManager: ObservableObject {
 
     @discardableResult
     func reconcile(records: [LibraryFileRecord], descriptor: LibraryDescriptor,
-                   context: ModelContext, isCompleteScan: Bool = true, readMetadata: Bool = true, provisionalPaths: Set<String> = [], reportProgress: Bool = true) async -> Bool {
+                   context: ModelContext, isCompleteScan: Bool = true, readMetadata: Bool = true, provisionalPaths: Set<String> = [],
+                   locallyCreatedIDs: Set<UUID> = [], reportProgress: Bool = true) async -> Bool {
         let existing = (try? context.fetch(FetchDescriptor<FileItem>())) ?? []
         let existingPresences = (try? context.fetch(FetchDescriptor<FilePresence>())) ?? []
         var updatedAvailability = availabilityByFileID
         var presenceByFileID: [UUID: FilePresence] = [:]
         for presence in existingPresences { presenceByFileID[presence.fileID] = presence }
-        func setPresence(_ fileID: UUID, _ availability: FileAvailability, _ seenAt: Date?) {
+        func setPresence(_ fileID: UUID, _ availability: FileAvailability, _ seenAt: Date?,
+                         reason: FilePresence.Reason? = nil, missingPath: String? = nil) {
+            let present = availability == .available || availability == .downloading
             if let presence = presenceByFileID[fileID] {
-                presence.availability = availability
+                if presence.availability != availability { presence.availability = availability }
                 presence.lastSeenAt = seenAt
-                presence.failureDescription = nil
+                if presence.failureDescription != nil { presence.failureDescription = nil }
+                if presence.reason != reason { presence.reason = reason }
+                if presence.missingPath != missingPath { presence.missingPath = missingPath }
+                if present && presence.seenHere != true { presence.seenHere = true }
             } else {
                 let presence = FilePresence(fileID: fileID, availability: availability,
-                                            lastSeenAt: seenAt)
+                                            lastSeenAt: seenAt, reason: reason)
+                presence.missingPath = missingPath
                 context.insert(presence)
                 presenceByFileID[fileID] = presence
             }
             updatedAvailability[fileID] = availability
+            pathCheckMissingIDs.remove(fileID)
+            if let missingPath { missingPathByID[fileID] = missingPath } else { missingPathByID.removeValue(forKey: fileID) }
         }
+        let caseInsensitive = await files.rootIsCaseInsensitive()
+        func pathKey(_ path: String) -> String { LibraryDuplicateMerger.normalizedPath(path, caseInsensitive: caseInsensitive) }
         var byPath: [String: FileItem] = [:]
+        // Every record at a path this pass sees is present, not only the one `byPath`
+        // keeps (duplicates synced from another device share the path).
+        var samePathItems: [String: [FileItem]] = [:]
         for item in existing where item.libraryID == descriptor.id || item.libraryID == nil {
-            if let path = item.effectiveRelativePath { byPath[path] = item }
+            if let path = item.effectiveRelativePath {
+                byPath[path] = item
+                samePathItems[pathKey(path), default: []].append(item)
+            }
         }
         let exactMatchIDs = Set(records.filter { !provisionalPaths.contains($0.relativePath) }.compactMap { byPath[$0.relativePath]?.id })
         var unmatchedExistingByHash: [String: [FileItem]] = [:]
@@ -1296,7 +1602,11 @@ final class LibraryManager: ObservableObject {
                 return false
             }
             let item: FileItem
+            // Only a record this scan created on this device may be folded back into the
+            // renamed original. A record synced from another device is kept; the duplicate
+            // merger combines it with the original under its rules instead.
             if let provisional = byPath[record.relativePath], provisionalPaths.contains(record.relativePath),
+               locallyCreatedIDs.contains(provisional.id),
                let original = relinkedByPath[record.relativePath], original.id != provisional.id,
                !provisional.metadataEdited, provisional.customTitle == nil, provisional.tags.isEmpty, !provisional.isFavorite,
                provisional.playCount == 0, provisional.lastOpenedAt <= provisional.importedAt {
@@ -1345,6 +1655,11 @@ final class LibraryManager: ObservableObject {
             if item.needsLibraryMigration { item.needsLibraryMigration = false }
             seen.insert(item.id)
             setPresence(item.id, .available, seenAt)
+            for other in samePathItems[pathKey(record.relativePath)] ?? []
+            where other !== item && other.modelContext != nil && !other.isDeleted && !seen.contains(other.id) {
+                seen.insert(other.id)
+                setPresence(other.id, .available, seenAt)
+            }
             if isCompleteScan && ((index + 1).isMultiple(of: 100) || index + 1 == records.count) {
                 do { try context.save() }
                 catch {
@@ -1367,8 +1682,16 @@ final class LibraryManager: ObservableObject {
             return false
         }
         // Missing is local state; metadata remains synced and recoverable.
-        for item in existing where isCompleteScan && item.modelContext != nil && item.libraryID == descriptor.id && !seen.contains(item.id) {
-            setPresence(item.id, .missing, nil)
+        // Only this completed full pass may record `completedScan` (which the duplicate
+        // merger requires before joining a missing record to a renamed file), and only
+        // for a file this device had before. A record this device never saw (for
+        // example a copy another device just added that iCloud Drive has not delivered
+        // here) is `notSeenHere` and never joins by fingerprint.
+        for item in existing where isCompleteScan && item.modelContext != nil && !item.isDeleted
+            && item.libraryID == descriptor.id && !seen.contains(item.id) {
+            let seenBefore = presenceByFileID[item.id]?.wasSeenHere == true
+            setPresence(item.id, .missing, nil, reason: seenBefore ? .completedScan : .notSeenHere,
+                        missingPath: item.effectiveRelativePath)
         }
         availabilityByFileID = updatedAvailability
         try? context.save()
@@ -1463,6 +1786,10 @@ private final class LibraryMoveCheckpointWriter {
 
 // MARK: - Backup / Restore
 
+/// One catalog record's user data. Version 3 adds every user-set field (custom
+/// title, tuning, measure loops, notice dismissal) plus identity for matching
+/// (library ID, relative path, fingerprint). Older versions stay readable: every
+/// field added after version 1 is optional.
 struct FileItemBackup: Codable {
     var filename: String
     var isFavorite: Bool
@@ -1492,10 +1819,61 @@ struct FileItemBackup: Codable {
     var artist: String? = nil
     var sourceID: String? = nil
     var copyrightNotice: String? = nil
+    // Version 3
+    var customTitle: String? = nil
+    var tuning: String? = nil
+    var loopStartMeasure: Int? = nil
+    var loopEndMeasure: Int? = nil
+    var confidenceNoticeDismissed: Bool? = nil
+    var libraryID: UUID? = nil
+    var relativePath: String? = nil
+    var contentHash: String? = nil
+    var byteSize: Int64? = nil
+
+    init(_ item: FileItem) {
+        filename = item.filename
+        isFavorite = item.isFavorite
+        tags = item.tags
+        importedAt = item.importedAt
+        lastOpenedAt = item.lastOpenedAt
+        scrollSpeed = item.scrollSpeed
+        folderName = item.folderName
+        loopStartY = item.loopStartY
+        loopEndY = item.loopEndY
+        libraryPath = item.libraryPath
+        playCount = item.playCount
+        userBPM = item.userBPM
+        referenceBPM = item.referenceBPM
+        instruments = item.instruments
+        instrument = item.instrument
+        composer = item.composer
+        arranger = item.arranger
+        collectionTitle = item.collectionTitle
+        arrangement = item.arrangement
+        sourceName = item.sourceName
+        sourceURL = item.sourceURL
+        metadataEdited = item.metadataEdited
+        preferredNotation = item.preferredNotation
+        preferredTextMode = item.preferredTextMode
+        embeddedTitle = item.embeddedTitle
+        artist = item.artist
+        sourceID = item.sourceID
+        copyrightNotice = item.copyrightNotice
+        customTitle = item.customTitle
+        tuning = item.tuning
+        loopStartMeasure = item.loopStartMeasure
+        loopEndMeasure = item.loopEndMeasure
+        confidenceNoticeDismissed = item.confidenceNoticeDismissed
+        libraryID = item.libraryID
+        relativePath = item.effectiveRelativePath
+        contentHash = item.contentHash
+        byteSize = item.byteSize
+    }
 }
 
 struct LibraryBackup: Codable {
-    var version: Int = 2
+    static let currentVersion = 3
+    var version: Int = LibraryBackup.currentVersion
     var exportedAt: Date
     var files: [FileItemBackup]
 }
@@ -1504,45 +1882,16 @@ enum BackupManager {
 
     static func exportJSON(context: ModelContext) -> Data? {
         let items = (try? context.fetch(FetchDescriptor<FileItem>())) ?? []
-
-        let entries = items.map { item in
-            FileItemBackup(
-                filename: item.filename,
-                isFavorite: item.isFavorite,
-                tags: item.tags,
-                importedAt: item.importedAt,
-                lastOpenedAt: item.lastOpenedAt,
-                scrollSpeed: item.scrollSpeed,
-                folderName: item.folderName,
-                loopStartY: item.loopStartY,
-                loopEndY: item.loopEndY,
-                libraryPath: item.libraryPath,
-                playCount: item.playCount,
-                userBPM: item.userBPM,
-                referenceBPM: item.referenceBPM,
-                instruments: item.instruments,
-                instrument: item.instrument,
-                composer: item.composer,
-                arranger: item.arranger,
-                collectionTitle: item.collectionTitle,
-                arrangement: item.arrangement,
-                sourceName: item.sourceName,
-                sourceURL: item.sourceURL,
-                metadataEdited: item.metadataEdited,
-                preferredNotation: item.preferredNotation,
-                preferredTextMode: item.preferredTextMode,
-                embeddedTitle: item.embeddedTitle, artist: item.artist,
-                sourceID: item.sourceID, copyrightNotice: item.copyrightNotice
-            )
-        }
-
-        let backup = LibraryBackup(exportedAt: .now, files: entries)
+        let backup = LibraryBackup(exportedAt: .now, files: items.map(FileItemBackup.init))
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         return try? encoder.encode(backup)
     }
 
+    /// Matching order: library ID + relative path, then relative path within the
+    /// target library, then a content fingerprint that is unique on both sides, then
+    /// a filename that is unique on both sides. Each record is restored at most once.
     @MainActor
     static func importJSON(data: Data, context: ModelContext, libraryID: UUID? = nil) -> Int {
         let decoder = JSONDecoder()
@@ -1553,59 +1902,103 @@ enum BackupManager {
 
         let existing = ((try? context.fetch(FetchDescriptor<FileItem>())) ?? [])
             .filter { libraryID == nil || $0.libraryID == libraryID }
-        var byPath: [String: FileItem] = [:]
-        var byName: [String: FileItem] = [:]
+        struct IDPath: Hashable { let library: UUID; let path: String }
+        var byIDPath: [IDPath: [FileItem]] = [:]
+        var byPath: [String: [FileItem]] = [:]
+        var byHash: [String: [FileItem]] = [:]
+        var byName: [String: [FileItem]] = [:]
         for item in existing {
-            if let lp = item.libraryPath { byPath[lp] = item }
-            if byName[item.filename] == nil { byName[item.filename] = item }
-        }
-
-        var restored = 0
-        for entry in backup.files {
-            let match = (entry.libraryPath.flatMap { byPath[$0] }) ?? byName[entry.filename]
-            guard let match else { continue }
-
-            match.isFavorite = entry.isFavorite
-            match.tags = entry.tags
-            match.scrollSpeed = entry.scrollSpeed
-            match.loopStartY = entry.loopStartY
-            match.loopEndY = entry.loopEndY
-            match.playCount = entry.playCount
-            match.userBPM = entry.userBPM
-            match.referenceBPM = entry.referenceBPM
-            if let value = entry.instruments { match.instruments = value }
-            if backup.version >= 2 { match.instrument = entry.instrument }
-            else if let value = entry.instrument { match.instrument = value }
-            if backup.version >= 2 { match.composer = entry.composer }
-            else if let value = entry.composer { match.composer = value }
-            if backup.version >= 2 { match.arranger = entry.arranger }
-            else if let value = entry.arranger { match.arranger = value }
-            if backup.version >= 2 { match.collectionTitle = entry.collectionTitle }
-            else if let value = entry.collectionTitle { match.collectionTitle = value }
-            if backup.version >= 2 { match.arrangement = entry.arrangement }
-            else if let value = entry.arrangement { match.arrangement = value }
-            if backup.version >= 2 { match.sourceName = entry.sourceName }
-            else if let value = entry.sourceName { match.sourceName = value }
-            if backup.version >= 2 { match.sourceURL = entry.sourceURL }
-            else if let value = entry.sourceURL { match.sourceURL = value }
-            if let value = entry.metadataEdited { match.metadataEdited = value }
-            if backup.version >= 2 { match.preferredNotation = entry.preferredNotation }
-            else if let value = entry.preferredNotation { match.preferredNotation = value }
-            if backup.version >= 2 { match.preferredTextMode = entry.preferredTextMode }
-            else if let value = entry.preferredTextMode { match.preferredTextMode = value }
-            if let value = entry.embeddedTitle { match.embeddedTitle = value }
-            if let value = entry.artist { match.artist = value }
-            if let value = entry.sourceID { match.sourceID = value }
-            if let value = entry.copyrightNotice { match.copyrightNotice = value }
-            if entry.lastOpenedAt > match.lastOpenedAt {
-                match.lastOpenedAt = entry.lastOpenedAt
+            if let path = item.effectiveRelativePath {
+                byPath[path, default: []].append(item)
+                if let library = item.libraryID { byIDPath[IDPath(library: library, path: path), default: []].append(item) }
             }
+            if let hash = item.contentHash { byHash[hash, default: []].append(item) }
+            byName[item.filename, default: []].append(item)
+        }
+        var entryHashCount: [String: Int] = [:]
+        var entryNameCount: [String: Int] = [:]
+        for entry in backup.files {
+            if let hash = entry.contentHash { entryHashCount[hash, default: 0] += 1 }
+            entryNameCount[entry.filename, default: 0] += 1
+        }
+        func unique(_ items: [FileItem]?) -> FileItem? { items?.count == 1 ? items?.first : nil }
+
+        // Pass 1 claims exact library ID + path matches, so a fallback for an earlier
+        // entry can never take a record that a later entry matches exactly.
+        var restoredIDs = Set<PersistentIdentifier>()
+        var restored = 0
+        var pending: [FileItemBackup] = []
+        for entry in backup.files {
+            let path = entry.relativePath ?? entry.libraryPath
+            if let library = entry.libraryID, let path,
+               let match = unique(byIDPath[IDPath(library: library, path: path)]),
+               restoredIDs.insert(match.persistentModelID).inserted {
+                apply(entry, version: backup.version, to: match)
+                restored += 1
+            } else {
+                pending.append(entry)
+            }
+        }
+        // Pass 2: fallbacks for the rest, never reusing a claimed record.
+        func unclaimed(_ item: FileItem?) -> FileItem? {
+            guard let item, !restoredIDs.contains(item.persistentModelID) else { return nil }
+            return item
+        }
+        for entry in pending {
+            let path = entry.relativePath ?? entry.libraryPath
+            var match: FileItem?
+            if let path { match = unclaimed(unique(byPath[path])) }
+            if match == nil, let hash = entry.contentHash, entryHashCount[hash] == 1 { match = unclaimed(unique(byHash[hash])) }
+            if match == nil, entryNameCount[entry.filename] == 1 { match = unclaimed(unique(byName[entry.filename])) }
+            guard let match, restoredIDs.insert(match.persistentModelID).inserted else { continue }
+            apply(entry, version: backup.version, to: match)
             restored += 1
         }
 
         try? context.save()
         TagIndexer.rebuild(in: context)
         return restored
+    }
+
+    @MainActor
+    private static func apply(_ entry: FileItemBackup, version: Int, to match: FileItem) {
+        match.isFavorite = entry.isFavorite
+        match.tags = entry.tags
+        match.scrollSpeed = entry.scrollSpeed
+        match.loopStartY = entry.loopStartY
+        match.loopEndY = entry.loopEndY
+        match.playCount = entry.playCount
+        match.userBPM = entry.userBPM
+        match.referenceBPM = entry.referenceBPM
+        if let value = entry.instruments { match.instruments = value }
+        // Version 2+ records every descriptive field, so nil means "not set".
+        func restore(_ keyPath: ReferenceWritableKeyPath<FileItem, String?>, _ value: String?, since: Int = 2) {
+            if version >= since { match[keyPath: keyPath] = value } else if let value { match[keyPath: keyPath] = value }
+        }
+        restore(\.instrument, entry.instrument)
+        restore(\.composer, entry.composer)
+        restore(\.arranger, entry.arranger)
+        restore(\.collectionTitle, entry.collectionTitle)
+        restore(\.arrangement, entry.arrangement)
+        restore(\.sourceName, entry.sourceName)
+        restore(\.sourceURL, entry.sourceURL)
+        restore(\.preferredNotation, entry.preferredNotation)
+        restore(\.preferredTextMode, entry.preferredTextMode)
+        restore(\.embeddedTitle, entry.embeddedTitle, since: 3)
+        restore(\.artist, entry.artist, since: 3)
+        restore(\.sourceID, entry.sourceID, since: 3)
+        restore(\.copyrightNotice, entry.copyrightNotice, since: 3)
+        restore(\.customTitle, entry.customTitle, since: 3)
+        restore(\.tuning, entry.tuning, since: 3)
+        if let value = entry.metadataEdited { match.metadataEdited = value }
+        if version >= 3 {
+            match.loopStartMeasure = entry.loopStartMeasure
+            match.loopEndMeasure = entry.loopEndMeasure
+            if let value = entry.confidenceNoticeDismissed { match.confidenceNoticeDismissed = value }
+        }
+        if entry.lastOpenedAt > match.lastOpenedAt {
+            match.lastOpenedAt = entry.lastOpenedAt
+        }
     }
 }
 
@@ -1635,6 +2028,8 @@ final class LibraryScanProgress: ObservableObject {
 final class LibraryDiscoveryIndex {
     private var paths: Set<String>
     private var insertedPresence: [UUID: FileAvailability] = [:]
+    /// Records this discovery created on this device (not ones synced from elsewhere).
+    private(set) var insertedIDs = Set<UUID>()
     init(paths: Set<String>) { self.paths = paths }
 
     /// Adds catalog entries for unknown paths. Before inserting, it checks the store
@@ -1669,6 +2064,7 @@ final class LibraryDiscoveryIndex {
             context.insert(item)
             context.insert(FilePresence(fileID: item.id, availability: .available, lastSeenAt: .now))
             insertedPresence[item.id] = .available
+            insertedIDs.insert(item.id)
             added += 1
         }
         return added
@@ -1694,6 +2090,9 @@ enum LibraryDuplicateMerger {
         var removedRecords = 0
         var removedDescriptors = 0
         var skippedGroups = 0
+        /// Extra rows that share one record UUID. They are never deleted (devices
+        /// cannot agree on which row to keep) and are left out of merging.
+        var sameIDRowsSkipped = 0
         /// Removed record ID → surviving record ID.
         var remapped: [UUID: UUID] = [:]
     }
@@ -1705,15 +2104,18 @@ enum LibraryDuplicateMerger {
         let path: String?
         let importedAt: Date
         let hash: String?
+        var byteSize: Int64 = 0
     }
 
     private struct Key: Hashable { let libraryID: UUID; let path: String }
 
-    /// iCloud Drive and the default iOS volume are case-insensitive and may return
-    /// either Unicode normalization, so paths compare after both are folded.
-    nonisolated static func normalizedPath(_ path: String) -> String {
-        let normalized = (try? LibraryFileService.normalizedRelativePath(path)) ?? path
-        return normalized.precomposedStringWithCanonicalMapping.lowercased()
+    /// Paths compare after Unicode normalization (file providers may return either
+    /// form). Case is folded only for case-insensitive locations (iCloud Drive, or
+    /// a volume that reports case-insensitive names); a case-sensitive local folder
+    /// can hold `Song.txt` and `song.txt` as two songs.
+    nonisolated static func normalizedPath(_ path: String, caseInsensitive: Bool = true) -> String {
+        let normalized = ((try? LibraryFileService.normalizedRelativePath(path)) ?? path).precomposedStringWithCanonicalMapping
+        return caseInsensitive ? normalized.lowercased() : normalized
     }
 
     nonisolated static func precedes(_ lhs: (Date, UUID), _ rhs: (Date, UUID)) -> Bool {
@@ -1724,12 +2126,16 @@ enum LibraryDuplicateMerger {
         availability == .available || availability == .downloading
     }
 
-    /// Pure grouping. Records group by (library, normalized path). A record whose file
-    /// is missing here also joins the one present record with the same content
-    /// fingerprint (a renamed or moved file). Returns candidate indices per group,
-    /// survivor first.
+    /// Pure grouping. Records group by (library, normalized path). A path group whose
+    /// records were all confirmed missing by a completed full scan on this device also
+    /// joins the one present group with the same content fingerprint (a renamed or
+    /// moved file), only when that fingerprint belongs to exactly those two groups
+    /// among all records (present or not) and every record with it has the same byte
+    /// size. Records hidden only by a quick path check never join by fingerprint.
+    /// Returns candidate indices per group, survivor first.
     nonisolated static func plan(_ candidates: [Candidate], presence: [UUID: FileAvailability],
-                                 fingerprintLibraryID: UUID?) -> [[Int]] {
+                                 scanConfirmedMissing: Set<UUID> = [], fingerprintLibraryID: UUID?,
+                                 caseInsensitivePaths: Bool = false) -> [[Int]] {
         var parent = Array(0..<candidates.count)
         func find(_ x: Int) -> Int {
             var x = x
@@ -1743,23 +2149,39 @@ enum LibraryDuplicateMerger {
         var firstByKey: [Key: Int] = [:]
         for candidate in candidates {
             guard let path = candidate.path else { continue }
-            let key = Key(libraryID: candidate.libraryID, path: normalizedPath(path))
+            let key = Key(libraryID: candidate.libraryID, path: normalizedPath(path, caseInsensitive: caseInsensitivePaths))
             if let first = firstByKey[key] { union(first, candidate.index) } else { firstByKey[key] = candidate.index }
         }
-        if let library = fingerprintLibraryID {
-            var presentByHash: [String: [Int]] = [:]
-            var missingByHash: [String: [Int]] = [:]
+        if let library = fingerprintLibraryID, !scanConfirmedMissing.isEmpty {
+            var membersByRoot: [Int: [Int]] = [:]
+            for candidate in candidates { membersByRoot[find(candidate.index), default: []].append(candidate.index) }
+            var byHash: [String: [Int]] = [:]
             for candidate in candidates where candidate.libraryID == library {
-                guard let hash = candidate.hash else { continue }
-                let availability = presence[candidate.id]
-                if availability == .missing { missingByHash[hash, default: []].append(candidate.index) }
-                else if isPresent(availability) { presentByHash[hash, default: []].append(candidate.index) }
+                if let hash = candidate.hash { byHash[hash, default: []].append(candidate.index) }
             }
-            for (hash, missing) in missingByHash {
-                guard let present = presentByHash[hash],
-                      Set(present.map(find)).count == 1 else { continue }   // Ambiguous copies stay separate.
-                for index in missing { union(present[0], index) }
+            var joins: [(Int, Int)] = []
+            for (_, withHash) in byHash {
+                let roots = Set(withHash.map(find))
+                guard roots.count == 2,
+                      Set(withHash.map { candidates[$0].byteSize }).count == 1 else { continue }   // Ambiguous or different sizes.
+                func confirmedMissing(_ root: Int) -> Bool {
+                    (membersByRoot[root] ?? []).allSatisfy {
+                        let id = candidates[$0].id
+                        return presence[id] == .missing && scanConfirmedMissing.contains(id)
+                    }
+                }
+                func present(_ root: Int) -> Bool {
+                    let members = membersByRoot[root] ?? []
+                    return members.contains { isPresent(presence[candidates[$0].id]) }
+                        && !members.contains { presence[candidates[$0].id] == .missing }
+                }
+                let missing = roots.filter(confirmedMissing)
+                let presentRoots = roots.filter(present)
+                guard missing.count == 1, presentRoots.count == 1, let from = missing.first, let to = presentRoots.first,
+                      from != to else { continue }
+                joins.append((to, from))
             }
+            for (to, from) in joins { union(to, from) }
         }
         var groups: [Int: [Int]] = [:]
         for candidate in candidates { groups[find(candidate.index), default: []].append(candidate.index) }
@@ -1771,8 +2193,14 @@ enum LibraryDuplicateMerger {
     }
 
     static func merge(context: ModelContext, presence: [UUID: FileAvailability], fingerprintLibraryID: UUID?,
+                      scanConfirmedMissing: Set<UUID> = [], caseInsensitivePaths: Bool = false,
                       protectedIDs: Set<UUID> = [], batchSize: Int = 100, fetchChunk: Int = 1_000,
-                      canonicalExists: (String) -> Bool = { CanonicalStore.exists(filename: $0) }) async -> Summary {
+                      canonicalExists: (String) -> Bool = { CanonicalStore.exists(filename: $0) },
+                      copyCanonical: (_ from: String, _ to: String) -> Void = { from, to in
+                          try? FileManager.default.copyItem(at: CanonicalStore.url(forFilename: from),
+                                                            to: CanonicalStore.url(forFilename: to))
+                      },
+                      progress: ((_ done: Int, _ total: Int) -> Void)? = nil) async -> Summary {
         var summary = Summary()
         summary.removedDescriptors = mergeDescriptors(context: context)
 
@@ -1780,19 +2208,24 @@ enum LibraryDuplicateMerger {
         var models: [FileItem] = []
         var candidates: [Candidate] = []
         var seen = Set<PersistentIdentifier>()
+        var seenIDs = Set<UUID>()
         var offset = 0
         while true {
             var descriptor = FetchDescriptor<FileItem>(sortBy: [SortDescriptor(\.importedAt), SortDescriptor(\.filename)])
             descriptor.fetchOffset = offset
             descriptor.fetchLimit = fetchChunk
-            descriptor.propertiesToFetch = [\.id, \.libraryID, \.storageRelativePath, \.libraryPath, \.importedAt, \.contentHash]
+            descriptor.propertiesToFetch = [\.id, \.libraryID, \.storageRelativePath, \.libraryPath, \.importedAt,
+                                            \.contentHash, \.byteSize]
             guard let chunk = try? context.fetch(descriptor), !chunk.isEmpty else { break }
             for item in chunk {
                 // Offset paging can repeat a row if the catalog changes meanwhile.
                 guard let libraryID = item.libraryID, seen.insert(item.persistentModelID).inserted else { continue }
+                // Two rows with one UUID cannot be ordered identically on every device, and
+                // deleting "the other one" on each device could delete both. Leave extras alone.
+                guard seenIDs.insert(item.id).inserted else { summary.sameIDRowsSkipped += 1; continue }
                 candidates.append(Candidate(index: models.count, id: item.id, libraryID: libraryID,
                                             path: item.effectiveRelativePath, importedAt: item.importedAt,
-                                            hash: item.contentHash))
+                                            hash: item.contentHash, byteSize: item.byteSize))
                 models.append(item)
             }
             offset += chunk.count
@@ -1800,14 +2233,19 @@ enum LibraryDuplicateMerger {
             await Task.yield()
             if Task.isCancelled { return summary }
         }
+        if summary.sameIDRowsSkipped > 0 {
+            print("[LibraryDuplicateMerger] Left \(summary.sameIDRowsSkipped) catalog rows that share a record ID with another row; they are never deleted automatically.")
+        }
         let snapshot = candidates
         let groups = await Task.detached(priority: .utility) {
-            plan(snapshot, presence: presence, fingerprintLibraryID: fingerprintLibraryID)
+            plan(snapshot, presence: presence, scanConfirmedMissing: scanConfirmedMissing,
+                 fingerprintLibraryID: fingerprintLibraryID, caseInsensitivePaths: caseInsensitivePaths)
         }.value
         guard !groups.isEmpty else {
             if summary.removedDescriptors > 0 { try? context.save() }
             return summary
         }
+        progress?(0, groups.count)
 
         var tagDelta: [String: Int] = [:]
         var presenceByFile: [UUID: [FilePresence]] = [:]
@@ -1815,27 +2253,33 @@ enum LibraryDuplicateMerger {
             presenceByFile[record.fileID, default: []].append(record)
         }
         for (batchIndex, group) in groups.enumerated() {
+            defer {
+                if (batchIndex + 1).isMultiple(of: batchSize) || batchIndex + 1 == groups.count {
+                    progress?(batchIndex + 1, groups.count)
+                }
+            }
             let members = group.map { models[$0] }.filter { $0.modelContext != nil && !$0.isDeleted }
             if members.count < 2 { continue }
             if members.contains(where: { protectedIDs.contains($0.id) }) { summary.skippedGroups += 1; continue }
             let ordered = members.sorted { precedes(($0.importedAt, $0.id), ($1.importedAt, $1.id)) }
-            guard Set(ordered.map(ObjectIdentifier.init)).count == ordered.count else { summary.skippedGroups += 1; continue }
+            guard Set(ordered.map(ObjectIdentifier.init)).count == ordered.count,
+                  Set(ordered.map(\.id)).count == ordered.count else { summary.skippedGroups += 1; continue }
             let survivor = ordered[0]
             let fileSource = ordered.first { isPresent(presence[$0.id]) } ?? survivor
             for member in ordered { for tag in Set(member.tags) { tagDelta[tag, default: 0] -= 1 } }
-            mergeFields(into: survivor, from: ordered, fileSource: fileSource, canonicalExists: canonicalExists)
+            mergeFields(into: survivor, from: ordered, fileSource: fileSource,
+                        canonicalExists: canonicalExists, copyCanonical: copyCanonical)
             for tag in Set(survivor.tags) { tagDelta[tag, default: 0] += 1 }
             // Keep the best local presence for the survivor.
             let records = ordered.flatMap { presenceByFile[$0.id] ?? [] }
             if let best = records.max(by: { rank($0.availability) < rank($1.availability) }) {
                 if best.fileID != survivor.id { best.fileID = survivor.id }
+                if best.seenHere != true, records.contains(where: \.wasSeenHere) { best.seenHere = true }
                 for record in records where record !== best { context.delete(record) }
                 for member in ordered { presenceByFile[member.id] = nil }
                 presenceByFile[survivor.id] = [best]
             }
             for loser in ordered.dropFirst() {
-                // Two rows with one UUID cannot be ordered identically on every device; keep both.
-                guard loser.id != survivor.id else { continue }
                 summary.remapped[loser.id] = survivor.id
                 context.delete(loser)
                 summary.removedRecords += 1
@@ -1910,21 +2354,42 @@ enum LibraryDuplicateMerger {
         return removed
     }
 
+    /// A record counts as opened only if it was opened after being catalogued
+    /// (`FileItem.init` sets `lastOpenedAt = importedAt`) or has a play count.
+    nonisolated static let openedEpsilon: TimeInterval = 1
+
+    static func wasOpened(_ item: FileItem) -> Bool {
+        item.playCount > 0 || item.lastOpenedAt.timeIntervalSince(item.importedAt) > openedEpsilon
+    }
+
     /// Merge rules (members are ordered survivor first):
-    /// tags union; favorite OR; play count max; last opened max; user-edited
-    /// descriptive fields from the first edited record (otherwise survivor, filling
-    /// blanks); loops and practice settings from the most recently opened record;
-    /// canonical tab data from the valid, newest conversion; file fields from a
-    /// record whose file is present on this device.
+    /// - tags union; favorite OR; play count max; last opened max; notice dismissal OR.
+    /// - Practice settings (loops, scroll speed, BPMs, reader/notation preferences):
+    ///   each field from the most recently opened record that has it set, else from
+    ///   any record that has it set (survivor order). A set value is never replaced by
+    ///   an unset/default one.
+    /// - Descriptive details: with user-edited records, field by field from the edited
+    ///   records (survivor order first for conflicts, blanks filled from other edited
+    ///   records); otherwise the survivor's values with blanks filled from the others.
+    /// - Canonical tab data: the survivor's canonical if it has one, else the lowest
+    ///   canonical filename (never depends on which files exist on this device). A
+    ///   missing local file is copied from a member's same-version file; nothing is deleted.
+    /// - File fields from a record whose file is present on this device.
     static func mergeFields(into survivor: FileItem, from ordered: [FileItem], fileSource: FileItem,
-                            canonicalExists: (String) -> Bool) {
+                            canonicalExists: (String) -> Bool,
+                            copyCanonical: (_ from: String, _ to: String) -> Void = { _, _ in }) {
         func set<T: Equatable>(_ keyPath: ReferenceWritableKeyPath<FileItem, T>, _ value: T) {
             if survivor[keyPath: keyPath] != value { survivor[keyPath: keyPath] = value }
         }
         // Choose sources before any survivor field changes.
-        var practice = survivor
-        for member in ordered where member.lastOpenedAt > practice.lastOpenedAt { practice = member }
-        let edited = ordered.first { $0.metadataEdited }
+        let opened = ordered.filter(wasOpened).enumerated().sorted { lhs, rhs in
+            lhs.element.lastOpenedAt != rhs.element.lastOpenedAt
+                ? lhs.element.lastOpenedAt > rhs.element.lastOpenedAt : lhs.offset < rhs.offset
+        }.map(\.element)
+        let practiceOrder = opened + ordered.filter { member in !opened.contains { $0 === member } }
+        func practiceValue<T>(_ read: (FileItem) -> T?) -> T? { practiceOrder.lazy.compactMap(read).first }
+        let edited = ordered.filter(\.metadataEdited)
+
         var tags = survivor.tags
         for member in ordered.dropFirst() { for tag in member.tags where !tags.contains(tag) { tags.append(tag) } }
         set(\.tags, tags)
@@ -1935,51 +2400,47 @@ enum LibraryDuplicateMerger {
         set(\.confidenceNoticeDismissed, ordered.contains { $0.confidenceNoticeDismissed })
         if survivor.bookmark.isEmpty, let bookmark = ordered.first(where: { !$0.bookmark.isEmpty })?.bookmark { set(\.bookmark, bookmark) }
 
-        // Descriptive details: an edited record wins as-is; otherwise fill blanks.
-        let describing = edited ?? survivor
-        let fill = edited == nil
-        func pick(_ keyPath: ReferenceWritableKeyPath<FileItem, String?>) {
-            var value = describing[keyPath: keyPath]
-            if fill && value == nil { value = ordered.lazy.compactMap { $0[keyPath: keyPath] }.first }
-            set(keyPath, value)
-        }
+        // Descriptive details, field by field.
+        let describing = edited.isEmpty ? ordered : edited
         for keyPath in [\FileItem.embeddedTitle, \.artist, \.composer, \.arranger, \.collectionTitle, \.arrangement,
                         \.sourceName, \.sourceURL, \.sourceID, \.copyrightNotice, \.instrument, \.tuning] {
-            pick(keyPath)
+            set(keyPath, describing.lazy.compactMap { $0[keyPath: keyPath] }.first)
         }
-        var instruments = describing.instruments
-        if fill && instruments.isEmpty { instruments = ordered.first { !$0.instruments.isEmpty }?.instruments ?? [] }
-        set(\.instruments, instruments)
+        set(\.instruments, describing.first { !$0.instruments.isEmpty }?.instruments ?? [])
         // A rename is a user choice even without the score-details edit flag.
-        set(\.customTitle, describing.customTitle ?? ordered.lazy.compactMap(\.customTitle).first)
-        set(\.metadataEdited, edited != nil)
-        set(\.metadataReadVersion, edited?.metadataReadVersion ?? (ordered.map(\.metadataReadVersion).max() ?? 0))
+        set(\.customTitle, (edited + ordered).lazy.compactMap(\.customTitle).first)
+        set(\.metadataEdited, !edited.isEmpty)
+        set(\.metadataReadVersion, describing.map(\.metadataReadVersion).max() ?? 0)
 
-        // Practice settings follow the most recently opened copy.
-        set(\.loopStartY, practice.loopStartY)
-        set(\.loopEndY, practice.loopEndY)
-        set(\.loopStartMeasure, practice.loopStartMeasure)
-        set(\.loopEndMeasure, practice.loopEndMeasure)
-        set(\.scrollSpeed, practice.scrollSpeed)
-        set(\.userBPM, practice.userBPM)
-        set(\.referenceBPM, practice.referenceBPM ?? ordered.lazy.compactMap(\.referenceBPM).first)
-        set(\.preferredTextMode, practice.preferredTextMode)
-        set(\.preferredNotation, practice.preferredNotation)
+        // Practice settings: never replace a set value with an unset one.
+        let loopY = practiceValue { $0.loopStartY != nil || $0.loopEndY != nil ? ($0.loopStartY, $0.loopEndY) : nil }
+        set(\.loopStartY, loopY?.0 ?? nil)
+        set(\.loopEndY, loopY?.1 ?? nil)
+        let loopMeasures = practiceValue { $0.loopStartMeasure != nil || $0.loopEndMeasure != nil ? ($0.loopStartMeasure, $0.loopEndMeasure) : nil }
+        set(\.loopStartMeasure, loopMeasures?.0 ?? nil)
+        set(\.loopEndMeasure, loopMeasures?.1 ?? nil)
+        set(\.scrollSpeed, practiceValue { $0.scrollSpeed != 0 ? $0.scrollSpeed : nil } ?? 0)
+        set(\.userBPM, practiceValue(\.userBPM))
+        set(\.referenceBPM, practiceValue(\.referenceBPM))
+        set(\.preferredTextMode, practiceValue(\.preferredTextMode))
+        set(\.preferredNotation, practiceValue(\.preferredNotation))
 
-        // Canonical tab data: prefer a file that exists here, then the newest converter version.
-        let converted = ordered.filter { $0.canonicalFilename != nil }
-        if let best = converted.max(by: { lhs, rhs in
-            let l = (canonicalExists(lhs.canonicalFilename!) ? 1 : 0, lhs.canonicalVersion)
-            let r = (canonicalExists(rhs.canonicalFilename!) ? 1 : 0, rhs.canonicalVersion)
-            if l != r { return l < r }
-            // Stable: earlier members win ties.
-            return (ordered.firstIndex { $0 === lhs } ?? 0) > (ordered.firstIndex { $0 === rhs } ?? 0)
-        }) {
-            set(\.canonicalFilename, best.canonicalFilename)
-            set(\.provenanceData, best.provenanceData)
-            set(\.canonicalVersion, best.canonicalVersion)
-            set(\.derivedTitle, best.derivedTitle)
-            set(\.foreword, best.foreword)
+        // Canonical tab data: deterministic on every device.
+        let chosen: FileItem? = survivor.canonicalFilename != nil ? survivor
+            : ordered.filter { $0.canonicalFilename != nil }.min { $0.canonicalFilename! < $1.canonicalFilename! }
+        if let chosen, let name = chosen.canonicalFilename {
+            if !canonicalExists(name),
+               let local = ordered.first(where: { member in
+                   guard let other = member.canonicalFilename else { return false }
+                   return other != name && member.canonicalVersion == chosen.canonicalVersion && canonicalExists(other)
+               })?.canonicalFilename {
+                copyCanonical(local, name)   // Device-local cache; the source file is kept.
+            }
+            set(\.canonicalFilename, name)
+            set(\.provenanceData, chosen.provenanceData)
+            set(\.canonicalVersion, chosen.canonicalVersion)
+            set(\.derivedTitle, chosen.derivedTitle)
+            set(\.foreword, chosen.foreword)
         }
         set(\.backgroundProcessingVersion, ordered.map(\.backgroundProcessingVersion).max() ?? 0)
 
@@ -1998,4 +2459,11 @@ enum LibraryDuplicateMerger {
             set(\.contentHash, hash)
         }
     }
+}
+
+/// Observed only by the status panel while a duplicate merge runs.
+@MainActor
+final class LibraryMergeProgress: ObservableObject {
+    @Published var done = 0
+    @Published var total = 0
 }

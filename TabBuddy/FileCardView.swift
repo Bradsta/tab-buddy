@@ -78,10 +78,11 @@ struct FileCardView: View, Equatable {
         .sheet(isPresented: $showDetails) { ScoreDetailsView(file: file) }
         .sheet(isPresented: $showTags) { TagEditorView(file: file) }
         .sheet(isPresented: $showRename) { renameSheet }
-        .alert(libraryManager.mode == .externalFolder ? "Delete file from its folder?" : "Delete this file?",
+        .alert(libraryManager.mode == .externalFolder ? "Move file to the Trash?" : "Delete this file?",
                isPresented: $showFileDeleteConfirmation) {
-            Button("Delete File", role: .destructive) {
+            Button(libraryManager.mode == .externalFolder ? "Move to Trash" : "Delete File", role: .destructive) {
                 if libraryManager.mode == .externalFolder {
+                    // Errors (including "couldn't move to the Trash") appear in the library's error banner.
                     Task { try? await libraryManager.deleteUnderlyingFile(file, context: context) }
                 } else {
                     onDelete()
@@ -89,8 +90,22 @@ struct FileCardView: View, Equatable {
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("This removes the underlying file and cannot be undone.")
+            Text(deleteMessage)
         }
+    }
+
+    /// Names the exact file. A folder you chose only ever moves the file to the Trash.
+    private var deleteMessage: String {
+        let path = file.effectiveRelativePath ?? file.filename
+        let folder = libraryManager.libraryName.map { "“\($0)”" } ?? "your folder"
+        if libraryManager.mode == .externalFolder {
+            var message = "Moves “\(path)” in \(folder) to the Trash and removes it from the library."
+            if libraryManager.storageOption == .hybrid {
+                message += " Its library info is removed on all your devices."
+            }
+            return message + " If the Trash isn’t available for this folder, the file is kept."
+        }
+        return "Deletes “\(path)” from the library folder. This can’t be undone."
     }
 
     // MARK: - Pieces
@@ -243,7 +258,7 @@ struct FileCardView: View, Equatable {
                 Label("Remove from Library", systemImage: "minus.circle")
             }
             Button(role: .destructive) { showFileDeleteConfirmation = true } label: {
-                Label("Delete File from Folder", systemImage: "trash")
+                Label("Move File to Trash", systemImage: "trash")
             }
         } else {
             Button(role: .destructive) { showFileDeleteConfirmation = true } label: {

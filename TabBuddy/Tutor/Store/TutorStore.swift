@@ -287,6 +287,26 @@ final class TutorStore {
         return moved.count
     }
 
+    /// Batch form for duplicate merges: one fetch of all takes, keys mapped in
+    /// memory, one save, and the audio cap re-applied once per surviving key.
+    @discardableResult
+    func rekeyTakes(_ map: [String: String]) throws -> Int {
+        let map = map.filter { $0.key != $0.value }
+        guard !map.isEmpty else { return 0 }
+        var touched = Set<String>()
+        var moved = 0
+        for take in fetch(FetchDescriptor<PracticeTakeRecord>()) {
+            guard let newKey = map[take.scoreKey] else { continue }
+            take.scoreKey = newKey
+            touched.insert(newKey)
+            moved += 1
+        }
+        guard moved > 0 else { return 0 }
+        try save()
+        for key in touched { try pruneTakeAudio(forScore: key) }
+        return moved
+    }
+
     // MARK: - Take audio encoding
 
     /// Re-encodes a take's audio to AAC off the main thread, then points the

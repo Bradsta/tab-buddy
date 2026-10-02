@@ -139,6 +139,7 @@ final class LibraryPersistence: ObservableObject {
         self.buildContainer = buildContainer
         self.finishWork = finishWork
         syncEnabled = LibrarySyncPreference.isEnabled(in: defaults)
+        if syncEnabled && cloudAccountAvailable { LibraryStorageOption.noteMirroring(in: defaults) }
         container = buildContainer(syncEnabled)
     }
 
@@ -161,6 +162,7 @@ final class LibraryPersistence: ObservableObject {
         guard container == nil else { return }
         syncEnabled = LibrarySyncPreference.isEnabled(in: defaults)
         cloudAccountAvailable = FileManager.default.ubiquityIdentityToken != nil
+        if syncEnabled && cloudAccountAvailable { LibraryStorageOption.noteMirroring(in: defaults) }
         container = buildContainer(syncEnabled)
     }
 }

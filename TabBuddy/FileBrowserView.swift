@@ -713,6 +713,8 @@ struct FileBrowserView: View {
             }
             .task { libraryManager.refreshStorageAvailability() }
             .task(id: catalogRevision) {
+                // A duplicate merge saves in many batches; refresh once when it finishes.
+                guard !libraryManager.isMergingDuplicates else { return }
                 guard scheduledCatalogRevision != catalogRevision else { return }
                 scheduledCatalogRevision = catalogRevision
                 let manager = libraryManager
@@ -737,9 +739,13 @@ struct FileBrowserView: View {
             // Songs appear or hide as this device learns which files are in its folder.
             .onReceive(libraryManager.$availabilityByFileID.dropFirst()) { _ in catalogRevision += 1 }
             .onChange(of: libraryManager.storageOption) { _, _ in catalogRevision += 1 }
+            .onChange(of: libraryManager.isMergingDuplicates) { _, merging in
+                if !merging { catalogRevision += 1 }
+            }
             .task { await runDebugLaunchArguments() }
             .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { notification in
                 guard let savedContext = notification.object as? ModelContext, savedContext === context else { return }
+                guard !libraryManager.isMergingDuplicates else { return }   // One refresh after the merge.
                 if !browserIndex.applySavedChanges(notification, context: context, libraryID: libraryManager.activeLibraryID,
                                                    isShown: { libraryManager.isShownOnThisDevice($0) }) {
                     catalogRevision += 1
@@ -956,9 +962,11 @@ struct FileBrowserView: View {
 
     @ViewBuilder
     private var backgroundWorkStatus: some View {
-        if libraryManager.isRescanning || libraryManager.rescanSummary != nil || libraryManager.processingSummary != nil || libraryManager.isProcessingLibrary || folderImporter.isRunning || canonicalConverter.isConverting {
+        if libraryManager.isRescanning || libraryManager.rescanSummary != nil || libraryManager.processingSummary != nil || libraryManager.isProcessingLibrary || folderImporter.isRunning || canonicalConverter.isConverting || libraryManager.isMergingDuplicates {
             VStack(spacing: 8) {
-                if libraryManager.isRescanning {
+                if libraryManager.isMergingDuplicates {
+                    LibraryMergeStatus(progress: libraryManager.mergeProgress).padding(.horizontal)
+                } else if libraryManager.isRescanning {
                     rescanStatus
                 } else if folderImporter.isRunning {
                     importOverlay
@@ -1225,5 +1233,27 @@ private struct LibraryScanStatus: View {
         }
         .padding(.horizontal).padding(.vertical, 8)
         .background(Color(.secondarySystemGroupedBackground))
+    }
+}
+
+/// "Merging library info from your other devices… (n)" while a duplicate merge runs.
+/// Only this view observes merge progress.
+private struct LibraryMergeStatus: View {
+    @ObservedObject var progress: LibraryMergeProgress
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                ProgressView()
+                Text(progress.total > 0
+                     ? "Merging library info from your other devices… (\(progress.done) of \(progress.total))"
+                     : "Merging library info from your other devices…")
+                    .font(.subheadline)
+            }
+            Text("Please don’t edit songs until this finishes.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
     }
 }

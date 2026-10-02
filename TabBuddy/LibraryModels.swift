@@ -68,18 +68,44 @@ final class FilePresence {
     var availabilityRaw: String = FileAvailability.accessNeeded.rawValue
     var lastSeenAt: Date? = nil
     var failureDescription: String? = nil
+    /// Why a record is `.missing` on this device (`FilePresence.Reason`). Optional
+    /// and defaulted for lightweight migration; nil on older rows means unknown.
+    var reasonRaw: String? = nil
+    /// The record's relative path when it was found missing. A different current
+    /// path (for example after another device's merge) triggers a re-check.
+    var missingPath: String? = nil
+    /// True once this device has had the file available or downloading. Optional
+    /// for lightweight migration; older rows fall back to `lastSeenAt != nil`.
+    var seenHere: Bool? = nil
+
+    /// Only a completed full scan on this device proves a file is gone, and only for
+    /// a file this device had before (`completedScan`). A file never seen here
+    /// (`notSeenHere`, e.g. a copy the other device just added that iCloud Drive has
+    /// not delivered) and a quick path check (`pathCheck`) never permit fingerprint joins.
+    enum Reason: String { case completedScan, pathCheck, notSeenHere }
 
     var availability: FileAvailability {
         get { FileAvailability(rawValue: availabilityRaw) ?? .failed }
         set { availabilityRaw = newValue.rawValue }
     }
 
+    var reason: Reason? {
+        get { reasonRaw.flatMap(Reason.init(rawValue:)) }
+        set { reasonRaw = newValue?.rawValue }
+    }
+
     init(fileID: UUID, availability: FileAvailability,
-         lastSeenAt: Date? = nil, failureDescription: String? = nil) {
+         lastSeenAt: Date? = nil, failureDescription: String? = nil, reason: Reason? = nil) {
         self.fileID = fileID
         self.availabilityRaw = availability.rawValue
         self.lastSeenAt = lastSeenAt
         self.failureDescription = failureDescription
+        self.reasonRaw = reason?.rawValue
+        if availability == .available || availability == .downloading { seenHere = true }
+    }
+
+    var wasSeenHere: Bool {
+        seenHere == true || lastSeenAt != nil || availability == .available || availability == .downloading
     }
 }
 
@@ -144,6 +170,14 @@ enum LibraryFileError: LocalizedError, Equatable {
     case unsupportedFile
     case noImportableFiles
     case copyFailed(String)
+    /// The folder's `.tabbuddy-library.json` exists but is still in iCloud Drive
+    /// (not downloaded) or could not be read. A new marker is never written then.
+    case markerNotDownloaded
+    /// iCloud Drive kept conflicting copies of the marker (for example `.tabbuddy-library 2.json`).
+    case markerConflict([String])
+    /// The saved folder's marker names a different library than the catalog expects.
+    case markerIdentityMismatch(expected: UUID, found: UUID)
+    case trashUnavailable(String)
 
     var errorDescription: String? {
         switch self {
@@ -157,6 +191,14 @@ enum LibraryFileError: LocalizedError, Equatable {
         case .noImportableFiles: return "No supported files were found in the selected folder. Choose a folder containing PDF, .txt, or Guitar Pro files. If it is in iCloud Drive, check that its contents are available in Files, then try again."
         case .unsupportedFile: return "Supported files: PDF, text, and Guitar Pro (.gp3, .gp4, .gp5, .gpx, .gp)."
         case .copyFailed(let message): return "The file could not be copied: \(message)"
+        case .markerNotDownloaded:
+            return "Waiting for the library marker to download from iCloud Drive. Open the folder in the Files app to download it, then try again."
+        case .markerConflict(let names):
+            return "iCloud Drive kept more than one library marker in this folder (\(names.joined(separator: ", "))). Use Settings → Resolve Library Marker to keep the one that matches this library; the other copy moves to the Trash."
+        case .markerIdentityMismatch(let expected, let found):
+            return "The folder’s library marker (\(found.uuidString.prefix(8))) doesn’t match this device’s library (\(expected.uuidString.prefix(8))). Nothing was changed. Choose the folder again in Settings."
+        case .trashUnavailable(let path):
+            return "“\(path)” couldn’t be moved to the Trash, so it wasn’t deleted. Delete it in the Files app if you still want to remove it."
         }
     }
 }
@@ -174,6 +216,18 @@ enum LibraryStorageOption: String, CaseIterable, Identifiable, Sendable {
 
     static let key = "library.storageOption"
     static let didChange = Notification.Name("TabBuddy.libraryStorageOptionChanged")
+    /// Set once library info has been (or was asked to be) mirrored from this store.
+    /// Local only keeps the same store; its persistent history is exported when
+    /// mirroring resumes, so removals made in Local only would then reach other devices.
+    static let mirroredKey = "library.storeHasMirrored"
+
+    static func hasEverMirrored(in defaults: UserDefaults = .standard) -> Bool {
+        defaults.bool(forKey: mirroredKey)
+    }
+
+    static func noteMirroring(in defaults: UserDefaults = .standard) {
+        if !defaults.bool(forKey: mirroredKey) { defaults.set(true, forKey: mirroredKey) }
+    }
 
     var id: String { rawValue }
     /// Whether CloudKit mirroring of library info is requested (it still needs an iCloud account).
@@ -233,6 +287,7 @@ enum LibraryStorageOption: String, CaseIterable, Identifiable, Sendable {
         }
         defaults.set(option.rawValue, forKey: key)
         defaults.set(option.syncsMetadata, forKey: LibrarySyncPreference.key)
+        if option.syncsMetadata { noteMirroring(in: defaults) }
         // A connection opened before any flag existed had mirroring off.
         if !hadFlag && option.syncsMetadata {
             NotificationCenter.default.post(name: LibrarySyncPreference.didChange, object: defaults)
@@ -249,6 +304,7 @@ enum LibraryStorageOption: String, CaseIterable, Identifiable, Sendable {
         let previous = stored(in: defaults)
         defaults.set(option.rawValue, forKey: key)
         defaults.set(option.syncsMetadata, forKey: LibrarySyncPreference.key)
+        if option.syncsMetadata { noteMirroring(in: defaults) }
         if previous != option { NotificationCenter.default.post(name: didChange, object: defaults) }
         if !hadFlag || previousSync != option.syncsMetadata {
             NotificationCenter.default.post(name: LibrarySyncPreference.didChange, object: defaults)

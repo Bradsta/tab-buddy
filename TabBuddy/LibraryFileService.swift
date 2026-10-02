@@ -78,29 +78,35 @@ actor LibraryFileService {
         try Self.writeOrValidateMarker(at: root, libraryID: libraryID, mayCreate: mayCreate)
     }
 
-    func existingManagedLibraryID(mode: LibraryMode) throws -> UUID? {
-        let markerURL = try managedRoot(for: mode).appendingPathComponent(LibraryMarker.filename)
-        guard FileManager.default.fileExists(atPath: markerURL.path) else { return nil }
-        let marker = try JSONDecoder().decode(LibraryMarker.self, from: Data(contentsOf: markerURL))
-        guard marker.schemaVersion == LibraryMarker.currentVersion else { throw LibraryFileError.markerMismatch }
-        return marker.libraryID
+    func existingManagedLibraryID(mode: LibraryMode) async throws -> UUID? {
+        let root = try managedRoot(for: mode)
+        guard FileManager.default.fileExists(atPath: root.path) else { return nil }
+        return try await Self.existingLibraryID(at: root)
     }
 
+    /// Launch path for TabBuddy's own library whose ID is already known. Never blocks
+    /// on a marker that is still in iCloud (offline launches stay fast): its download
+    /// starts and `markerProblem(at:expected:)` validates it later. A marker is only
+    /// written when none exists at all.
     func configureManagedLibrary(id: UUID, mode: LibraryMode = .managedICloud,
-                                 displayName: String = managedFolderName) throws -> URL {
+                                 displayName: String = managedFolderName) async throws -> URL {
         let root = try managedRoot(for: mode)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        try Self.writeOrValidateMarker(at: root, libraryID: id, mayCreate: true)
+        try Self.writeOrValidateMarker(at: root, libraryID: id, mayCreate: true, deferUnreadable: true)
         configuration = LibraryConfiguration(id: id, mode: mode,
                                              displayName: displayName, externalBookmark: nil)
         return root
     }
 
+    func managedRootURL(mode: LibraryMode) throws -> URL { try managedRoot(for: mode) }
+
     func connectExternalRoot(_ url: URL, libraryID: UUID, displayName: String,
-                             mayCreateMarker: Bool = true) throws -> Data {
+                             mayCreateMarker: Bool = true) async throws -> Data {
         let started = url.startAccessingSecurityScopedResource()
         defer { if started { url.stopAccessingSecurityScopedResource() } }
         _ = try url.resourceValues(forKeys: [.isDirectoryKey])
+        // Download (or wait for) an evicted marker first; a placeholder is never overwritten.
+        _ = try await Self.existingLibraryID(at: url)
 
         try Self.writeOrValidateMarker(at: url, libraryID: libraryID,
                                        mayCreate: mayCreateMarker)
@@ -112,14 +118,215 @@ actor LibraryFileService {
         return bookmark
     }
 
-    /// Reuse the identity of an existing library, or adopt an unmarked folder.
+    /// Reuse the identity of an existing library, or adopt an unmarked folder (nil).
     /// Never creates a child directory or overwrites another library's marker.
-    static func existingLibraryID(at root: URL) throws -> UUID? {
-        let markerURL = root.appendingPathComponent(LibraryMarker.filename)
-        guard FileManager.default.fileExists(atPath: markerURL.path) else { return nil }
-        let marker = try JSONDecoder().decode(LibraryMarker.self, from: Data(contentsOf: markerURL))
+    /// A marker that is still in iCloud Drive (a `.icloud` placeholder or a dataless
+    /// file) is downloaded with a coordinated read; if it cannot be read in time this
+    /// throws `markerNotDownloaded` rather than reporting the folder as unmarked, so
+    /// callers never mint a second library identity for a synced folder. Conflict
+    /// copies are downloaded and read too; copies naming the same library are ignored.
+    /// File checks run off the calling actor.
+    static func existingLibraryID(at root: URL, timeout: Duration? = nil) async throws -> UUID? {
+        let deadline = ContinuousClock.now.advanced(by: timeout ?? markerDownloadTimeout)
+        switch await inspectMarkerDetached(at: root) {
+        case .absent:
+            return nil
+        case .present(let marker):
+            try await validateConflicts(at: root, primary: marker, deadline: deadline)
+            return try validatedID(marker)
+        case .conflict(let names):
+            throw LibraryFileError.markerConflict(names)
+        case .notDownloaded:
+            let markerURL = root.appendingPathComponent(LibraryMarker.filename)
+            try? FileManager.default.startDownloadingUbiquitousItem(at: markerURL)
+            while ContinuousClock.now < deadline {
+                try Task.checkCancellation()
+                if case .present(let marker) = await inspectMarkerDetached(at: root) {
+                    try await validateConflicts(at: root, primary: marker, deadline: deadline)
+                    return try validatedID(marker)
+                }
+                let remaining = ContinuousClock.now.duration(to: deadline)
+                if FileManager.default.fileExists(atPath: markerURL.path),
+                   let data = await coordinatedRead(markerURL, timeout: min(remaining, .seconds(5))),
+                   let marker = try? JSONDecoder().decode(LibraryMarker.self, from: data) {
+                    try await validateConflicts(at: root, primary: marker, deadline: deadline)
+                    return try validatedID(marker)
+                }
+                try await Task.sleep(for: .milliseconds(250))
+            }
+            throw LibraryFileError.markerNotDownloaded
+        case .unreadable:
+            throw LibraryFileError.markerNotDownloaded
+        }
+    }
+
+    /// Background check for a folder whose library ID is already known. Returns a
+    /// problem only when a readable marker disagrees or a readable conflict copy
+    /// names another library; a marker that cannot download (offline) is not a problem.
+    static func markerProblem(at root: URL, expected: UUID, timeout: Duration? = nil) async -> LibraryFileError? {
+        do {
+            guard let id = try await existingLibraryID(at: root, timeout: timeout) else { return nil }
+            return id == expected ? nil : .markerIdentityMismatch(expected: expected, found: id)
+        } catch let error as LibraryFileError {
+            if case .markerConflict = error { return error }
+            if case .markerMismatch = error { return error }
+            return nil
+        } catch { return nil }
+    }
+
+    /// How long choosing a folder waits for an evicted marker to download.
+    nonisolated(unsafe) static var markerDownloadTimeout: Duration = .seconds(15)
+
+    enum MarkerState: Equatable {
+        case absent
+        case present(LibraryMarker)
+        /// An iCloud Drive placeholder or dataless marker that must be downloaded first.
+        case notDownloaded
+        /// A local marker that exists but cannot be decoded.
+        case unreadable
+        /// Conflict copies exist and no primary marker could be read.
+        case conflict([String])
+    }
+
+    private static func validatedID(_ marker: LibraryMarker) throws -> UUID {
         guard marker.schemaVersion == LibraryMarker.currentVersion else { throw LibraryFileError.markerMismatch }
         return marker.libraryID
+    }
+
+    struct MarkerEntries: Equatable {
+        var primaryLocal = false
+        var primaryPlaceholder = false
+        /// Logical conflict-copy names (".tabbuddy-library 2.json"), and whether each is only a placeholder.
+        var conflicts: [(name: String, placeholder: Bool)] = []
+        static func == (l: Self, r: Self) -> Bool {
+            l.primaryLocal == r.primaryLocal && l.primaryPlaceholder == r.primaryPlaceholder
+                && l.conflicts.map(\.name) == r.conflicts.map(\.name) && l.conflicts.map(\.placeholder) == r.conflicts.map(\.placeholder)
+        }
+    }
+
+    /// Conflict copies iCloud Drive may create: ".tabbuddy-library 2.json" … " 20.json".
+    static let conflictMarkerNames: [String] = (2...20).map { ".tabbuddy-library \($0).json" }
+
+    /// Checks only the marker's own names (and their `.icloud` placeholder forms);
+    /// the folder is never enumerated.
+    static func markerEntries(at root: URL) -> MarkerEntries {
+        func exists(_ name: String) -> Bool { FileManager.default.fileExists(atPath: root.appendingPathComponent(name).path) }
+        func placeholder(_ name: String) -> Bool { exists(".\(name).icloud") || exists("\(name).icloud") }
+        var entries = MarkerEntries()
+        entries.primaryLocal = exists(LibraryMarker.filename)
+        entries.primaryPlaceholder = !entries.primaryLocal && placeholder(LibraryMarker.filename)
+        for name in conflictMarkerNames {
+            if exists(name) { entries.conflicts.append((name, false)) }
+            else if placeholder(name) { entries.conflicts.append((name, true)) }
+        }
+        return entries
+    }
+
+    static func inspectMarkerDetached(at root: URL) async -> MarkerState {
+        await Task.detached(priority: .userInitiated) { inspectMarker(at: root) }.value
+    }
+
+    static func inspectMarker(at root: URL) -> MarkerState {
+        let markerURL = root.appendingPathComponent(LibraryMarker.filename)
+        let entries = markerEntries(at: root)
+        if entries.primaryLocal {
+            let values = try? markerURL.resourceValues(forKeys: [.isUbiquitousItemKey, .ubiquitousItemDownloadingStatusKey])
+            // `.current` and `.downloaded` are both readable; only `.notDownloaded` is dataless.
+            if values?.isUbiquitousItem == true, values?.ubiquitousItemDownloadingStatus == .notDownloaded {
+                return .notDownloaded
+            }
+            guard let data = try? Data(contentsOf: markerURL) else { return .notDownloaded }
+            guard let marker = try? JSONDecoder().decode(LibraryMarker.self, from: data) else { return .unreadable }
+            return .present(marker)
+        }
+        if entries.primaryPlaceholder { return .notDownloaded }
+        if !entries.conflicts.isEmpty { return .conflict(entries.conflicts.map(\.name)) }
+        return .absent
+    }
+
+    /// Reads one marker file, downloading it first when it is only in iCloud.
+    static func readMarker(at url: URL, deadline: ContinuousClock.Instant) async -> LibraryMarker? {
+        if let data = try? Data(contentsOf: url), let marker = try? JSONDecoder().decode(LibraryMarker.self, from: data) {
+            return marker
+        }
+        try? FileManager.default.startDownloadingUbiquitousItem(at: url)
+        let remaining = ContinuousClock.now.duration(to: deadline)
+        guard remaining > .zero else { return nil }
+        guard let data = await coordinatedRead(url, timeout: min(remaining, .seconds(5))) else { return nil }
+        return try? JSONDecoder().decode(LibraryMarker.self, from: data)
+    }
+
+    /// Conflict copies that name the same library are harmless, including evicted
+    /// ones once downloaded. A readable copy naming a different library must be
+    /// resolved (Settings → Resolve Library Marker). A copy that cannot be read in
+    /// time is not treated as a conflict; the primary marker decides.
+    private static func validateConflicts(at root: URL, primary: LibraryMarker, deadline: ContinuousClock.Instant) async throws {
+        let conflicts = await Task.detached { markerEntries(at: root).conflicts }.value
+        guard !conflicts.isEmpty else { return }
+        var unresolved: [String] = []
+        for conflict in conflicts {
+            guard let marker = await readMarker(at: root.appendingPathComponent(conflict.name), deadline: deadline) else { continue }
+            if marker.libraryID != primary.libraryID { unresolved.append(conflict.name) }
+        }
+        if !unresolved.isEmpty { throw LibraryFileError.markerConflict(unresolved) }
+    }
+
+    /// Keeps the marker (primary or conflict copy) that names `keep`; every other
+    /// marker copy is moved to the Trash, never deleted. If only a conflict copy
+    /// names `keep`, it becomes the primary marker after the primary is trashed.
+    static func resolveMarkerConflict(at root: URL, keep: UUID,
+                                      trash: (URL) throws -> Void = { try FileManager.default.trashItem(at: $0, resultingItemURL: nil) }) async throws -> [String] {
+        let deadline = ContinuousClock.now.advanced(by: markerDownloadTimeout)
+        let entries = markerEntries(at: root)
+        let primaryURL = root.appendingPathComponent(LibraryMarker.filename)
+        var markers: [(name: String, marker: LibraryMarker?)] = []
+        if entries.primaryLocal || entries.primaryPlaceholder {
+            markers.append((LibraryMarker.filename, await readMarker(at: primaryURL, deadline: deadline)))
+        }
+        for conflict in entries.conflicts {
+            markers.append((conflict.name, await readMarker(at: root.appendingPathComponent(conflict.name), deadline: deadline)))
+        }
+        guard let keeper = markers.first(where: { $0.marker?.libraryID == keep }) else { throw LibraryFileError.markerNotDownloaded }
+        var trashed: [String] = []
+        for entry in markers where entry.name != keeper.name {
+            // Only trash copies that were read; an unreadable copy is left alone.
+            guard entry.marker != nil else { continue }
+            do { try trash(root.appendingPathComponent(entry.name)) }
+            catch { throw LibraryFileError.trashUnavailable(entry.name) }
+            trashed.append(entry.name)
+        }
+        if keeper.name != LibraryMarker.filename, !FileManager.default.fileExists(atPath: primaryURL.path) {
+            var coordinationError: NSError?
+            var result: Result<Void, Error> = .success(())
+            NSFileCoordinator().coordinate(writingItemAt: root.appendingPathComponent(keeper.name), options: .forMoving,
+                                           writingItemAt: primaryURL, options: .forReplacing, error: &coordinationError) { from, to in
+                result = Result { try FileManager.default.moveItem(at: from, to: to) }
+            }
+            if let coordinationError { throw coordinationError }
+            try result.get()
+        }
+        return trashed
+    }
+
+    /// A coordinated read lets the file provider download the file. It is abandoned
+    /// (and the coordinator cancelled) after `timeout`.
+    static func coordinatedRead(_ url: URL, timeout: Duration) async -> Data? {
+        let coordinator = ScanCoordinator()
+        let read = Task.detached(priority: .userInitiated) { () -> Data? in
+            var error: NSError?
+            var data: Data?
+            coordinator.value.coordinate(readingItemAt: url, options: [], error: &error) { readable in
+                data = try? Data(contentsOf: readable)
+            }
+            return data
+        }
+        let timer = Task.detached {
+            try? await Task.sleep(for: timeout)
+            if !Task.isCancelled { coordinator.value.cancel() }
+        }
+        let result = await read.value
+        timer.cancel()
+        return result
     }
 
     func acquireFile(relativePath: String, allowCloudPlaceholder: Bool = false) throws -> FileAccessLease {
@@ -527,6 +734,19 @@ actor LibraryFileService {
         return present
     }
 
+    /// Whether paths in the active root compare case-insensitively: iCloud Drive
+    /// (TabBuddy's container or a ubiquitous folder) or a volume that reports
+    /// case-insensitive names. Unknown roots are treated as case-sensitive, which
+    /// merges fewer records.
+    func rootIsCaseInsensitive() -> Bool {
+        guard let lease = try? acquireRoot() else { return false }
+        defer { lease.close() }
+        if configuration?.mode == .managedICloud && testingRoot == nil { return true }
+        let values = try? lease.url.resourceValues(forKeys: [.isUbiquitousItemKey, .volumeSupportsCaseSensitiveNamesKey])
+        if values?.isUbiquitousItem == true { return true }
+        return values?.volumeSupportsCaseSensitiveNames == false
+    }
+
     /// Whether the active root lives in iCloud (TabBuddy's container or iCloud Drive).
     func rootIsUbiquitous() -> Bool {
         guard let lease = try? acquireRoot() else { return false }
@@ -535,13 +755,30 @@ actor LibraryFileService {
         return (try? lease.url.resourceValues(forKeys: [.isUbiquitousItemKey]))?.isUbiquitousItem == true
     }
 
+    /// Deletes one song file the user explicitly confirmed. A folder the user chose
+    /// (Local only or Hybrid) only ever moves the file to the Trash; if the Trash is
+    /// unavailable there the file stays and `trashUnavailable` is thrown. Only the
+    /// app-managed library folder falls back to permanent removal.
     func deleteUnderlyingFile(relativePath: String) throws {
         let normalized = try Self.normalizedRelativePath(relativePath)
+        guard let configuration else { throw LibraryFileError.notConfigured }
         let lease = try acquireRoot()
         defer { lease.close() }
         let url = lease.url.appendingPathComponent(normalized)
         guard Self.contains(url, in: lease.url) else { throw LibraryFileError.invalidRelativePath }
-        try FileManager.default.removeItem(at: url)
+        try Self.deleteFile(at: url, displayPath: normalized,
+                            allowPermanentRemoval: configuration.mode != .externalFolder)
+    }
+
+    /// Trash first; permanent removal only when allowed (the app-managed folder).
+    static func deleteFile(at url: URL, displayPath: String, allowPermanentRemoval: Bool,
+                           trash: (URL) throws -> Void = { try FileManager.default.trashItem(at: $0, resultingItemURL: nil) }) throws {
+        do {
+            try trash(url)
+        } catch {
+            guard allowPermanentRemoval else { throw LibraryFileError.trashUnavailable(displayPath) }
+            try FileManager.default.removeItem(at: url)
+        }
     }
 
     /// Copies a complete library to a new root. The active configuration is
@@ -741,12 +978,13 @@ actor LibraryFileService {
 
     private static func validateExistingMarkerIfPresent(at root: URL,
                                                         libraryID: UUID) throws {
-        let markerURL = root.appendingPathComponent(LibraryMarker.filename)
-        guard FileManager.default.fileExists(atPath: markerURL.path) else { return }
-        guard let data = try? Data(contentsOf: markerURL),
-              let marker = try? JSONDecoder().decode(LibraryMarker.self, from: data),
-              marker.libraryID == libraryID else {
-            throw LibraryFileError.markerMismatch
+        switch inspectMarker(at: root) {
+        case .absent: return
+        case .present(let marker):
+            guard marker.libraryID == libraryID else { throw LibraryFileError.markerMismatch }
+        case .notDownloaded: throw LibraryFileError.markerNotDownloaded
+        case .unreadable: throw LibraryFileError.markerMismatch
+        case .conflict(let names): throw LibraryFileError.markerConflict(names)
         }
     }
 
@@ -779,18 +1017,62 @@ actor LibraryFileService {
     }
 
     private static func writeOrValidateMarker(at root: URL, libraryID: UUID,
-                                              mayCreate: Bool) throws {
+                                              mayCreate: Bool, deferUnreadable: Bool = false) throws {
         let markerURL = root.appendingPathComponent(LibraryMarker.filename)
-        if let data = try? Data(contentsOf: markerURL),
-           let marker = try? JSONDecoder().decode(LibraryMarker.self, from: data) {
+        switch inspectMarker(at: root) {
+        case .present(let marker):
             guard marker.libraryID == libraryID else { throw LibraryFileError.markerMismatch }
             return
+        case .notDownloaded, .unreadable:
+            // Never replace a marker that exists but is not readable here yet.
+            guard deferUnreadable else { throw LibraryFileError.markerNotDownloaded }
+            try? FileManager.default.startDownloadingUbiquitousItem(at: markerURL)
+            return
+        case .conflict(let names):
+            guard deferUnreadable else { throw LibraryFileError.markerConflict(names) }
+            return
+        case .absent:
+            break
         }
         guard mayCreate else { throw LibraryFileError.markerMismatch }
         let marker = LibraryMarker(libraryID: libraryID,
                                    schemaVersion: LibraryMarker.currentVersion)
         let data = try JSONEncoder().encode(marker)
-        try data.write(to: markerURL, options: .atomic)
+        do {
+            // Never replace a marker that appeared (for example from iCloud Drive) meanwhile.
+            try writeExclusively(data, to: markerURL)
+        } catch {
+            if case .present(let existing) = inspectMarker(at: root) {
+                guard existing.libraryID == libraryID else { throw LibraryFileError.markerMismatch }
+                return
+            }
+            throw error
+        }
+    }
+
+    /// Coordinated write of a complete temporary file, then an exclusive rename
+    /// (`renamex_np` with `RENAME_EXCL`, falling back to `link`) so the marker is
+    /// never torn and never replaces an existing file.
+    static func writeExclusively(_ data: Data, to destination: URL) throws {
+        var coordinationError: NSError?
+        var result: Result<Void, Error> = .success(())
+        NSFileCoordinator().coordinate(writingItemAt: destination, options: [], error: &coordinationError) { url in
+            result = Result {
+                let temporary = url.deletingLastPathComponent().appendingPathComponent(".tabbuddy-marker-\(UUID().uuidString).tmp")
+                try data.write(to: temporary)
+                defer { _ = unlink(temporary.path) }   // Our own temporary file only.
+                if renamex_np(temporary.path, url.path, UInt32(RENAME_EXCL)) == 0 { return }
+                let renameError = errno
+                if renameError == EEXIST { throw POSIXError(.EEXIST) }
+                if link(temporary.path, url.path) == 0 { return }
+                let linkError = errno
+                if linkError == EEXIST { throw POSIXError(.EEXIST) }
+                // A provider without rename-exclusive or hard links: still never overwrite.
+                try data.write(to: url, options: .withoutOverwriting)
+            }
+        }
+        if let coordinationError { throw coordinationError }
+        try result.get()
     }
 }
 

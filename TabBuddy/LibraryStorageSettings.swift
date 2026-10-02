@@ -52,6 +52,7 @@ struct LibraryStorageSettings: View {
     @Environment(\.dismiss) private var dismiss
     @State private var pendingOption: LibraryStorageOption?
     @State private var showsMoreOptions = false
+    @State private var confirmsMarkerResolve = false
 
     private var isBusy: Bool {
         libraryManager.isMoving || libraryManager.isProcessingLibrary || libraryManager.isRescanning ||
@@ -92,6 +93,13 @@ struct LibraryStorageSettings: View {
                 if let error = libraryManager.lastError {
                     Section { Text(error).foregroundStyle(.red) }
                 }
+                if let names = libraryManager.markerConflictNames {
+                    Section {
+                        Button("Resolve Library Marker…") { confirmsMarkerResolve = true }.disabled(isBusy)
+                    } footer: {
+                        Text("iCloud Drive kept more than one library marker (\(names.joined(separator: ", "))). Resolve keeps the one for this library and moves the others to the Trash.")
+                    }
+                }
                 if let performLibraryAction {
                     Section("Library Maintenance") {
                         Toggle("Prepare library automatically", isOn: $libraryManager.automaticallyProcessesLibrary)
@@ -100,7 +108,8 @@ struct LibraryStorageSettings: View {
                         Button("Prepare Library", systemImage: "doc.text.magnifyingglass") {
                             performLibraryAction(.prepare)
                             dismiss()
-                        }.disabled(!libraryManager.isConfigured || libraryManager.isProcessingLibrary || libraryManager.isRescanning || isGeneratingTabData)
+                        }.disabled(!libraryManager.isConfigured || libraryManager.isProcessingLibrary || libraryManager.isRescanning
+                                   || libraryManager.isMergingDuplicates || isGeneratingTabData)
 
                         Button("Rescan Library", systemImage: "arrow.clockwise") {
                             performLibraryAction(.rescan)
@@ -139,6 +148,14 @@ struct LibraryStorageSettings: View {
                 }
             }
             .navigationTitle("Settings")
+            .alert("Resolve library marker?", isPresented: $confirmsMarkerResolve) {
+                Button("Keep This Library’s Marker", role: .destructive) {
+                    Task { await libraryManager.resolveMarkerConflict() }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Keeps the marker that matches this library. The other marker copies (\((libraryManager.markerConflictNames ?? []).joined(separator: ", "))) move to the Trash; nothing is permanently deleted. Your other device may then ask you to choose the folder again.")
+            }
             #if DEBUG
             .onAppear {
                 if ProcessInfo.processInfo.arguments.contains("-LibraryMoreOptionsOpen") { showsMoreOptions = true }
@@ -148,6 +165,14 @@ struct LibraryStorageSettings: View {
             .alert(pendingOption.map { "Switch to \($0.title)?" } ?? "",
                    isPresented: Binding(get: { pendingOption != nil }, set: { if !$0 { pendingOption = nil } }),
                    presenting: pendingOption) { option in
+                if libraryManager.offersBackupBeforeSwitching(to: option), let performLibraryAction {
+                    // First sync on this device: save a metadata backup, then switch afterwards.
+                    Button("Export a Library Backup First") {
+                        pendingOption = nil
+                        performLibraryAction(.exportBackup)
+                        dismiss()
+                    }
+                }
                 Button(libraryManager.plannedLocation(for: option) == nil ? "Choose Folder…" : "Switch") { confirm(option) }
                 Button("Cancel", role: .cancel) { }
             } message: { option in

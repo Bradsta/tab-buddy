@@ -150,7 +150,11 @@ final class CanonicalConverter: ObservableObject {
     func convertOnOpen(_ item: FileItem,
                        context: ModelContext,
                        prebuilt: (map: MeasureMap, source: Provenance.SourceType)? = nil) {
-        guard item.canonicalVersion < CanonicalConverterVersion.current else { return }
+        // Canonical files are device-local. A record synced (or merged) from another
+        // device can name a current canonical this device never generated; a text tab
+        // with a prebuilt parse regenerates it here.
+        let missingLocally = prebuilt != nil && item.canonicalFilename.map { !CanonicalStore.exists(filename: $0) } == true
+        guard item.canonicalVersion < CanonicalConverterVersion.current || missingLocally else { return }
 
         if let prebuilt {
             guard prebuilt.map.resolvedOpenStringMIDI != nil else { return }

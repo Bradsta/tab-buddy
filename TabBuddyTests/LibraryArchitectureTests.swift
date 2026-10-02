@@ -534,8 +534,10 @@ final class LibraryArchitectureTests: XCTestCase {
         await LibraryManager.shared.reconcile(records: [record], descriptor: descriptor, context: context,
                                              isCompleteScan: false, readMetadata: false)
         XCTAssertEqual(try context.fetch(FetchDescriptor<FileItem>()).count, 2, "Discovery can persist a provisional path before rename matching")
+        let provisionalIDs = Set(try context.fetch(FetchDescriptor<FileItem>()).map(\.id)).subtracting([item.id])
         await LibraryManager.shared.reconcile(records: [record], descriptor: descriptor, context: context,
-                                             provisionalPaths: ["renamed.txt"], reportProgress: false)
+                                             provisionalPaths: ["renamed.txt"], locallyCreatedIDs: provisionalIDs,
+                                             reportProgress: false)
 
 
         let files = try context.fetch(FetchDescriptor<FileItem>())
@@ -645,7 +647,8 @@ final class LibraryArchitectureTests: XCTestCase {
         let activeID = try XCTUnwrap(manager.activeLibraryID)
         XCTAssertNotEqual(activeID, previousID)
         XCTAssertFalse(FileManager.default.fileExists(atPath: selected.appendingPathComponent(LibraryFileService.managedFolderName).path))
-        XCTAssertEqual(try LibraryFileService.existingLibraryID(at: selected), activeID)
+        let markerID = try await LibraryFileService.existingLibraryID(at: selected)
+        XCTAssertEqual(markerID, activeID)
         let all = try context.fetch(FetchDescriptor<FileItem>())
         XCTAssertEqual(all.filter { $0.libraryID == activeID }.map(\.filename), ["song.txt"])
         XCTAssertEqual(all.filter { $0.libraryID == previousID }.count, 1)
@@ -1514,10 +1517,14 @@ final class LibraryStorageOptionTests: XCTestCase {
         var availability: [UUID: FileAvailability] = [:]
         if let presence { for item in items { availability[item.id] = presence; context.insert(FilePresence(fileID: item.id, availability: presence)) } }
         try context.save()
+        // iCloud Drive compares names case-insensitively.
         let summary = await LibraryDuplicateMerger.merge(context: context, presence: availability, fingerprintLibraryID: library,
-                                                         canonicalExists: { $0 == "present-canonical.musicxml" })
+                                                         caseInsensitivePaths: true,
+                                                         canonicalExists: { $0 == (insertInReverse ? "present-canonical.musicxml" : "missing-canonical.musicxml") },
+                                                         copyCanonical: { _, _ in })
         XCTAssertEqual(summary.remapped, [iphoneID: ipadID])
-        let again = await LibraryDuplicateMerger.merge(context: context, presence: availability, fingerprintLibraryID: library)
+        let again = await LibraryDuplicateMerger.merge(context: context, presence: availability, fingerprintLibraryID: library,
+                                                       caseInsensitivePaths: true)
         XCTAssertEqual(again.mergedGroups, 0, "Merging is idempotent")
         let survivors = try context.fetch(FetchDescriptor<FileItem>())
         XCTAssertEqual(survivors.count, 1)
@@ -1541,7 +1548,7 @@ final class LibraryStorageOptionTests: XCTestCase {
             "true", "12", "9000.0",                   // favorite OR, play count max, last opened max
             "1-2", "96.0",                            // loop from most recently opened; tempo filled
             "Koji Kondo", "Zelda Theme", "true",      // user-edited details win
-            "present-canonical.musicxml", "30",       // a canonical that exists here wins
+            "missing-canonical.musicxml", "40",       // the survivor's canonical, whichever files exist on each device
             "Games/Zelda.gp"
         ])
     }
@@ -1570,7 +1577,9 @@ final class LibraryStorageOptionTests: XCTestCase {
                                                    twinMissing.id: .missing, twinA.id: .available, twinB.id: .available]
         for (id, availability) in presence { context.insert(FilePresence(fileID: id, availability: availability)) }
         try context.save()
-        let summary = await LibraryDuplicateMerger.merge(context: context, presence: presence, fingerprintLibraryID: library)
+        let scanMissing: Set<UUID> = [old.id, unrelatedMissing.id, twinMissing.id]
+        let summary = await LibraryDuplicateMerger.merge(context: context, presence: presence, fingerprintLibraryID: library,
+                                                         scanConfirmedMissing: scanMissing)
         XCTAssertEqual(summary.remapped, [renamed.id: old.id])
         let items = try context.fetch(FetchDescriptor<FileItem>())
         XCTAssertEqual(items.count, 5)
@@ -1604,7 +1613,7 @@ final class LibraryStorageOptionTests: XCTestCase {
         try tutor.saveTake(scoreKey: second.id.uuidString, scoreTitle: "Song", measures: 0...1, bpm: 90, analysis: analysis)
         defaults.set(Data("gp".utf8), forKey: "guitarPro.practice.\(second.id.uuidString)")
         let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
-        manager.rekeyPracticeTakes = { from, to in _ = try? tutor.rekeyTakes(from: from, to: to) }
+        manager.rekeyPracticeTakes = { map in _ = try? tutor.rekeyTakes(map) }
         manager.bootstrap(context: context)
         let summary = try await XCTUnwrapAsync(await manager.mergeDuplicates(context: context))
         XCTAssertEqual(summary.remapped, [second.id: first.id])
@@ -1710,6 +1719,912 @@ final class LibraryStorageOptionTests: XCTestCase {
         XCTAssertEqual(try tutor.rekeyTakes(from: "old", to: "new"), 0)
         XCTAssertEqual(try tutor.rekeyTakes(from: "new", to: "new"), 0)
     }
+    // MARK: - Data-safety fixes (2026-09-25 review)
+
+    /// #1: `FileItem.init` sets lastOpenedAt = importedAt, so a later-catalogued,
+    /// never-opened record must not win practice fields.
+    @MainActor
+    func testPracticeFieldsSurviveNeverOpenedLaterRecord() async throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let library = UUID()
+        let practiced = record("song.gp", library: library, importedAt: Date(timeIntervalSince1970: 1_000))
+        practiced.lastOpenedAt = Date(timeIntervalSince1970: 2_000)
+        practiced.playCount = 4
+        practiced.loopStartMeasure = 3; practiced.loopEndMeasure = 9
+        practiced.loopStartY = 10; practiced.loopEndY = 400
+        practiced.scrollSpeed = 42
+        practiced.userBPM = 88
+        practiced.referenceBPM = 120
+        practiced.preferredTextMode = "player"
+        practiced.preferredNotation = "tab"
+        // Catalogued later on the other device and never opened: lastOpenedAt == importedAt (5000 > 2000).
+        let fresh = record("song.gp", library: library, importedAt: Date(timeIntervalSince1970: 5_000))
+        XCTAssertEqual(fresh.lastOpenedAt, fresh.importedAt)
+        context.insert(fresh); context.insert(practiced)
+        try context.save()
+        let summary = await LibraryDuplicateMerger.merge(context: context, presence: [:], fingerprintLibraryID: nil)
+        XCTAssertEqual(summary.remapped, [fresh.id: practiced.id])
+        XCTAssertEqual(practiced.loopStartMeasure, 3); XCTAssertEqual(practiced.loopEndMeasure, 9)
+        XCTAssertEqual(practiced.loopStartY, 10); XCTAssertEqual(practiced.loopEndY, 400)
+        XCTAssertEqual(practiced.scrollSpeed, 42)
+        XCTAssertEqual(practiced.userBPM, 88)
+        XCTAssertEqual(practiced.referenceBPM, 120)
+        XCTAssertEqual(practiced.preferredTextMode, "player")
+        XCTAssertEqual(practiced.preferredNotation, "tab")
+        XCTAssertEqual(practiced.playCount, 4)
+    }
+
+    /// #1 reversed: the survivor was never opened; the later record holds the settings.
+    @MainActor
+    func testPracticeFieldsComeFromOpenedLoserAndFieldByField() async throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let library = UUID()
+        let survivor = record("a.txt", library: library, importedAt: Date(timeIntervalSince1970: 1_000))
+        survivor.scrollSpeed = 0
+        // Opened most recently: only a loop.
+        let recent = record("a.txt", library: library, importedAt: Date(timeIntervalSince1970: 2_000))
+        recent.lastOpenedAt = Date(timeIntervalSince1970: 9_000)
+        recent.loopStartMeasure = 1; recent.loopEndMeasure = 2
+        // Opened earlier: tempo and speed but no loop.
+        let older = record("a.txt", library: library, importedAt: Date(timeIntervalSince1970: 3_000))
+        older.playCount = 1
+        older.lastOpenedAt = Date(timeIntervalSince1970: 3_000)   // == importedAt, but it has a play count
+        older.userBPM = 70
+        older.scrollSpeed = 25
+        older.loopStartMeasure = 5; older.loopEndMeasure = 6
+        // Never opened but has a notation preference: used as the last fallback.
+        let unopened = record("a.txt", library: library, importedAt: Date(timeIntervalSince1970: 4_000))
+        unopened.preferredNotation = "staff"
+        for item in [unopened, older, recent, survivor] { context.insert(item) }
+        try context.save()
+        _ = await LibraryDuplicateMerger.merge(context: context, presence: [:], fingerprintLibraryID: nil)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<FileItem>()), 1)
+        XCTAssertEqual(survivor.loopStartMeasure, 1, "Most recently opened record with a loop")
+        XCTAssertEqual(survivor.loopEndMeasure, 2)
+        XCTAssertEqual(survivor.userBPM, 70, "A set value is never replaced by an unset one")
+        XCTAssertEqual(survivor.scrollSpeed, 25)
+        XCTAssertEqual(survivor.preferredNotation, "staff")
+        XCTAssertEqual(survivor.lastOpenedAt, Date(timeIntervalSince1970: 9_000))
+        XCTAssertEqual(survivor.playCount, 1)
+    }
+
+    /// #2: several user-edited records merge field by field.
+    @MainActor
+    func testEditedDetailsMergeFieldByField() async throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let library = UUID()
+        let first = record("s.pdf", library: library, importedAt: Date(timeIntervalSince1970: 1))
+        first.metadataEdited = true
+        first.composer = "Composer A"
+        first.tags = ["one"]
+        let second = record("s.pdf", library: library, importedAt: Date(timeIntervalSince1970: 2))
+        second.metadataEdited = true
+        second.composer = "Composer B"      // Conflict: survivor order wins.
+        second.artist = "Artist B"          // Blank on the first edited record: filled.
+        second.instruments = ["piano"]
+        second.tuning = "Drop D"
+        second.tags = ["two"]
+        let unedited = record("s.pdf", library: library, importedAt: Date(timeIntervalSince1970: 3))
+        unedited.arranger = "Inferred arranger"   // Not a user edit: edited records decide.
+        unedited.customTitle = "My Title"
+        for item in [unedited, second, first] { context.insert(item) }
+        try context.save()
+        _ = await LibraryDuplicateMerger.merge(context: context, presence: [:], fingerprintLibraryID: nil)
+        XCTAssertEqual(first.composer, "Composer A")
+        XCTAssertEqual(first.artist, "Artist B")
+        XCTAssertEqual(first.instruments, ["piano"])
+        XCTAssertEqual(first.tuning, "Drop D")
+        XCTAssertNil(first.arranger)
+        XCTAssertEqual(first.customTitle, "My Title", "A rename is kept from any record")
+        XCTAssertTrue(first.metadataEdited)
+        XCTAssertEqual(first.tags, ["one", "two"])
+    }
+
+    /// #3: an undownloaded marker is never treated as "no marker".
+    func testPlaceholderMarkerIsNeverReplaced() async throws {
+        for placeholderName in ["..tabbuddy-library.json.icloud", ".tabbuddy-library.json.icloud"] {
+            let folder = temporaryRoot.appendingPathComponent("Synced-\(UUID().uuidString)", isDirectory: true)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            try Data("bplist placeholder".utf8).write(to: folder.appendingPathComponent(placeholderName))
+            XCTAssertEqual(LibraryFileService.inspectMarker(at: folder), .notDownloaded, placeholderName)
+            do {
+                _ = try await LibraryFileService.existingLibraryID(at: folder, timeout: .milliseconds(300))
+                XCTFail("A placeholder marker must not read as an unmarked folder")
+            } catch {
+                XCTAssertEqual(error as? LibraryFileError, .markerNotDownloaded)
+            }
+            do {
+                try await LibraryFileService().validateOrCreateMarker(at: folder, libraryID: UUID(), mayCreate: true)
+                XCTFail("A second marker must never be written next to a placeholder")
+            } catch {
+                XCTAssertEqual(error as? LibraryFileError, .markerNotDownloaded)
+            }
+            XCTAssertFalse(FileManager.default.fileExists(atPath: folder.appendingPathComponent(LibraryMarker.filename).path))
+        }
+    }
+
+    @MainActor
+    func testChoosingFolderWithUndownloadedMarkerWaitsInsteadOfMintingID() async throws {
+        let saved = LibraryFileService.markerDownloadTimeout
+        LibraryFileService.markerDownloadTimeout = .milliseconds(300)
+        defer { LibraryFileService.markerDownloadTimeout = saved }
+        let defaults = try makeDefaults()
+        let folder = temporaryRoot.appendingPathComponent("iCloud Songs", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try Data().write(to: folder.appendingPathComponent("..tabbuddy-library.json.icloud"))
+        try Data("tab".utf8).write(to: folder.appendingPathComponent("song.txt"))
+        let container = try makeContainer()
+        let context = container.mainContext
+        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        manager.useExistingFolder(url: folder, context: context, option: .hybrid)
+        try await settle(manager)
+        XCTAssertEqual(manager.lastError, LibraryFileError.markerNotDownloaded.localizedDescription)
+        XCTAssertTrue(manager.lastError?.contains("Waiting for the library marker to download from iCloud Drive") == true)
+        XCTAssertNil(manager.activeLibraryID)
+        XCTAssertTrue(try context.fetch(FetchDescriptor<LibraryDescriptor>()).isEmpty)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: folder.appendingPathComponent(LibraryMarker.filename).path))
+    }
+
+    func testMarkerConflictCopiesAreSurfaced() async throws {
+        let id = UUID()
+        let encoder = JSONEncoder()
+        func folder(_ name: String) throws -> URL {
+            let url = temporaryRoot.appendingPathComponent(name, isDirectory: true)
+            try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+            try encoder.encode(LibraryMarker(libraryID: id, schemaVersion: 1)).write(to: url.appendingPathComponent(LibraryMarker.filename))
+            return url
+        }
+        // A conflict copy with the same identity is harmless.
+        let same = try folder("Same")
+        try encoder.encode(LibraryMarker(libraryID: id, schemaVersion: 1)).write(to: same.appendingPathComponent(".tabbuddy-library 2.json"))
+        let sameID = try await LibraryFileService.existingLibraryID(at: same)
+        XCTAssertEqual(sameID, id)
+        // A conflict copy naming another library must be resolved by the user.
+        let different = try folder("Different")
+        try encoder.encode(LibraryMarker(libraryID: UUID(), schemaVersion: 1)).write(to: different.appendingPathComponent(".tabbuddy-library 2.json"))
+        do {
+            _ = try await LibraryFileService.existingLibraryID(at: different)
+            XCTFail("Conflicting markers must be surfaced")
+        } catch {
+            XCTAssertEqual(error as? LibraryFileError, .markerConflict([".tabbuddy-library 2.json"]))
+        }
+        // Only a conflict copy and no primary marker: surfaced, and nothing is written.
+        let onlyCopy = temporaryRoot.appendingPathComponent("OnlyCopy", isDirectory: true)
+        try FileManager.default.createDirectory(at: onlyCopy, withIntermediateDirectories: true)
+        try encoder.encode(LibraryMarker(libraryID: id, schemaVersion: 1)).write(to: onlyCopy.appendingPathComponent(".tabbuddy-library 2.json"))
+        XCTAssertEqual(LibraryFileService.inspectMarker(at: onlyCopy), .conflict([".tabbuddy-library 2.json"]))
+        do {
+            try await LibraryFileService().validateOrCreateMarker(at: onlyCopy, libraryID: id)
+            XCTFail("Expected a conflict")
+        } catch {
+            XCTAssertEqual(error as? LibraryFileError, .markerConflict([".tabbuddy-library 2.json"]))
+        }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: onlyCopy.appendingPathComponent(LibraryMarker.filename).path))
+    }
+
+    /// #3 legacy bootstrap: the folder's marker decides the identity; an unreadable
+    /// marker is shown instead of silently creating a diverging descriptor.
+    @MainActor
+    func testLegacyBookmarkAdoptsFolderMarkerIdentity() async throws {
+        let saved = LibraryFileService.markerDownloadTimeout
+        LibraryFileService.markerDownloadTimeout = .milliseconds(300)
+        defer { LibraryFileService.markerDownloadTimeout = saved }
+        let markerID = UUID()
+        let marked = temporaryRoot.appendingPathComponent("Marked", isDirectory: true)
+        try FileManager.default.createDirectory(at: marked, withIntermediateDirectories: true)
+        try JSONEncoder().encode(LibraryMarker(libraryID: markerID, schemaVersion: 1)).write(to: marked.appendingPathComponent(LibraryMarker.filename))
+        let defaults = try makeDefaults()
+        defaults.set(try marked.bookmarkData(), forKey: LibraryManager.legacyBookmarkKey)
+        let container = try makeContainer()
+        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        manager.bootstrap(context: container.mainContext)
+        try await settle(manager)
+        XCTAssertNil(manager.lastError)
+        XCTAssertEqual(manager.activeLibraryID, markerID)
+        XCTAssertEqual(try container.mainContext.fetch(FetchDescriptor<LibraryDescriptor>()).map(\.id), [markerID])
+
+        let evicted = temporaryRoot.appendingPathComponent("Evicted", isDirectory: true)
+        try FileManager.default.createDirectory(at: evicted, withIntermediateDirectories: true)
+        try Data().write(to: evicted.appendingPathComponent("..tabbuddy-library.json.icloud"))
+        let otherDefaults = try makeDefaults()
+        otherDefaults.set(try evicted.bookmarkData(), forKey: LibraryManager.legacyBookmarkKey)
+        let other = try makeContainer()
+        let second = LibraryManager(files: LibraryFileService(), defaults: otherDefaults)
+        second.bootstrap(context: other.mainContext)
+        try await settle(second)
+        XCTAssertEqual(second.lastError, LibraryFileError.markerNotDownloaded.localizedDescription)
+        XCTAssertTrue(try other.mainContext.fetch(FetchDescriptor<LibraryDescriptor>()).isEmpty)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: evicted.appendingPathComponent(LibraryMarker.filename).path))
+    }
+
+    /// #4: fingerprint joins need a completed-scan miss, a unique fingerprint among
+    /// all records, and equal sizes.
+    func testFingerprintJoinRequiresScanConfirmedUniqueSameSize() {
+        let library = UUID()
+        func candidate(_ index: Int, _ path: String, hash: String?, size: Int64 = 100) -> LibraryDuplicateMerger.Candidate {
+            .init(index: index, id: UUID(), libraryID: library, path: path, importedAt: Date(timeIntervalSince1970: Double(index)),
+                  hash: hash, byteSize: size)
+        }
+        let old = candidate(0, "Old.pdf", hash: "h")
+        let new = candidate(1, "New/New.pdf", hash: "h")
+        let presence: [UUID: FileAvailability] = [old.id: .missing, new.id: .available]
+        XCTAssertEqual(LibraryDuplicateMerger.plan([old, new], presence: presence, scanConfirmedMissing: [old.id],
+                                                   fingerprintLibraryID: library), [[0, 1]])
+        XCTAssertTrue(LibraryDuplicateMerger.plan([old, new], presence: presence, scanConfirmedMissing: [],
+                                                  fingerprintLibraryID: library).isEmpty,
+                      "A miss from a quick path check (iCloud listing lag) never joins")
+        // A third record with the same fingerprint, even one not present here, makes it ambiguous.
+        let third = candidate(2, "Elsewhere.pdf", hash: "h")
+        XCTAssertTrue(LibraryDuplicateMerger.plan([old, new, third], presence: presence, scanConfirmedMissing: [old.id],
+                                                  fingerprintLibraryID: library).isEmpty)
+        // Different byte sizes never join.
+        let bigger = candidate(1, "New/New.pdf", hash: "h", size: 200)
+        XCTAssertTrue(LibraryDuplicateMerger.plan([old, bigger], presence: [old.id: .missing, bigger.id: .available],
+                                                  scanConfirmedMissing: [old.id], fingerprintLibraryID: library).isEmpty)
+    }
+
+    /// #4 + #5 through the manager: a path-check miss neither joins by fingerprint nor
+    /// stays hidden once the file appears; only a completed scan enables the join.
+    @MainActor
+    func testPathCheckMissNeverJoinsAndIsRecheckedAfterMerges() async throws {
+        let defaults = try makeDefaults()
+        let folder = temporaryRoot.appendingPathComponent("Hybrid Folder", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder.appendingPathComponent("New"), withIntermediateDirectories: true)
+        let payload = Data("renamed tab".utf8)
+        let newURL = folder.appendingPathComponent("New/Name.txt")
+        try payload.write(to: newURL)
+        let container = try makeContainer()
+        let context = container.mainContext
+        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        manager.useExistingFolder(url: folder, context: context, option: .hybrid)
+        try await settle(manager)
+        manager.rescan(context: context)
+        try await settle(manager)
+        let library = try XCTUnwrap(manager.activeLibraryID)
+        let present = try XCTUnwrap(try context.fetch(FetchDescriptor<FileItem>()).first { $0.effectiveRelativePath == "New/Name.txt" })
+        let hash = try XCTUnwrap(FileItem.fingerprint(of: newURL))
+        present.contentHash = hash
+        // Synced from the other device, at a path this device's listing does not show (yet).
+        let synced = record("Old Name.txt", library: library, importedAt: .distantPast)
+        synced.contentHash = hash
+        synced.byteSize = present.byteSize
+        synced.tags = ["Synced"]
+        context.insert(synced)
+        // Another synced record whose file arrives later.
+        let arriving = record("Arriving.txt", library: library, importedAt: .distantPast)
+        context.insert(arriving)
+        try context.save()
+
+        await manager.verifyUnknownPresence(context: context, force: true)
+        XCTAssertEqual(manager.availabilityByFileID[synced.id], .missing)
+        XCTAssertFalse(manager.isShownOnThisDevice(arriving))
+        var quickSummary: LibraryDuplicateMerger.Summary?
+        for _ in 0..<100 where quickSummary == nil {
+            quickSummary = await manager.mergeDuplicates(context: context)   // nil while a scheduled pass runs
+            if quickSummary == nil { try await Task.sleep(nanoseconds: 50_000_000) }
+        }
+        let quick = try XCTUnwrap(quickSummary)
+        XCTAssertTrue(quick.remapped.isEmpty, "A path-check miss must not join by fingerprint")
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<FileItem>()), 3)
+
+        // The file arrives; the next merge pass re-checks path-check misses.
+        try Data("arrived".utf8).write(to: folder.appendingPathComponent("Arriving.txt"))
+        _ = await manager.mergeDuplicates(context: context)
+        XCTAssertEqual(manager.availabilityByFileID[arriving.id], .available)
+        XCTAssertTrue(manager.isShownOnThisDevice(arriving))
+
+        // This device had the old file before it was renamed (seen here). A completed
+        // full scan then confirms the old path is gone, and the rename joins.
+        try context.fetch(FetchDescriptor<FilePresence>()).first { $0.fileID == synced.id }?.seenHere = true
+        try context.save()
+        manager.rescan(context: context)
+        try await settle(manager)
+        let reasons = try context.fetch(FetchDescriptor<FilePresence>()).first { $0.fileID == synced.id }?.reason
+        XCTAssertEqual(reasons, .completedScan)
+        var joined = false
+        for _ in 0..<50 where !joined {
+            _ = await manager.mergeDuplicates(context: context)
+            joined = (try context.fetchCount(FetchDescriptor<FileItem>())) == 2
+            if !joined { try await Task.sleep(nanoseconds: 50_000_000) }
+        }
+        XCTAssertTrue(joined)
+        let survivor = try XCTUnwrap(try context.fetch(FetchDescriptor<FileItem>()).first { $0.id == synced.id })
+        XCTAssertEqual(survivor.effectiveRelativePath, "New/Name.txt")
+        XCTAssertEqual(survivor.tags, ["Synced"])
+        await manager.finishDatabaseWork()
+    }
+
+    /// #6: Local only on a store that mirrored before keeps hidden songs out of Remove All.
+    @MainActor
+    func testLocalOnlyAfterMirroringSkipsHiddenSongsAndSaysSo() async throws {
+        let defaults = try makeDefaults()
+        let folder = temporaryRoot.appendingPathComponent("Folder", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try Data("here".utf8).write(to: folder.appendingPathComponent("here.txt"))
+        let container = try makeContainer()
+        let context = container.mainContext
+        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        XCTAssertFalse(manager.hasEverMirrored)
+        XCTAssertTrue(manager.offersBackupBeforeSwitching(to: .hybrid))
+        manager.useExistingFolder(url: folder, context: context, option: .hybrid)
+        try await settle(manager)
+        XCTAssertTrue(manager.hasEverMirrored)
+        XCTAssertFalse(manager.offersBackupBeforeSwitching(to: .iCloudOnly))
+        XCTAssertEqual(manager.switchStorageOption(to: .localOnly, context: context), .started)
+        try await settle(manager)
+        XCTAssertEqual(manager.storageOption, .localOnly)
+        manager.rescan(context: context)
+        try await settle(manager)
+        let library = try XCTUnwrap(manager.activeLibraryID)
+        let hidden = record("elsewhere.txt", library: library, importedAt: .distantPast)
+        context.insert(hidden)
+        try context.save()
+        manager.rescan(context: context)
+        try await settle(manager)
+        XCTAssertFalse(manager.isShownOnThisDevice(hidden))
+        XCTAssertTrue(manager.removalSkipsHiddenSongs)
+        XCTAssertTrue(manager.removalConfirmation(count: 1, all: true).message.contains("also apply on your other devices"))
+        await manager.removeItems(try context.fetch(FetchDescriptor<FileItem>()), context: context)
+        XCTAssertEqual(try context.fetch(FetchDescriptor<FileItem>()).map(\.id), [hidden.id])
+        // A store that never mirrored keeps the earlier Local only behavior.
+        let never = LibraryManager.removalConfirmation(count: 1, all: true, option: .localOnly, mode: .externalFolder,
+                                                       folderName: "F", hasMirrored: false)
+        XCTAssertFalse(never.message.contains("other devices"))
+        await manager.finishDatabaseWork()
+    }
+
+    /// #7: the reader follows a record deleted under it, or closes cleanly.
+    @MainActor
+    func testReaderGuardFollowsMergedRecordOrCloses() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let library = UUID()
+        let open = record("Album/song.txt", library: library, importedAt: Date(timeIntervalSince1970: 2))
+        let other = record("Album/song.txt", library: library, importedAt: Date(timeIntervalSince1970: 1))
+        context.insert(open); context.insert(other)
+        try context.save()
+        let opened = ReaderRecordGuard.Opened(open)
+        XCTAssertEqual(ReaderRecordGuard.resolve(opened, current: open, context: context, survivor: { _ in nil }), .unchanged)
+        // Another device's merge deleted the open record: follow the same library + path.
+        context.delete(open)
+        try context.save()
+        XCTAssertEqual(ReaderRecordGuard.resolve(opened, current: nil, context: context, survivor: { _ in nil }), .redirect(other))
+        // With a known survivor from this device's merge map.
+        let moved = record("Elsewhere/renamed.txt", library: library, importedAt: Date(timeIntervalSince1970: 3))
+        context.insert(moved)
+        context.delete(other)
+        try context.save()
+        let movedID = moved.id
+        XCTAssertEqual(ReaderRecordGuard.resolve(opened, current: nil, context: context, survivor: { _ in movedID }), .redirect(moved))
+        XCTAssertEqual(ReaderRecordGuard.resolve(opened, current: nil, context: context, survivor: { _ in nil }), .gone)
+    }
+
+    /// #8: the whole manager path (merge + follow-up re-keying) at 10k pairs, with the
+    /// longest main-actor pause measured.
+    @MainActor
+    func testManagerMergeTenThousandPairsIncludingRekeyWithoutLongStalls() async throws {
+        let defaults = try makeDefaults()
+        LibraryStorageOption.set(.iCloudOnly, in: defaults)
+        let container = try makeContainer()
+        let context = container.mainContext
+        context.autosaveEnabled = false
+        let library = UUID()
+        context.insert(LibraryDescriptor(id: library, mode: .managedICloud, displayName: "Songs"))
+        let base = Date(timeIntervalSince1970: 1_000_000)
+        var losers: [UUID] = []
+        for index in 0..<10_000 {
+            let path = "Folder \(index % 100)/Song \(index).pdf"
+            let ipad = record(path, library: library, importedAt: base.addingTimeInterval(Double(index)))
+            ipad.tags = ["Set \(index % 20)"]
+            let iphone = record(path, library: library, importedAt: base.addingTimeInterval(Double(index) + 0.5))
+            iphone.playCount = index % 7
+            context.insert(ipad); context.insert(iphone)
+            context.insert(FilePresence(fileID: iphone.id, availability: .available))
+            losers.append(iphone.id)
+            if index % 1_000 == 999 { try context.save() }
+        }
+        try context.save()
+        TagIndexer.rebuild(in: context)
+        let tutor = try TutorStore.inMemory()
+        tutor.compressesTakeAudio = false
+        let analysis = TakeAnalysis(graded: [], extras: [], tempoCurve: [], targetBPM: 90, accuracy: 0.8, timingMADms: 10,
+                                    measureAccuracy: [:], measureTendency: [:], suggestions: [])
+        for id in losers.prefix(200) {
+            try tutor.saveTake(scoreKey: id.uuidString, scoreTitle: "Song", measures: 0...1, bpm: 90, analysis: analysis)
+            defaults.set(Data("gp".utf8), forKey: "guitarPro.practice.\(id.uuidString)")
+        }
+        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        var rekeyCalls = 0
+        manager.rekeyPracticeTakes = { map in rekeyCalls += 1; _ = try? tutor.rekeyTakes(map) }
+        var longestStall: Duration = .zero
+        var ticking = true
+        let ticker = Task { @MainActor in
+            var last = ContinuousClock.now
+            while ticking {
+                try? await Task.sleep(for: .milliseconds(5))
+                let now = ContinuousClock.now
+                longestStall = max(longestStall, now - last)
+                last = now
+            }
+        }
+        let start = ContinuousClock.now
+        let summary = try XCTUnwrapAsync(await manager.mergeDuplicates(context: context))
+        let elapsed = start.duration(to: .now)
+        ticking = false
+        await ticker.value
+        print("Manager path: 10k pairs merged and re-keyed in \(elapsed); longest main-actor stall \(longestStall)")
+        XCTAssertEqual(summary.removedRecords, 10_000)
+        XCTAssertEqual(rekeyCalls, 1, "Practice takes re-key in one batch")
+        XCTAssertEqual(manager.mergeProgress.done, 10_000)
+        XCTAssertEqual(tutor.takes(forScore: summary.remapped[losers[0]]!.uuidString).count, 1)
+        XCTAssertTrue(tutor.takes(forScore: losers[0].uuidString).isEmpty)
+        XCTAssertEqual(defaults.data(forKey: "guitarPro.practice.\(summary.remapped[losers[199]]!.uuidString)"), Data("gp".utf8))
+        XCTAssertNil(defaults.object(forKey: "guitarPro.practice.\(losers[199].uuidString)"))
+        XCTAssertEqual(manager.availabilityByFileID.count, 10_000)
+        XCTAssertLessThan(elapsed, .seconds(90))
+        XCTAssertLessThan(longestStall, .milliseconds(500), "The manager path must yield to the UI")
+    }
+
+    /// #9: the synced canonical name never depends on which files this device has.
+    @MainActor
+    func testCanonicalChoiceIsDeterministicAndNeverDeletes() async throws {
+        let library = UUID()
+        func run(existing: Set<String>) async throws -> (String?, [String]) {
+            let container = try makeContainer()
+            let context = container.mainContext
+            let survivor = record("x.txt", library: library, importedAt: Date(timeIntervalSince1970: 1),
+                                  id: UUID(uuidString: "00000000-0000-0000-0000-00000000000A")!)
+            let b = record("x.txt", library: library, importedAt: Date(timeIntervalSince1970: 2))
+            b.canonicalFilename = "b.musicxml"; b.canonicalVersion = 7
+            let a = record("x.txt", library: library, importedAt: Date(timeIntervalSince1970: 3))
+            a.canonicalFilename = "a.musicxml"; a.canonicalVersion = 7
+            for item in [a, b, survivor] { context.insert(item) }
+            try context.save()
+            var copies: [String] = []
+            _ = await LibraryDuplicateMerger.merge(context: context, presence: [:], fingerprintLibraryID: nil,
+                                                   canonicalExists: { existing.contains($0) },
+                                                   copyCanonical: { from, to in copies.append("\(from)->\(to)") })
+            return (survivor.canonicalFilename, copies)
+        }
+        let deviceA = try await run(existing: ["a.musicxml"])
+        let deviceB = try await run(existing: ["b.musicxml"])
+        XCTAssertEqual(deviceA.0, "a.musicxml", "Lowest name when the survivor has none")
+        XCTAssertEqual(deviceB.0, "a.musicxml", "Same choice on every device")
+        XCTAssertEqual(deviceA.1, [])
+        XCTAssertEqual(deviceB.1, ["b.musicxml->a.musicxml"], "Missing local file is copied, never moved or deleted")
+    }
+
+    /// #10: case folding only for case-insensitive locations; Unicode forms always match.
+    func testPathGroupingCaseSensitivity() {
+        let library = UUID()
+        let upper = LibraryDuplicateMerger.Candidate(index: 0, id: UUID(), libraryID: library, path: "Song.txt", importedAt: .distantPast, hash: nil)
+        let lower = LibraryDuplicateMerger.Candidate(index: 1, id: UUID(), libraryID: library, path: "song.txt", importedAt: .now, hash: nil)
+        XCTAssertTrue(LibraryDuplicateMerger.plan([upper, lower], presence: [:], fingerprintLibraryID: nil, caseInsensitivePaths: false).isEmpty)
+        XCTAssertEqual(LibraryDuplicateMerger.plan([upper, lower], presence: [:], fingerprintLibraryID: nil, caseInsensitivePaths: true), [[0, 1]])
+        let composed = LibraryDuplicateMerger.Candidate(index: 0, id: UUID(), libraryID: library, path: "Caf\u{E9}.txt", importedAt: .distantPast, hash: nil)
+        let decomposed = LibraryDuplicateMerger.Candidate(index: 1, id: UUID(), libraryID: library, path: "Cafe\u{301}.txt", importedAt: .now, hash: nil)
+        XCTAssertEqual(LibraryDuplicateMerger.plan([composed, decomposed], presence: [:], fingerprintLibraryID: nil, caseInsensitivePaths: false), [[0, 1]])
+    }
+
+    /// #11: a merge requested while one runs is not dropped.
+    @MainActor
+    func testMergeRequestedDuringPassRunsAfterward() async throws {
+        let defaults = try makeDefaults()
+        let container = try makeContainer()
+        let context = container.mainContext
+        let library = UUID()
+        for index in 0..<300 {
+            context.insert(record("s\(index).txt", library: library, importedAt: Date(timeIntervalSince1970: Double(index))))
+            context.insert(record("s\(index).txt", library: library, importedAt: Date(timeIntervalSince1970: Double(index) + 0.5)))
+        }
+        try context.save()
+        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        let first = Task { await manager.mergeDuplicates(context: context) }
+        while !manager.isMergingDuplicates { await Task.yield() }
+        let second = await manager.mergeDuplicates(context: context)
+        XCTAssertNil(second, "Only one pass at a time")
+        _ = await first.value
+        // Arrives after the first pass read the catalog: merged by the follow-up pass.
+        context.insert(record("late.txt", library: library, importedAt: Date(timeIntervalSince1970: 1)))
+        context.insert(record("late.txt", library: library, importedAt: Date(timeIntervalSince1970: 2)))
+        try context.save()
+        var remaining = try context.fetchCount(FetchDescriptor<FileItem>())
+        for _ in 0..<100 where remaining != 301 {
+            try await Task.sleep(nanoseconds: 50_000_000)
+            remaining = try context.fetchCount(FetchDescriptor<FileItem>())
+        }
+        XCTAssertEqual(remaining, 301)
+    }
+
+    /// #12: a record synced from another device is never deleted by rename relinking.
+    @MainActor
+    func testRelinkNeverDeletesRecordSyncedFromAnotherDevice() async throws {
+        let root = temporaryRoot.appendingPathComponent("Relink", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let renamedURL = root.appendingPathComponent("renamed.txt")
+        try Data("favorite tab".utf8).write(to: renamedURL)
+        let libraryID = UUID()
+        let service = LibraryFileService()
+        try await service.configureTestingRoot(root, libraryID: libraryID)
+        let container = try makeContainer()
+        let context = container.mainContext
+        let descriptor = LibraryDescriptor(id: libraryID, mode: .externalFolder, displayName: "Relink")
+        context.insert(descriptor)
+        let original = record("original.txt", library: libraryID, importedAt: Date(timeIntervalSince1970: 1))
+        original.tags = ["practice"]
+        original.contentHash = FileItem.fingerprint(of: renamedURL)
+        let values = try renamedURL.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey])
+        original.byteSize = Int64(values.fileSize ?? 0)
+        // The other device already catalogued the renamed file; it arrived through iCloud.
+        let synced = record("renamed.txt", library: libraryID, importedAt: Date(timeIntervalSince1970: 2))
+        synced.isFavorite = false
+        context.insert(original); context.insert(synced)
+        // This device had the original file before it was renamed.
+        context.insert(FilePresence(fileID: original.id, availability: .available, lastSeenAt: .now))
+        try context.save()
+        let manager = LibraryManager(files: service, defaults: try makeDefaults())
+        let file = LibraryFileRecord(relativePath: "renamed.txt", filename: "renamed.txt",
+                                     byteSize: Int64(values.fileSize ?? 0), modificationDate: values.contentModificationDate)
+        await manager.reconcile(records: [file], descriptor: descriptor, context: context,
+                                provisionalPaths: ["renamed.txt"], locallyCreatedIDs: [], reportProgress: false)
+        let ids = Set(try context.fetch(FetchDescriptor<FileItem>()).map(\.id))
+        XCTAssertEqual(ids, [original.id, synced.id], "The synced record is kept")
+        let presences = try context.fetch(FetchDescriptor<FilePresence>())
+        XCTAssertEqual(presences.first { $0.fileID == original.id }?.reason, .completedScan)
+        // The merger then combines them under its rules.
+        synced.contentHash = original.contentHash
+        synced.byteSize = original.byteSize
+        try context.save()
+        let summary = await LibraryDuplicateMerger.merge(context: context, presence: manager.availabilityByFileID,
+                                                         fingerprintLibraryID: libraryID, scanConfirmedMissing: [original.id])
+        XCTAssertEqual(summary.remapped, [synced.id: original.id])
+        XCTAssertEqual(original.effectiveRelativePath, "renamed.txt")
+        XCTAssertEqual(original.tags, ["practice"])
+        await service.clearTestingRoot()
+    }
+
+    /// #13: rows sharing one UUID are never deleted and do not reprocess forever.
+    @MainActor
+    func testSameIDRowsAreSkippedPermanently() async throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let library = UUID()
+        let shared = UUID()
+        let a = record("x.txt", library: library, importedAt: Date(timeIntervalSince1970: 1), id: shared)
+        let b = record("x.txt", library: library, importedAt: Date(timeIntervalSince1970: 1), id: shared)
+        let other = record("x.txt", library: library, importedAt: Date(timeIntervalSince1970: 2))
+        for item in [a, b, other] { context.insert(item) }
+        try context.save()
+        let first = await LibraryDuplicateMerger.merge(context: context, presence: [:], fingerprintLibraryID: nil)
+        XCTAssertEqual(first.sameIDRowsSkipped, 1)
+        XCTAssertEqual(first.remapped, [other.id: shared])
+        XCTAssertEqual(try context.fetch(FetchDescriptor<FileItem>()).map(\.id), [shared, shared])
+        let second = await LibraryDuplicateMerger.merge(context: context, presence: [:], fingerprintLibraryID: nil)
+        XCTAssertEqual(second.mergedGroups, 0)
+        XCTAssertEqual(second.removedRecords, 0)
+    }
+
+    /// #14: every user-set field round-trips; matching is by library + path, then
+    /// fingerprint, then a unique filename.
+    @MainActor
+    func testBackupRoundTripsEveryUserFieldAndMatchesSafely() throws {
+        let library = UUID()
+        let source = try makeContainer()
+        let item = record("Album/Song.txt", library: library, importedAt: Date(timeIntervalSince1970: 100))
+        item.isFavorite = true
+        item.tags = ["A", "B"]
+        item.lastOpenedAt = Date(timeIntervalSince1970: 500)
+        item.scrollSpeed = 33
+        item.loopStartY = 1; item.loopEndY = 2
+        item.loopStartMeasure = 3; item.loopEndMeasure = 4
+        item.playCount = 9
+        item.userBPM = 90; item.referenceBPM = 100
+        item.instruments = ["guitar", "bass"]; item.instrument = "guitar"
+        item.composer = "C"; item.arranger = "Ar"; item.collectionTitle = "Col"; item.arrangement = "Arr"
+        item.sourceName = "SN"; item.sourceURL = "https://example.com"; item.sourceID = "SID"; item.copyrightNotice = "©"
+        item.embeddedTitle = "ET"; item.artist = "Art"
+        item.metadataEdited = true
+        item.preferredNotation = "staff"; item.preferredTextMode = "player"
+        item.customTitle = "Custom"
+        item.tuning = "Drop D"
+        item.confidenceNoticeDismissed = true
+        item.contentHash = "hash-song"
+        source.mainContext.insert(item)
+        try source.mainContext.save()
+        let data = try XCTUnwrap(BackupManager.exportJSON(context: source.mainContext))
+        let decoded = try { let d = JSONDecoder(); d.dateDecodingStrategy = .iso8601; return try d.decode(LibraryBackup.self, from: data) }()
+        XCTAssertEqual(decoded.version, 3)
+
+        let target = try makeContainer()
+        let context = target.mainContext
+        let blank = record("Album/Song.txt", library: library, importedAt: Date(timeIntervalSince1970: 100))
+        // Same filename elsewhere: must not receive the entry.
+        let sameName = record("Other/Song.txt", library: library, importedAt: Date(timeIntervalSince1970: 100))
+        context.insert(blank); context.insert(sameName)
+        try context.save()
+        XCTAssertEqual(BackupManager.importJSON(data: data, context: context, libraryID: library), 1)
+        func fields(_ f: FileItem) -> [String] {
+            ["\(f.isFavorite)", f.tags.joined(separator: ","), "\(f.lastOpenedAt.timeIntervalSince1970)", "\(f.scrollSpeed)",
+             "\(f.loopStartY ?? -1)", "\(f.loopEndY ?? -1)", "\(f.loopStartMeasure ?? -1)", "\(f.loopEndMeasure ?? -1)",
+             "\(f.playCount)", "\(f.userBPM ?? -1)", "\(f.referenceBPM ?? -1)", f.instruments.joined(separator: ","),
+             f.instrument ?? "-", f.composer ?? "-", f.arranger ?? "-", f.collectionTitle ?? "-", f.arrangement ?? "-",
+             f.sourceName ?? "-", f.sourceURL ?? "-", f.sourceID ?? "-", f.copyrightNotice ?? "-", f.embeddedTitle ?? "-",
+             f.artist ?? "-", "\(f.metadataEdited)", f.preferredNotation ?? "-", f.preferredTextMode ?? "-",
+             f.customTitle ?? "-", f.tuning ?? "-", "\(f.confidenceNoticeDismissed)"]
+        }
+        XCTAssertEqual(fields(blank), fields(item))
+        XCTAssertTrue(sameName.tags.isEmpty)
+        XCTAssertNil(sameName.customTitle)
+
+        // Renamed since the backup: the unique fingerprint finds it.
+        let moved = try makeContainer()
+        let renamed = record("New Place/Renamed.txt", library: library, importedAt: .now)
+        renamed.contentHash = "hash-song"
+        moved.mainContext.insert(renamed)
+        try moved.mainContext.save()
+        XCTAssertEqual(BackupManager.importJSON(data: data, context: moved.mainContext, libraryID: library), 1)
+        XCTAssertEqual(renamed.customTitle, "Custom")
+
+        // Only an ambiguous filename: nothing is restored.
+        let ambiguous = try makeContainer()
+        ambiguous.mainContext.insert(record("X/Song.txt", library: library, importedAt: .now))
+        ambiguous.mainContext.insert(record("Y/Song.txt", library: library, importedAt: .now))
+        try ambiguous.mainContext.save()
+        XCTAssertEqual(BackupManager.importJSON(data: data, context: ambiguous.mainContext, libraryID: library), 0)
+
+        // A version 2 backup (no new fields) stays readable and keeps unknown fields.
+        let v2 = """
+        {"version":2,"exportedAt":"2026-01-01T00:00:00Z","files":[{"filename":"Song.txt","isFavorite":true,"tags":["Old"],
+        "importedAt":"2026-01-01T00:00:00Z","lastOpenedAt":"2026-01-01T00:00:00Z","scrollSpeed":5,"folderName":"Album",
+        "libraryPath":"Album/Song.txt","playCount":2}]}
+        """
+        let old = try makeContainer()
+        let keep = record("Album/Song.txt", library: library, importedAt: .now)
+        keep.customTitle = "Keep me"
+        keep.loopStartMeasure = 7
+        old.mainContext.insert(keep)
+        try old.mainContext.save()
+        XCTAssertEqual(BackupManager.importJSON(data: Data(v2.utf8), context: old.mainContext, libraryID: library), 1)
+        XCTAssertEqual(keep.tags, ["Old"])
+        XCTAssertEqual(keep.customTitle, "Keep me")
+        XCTAssertEqual(keep.loopStartMeasure, 7)
+    }
+
+    /// #15: a chosen folder's file only moves to the Trash; it is kept when the Trash is unavailable.
+    func testDeleteFilePrefersTrashAndNeverRemovesChosenFolderFiles() throws {
+        let file = temporaryRoot.appendingPathComponent("keep.txt")
+        try Data("song".utf8).write(to: file)
+        struct NoTrash: Error {}
+        XCTAssertThrowsError(try LibraryFileService.deleteFile(at: file, displayPath: "keep.txt", allowPermanentRemoval: false,
+                                                               trash: { _ in throw NoTrash() })) { error in
+            XCTAssertEqual(error as? LibraryFileError, .trashUnavailable("keep.txt"))
+        }
+        XCTAssertTrue(FileManager.default.fileExists(atPath: file.path), "A chosen folder's file is never removed permanently")
+        var trashed: [URL] = []
+        try LibraryFileService.deleteFile(at: file, displayPath: "keep.txt", allowPermanentRemoval: false,
+                                          trash: { trashed.append($0) })
+        XCTAssertEqual(trashed, [file])
+        try LibraryFileService.deleteFile(at: file, displayPath: "keep.txt", allowPermanentRemoval: true,
+                                          trash: { _ in throw NoTrash() })
+        XCTAssertFalse(FileManager.default.fileExists(atPath: file.path), "Only the app-managed folder falls back to removal")
+    }
+
+
+    // MARK: - Re-review fixes (2026-09-25)
+
+    /// R1: a rescan started during a merge waits for the whole pass; survivors are
+    /// never marked missing and no deleted record is written.
+    @MainActor
+    func testRescanDuringMergeWaitsForThePass() async throws {
+        let defaults = try makeDefaults()
+        let folder = temporaryRoot.appendingPathComponent("Busy", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        for index in 0..<300 { try Data("song \(index)".utf8).write(to: folder.appendingPathComponent("s\(index).txt")) }
+        let container = try makeContainer()
+        let context = container.mainContext
+        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        manager.useExistingFolder(url: folder, context: context, option: .localOnly)
+        try await settle(manager)
+        manager.rescan(context: context)
+        try await settle(manager)
+        let library = try XCTUnwrap(manager.activeLibraryID)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<FileItem>()), 300)
+        // The other device's copies of the same songs.
+        for index in 0..<300 {
+            context.insert(record("s\(index).txt", library: library, importedAt: Date(timeIntervalSinceNow: Double(index))))
+        }
+        try context.save()
+        let merge = Task { await manager.mergeDuplicates(context: context) }
+        while !manager.isMergingDuplicates { await Task.yield() }
+        manager.rescan(context: context)
+        XCTAssertTrue(manager.isRescanning)
+        _ = await merge.value
+        try await settle(manager)
+        for _ in 0..<100 where manager.isRescanning || manager.isMergingDuplicates { try await Task.sleep(nanoseconds: 50_000_000) }
+        var count = try context.fetchCount(FetchDescriptor<FileItem>())
+        for _ in 0..<20 where count != 300 {
+            _ = await manager.mergeDuplicates(context: context)
+            try await Task.sleep(nanoseconds: 50_000_000)
+            count = try context.fetchCount(FetchDescriptor<FileItem>())
+        }
+        XCTAssertEqual(count, 300)
+        let items = try context.fetch(FetchDescriptor<FileItem>())
+        XCTAssertTrue(items.allSatisfy { manager.availabilityByFileID[$0.id] == .available }, "No survivor is marked missing")
+        XCTAssertTrue(items.allSatisfy { manager.isShownOnThisDevice($0) })
+        await manager.finishDatabaseWork()
+    }
+
+    /// R2: a missing record whose path changed (another device's merge) is re-checked,
+    /// and a rescan marks every record at a seen path present.
+    @MainActor
+    func testMovedMissingRecordIsRecheckedAndSamePathRecordsAreSeen() async throws {
+        let defaults = try makeDefaults()
+        let folder = temporaryRoot.appendingPathComponent("Moved", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try Data("new".utf8).write(to: folder.appendingPathComponent("new.txt"))
+        try Data("dup".utf8).write(to: folder.appendingPathComponent("dup.txt"))
+        let container = try makeContainer()
+        let context = container.mainContext
+        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        manager.useExistingFolder(url: folder, context: context, option: .hybrid)
+        try await settle(manager)
+        manager.rescan(context: context)
+        try await settle(manager)
+        let library = try XCTUnwrap(manager.activeLibraryID)
+        let moved = record("old.txt", library: library, importedAt: .distantPast)
+        context.insert(moved)
+        let twin = record("dup.txt", library: library, importedAt: .distantPast)
+        context.insert(twin)
+        try context.save()
+        manager.rescan(context: context)
+        try await settle(manager)
+        XCTAssertEqual(manager.availabilityByFileID[moved.id], .missing)
+        XCTAssertEqual(manager.availabilityByFileID[twin.id], .available, "Every record at a path the scan saw is present")
+        let presence = try XCTUnwrap(try context.fetch(FetchDescriptor<FilePresence>()).first { $0.fileID == moved.id })
+        XCTAssertEqual(presence.missingPath, "old.txt")
+        // Another device's merge moved the record to the file that exists here.
+        moved.storageRelativePath = "new.txt"; moved.libraryPath = "new.txt"
+        try context.save()
+        await manager.verifyUnknownPresence(context: context)
+        XCTAssertEqual(manager.availabilityByFileID[moved.id], .available)
+        XCTAssertTrue(manager.isShownOnThisDevice(moved))
+        await manager.finishDatabaseWork()
+    }
+
+    /// R3: a copy the other device just added, whose file has not reached this
+    /// device, is `notSeenHere` after a completed scan and never fingerprint-joined.
+    @MainActor
+    func testNeverSeenCopyIsNotJoinedByFingerprint() async throws {
+        let defaults = try makeDefaults()
+        let folder = temporaryRoot.appendingPathComponent("Copies", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let fileURL = folder.appendingPathComponent("c.txt")
+        try Data("same bytes".utf8).write(to: fileURL)
+        let container = try makeContainer()
+        let context = container.mainContext
+        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        manager.useExistingFolder(url: folder, context: context, option: .hybrid)
+        try await settle(manager)
+        manager.rescan(context: context)
+        try await settle(manager)
+        let library = try XCTUnwrap(manager.activeLibraryID)
+        let original = try XCTUnwrap(try context.fetch(FetchDescriptor<FileItem>()).first)
+        original.contentHash = FileItem.fingerprint(of: fileURL)
+        let copy = record("copy/c.txt", library: library, importedAt: Date.now.addingTimeInterval(60))
+        copy.contentHash = original.contentHash
+        copy.byteSize = original.byteSize
+        copy.tags = ["Added on iPad"]
+        context.insert(copy)
+        try context.save()
+        manager.rescan(context: context)
+        try await settle(manager)
+        let reason = try context.fetch(FetchDescriptor<FilePresence>()).first { $0.fileID == copy.id }?.reason
+        XCTAssertEqual(reason, .notSeenHere)
+        for _ in 0..<3 { _ = await manager.mergeDuplicates(context: context); try await Task.sleep(nanoseconds: 50_000_000) }
+        XCTAssertEqual(Set(try context.fetch(FetchDescriptor<FileItem>()).map(\.id)), [original.id, copy.id],
+                       "A copy never seen here is not merged away")
+        await manager.finishDatabaseWork()
+    }
+
+    /// R4: a known iCloud library launches without waiting for an evicted marker.
+    func testKnownManagedLibraryLaunchDoesNotBlockOnEvictedMarker() async throws {
+        let cloud = temporaryRoot.appendingPathComponent("Cloud", isDirectory: true)
+        let root = cloud.appendingPathComponent("Documents/\(LibraryFileService.managedFolderName)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        try Data().write(to: root.appendingPathComponent("..tabbuddy-library.json.icloud"))
+        let service = LibraryFileService(localDocumentsURL: temporaryRoot.appendingPathComponent("App"), cloudContainer: { cloud })
+        let start = ContinuousClock.now
+        _ = try await service.configureManagedLibrary(id: UUID(), mode: .managedICloud)
+        XCTAssertLessThan(start.duration(to: .now), .seconds(2))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: root.appendingPathComponent(LibraryMarker.filename).path))
+        let offline = await LibraryFileService.markerProblem(at: root, expected: UUID(), timeout: .milliseconds(200))
+        XCTAssertNil(offline, "An undownloaded marker is not an error")
+        let expected = UUID(), other = UUID()
+        let readable = temporaryRoot.appendingPathComponent("Readable", isDirectory: true)
+        try FileManager.default.createDirectory(at: readable, withIntermediateDirectories: true)
+        try JSONEncoder().encode(LibraryMarker(libraryID: other, schemaVersion: 1)).write(to: readable.appendingPathComponent(LibraryMarker.filename))
+        let mismatch = await LibraryFileService.markerProblem(at: readable, expected: expected)
+        XCTAssertEqual(mismatch, .markerIdentityMismatch(expected: expected, found: other))
+    }
+
+    /// R5: evicted conflict copies don't block; Resolve keeps this library's marker and trashes the other.
+    func testMarkerConflictResolveKeepsActiveLibraryAndTrashes() async throws {
+        let keep = UUID(), other = UUID()
+        let encoder = JSONEncoder()
+        let evicted = temporaryRoot.appendingPathComponent("EvictedCopy", isDirectory: true)
+        try FileManager.default.createDirectory(at: evicted, withIntermediateDirectories: true)
+        try encoder.encode(LibraryMarker(libraryID: keep, schemaVersion: 1)).write(to: evicted.appendingPathComponent(LibraryMarker.filename))
+        try Data().write(to: evicted.appendingPathComponent("..tabbuddy-library 2.json.icloud"))
+        let id = try await LibraryFileService.existingLibraryID(at: evicted, timeout: .milliseconds(300))
+        XCTAssertEqual(id, keep, "An unreadable conflict copy does not block; the primary decides")
+
+        let folder = temporaryRoot.appendingPathComponent("Conflict", isDirectory: true)
+        let trashDir = temporaryRoot.appendingPathComponent("FakeTrash", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: trashDir, withIntermediateDirectories: true)
+        try encoder.encode(LibraryMarker(libraryID: other, schemaVersion: 1)).write(to: folder.appendingPathComponent(LibraryMarker.filename))
+        try encoder.encode(LibraryMarker(libraryID: keep, schemaVersion: 1)).write(to: folder.appendingPathComponent(".tabbuddy-library 2.json"))
+        let trashed = try await LibraryFileService.resolveMarkerConflict(at: folder, keep: keep, trash: { url in
+            try FileManager.default.moveItem(at: url, to: trashDir.appendingPathComponent(UUID().uuidString))
+        })
+        XCTAssertEqual(trashed, [LibraryMarker.filename])
+        XCTAssertEqual(LibraryFileService.inspectMarker(at: folder), .present(LibraryMarker(libraryID: keep, schemaVersion: 1)))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: folder.appendingPathComponent(".tabbuddy-library 2.json").path))
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: trashDir.path).count, 1, "The other marker is in the Trash, not deleted")
+        // Trash unavailable: nothing is removed.
+        let stuck = temporaryRoot.appendingPathComponent("Stuck", isDirectory: true)
+        try FileManager.default.createDirectory(at: stuck, withIntermediateDirectories: true)
+        try encoder.encode(LibraryMarker(libraryID: keep, schemaVersion: 1)).write(to: stuck.appendingPathComponent(LibraryMarker.filename))
+        try encoder.encode(LibraryMarker(libraryID: other, schemaVersion: 1)).write(to: stuck.appendingPathComponent(".tabbuddy-library 2.json"))
+        struct NoTrash: Error {}
+        do {
+            _ = try await LibraryFileService.resolveMarkerConflict(at: stuck, keep: keep, trash: { _ in throw NoTrash() })
+            XCTFail("Expected trashUnavailable")
+        } catch {
+            XCTAssertEqual(error as? LibraryFileError, .trashUnavailable(".tabbuddy-library 2.json"))
+        }
+        XCTAssertTrue(FileManager.default.fileExists(atPath: stuck.appendingPathComponent(".tabbuddy-library 2.json").path))
+    }
+
+    /// R6: an exact library + path match wins over an earlier entry's fallback.
+    @MainActor
+    func testRestoreExactMatchesClaimRecordsBeforeFallbacks() throws {
+        let library = UUID()
+        let source = try makeContainer()
+        let renamedAway = record("Old/Song.txt", library: library, importedAt: .now)
+        renamedAway.contentHash = "h"
+        renamedAway.customTitle = "Fallback"
+        let exact = record("A/Song.txt", library: library, importedAt: .now)
+        exact.customTitle = "Exact"
+        source.mainContext.insert(renamedAway); source.mainContext.insert(exact)
+        try source.mainContext.save()
+        var backup = LibraryBackup(exportedAt: .now, files: [FileItemBackup(renamedAway), FileItemBackup(exact)])
+        backup.files[1].contentHash = nil
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+        let data = try encoder.encode(backup)
+        let target = try makeContainer()
+        let current = record("A/Song.txt", library: library, importedAt: .now)
+        current.contentHash = "h"
+        target.mainContext.insert(current)
+        try target.mainContext.save()
+        XCTAssertEqual(BackupManager.importJSON(data: data, context: target.mainContext, libraryID: library), 1)
+        XCTAssertEqual(current.customTitle, "Exact")
+    }
+
+    /// R8: markers are written whole and never over an existing file.
+    func testExclusiveMarkerWriteNeverOverwrites() throws {
+        let folder = temporaryRoot.appendingPathComponent("Exclusive", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let url = folder.appendingPathComponent(LibraryMarker.filename)
+        try LibraryFileService.writeExclusively(Data("first".utf8), to: url)
+        XCTAssertThrowsError(try LibraryFileService.writeExclusively(Data("second".utf8), to: url))
+        XCTAssertEqual(try Data(contentsOf: url), Data("first".utf8))
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: folder.path), [LibraryMarker.filename], "No temporary file is left")
+    }
+
 }
 
 private func XCTUnwrapAsync<T>(_ value: T?, file: StaticString = #filePath, line: UInt = #line) throws -> T {

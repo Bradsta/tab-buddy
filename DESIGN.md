@@ -15,7 +15,12 @@ Supersedes the single **Sync library with iCloud** switch and the Advanced **Use
 - **Current Location** section: Songs and Library info rows, plus Choose/Change Folder for Local only and Hybrid and Use App Folder Instead for a chosen Local only folder. Hybrid's footer says to choose the same folder on each device and that songs missing here are hidden, not deleted.
 - **More Storage Options** (collapsed DisclosureGroup below Remove All Files) holds rarely used actions: Keep available offline (only for iCloud-backed folders), Reconnect Folder, and Copy Library to New Folder, the only explicit copy. Maintenance, backup, and Remove All Files stay where they were.
 - **Unauthorized Hybrid folder on this device** shows a banner "Choose This Folder on This Device" naming the folder, with a Choose Folder… button, rather than an empty or broken library.
-- **Removal wording states the scope**: chosen-folder removal says files stay in the folder; iCloud only and Hybrid say library info is removed on all devices; app-local deletion says files are deleted on this device.
+- **Removal wording states the scope**: chosen-folder removal says files stay in the folder; iCloud only and Hybrid say library info is removed on all devices; app-local deletion says files are deleted on this device. Local only on a store that has mirrored adds that removals apply on other devices if syncing is turned back on.
+- **First sync on a device**: the switch alert to Hybrid or iCloud only adds **Export a Library Backup First** (exports, then the user switches again) and asks the user not to edit while library info merges.
+- **Merge status**: while a duplicate merge runs, the bottom status panel shows a spinner, "Merging library info from your other devices… (n of total)", and "Please don't edit songs until this finishes." Only that subview observes merge progress; the library list refreshes once when the merge ends.
+- **Delete File for a chosen folder** is labeled "Move File to Trash"; the alert ("Move file to the Trash?") names the relative path and folder and says the file is kept if the Trash is unavailable.
+- **Marker errors** (evicted or conflicting `.tabbuddy-library.json`) appear as the library error text with the recovery step, instead of creating a new library.
+- **Reader redirect**: if the open score's record is merged or removed from another device, the reader reopens on the surviving record, or closes with a "Song moved" alert.
 - iPad-first sheet; rows and descriptions wrap in compact width. Screenshots checked on the iPad and iPhone simulators (unconfigured and Local only states).
 
 ## Tutor and Practice interface (2026-09-25)

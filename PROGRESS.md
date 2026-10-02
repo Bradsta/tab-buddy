@@ -6,6 +6,53 @@ it lives, and what's next. Newest first.
 
 ---
 
+## 2026-09-25 — Library data-safety follow-ups (re-review)
+
+A re-review of the data-safety fixes gave a conditional go and found eight more issues:
+
+- **Merge exclusivity**: `isMergingDuplicates` now covers the whole pass (merge, re-keying, presence check). Rescans, imports, removals, metadata saves, and Delete File wait for it (`finishMergePass`) and reschedule the interrupted merge; a merge re-checks for busy work after its first suspension; Prepare Library is disabled during a merge. Before, a rescan could interleave with a merge.
+- **Hidden after the other device's merge**: `FilePresence.missingPath` (optional) records the missing path; a record whose current path differs is re-checked, and every missing record is re-checked after CloudKit imports (Hybrid and iCloud only), in chunks. A full scan marks every record at a seen path present, not only one per path.
+- **Never-seen copies**: `FilePresence.seenHere` (optional). A completed scan records `completedScan` only for a file this device had before; otherwise `notSeenHere`, which never joins by fingerprint. Previously a copy just added on the other device could be fingerprint-joined and deleted on both devices.
+- **Offline iCloud-only launch**: a known library no longer waits 15 s on an evicted marker; validation runs in the background and reports only a readable disagreeing marker.
+- **Marker conflicts**: conflict copies are downloaded before judging; same-library and unreadable copies do not block; conflicts are checked at launch; Settings → Resolve Library Marker… keeps the active library's marker and moves others to the Trash (never deletes). The error no longer tells users to delete hidden files.
+- **Restore**: two passes; exact library ID + path matches claim records before fallbacks.
+- **Canonical on PDF/Guitar Pro**: checked; a PDF whose canonical file is missing on this device opens in the original PDF view with no error; Guitar Pro does not use the canonical. No automatic PDF conversion (by design).
+- **Marker edge cases**: `.downloaded` counts as readable; markers are written via a coordinated temporary file and exclusive rename (`renamex_np` `RENAME_EXCL`, then `link`, then `.withoutOverwriting`); marker checks look only for marker names and run off the main actor.
+
+Validation (unsigned simulator, iPhone FD447CDF, CloudKit off): targeted LibraryArchitectureTests 37, LibraryStorageOptionTests 43 (7 new), TutorStoreTests 19, PracticeTests 7 — 106 tests, 0 failures. Whole `TabBuddyTests`: 380 tests, 8 skipped (snapshot tests without output directories), 0 failures. Manager-path benchmark at 10,000 pairs: about 8.6 s, longest main-actor gap about 182 ms.
+
+Not verified: live two-device CloudKit sync, real iCloud Drive eviction/download and conflict-copy naming, and `trashItem` on iCloud Drive folders on device. Rechecking every missing record after each CloudKit import costs up to one path check per hidden song per import burst.
+
+## 2026-09-25 — Library data-safety fixes before switching a real library to Hybrid
+
+A review of the Library options commit (1d03891) returned no-go because merges could lose metadata. Fixes:
+
+- **Practice fields** (`LibraryDuplicateMerger.mergeFields`): a record counts as opened only if `lastOpenedAt > importedAt + 1 s` or `playCount > 0`. Each practice field (A/B loop pair, measure loop pair, scroll speed, user/reference BPM, text mode, notation) comes from the most recently opened record that has it set, else any record that has it; a set value is never replaced by an unset one. Before, a later-catalogued never-opened record (`lastOpenedAt == importedAt`) won and cleared loops and tempo.
+- **Edited details** merge field by field across all user-edited records (survivor order wins conflicts).
+- **Marker**: evicted markers (`..tabbuddy-library.json.icloud`, `.tabbuddy-library.json.icloud`, dataless files) are downloaded (`startDownloadingUbiquitousItem` + coordinated read, 15 s). If unreadable, choosing the folder shows "Waiting for the library marker to download from iCloud Drive…" and no new marker/ID is created; new markers are written with `.withoutOverwriting`. Conflict copies naming another library are reported. The legacy-bookmark bootstrap reads the marker before creating a descriptor and surfaces errors; a marker that names a different library than the active descriptor is reported on launch.
+- **Fingerprint joins** require a completed full scan on this device (`FilePresence.reasonRaw = completedScan`, new optional device-local attribute), a fingerprint held by exactly the two path groups among all records, and equal byte sizes. Misses from `verifyUnknownPresence` (`pathCheck`) never join.
+- **Stuck hidden songs**: `pathCheck` misses are re-checked after merges and imports (chunked, IDs/paths only, skipped when nothing is pending).
+- **Local only after mirroring**: `library.storeHasMirrored` is set when a syncing option is chosen or the store opens with mirroring. Then Local only removal skips songs hidden on this device and the confirmation says removals will reach other devices if syncing is turned back on.
+- **Reader**: `ReaderRecordGuard` follows a merged/removed open record to the survivor (this device's merge map, else same library + path) or closes with a message, on CloudKit import events, merges/removals, and saves.
+- **Performance**: Tutor takes re-key in one batch (`TutorStore.rekeyTakes(_ map:)`); per-file `UserDefaults` keys are enumerated once; presence is read once per pass; the library index skips refreshes during a merge and refreshes once afterwards; the status panel shows "Merging library info from your other devices… (n of total)".
+- **Canonical data**: survivor's canonical, else the lowest filename, independent of local files; a missing local file is copied from a same-version member file; nothing is deleted. Text tabs regenerate a missing local canonical on open.
+- **Paths**: case folded only for iCloud/case-insensitive roots (Unicode normalization always).
+- **Dropped merge requests** rerun once after the running pass. A second pass can no longer start while the first awaits its setup.
+- **Relink** only folds a provisional record that this scan created on this device; synced records are left to the merger.
+- **Same-UUID rows** are excluded from merging, counted, and logged; never deleted.
+- **Backup v3** stores every user-set field plus library ID, relative path, fingerprint, and size. Restore matches library ID + path, path, unique fingerprint, then unique filename; v1/v2 remain readable.
+- **Delete File** on a chosen folder moves the file to the Trash (kept if the Trash is unavailable); the alert names the exact path. Only the app-managed folder can fall back to permanent removal.
+- **First sync on a device**: the switch confirmation offers **Export a Library Backup First**.
+
+Validation (unsigned simulator, iPhone FD447CDF, `CODE_SIGNING_ALLOWED=NO`, CloudKit off):
+
+- Targeted: LibraryArchitectureTests 37, LibraryStorageOptionTests 36, TutorStoreTests 19, PracticeTests 7 — 99 tests, 0 failures.
+- Whole `TabBuddyTests` suite: 373 tests, 8 skipped (snapshot tests without output directories), 0 failures. This run preceded two small follow-up edits (launch-time marker mismatch notice, destination marker check before copying); the targeted suites above were rerun after them.
+- Manager path (`mergeDuplicates` + `applyMergeResult`) at 10,000 duplicate pairs with presence records, 200 Tutor takes, and 200 per-file defaults keys: about 8.5 s; longest main-actor gap (5 ms ticker) about 169 ms. Merger alone: about 6.8 s, longest gap about 70 ms.
+- Placeholder markers were simulated with empty `.icloud` files; real iCloud Drive eviction and download were not exercised.
+
+Not verified / remaining risk: live two-device CloudKit sync (Hybrid between the iPad and iPhone, first-enable merge of two 10,000-song catalogs, import-event timing) is still untested. SwiftData's `@Query` still refetches after each 100-group merge save; only the library index rebuild is coalesced. Edits made on one device to a record that the other device's merge deletes before this device merges it are lost to CloudKit last-writer-wins, and SwiftUI can redraw the reader between a remote deletion and the redirect. A second device that chooses the folder before the first device's marker is listed in iCloud Drive can still write its own marker (now surfaced as a conflict copy, not merged).
+
 ## 2026-09-25 — Library options: Local only, iCloud only, Hybrid
 
 - **Model**: `LibraryStorageOption` (device-local `library.storageOption`) replaces the sync toggle; `library.syncEnabled` is kept equal to `option.syncsMetadata`. One-time migration: sync on → iCloud only; sync off (app-local or chosen folder) → Local only; a chosen folder is never switched to Hybrid automatically. CloudKit mirroring = iCloud only or Hybrid, and an available account; the existing same-store-URL connection reload is reused.

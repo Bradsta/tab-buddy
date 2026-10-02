@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import CoreData
 
 enum AppPage: Hashable {
     case viewer
@@ -23,6 +24,11 @@ struct ContentView: View {
     @State private var currentFile: FileItem?
     @State private var path: [AppPage] = []
     @State private var viewerIdentity = UUID()
+    /// Identity of the open score, captured at open so a record deleted by an iCloud
+    /// import (another device's duplicate merge) can be followed without reading the
+    /// deleted model.
+    @State private var openedScore: ReaderRecordGuard.Opened?
+    @State private var readerNotice: String?
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -72,6 +78,28 @@ struct ContentView: View {
         .onChange(of: currentFile?.id) { _, id in
             if path.contains(.viewer) { LibraryManager.shared.readerFileID = id }
         }
+        // The open score's record can disappear when iCloud imports another device's
+        // duplicate merge, or after a merge/removal here. Follow it or close cleanly.
+        .onReceive(NotificationCenter.default.publisher(for: NSPersistentCloudKitContainer.eventChangedNotification)) { notification in
+            guard let event = notification.userInfo?[NSPersistentCloudKitContainer.eventNotificationUserInfoKey]
+                    as? NSPersistentCloudKitContainer.Event, event.type == .import, event.endDate != nil else { return }
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(300))
+                validateOpenScore()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: LibraryManager.recordsChangedNotification)) { _ in
+            validateOpenScore()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { notification in
+            guard openedScore != nil, (notification.object as? ModelContext) === context else { return }
+            validateOpenScore()
+        }
+        .alert("Song moved", isPresented: Binding(get: { readerNotice != nil }, set: { if !$0 { readerNotice = nil } })) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(readerNotice ?? "")
+        }
     }
 
     private func openFile(_ file: FileItem) {
@@ -79,8 +107,31 @@ struct ContentView: View {
         viewerIdentity = UUID()
         // 2) set the file
         currentFile = file
+        openedScore = ReaderRecordGuard.Opened(file)
         // 3) push the destination
         path.append(.viewer)
+    }
+
+    private func validateOpenScore() {
+        guard path.contains(.viewer), let opened = openedScore else { return }
+        switch ReaderRecordGuard.resolve(opened, current: currentFile, context: context,
+                                         survivor: LibraryManager.shared.survivor(for:)) {
+        case .unchanged:
+            return
+        case .redirect(let survivor):
+            // Reopen the viewer on the merged record; practice settings were merged into it.
+            ReaderPersistence.flush(context)
+            openedScore = ReaderRecordGuard.Opened(survivor)
+            viewerIdentity = UUID()
+            currentFile = survivor
+            LibraryManager.shared.readerFileID = survivor.id
+        case .gone:
+            openedScore = nil
+            path.removeAll { $0 == .viewer }
+            currentFile = nil
+            LibraryManager.shared.readerFileID = nil
+            readerNotice = "This song’s library entry was removed or merged on another device. Open it again from the library."
+        }
     }
 
     private func backfillFolderNames() {
@@ -102,6 +153,57 @@ struct ContentView: View {
         }
     }
 
+}
+
+/// Keeps the reader pointed at a live catalog record without reading a deleted model.
+@MainActor
+enum ReaderRecordGuard {
+    struct Opened: Equatable {
+        let id: UUID
+        let modelID: PersistentIdentifier
+        let libraryID: UUID?
+        let path: String?
+
+        init(_ item: FileItem) {
+            id = item.id
+            modelID = item.persistentModelID
+            libraryID = item.libraryID
+            path = item.effectiveRelativePath
+        }
+    }
+
+    enum Resolution: Equatable {
+        case unchanged
+        case redirect(FileItem)
+        case gone
+    }
+
+    /// The open record still exists → unchanged. Otherwise follow this device's merge
+    /// map, then a record with the same library and path (the survivor another device
+    /// chose); with neither, the reader closes.
+    static func resolve(_ opened: Opened, current: FileItem?, context: ModelContext,
+                        survivor: (UUID) -> UUID?) -> Resolution {
+        let id = opened.id
+        let live = (try? context.fetch(FetchDescriptor<FileItem>(predicate: #Predicate { $0.id == id }))) ?? []
+        if let current, live.contains(where: { $0.persistentModelID == current.persistentModelID }) { return .unchanged }
+        if current == nil, !live.isEmpty { return .unchanged }
+        if let first = live.first { return .redirect(first) }
+        if let next = survivor(id),
+           let found = try? context.fetch(FetchDescriptor<FileItem>(predicate: #Predicate { $0.id == next })).first {
+            return .redirect(found)
+        }
+        if let library = opened.libraryID, let path = opened.path {
+            let optionalLibrary: UUID? = library
+            let optionalPath: String? = path
+            let samePath = (try? context.fetch(FetchDescriptor<FileItem>(predicate: #Predicate {
+                $0.libraryID == optionalLibrary && ($0.storageRelativePath == optionalPath || $0.libraryPath == optionalPath)
+            }))) ?? []
+            if let found = samePath.sorted(by: { LibraryDuplicateMerger.precedes(($0.importedAt, $0.id), ($1.importedAt, $1.id)) }).first {
+                return .redirect(found)
+            }
+        }
+        return .gone
+    }
 }
 
 /// Resolves a ComposedTab by UUID from SwiftData and presents TabMakerView.
