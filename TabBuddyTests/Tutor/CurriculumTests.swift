@@ -532,42 +532,6 @@ final class CurriculumTests: XCTestCase {
         }
     }
 
-    // MARK: - Coach
-
-    func testFeedbackCoachRules() {
-        var coach = FeedbackCoach(tips: ["tip A", "tip B"], tempoSteps: [60, 70, 80])
-        XCTAssertNil(coach.registerAttempt(target: "G", success: false))
-        XCTAssertNil(coach.registerAttempt(target: "G", success: false))
-        XCTAssertEqual(coach.registerAttempt(target: "G", success: false), .tip("tip A"))
-        XCTAssertNil(coach.registerAttempt(target: "C", success: false))
-        XCTAssertNil(coach.registerAttempt(target: "G", success: true))
-        for _ in 0..<2 { XCTAssertNil(coach.registerAttempt(target: "G", success: false)) }
-        XCTAssertEqual(coach.registerAttempt(target: "G", success: false), .tip("tip B"))
-
-        XCTAssertNil(coach.registerRun(accuracy: 1))
-        XCTAssertNil(coach.registerRun(accuracy: 1))
-        XCTAssertNil(coach.registerRun(accuracy: 0.5))   // breaks the streak
-        XCTAssertNil(coach.registerRun(accuracy: 1))
-        XCTAssertNil(coach.registerRun(accuracy: 0.97))
-        XCTAssertEqual(coach.registerRun(accuracy: 1), .offerTempo(bpm: 70))
-        coach.advanceTempo()
-        XCTAssertEqual(coach.currentTempo, 70)
-        for _ in 0..<2 { _ = coach.registerRun(accuracy: 1) }
-        XCTAssertEqual(coach.registerRun(accuracy: 1), .offerTempo(bpm: 80))
-        coach.advanceTempo()
-        for _ in 0..<3 { XCTAssertNil(coach.registerRun(accuracy: 1)) }   // top of the ladder
-
-        let passage = PassageBuilder.chords([[45, 52], [50, 57]], names: ["A", "D"], repetitions: 2, bpm: 60, instrument: .guitar)
-        let graded = [
-            GradedEvent(expectedID: 0, grade: .hit, matchedPitches: [45, 52], missingPitches: [], wrongPitches: [], confidence: 1),
-            GradedEvent(expectedID: 1, grade: .hit, matchedPitches: [45, 52], missingPitches: [], wrongPitches: [], confidence: 1),
-            GradedEvent(expectedID: 2, grade: .partial, matchedPitches: [50], missingPitches: [57], wrongPitches: [], confidence: 1),
-            GradedEvent(expectedID: 3, grade: .uncertain, matchedPitches: [], missingPitches: [], wrongPitches: [], confidence: 0),
-        ]
-        XCTAssertEqual(FeedbackCoach.weakestItem(passage: passage, graded: graded), .weakest(item: "D", accuracy: 0.5))
-        XCTAssertEqual(FeedbackCoach.weakestItem(passage: passage, graded: Array(graded.prefix(2))), .allClean)
-    }
-
     // MARK: - Library suggestions
 
     func testLibrarySongSuggester() {

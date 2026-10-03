@@ -37,7 +37,7 @@ See [PROJECT.md](PROJECT.md) for the current feature inventory, product intent, 
 - **Reading progress**: Tracks last opened time and reading position
 
 ### 🎓 Tutor and Practice
-- **Tutor**: guitar and piano lessons in a recommended order you can skip through, with optional side branches, spaced-repetition reviews, ear and fretboard games, and a glossary
+- **Tutor**: guitar and piano courses laid out like a textbook: chapters you read at your own pace with inline diagrams, playable examples, and "Try it" boxes; a Practice section for scales, chords, intervals, and rhythms at any tempo; flashcards; ear and fretboard games; and a glossary
 - **Practice a library song**: TabBuddy listens through the microphone, compares what you play with the score, and reviews accuracy and tempo
 - **Offline and on device**: no account, network, or MIDI cable needed
 
@@ -115,17 +115,18 @@ Bass, ukulele, and extended-range guitar tabs retain their string counts. Smooth
 ### Tutor
 Tap **Tutor** (graduation cap) in the library toolbar. Choose **Guitar** or **Piano** at the top of the sidebar (iPad) or home screen (iPhone). The tutor is written for an acoustic guitar or an acoustic/digital piano played into the device microphone.
 
-- **Path**: stages 0–8 are a recommended order, not a gate. Tap any lesson to start it, or choose **Mark as done (skip)** in its detail to skip it (**Mark as not done** undoes this). **Continue** opens the first lesson you haven't finished. Side branches such as Rhythm reading, Fingerstyle basics, Blues shuffle, Reading the grand staff, and Pedal basics are optional detours suggested after a named lesson.
-- **Lessons**: steps include reading with diagrams, listening demos, playing exercises the microphone checks, quizzes, and short song excerpts. Use ← / → to move between steps, Space to start or stop listening, and 1–4 to answer. Without microphone access, choose **Skip for now** on playing steps; quizzes still work.
-- **Reviews**: finished lessons add review cards. **Reviews** shows what is due. Grade facts yourself (Again / Hard / Good / Easy); multiple-choice and play cards are graded for you.
+- **Contents**: the course is a book. Parts 0–8 are a recommended order, not a gate; every chapter opens. **Next up** is the first chapter you have not marked read. Tap a chapter to see its sections and open it (or jump to one section). **Mark as done** means read; **Mark as not done** undoes it. Nothing is scored. Side branches such as Rhythm reading, Fingerstyle basics, Blues shuffle, Reading the grand staff, and Pedal basics are optional detours suggested after a named chapter.
+- **Chapters**: one scrolling page with a table of contents at the top (on iPad) and in the Contents menu. Reading sections put the diagram beside the text with a **Hear it** button; **Example** cards play on the built-in synth and light up the diagram; **Try it** boxes let you practice an exercise at your own pace: **Play example** at any tempo, **Loop**, tempo chips, and a **Listen** switch that turns the notes it hears green (choose **Wait for me** or **Play along** with a visual count-in). Songs are Try it boxes too. **Check yourself** questions sit at the end of the chapter: tap a choice or **Show answer** to see the answer and why; **New set** draws new generated questions. Keyboard: Space plays the example, L toggles Listen, ⌘D marks the chapter done, Escape closes. Without microphone access everything except Listen still works.
+- **Practice**: scales (any root and type, one or two octaves, a fret position on guitar), chords (any root and quality, block / arpeggio / strum), intervals (any interval from a movable root, up / down / together), and rhythms (presets or your own tokens such as `q q e e q`), each with Play example, loop, tempo, and Listen. **Exercises** lists every Try it box and song in the course by kind and opens its chapter at that section.
+- **Flashcards**: the facts, notes, and chords from chapters you have marked read (or all chapters). Flip a card; **Got it** keeps it out for the session, **Again** sends it to the back. Play cards offer **Hear it** instead of listening. Nothing is graded.
 - **Games**: Fretboard Hunt / Key Hunt, Chord Change Sprint, Interval Duel, Name That Quality, Rhythm Tapper, Scale Runner, and Note Rush. Each keeps a personal best; there are no streaks.
 - **Songs you know**: library songs whose chord symbols use chords you have learned. Tap one to open it in the reader. Chords are read from converted scores and from text tabs already on the device; Guitar Pro chord names are not read yet.
-- **Tutor settings**: instrument, a daily goal in minutes, and **Reset progress** for one instrument. Reset keeps calibration and your practice takes.
+- **Tutor settings**: instrument, a daily goal in minutes (counted from chapters you mark read), and **Reset progress** for one instrument. Reset keeps calibration and your practice takes.
 
-TabBuddy checks which pitches sound, not which string or fret you used. When it cannot tell, it shows a gray "not sure" and does not count it against you. All app sound stops while it listens, so follow the on-screen count-in and beat pulse.
+When TabBuddy listens it checks which pitches sound, not which string or fret you used, and only ever adds green for what it heard. When it cannot tell, it shows a gray "not sure". All app sound stops while it listens, so follow the on-screen count-in and beat pulse.
 
 ### Calibrating the microphone
-Open **Tutor → Calibration** before your first playing lesson, and again after changing headphones or an audio interface. Calibration is saved separately for each audio route.
+Open **Tutor → Calibration** before you first use Listen or Library Practice, and again after changing headphones or an audio interface. Calibration is saved separately for each audio route.
 1. Allow microphone access.
 2. Check the input level. On iPad, stand it on a music stand within about 1 m of the guitar, with the top edge (where the microphones are) toward the sound hole. For piano, put it on the music desk with the top edge toward the strings or open lid. Keep the case and your hands off that edge, and turn off fans, music, or the TV.
 3. Play the check note (open low E, or middle C) and confirm the detected note.

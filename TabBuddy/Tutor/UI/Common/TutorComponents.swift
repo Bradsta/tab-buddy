@@ -224,7 +224,7 @@ struct InputLevelMeter: View {
     }
 }
 
-/// Microphone access is off: explain, link to Settings, and let the lesson continue.
+/// Microphone access is off: explain and link to Settings.
 struct MicrophoneOffPanel: View {
     var onSkip: (() -> Void)?
 
@@ -233,7 +233,7 @@ struct MicrophoneOffPanel: View {
             Label("Microphone access is off", systemImage: "mic.slash")
                 .font(.headline)
                 .foregroundStyle(DS.fg1)
-            Text("TabBuddy listens to your instrument to check what you play. Turn on Microphone for TabBuddy in Settings, then come back. You can skip this exercise for now; explanations and quizzes still work.")
+            Text("TabBuddy can listen to your instrument and turn heard notes green. Turn on Microphone for TabBuddy in Settings, then come back. Reading, examples, and Check yourself work without it.")
                 .foregroundStyle(DS.fg2)
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 12) {

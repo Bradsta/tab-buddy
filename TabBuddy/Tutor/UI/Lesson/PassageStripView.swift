@@ -2,19 +2,20 @@
 //  PassageStripView.swift
 //  TabBuddy
 //
-//  The notes or chords of a passage as chips grouped into measures, marked as
-//  they are played: green check for a hit, neutral "?" when the detector was
-//  unsure, a caution tint for "try again". The cursor chip has an accent ring.
+//  The notes or chords of a passage as chips grouped into measures. Heard
+//  events are green with a check; the listening target has an accent ring;
+//  the chip sounding in the example is filled. Nothing is ever red.
 //
 
 import SwiftUI
 
 struct PassageStripView: View {
     let events: [ExpectedEvent]
-    var marks: [Int: PracticeRunModel.Mark] = [:]
-    /// Index into `events` of the current target.
+    /// Event ids heard while listening.
+    var heard: Set<Int> = []
+    /// Index into `events` of the current listening target.
     var cursor: Int?
-    /// Index into `events` sounding in a demo.
+    /// Index into `events` sounding in the example.
     var playing: Int?
     var showMeasures = true
     var large = false
@@ -61,24 +62,23 @@ struct PassageStripView: View {
     }
 
     private func chip(_ index: Int, _ event: ExpectedEvent) -> some View {
-        let mark = marks[event.id] ?? .pending
+        let isHeard = heard.contains(event.id)
         let isCursor = cursor == index
         let isPlaying = playing == index
-        let style = Self.style(for: mark)
         return HStack(spacing: 4) {
-            if let icon = style.icon {
-                Image(systemName: icon).font(.caption.weight(.bold))
+            if isHeard {
+                Image(systemName: "checkmark").font(.caption.weight(.bold))
             }
             Text(Self.label(event))
                 .font(large ? .title3.weight(.semibold) : .headline)
                 .lineLimit(1)
         }
-        .foregroundStyle(isPlaying ? .white : style.foreground)
+        .foregroundStyle(isPlaying ? .white : (isHeard ? Color.green : DS.fg1))
         .padding(.horizontal, large ? 14 : 10)
         .padding(.vertical, large ? 10 : 7)
         .background(
             RoundedRectangle(cornerRadius: DS.radiusChip, style: .continuous)
-                .fill(isPlaying ? DS.accent : style.background)
+                .fill(isPlaying ? DS.accent : (isHeard ? Color.green.opacity(0.14) : DS.surfaceInset))
         )
         .overlay(
             RoundedRectangle(cornerRadius: DS.radiusChip, style: .continuous)
@@ -88,35 +88,11 @@ struct PassageStripView: View {
         .animation(DS.motionFast, value: isCursor)
     }
 
-    struct ChipStyle {
-        var foreground: Color
-        var background: Color
-        var icon: String?
-    }
-
-    static func style(for mark: PracticeRunModel.Mark) -> ChipStyle {
-        switch mark {
-        case .pending: return ChipStyle(foreground: DS.fg1, background: DS.surfaceInset, icon: nil)
-        case .hit: return ChipStyle(foreground: Color.green, background: Color.green.opacity(0.14), icon: "checkmark")
-        case .notSure: return ChipStyle(foreground: DS.fg2, background: DS.surfaceInset, icon: "questionmark")
-        case .retry, .partial: return ChipStyle(foreground: DS.cautionText, background: DS.cautionSoft, icon: "arrow.uturn.left")
-        case .skipped, .missed: return ChipStyle(foreground: DS.fg3, background: DS.surfaceInset, icon: "minus")
-        }
-    }
-
     private var accessibilityText: String {
         let parts = events.enumerated().map { i, e -> String in
-            let mark = marks[e.id] ?? .pending
-            let status: String
-            switch mark {
-            case .pending: status = cursor == i ? "current" : ""
-            case .hit: status = "played"
-            case .notSure: status = "not sure"
-            case .retry, .partial: status = "try again"
-            case .skipped: status = "skipped"
-            case .missed: status = "missed"
-            }
-            return status.isEmpty ? Self.label(e) : "\(Self.label(e)) \(status)"
+            if heard.contains(e.id) { return "\(Self.label(e)) heard" }
+            if cursor == i { return "\(Self.label(e)) current" }
+            return Self.label(e)
         }
         return "Passage: " + parts.joined(separator: ", ")
     }

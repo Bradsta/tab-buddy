@@ -48,7 +48,7 @@ struct Lesson: Codable, Hashable, Identifiable, Sendable {
     @Defaulted<EmptyList<String>> var glossaryTerms: [String] = []
 }
 
-/// Seeds a spaced-repetition card when the lesson is completed.
+/// A flashcard for the Flashcards section (shown once its chapter is marked read, or for all chapters).
 struct ReviewItemSeed: Codable, Hashable, Identifiable, Sendable {
     var id: String
     var kind: ReviewKind
@@ -62,8 +62,8 @@ struct ReviewItemSeed: Codable, Hashable, Identifiable, Sendable {
 enum ReviewKind: String, Codable, Sendable {
     case fact          // text recall, self-graded
     case noteName      // name the highlighted note
-    case playNote      // play the named note (mic-graded)
-    case playChord     // play the named chord (mic-graded)
+    case playNote      // play the named note ("hear it / play it", not graded)
+    case playChord     // play the named chord ("hear it / play it", not graded)
     case earInterval   // hear, name the interval
     case earQuality    // hear, name the chord quality
 }
@@ -158,7 +158,7 @@ struct PlaybackSpec: Codable, Hashable, Sendable {
 
 struct PracticeStep: Codable, Hashable, Sendable {
     var exercise: ExerciseSpec
-    /// Shown in rotation after repeated misses.
+    /// Shown as a static "Tips" disclosure in the Try it box.
     @Defaulted<EmptyList<String>> var mistakeTips: [String] = []
 }
 
@@ -184,13 +184,13 @@ struct ExerciseSpec: Codable, Hashable, Sendable {
     var octaves: Int? = nil
     var key: String? = nil
     var bpm: Double? = nil
-    /// Tempo ladder offered after clean runs, e.g. [60, 70, 80].
+    /// Suggested tempos, e.g. [60, 70, 80]; shown as tempo chips. The first seeds the tempo.
     var tempoSteps: [Double]? = nil
     var durationSec: Double? = nil
     var rhythm: String? = nil
     var repetitions: Int? = nil
     var pitchClass: String? = nil
-    /// Fraction of events that must be hits to pass.
+    /// Kept for content compatibility; the Try it box does not grade.
     @Defaulted<PassAccuracy80> var passAccuracy: Double = 0.8
     /// Optional fixed diagram shown during the exercise.
     var diagram: Diagram? = nil
@@ -240,6 +240,7 @@ struct SongStep: Codable, Hashable, Sendable {
     var rhythm: String
     var bpm: Double
     @Defaulted<FourBeats> var beatsPerMeasure: Int = 4
+    /// Kept for content compatibility; song boxes do not grade.
     @Defaulted<PassAccuracy75> var passAccuracy: Double = 0.75
 }
 

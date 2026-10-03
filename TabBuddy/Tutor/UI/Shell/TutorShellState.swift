@@ -3,9 +3,10 @@
 //  TabBuddy
 //
 //  Shared state of the tutor shell: current instrument (persisted in
-//  TutorStore settings), path progress, due reviews, a gentle practice-days
-//  count, today's minutes against the daily goal, progress reset, and DEBUG
-//  launch arguments.
+//  TutorStore settings), path progress (chapters marked read), reading days,
+//  today's minutes against the daily goal, progress reset, and DEBUG launch
+//  arguments. Done means read: there are no attempts or scores, so the day
+//  counts and minutes come from the chapters marked done.
 //
 
 import Foundation
@@ -15,8 +16,9 @@ import SwiftData
 final class TutorShellState: ObservableObject {
     @Published private(set) var instrument: TutorInstrument
     @Published private(set) var progress: PathProgress?
-    @Published private(set) var dueCount = 0
+    /// Distinct days on which a chapter was marked done.
     @Published private(set) var practiceDays = 0
+    /// Minutes of the chapters marked done today.
     @Published private(set) var todayMinutes = 0
     @Published private(set) var dailyGoalMinutes: Int
 
@@ -50,15 +52,14 @@ final class TutorShellState: ObservableObject {
         } else {
             progress = nil
         }
-        dueCount = store.dueReviewCount(instrument: instrument, asOf: now())
-        let records = store.allProgress(instrument: instrument)
-        let cards = allCards(instrument: instrument)
+        let done = store.allProgress(instrument: instrument).filter { $0.progressStatus == .completed }
         var days = Set<DateComponents>()
-        for r in records where r.attempts > 0 { days.insert(calendar.dateComponents([.year, .month, .day], from: r.updatedAt)) }
-        for c in cards { if let d = c.lastReview { days.insert(calendar.dateComponents([.year, .month, .day], from: d)) } }
+        for r in done {
+            if let date = r.completedAt { days.insert(calendar.dateComponents([.year, .month, .day], from: date)) }
+        }
         practiceDays = days.count
         let today = now()
-        todayMinutes = records.filter { calendar.isDate($0.updatedAt, inSameDayAs: today) && $0.attempts > 0 }
+        todayMinutes = done.filter { r in r.completedAt.map { calendar.isDate($0, inSameDayAs: today) } ?? false }
             .reduce(0) { sum, r in sum + (course?.lesson(id: r.lessonID)?.minutes ?? 0) }
     }
 
@@ -77,52 +78,41 @@ final class TutorShellState: ObservableObject {
         try? store.save()
     }
 
-    /// Deletes lesson progress and review cards for one instrument. Settings,
-    /// calibration, and library practice takes are kept.
+    /// Deletes lesson progress (and any legacy review cards) for one
+    /// instrument. Settings, calibration, and library practice takes are kept.
     func resetProgress(for target: TutorInstrument) {
         for record in store.allProgress(instrument: target) { store.context.delete(record) }
-        for card in allCards(instrument: target) { store.context.delete(card) }
+        for card in legacyCards(instrument: target) { store.context.delete(card) }
         try? store.save()
         refresh()
     }
 
-    /// Skips a lesson (marks it done) or undoes that. Review cards are not
-    /// seeded for skipped lessons.
+    /// Marks a chapter read (done) or not.
     func setLessonDone(_ lesson: Lesson, done: Bool) {
         try? store.setLessonCompleted(lessonID: lesson.id, instrument: instrument, completed: done, date: now())
         refresh()
     }
 
-    /// Called when the lesson player closes. Records completion if the player did not.
-    func lessonDidExit(_ lesson: Lesson, completed: Bool) {
-        if completed, store.progress(lessonID: lesson.id, instrument: instrument)?.progressStatus != .completed {
-            try? ReviewScheduler.completeLesson(lesson, instrument: instrument, score: 1, store: store, now: now())
-        }
-        refresh()
-    }
+    /// Called when a lesson page closes; the page writes done itself.
+    func lessonDidClose() { refresh() }
 
-    private func allCards(instrument: TutorInstrument) -> [ReviewCardRecord] {
+    /// Review cards from the earlier graded-review design; no longer written by the UI.
+    private func legacyCards(instrument: TutorInstrument) -> [ReviewCardRecord] {
         let raw = instrument.rawValue
         return (try? store.context.fetch(FetchDescriptor<ReviewCardRecord>(predicate: #Predicate { $0.instrument == raw }))) ?? []
     }
 
     // MARK: DEBUG seeding
 
-    /// Marks the first `count` main-path lessons complete and makes their cards due now.
+    /// Marks the first `count` main-path lessons done.
     func seedProgress(firstLessons count: Int) {
         guard let course else { return }
         let date = now()
         for lesson in course.mainPathLessons.prefix(count) {
             if store.progress(lessonID: lesson.id, instrument: instrument)?.progressStatus != .completed {
-                try? ReviewScheduler.completeLesson(lesson, instrument: instrument, score: 1, store: store, now: date)
-            }
-            for item in lesson.reviewItems {
-                if let card = store.reviewCard(itemID: item.id, instrument: instrument), card.reps == 0 {
-                    card.due = date.addingTimeInterval(-60)
-                }
+                try? store.setLessonCompleted(lessonID: lesson.id, instrument: instrument, completed: true, date: date)
             }
         }
-        try? store.save()
         refresh()
     }
 }
@@ -166,7 +156,7 @@ enum TutorLaunchOptions {
         #endif
     }
 
-    /// `-TutorSection path|reviews|songs|games|glossary|calibration|settings|review-session` (screenshots).
+    /// `-TutorSection path|practice|flashcards|songs|games|glossary|calibration|settings` (screenshots).
     static var section: String? {
         #if DEBUG
         return value(after: "-TutorSection")
@@ -175,10 +165,10 @@ enum TutorLaunchOptions {
         #endif
     }
 
-    /// `-TutorReviewKind <ReviewKind>`: show due cards of that kind first.
-    static var reviewKind: String? {
+    /// `-TutorPracticeTab scales|chords|intervals|rhythms|exercises`: tab of the Practice section.
+    static var practiceTab: String? {
         #if DEBUG
-        return value(after: "-TutorReviewKind")
+        return value(after: "-TutorPracticeTab")
         #else
         return nil
         #endif

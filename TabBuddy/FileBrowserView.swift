@@ -191,8 +191,10 @@ struct FileBrowserView: View {
     @State private var storagePickerTarget: ImportTarget?
     @State private var firstRunOption: LibraryStorageOption?
     
-    // Live list, auto-refreshes when you insert / delete / edit
-    @Query private var items: [FileItem]
+    /// The catalog, fetched once per `catalogRevision`. A live `@Query` re-materialized
+    /// every model on most redraws (2.4 s of main-thread time per 20 s with 5,000 songs);
+    /// saves, CloudKit imports, and record changes bump the revision instead.
+    @State private var items: [FileItem] = []
     @StateObject private var browserIndex = LibraryBrowserIndex()
     @State private var catalogRevision = 0
     @State private var scheduledCatalogRevision: Int?
@@ -375,6 +377,7 @@ struct FileBrowserView: View {
             .padding(.bottom, 28)
         }
         .background(Color(.systemGroupedBackground))
+        .onAppear { PerfTrace.endAfterCommit("back", "library visible") }
     }
 
     private var jumpBackInSection: some View {
@@ -387,7 +390,7 @@ struct FileBrowserView: View {
                 HStack(alignment: .top, spacing: 11) {
                     ForEach(jumpBackInFiles, id: \.persistentModelID) { file in
                         if file.modelContext != nil && !file.isDeleted {
-                        FileCardView(file: file, isRail: true, showEyebrow: true,
+                        FileCardView(file: file, library: cardContext, isRail: true, showEyebrow: true,
                                      availability: libraryManager.availability(of: file, context: context),
                                      onOpen: { open(file) }, onDelete: { delete(file) })
                             .frame(width: 216)
@@ -427,6 +430,7 @@ struct FileBrowserView: View {
                     ForEach(Array(visible.prefix(displayedFileLimit)), id: \.persistentModelID) { file in
                         if file.modelContext != nil && !file.isDeleted {
                         FileCardView(file: file,
+                                     library: cardContext,
                                      isRail: false,
                                      showEyebrow: browseMode == .flat,
                                      isSelecting: isSelecting,
@@ -447,6 +451,11 @@ struct FileBrowserView: View {
 
     /// Build membership once per rendered folder section, not once per folder card.
     private var folderMemberships: [String: [FileItem]] { browserIndex.folderMembers }
+
+    private var cardContext: LibraryCardContext {
+        LibraryCardContext(mode: libraryManager.mode, storageOption: libraryManager.storageOption,
+                           libraryName: libraryManager.libraryName)
+    }
 
     private func folderCard(_ folder: String, members: [FileItem]) -> some View {
         let ids = Set(members.filter { $0.modelContext != nil && !$0.isDeleted }.map(\.id))
@@ -641,8 +650,107 @@ struct FileBrowserView: View {
             libraryManager.configureManaged(context: context, useICloud: false)
         }
         if arguments.contains("-LibrarySettingsOpen") { showStorageSettings = true }
+        await seedLibraryIfRequested(arguments)
+        if arguments.contains("-LibraryRescan") {
+            for _ in 0..<100 where !libraryManager.isConfigured || libraryManager.isRescanning {
+                try? await Task.sleep(for: .milliseconds(200))
+            }
+            libraryManager.rescan(context: context)
+        }
+        // Detached: this view task is cancelled and restarted on navigation, which
+        // would cut every sleep short.
+        Task { @MainActor in await runPerfCycleIfRequested(arguments) }
         #endif
     }
+
+    #if DEBUG
+    /// `-LibrarySeedSynthetic <n>` writes n generated text tabs and
+    /// `-LibrarySeedFolder <path>` copies the supported files under a host folder into
+    /// the app-local library, then rescans. Runs once per install (a `Seed` folder
+    /// marks it). For navigation timing on the simulator only.
+    private func seedLibraryIfRequested(_ arguments: [String]) async {
+        func value(after flag: String) -> String? {
+            guard let i = arguments.firstIndex(of: flag), i + 1 < arguments.count else { return nil }
+            return arguments[i + 1]
+        }
+        let synthetic = value(after: "-LibrarySeedSynthetic").flatMap(Int.init) ?? 0
+        let folder = value(after: "-LibrarySeedFolder")
+        guard synthetic > 0 || folder != nil else { return }
+        for _ in 0..<100 where !libraryManager.isConfigured || LibraryManager.activeRoot == nil {
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        guard let root = LibraryManager.activeRoot else { return }
+        let seedRoot = root.appendingPathComponent("Seed", isDirectory: true)
+        guard !FileManager.default.fileExists(atPath: seedRoot.path) else { return }
+        let count = synthetic
+        let source = folder.map { URL(fileURLWithPath: $0) }
+        await Task.detached(priority: .utility) {
+            let fm = FileManager.default
+            try? fm.createDirectory(at: seedRoot, withIntermediateDirectories: true)
+            let strings = ["e", "B", "G", "D", "A", "E"]
+            for n in 0..<count {
+                var text = "Seed Song \(n)\nArtist \(n % 97)\n\n"
+                for system in 0..<(6 + n % 7) {
+                    for line in strings {
+                        var row = "\(line)|"
+                        for _ in 0..<4 {
+                            for beat in 0..<16 {
+                                let fret = (system * 7 + beat * 3 + n) % 17
+                                row += beat % 3 == 0 && fret < 10 ? "-\(fret)" : (beat % 5 == 0 && fret >= 10 ? "\(fret)" : "--")
+                            }
+                            row += "|"
+                        }
+                        text += row + "\n"
+                    }
+                    text += "\n"
+                }
+                let dir = seedRoot.appendingPathComponent("Folder \(n % 12)", isDirectory: true)
+                try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+                try? text.write(to: dir.appendingPathComponent("Seed Song \(n).txt"), atomically: true, encoding: .utf8)
+            }
+            if let source, let items = fm.enumerator(at: source, includingPropertiesForKeys: nil) {
+                let supported = Set(["txt", "pdf"] + GuitarProFileType.extensions)
+                let dest = seedRoot.appendingPathComponent("Fixtures", isDirectory: true)
+                try? fm.createDirectory(at: dest, withIntermediateDirectories: true)
+                for case let url as URL in items where supported.contains(url.pathExtension.lowercased()) {
+                    try? fm.copyItem(at: url, to: dest.appendingPathComponent(url.lastPathComponent))
+                }
+            }
+        }.value
+        // Auto-setup may already be scanning; a second scan request would be dropped.
+        for _ in 0..<600 where libraryManager.isRescanning { try? await Task.sleep(for: .milliseconds(200)) }
+        libraryManager.rescan(context: context)
+    }
+
+    /// `-LibraryPerfCycle <rounds>` opens a fixed set of scores (the first seed text tab,
+    /// `comet-observatory.txt`, `corridors-of-time.pdf`, `practice.gp`) `rounds` times each,
+    /// waiting after each open and after each return, so PerfTrace logs open/back timings
+    /// without touching the screen. Runs after seeding and the scan finish.
+    nonisolated(unsafe) private static var perfCycleStarted = false
+    private func runPerfCycleIfRequested(_ arguments: [String]) async {
+        guard let i = arguments.firstIndex(of: "-LibraryPerfCycle"), i + 1 < arguments.count,
+              let rounds = Int(arguments[i + 1]), rounds > 0, !Self.perfCycleStarted else { return }
+        Self.perfCycleStarted = true
+        try? await Task.sleep(for: .seconds(2))
+        for _ in 0..<1200 where libraryManager.isRescanning || !browserIndex.hasSnapshot || libraryItems.isEmpty {
+            try? await Task.sleep(for: .milliseconds(500))
+        }
+        try? await Task.sleep(for: .seconds(3))
+        let names = ["seed song 0.txt", "comet-observatory.txt", "corridors-of-time.pdf", "practice.gp"]
+        let targets = names.compactMap { name in libraryItems.first { $0.filename.lowercased().hasSuffix(name) } }
+        PerfTrace.begin("targets"); PerfTrace.end("targets", targets.map(\.filename).joined(separator: ","))
+        for file in targets {
+            for _ in 0..<rounds {
+                open(file)
+                try? await Task.sleep(for: .seconds(6))
+                PerfTrace.begin("back")
+                if !path.isEmpty { path.removeLast() }
+                try? await Task.sleep(for: .seconds(4))
+            }
+        }
+        PerfTrace.begin("cycle-done"); PerfTrace.end("cycle-done")
+    }
+    #endif
 
     private func performSettingsAction(_ action: LibrarySettingsAction) {
         // Start new presentations only after Settings has fully dismissed.
@@ -716,10 +824,20 @@ struct FileBrowserView: View {
                 // A duplicate merge saves in many batches; refresh once when it finishes.
                 guard !libraryManager.isMergingDuplicates else { return }
                 guard scheduledCatalogRevision != catalogRevision else { return }
+                if scheduledCatalogRevision != nil {
+                    // Coalesce bursts (import batches, CloudKit imports) into one fetch.
+                    try? await Task.sleep(for: .milliseconds(150))
+                    guard !Task.isCancelled else { return }
+                }
                 scheduledCatalogRevision = catalogRevision
+                items = (try? context.fetch(FetchDescriptor<FileItem>())) ?? []
                 let manager = libraryManager
                 browserIndex.scheduleRebuild(items, libraryID: libraryManager.activeLibraryID,
                                              isShown: { manager.isShownOnThisDevice($0) })
+                // The first Guitar Pro open otherwise pays the whole web runtime start.
+                if items.contains(where: { GuitarProFileType.extensions.contains(($0.filename as NSString).pathExtension.lowercased()) }) {
+                    GuitarProWebViewPool.shared.scheduleWarm(after: 6)
+                }
             }
             .task(id: browserRequest) {
                 await browserIndex.filter(browserRequest)
@@ -731,7 +849,10 @@ struct FileBrowserView: View {
             .onChange(of: filterFavorite) { _, _ in displayedFileLimit = 200 }
             .onChange(of: folderPath) { _, _ in displayedFileLimit = 200 }
             .onChange(of: browseMode) { _, _ in displayedFileLimit = 200 }
-            .onChange(of: items) { _, _ in catalogRevision += 1 }
+            // Records changed by CloudKit imports or by library operations that do not
+            // save through this context's notification path.
+            .onReceive(NotificationCenter.default.publisher(for: .NSPersistentStoreRemoteChange)) { _ in catalogRevision += 1 }
+            .onReceive(NotificationCenter.default.publisher(for: LibraryManager.recordsChangedNotification)) { _ in catalogRevision += 1 }
             .onChange(of: libraryManager.activeLibraryID) { _, _ in
                 browserIndex.clear()
                 catalogRevision += 1
@@ -753,7 +874,7 @@ struct FileBrowserView: View {
             }
 
             .onReceive(NotificationCenter.default.publisher(for: .NSUbiquityIdentityDidChange)) { _ in
-                libraryManager.refreshStorageAvailability()
+                libraryManager.refreshStorageAvailability(force: true)
                 libraryManager.bootstrap(context: context)
             }
             .overlay {
@@ -872,7 +993,7 @@ struct FileBrowserView: View {
             }
             .padding()
             .background(Color.orange.opacity(0.12))
-        } else if items.contains(where: \.needsLibraryMigration) {
+        } else if browserIndex.hasLegacyImports {
             HStack {
                 Image(systemName: "arrow.triangle.2.circlepath")
                 VStack(alignment: .leading) {
@@ -1045,6 +1166,9 @@ private struct BrowserDialogs: ViewModifier {
     let libraryManager: LibraryManager
 
     private var removeAllConfirmation: LibraryManager.RemovalConfirmation {
+        // Alert titles are evaluated on every redraw; count the catalog only while the
+        // confirmation is up instead of faulting every model each time.
+        guard showClearConfirmation else { return libraryManager.removalConfirmation(count: 0, all: true) }
         let active = libraryManager.activeLibraryID
         let count = items.filter { ($0.libraryID == nil || $0.libraryID == active) && libraryManager.isShownOnThisDevice($0) }.count
         return libraryManager.removalConfirmation(count: count, all: true)

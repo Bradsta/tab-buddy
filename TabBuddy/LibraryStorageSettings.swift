@@ -81,7 +81,7 @@ struct LibraryStorageSettings: View {
                     Section {
                         Text("iCloud is unavailable on this device. Local only works without it; with Hybrid, library info stays on this device until iCloud is back.")
                             .font(.subheadline).foregroundStyle(.secondary)
-                        Button("Check Again") { libraryManager.refreshStorageAvailability() }
+                        Button("Check Again") { libraryManager.refreshStorageAvailability(force: true) }
                     }
                 }
                 if libraryManager.isMoving {

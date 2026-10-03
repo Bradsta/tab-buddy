@@ -2,6 +2,8 @@
 
 Companion to `TUTOR_PLAN.md` (research and product decisions). This file is the build contract for every work package. Status (2026-09-25): **implemented; unit-tested on the simulator with synthetic audio; not yet validated with a real microphone or on a device.** `PROJECT.md` is the source of truth for current behavior. The notes marked *As built* record where the implementation differs from the original plan.
 
+**Lesson rework (2026-10-02).** Lessons are no longer a graded step player. Each lesson renders as one textbook chapter page (`LessonPageView` / `LessonPageModel`): sections with headings, inline diagrams and "Hear it", worked examples as figure cards, exercises as ungraded **Try it** boxes (`TryItModel`), and **Check yourself** flashcards at the end. Done means read. Graded reviews became **Flashcards** (`TutorFlashcardsModel`, order only), and a **Practice** section (`UI/QuickPractice`) offers scales, chords, intervals, rhythms, and an exercise index. `FeedbackCoach`, `PracticeRunModel`, `LessonPlayerModel`, the quiz scoring models, and `TutorReviewSessionView` were removed. Sections §6–§7 below describe the original design; where they mention grading, passing, tips in rotation, tempo offers, review seeding, or step gating, the 2026-10-02 behavior in `PROJECT.md` supersedes them.
+
 Decisions that bind all packages:
 - Guitar (acoustic) and piano are both taught through **microphone listening only**. There is no MIDI input.
 - **App audio output is muted while listening.** Timing cues during graded play are visual: beat pulse, visual count-in, and score cursor.
@@ -123,9 +125,9 @@ Pure Swift. No UI or audio imports. All types are `Codable, Hashable, Sendable`.
   - `SongStep(title, notes: [[String]] per event or chords, rhythm, bpm)` for short excerpts written in-app. Songs must be public domain or original melodies; do not transcribe copyrighted songs. Library songs are suggested separately by chord content.
 - `CurriculumLoader`: loads and validates all bundled JSON at startup. Validation parses every pitch/chord/scale/key/rhythm through the WP-A parsers. A unit test runs the validator on every content file.
 - `ExerciseGenerator` / `QuizGenerator`: produce concrete `ExpectedPassage` / questions from specs using WP-A (e.g. `scale: "G major", octaves: 1` → fretboard-appropriate pitches; `intervalByEar` → random root in range + interval set).
-- `ReviewScheduler`: FSRS-style (simplified: stability/difficulty update on grade Again/Hard/Good/Easy, due-date math), using `ReviewCardRecord`s. It seeds cards from `Lesson.reviewItems` on lesson completion.
+- `ReviewScheduler`: FSRS-style (simplified: stability/difficulty update on grade Again/Hard/Good/Easy, due-date math), using `ReviewCardRecord`s. *As of 2026-10-02* the math and record model are retained and unit-tested but nothing in the UI seeds, reads, or grades cards; `Lesson.reviewItems` feed the Flashcards section directly from the curriculum.
 - `PathProgress`: computes locked/available/completed per lesson on the fixed path (sequential), with branches unlocking after `unlocksAfter` and never blocking the path.
-- `FeedbackCoach`: rules. After 3 consecutive misses on the same target, show the step's `mistakeTips` in rotation; after 3 clean runs with `tempoSteps`, offer the next tempo; after a pass, say which item was weakest.
+- ~~`FeedbackCoach`~~ *Removed 2026-10-02.* `mistakeTips` are a static Tips disclosure and `tempoSteps` are tempo chips in the Try it box.
 - **Content** (JSON, written in plain encouraging prose, accurate theory; every stage ends with a review quiz):
   - Guitar stages 0–8 per `TUTOR_PLAN.md` §2.2, with side branches: Rhythm reading (after stage 2), Fingerstyle basics (after stage 3), Songs you know (library suggestions, after 3), Blues shuffle (after 6).
   - Piano stages 0–8: 0 setup/mic check/finding middle C; 1 keyboard geography and note names; 2 pulse and rhythm; 3 five-finger positions C and G, hands separately; 4 major scale and intervals; 5 triads, inversions, left-hand chords; 6 keys, Roman numerals, progressions; 7 hands together and accompaniment patterns; 8 minor scales, 7th chords, blues. Branches: Reading the grand staff (after 1), Pedal basics (after 5).
@@ -137,15 +139,17 @@ Pure Swift. No UI or audio imports. All types are `Codable, Hashable, Sendable`.
 - Entry: `AppPage.tutor` in `ContentView`, and a **Tutor** item (`graduationcap`) in the `FileBrowserView` toolbar next to Tuner.
 - *As built — shell:* `TutorRootView` draws its own sidebar (300 pt) plus detail pane in regular width, inside the app's `NavigationStack`. It does not use `NavigationSplitView`, which cannot nest there. Compact width uses one scrolling home whose sections push onto the app stack. Sections are Path, Reviews, Songs you know, Games, Glossary, Calibration, and Tutor settings. Lessons, reviews, and games are full-screen covers. There is no separate `TutorHomeView`; the home is `TutorPathView` with a Continue hero and summary cards.
 - `TutorHomeView`: instrument switch (Guitar | Piano). A path map shows stages as a vertical path with lesson nodes (available/in progress/done; none locked, with Mark as done to skip) and side-branch nodes off the path. Also includes a "Reviews due (n)" card, a "Continue" button, and access to Glossary and Calibration.
-- `LessonPlayerView`: step pager with progress, and one renderer per step type:
-  - `ExplainStepView` (markdown + `DiagramView`)
-  - `DemoStepView` (plays via `TutorSynth`, highlights diagram in sync)
-  - `PracticeStepView` (live listening via `TutorListener`; wait-mode progression through the passage; green check per satisfied event; neutral otherwise; visual beat pulse for timed exercises; mistake tips from `FeedbackCoach`; pass/fail summary)
-  - `QuizStepView` (multiple choice; ear questions play audio first; *or answer by playing*; explanation after answer)
-  - `SongStepView`
-  - Completion screen writes `LessonProgressRecord` and seeds review cards.
+- *As built 2026-10-02 (replaces the step pager):* `LessonPageView` renders the lesson as one chapter page from `LessonPageModel.sections(for:)` (quiz steps last), with a table of contents, section headings, and a Done toggle (`TutorStore.setLessonCompleted`). Section renderers:
+  - `ExplainStepView` (markdown + `DiagramView` beside it + "Hear it")
+  - `DemoStepView` (figure card: plays via `TutorSynth`, highlights the diagram in sync, caption underneath)
+  - `TryItCardView` over `TryItModel` (Play example at tempo, loop, Listen that only adds green; wait and play-along modes; note hunt and improvise; static tips; no grading)
+  - `CheckYourselfView` over `CheckYourselfModel` (`FlashcardQuestionView` per question; tap to reveal; New set)
+  - `SongStepView` (a Try it box over `SongCardBuilder.exercise`)
+  - No completion screen; nothing seeds review cards.
+- `TutorPracticeView` (`UI/QuickPractice`): `ScalePracticeSpec`, `ChordPracticeSpec`, `IntervalPracticeSpec`, `RhythmPracticeSpec` → diagram + example + `GeneratedExercise` → `TryItModel`; `TutorExerciseIndex` lists Try it boxes and songs by `ExerciseGroup` with jump links.
+- `TutorFlashcardsView` over `TutorFlashcardsModel`: deck from `Lesson.reviewItems` scoped to read chapters; flip; Got it / Again reorder only.
 - Diagrams: `FretboardView` (tuning-aware, highlights, labels, tap to hear), `KeyboardView` (range, highlights, tap to hear), `MiniStaffView` (treble/bass, spelled notes, may reuse drawing ideas from `LiveTranscriptionView`), `CircleOfFifthsView`, `RhythmStripView`, `IntervalLadderView`.
-- `ReviewSessionView` (due SRS cards, self-graded or auto-graded answers), `GlossaryView` (searchable), `CalibrationView` (mic permission, input-level check, "play open low E / middle C" check, latency calibration).
+- ~~`ReviewSessionView`~~ (removed 2026-10-02; see Flashcards above), `GlossaryView` (searchable), `CalibrationView` (mic permission, input-level check, "play open low E / middle C" check, latency calibration).
 - Mic permission denied → a clear message with a Settings deep link. Quizzes still work without the mic.
 
 ## 8. WP-F — Library practice mode (`Tutor/Practice` + integration)

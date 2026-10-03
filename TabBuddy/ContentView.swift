@@ -1,6 +1,50 @@
 import SwiftUI
 import SwiftData
 import CoreData
+import OSLog
+
+/// DEBUG-only reader navigation timings. Read them with
+/// `log stream --predicate 'subsystem == "com.gamicarts.TabBuddy" AND category == "Perf"'`.
+/// No-ops in release builds.
+@MainActor
+enum PerfTrace {
+    #if DEBUG
+    private static let log = Logger(subsystem: "com.gamicarts.TabBuddy", category: "Perf")
+    private static var starts: [String: CFAbsoluteTime] = [:]
+    #endif
+
+    static func begin(_ name: String) {
+        #if DEBUG
+        starts[name] = CFAbsoluteTimeGetCurrent()
+        #endif
+    }
+
+    /// Logs the elapsed time once per `begin`; later `end` calls are ignored.
+    static func end(_ name: String, _ detail: String = "") {
+        #if DEBUG
+        guard let start = starts.removeValue(forKey: name) else { return }
+        let ms = Int(((CFAbsoluteTimeGetCurrent() - start) * 1000).rounded())
+        log.notice("\(name, privacy: .public) \(detail, privacy: .public) \(ms) ms")
+        #endif
+    }
+
+    /// Logs elapsed time without ending the measurement.
+    static func lap(_ name: String, _ detail: String) {
+        #if DEBUG
+        guard let start = starts[name] else { return }
+        let ms = Int(((CFAbsoluteTimeGetCurrent() - start) * 1000).rounded())
+        log.notice("\(name, privacy: .public) · \(detail, privacy: .public) \(ms) ms")
+        #endif
+    }
+
+    /// Ends the measurement after the next run-loop turn, i.e. once the frame that
+    /// shows the new state has been committed.
+    static func endAfterCommit(_ name: String, _ detail: String = "") {
+        #if DEBUG
+        DispatchQueue.main.async { end(name, detail) }
+        #endif
+    }
+}
 
 enum AppPage: Hashable {
     case viewer
@@ -103,6 +147,7 @@ struct ContentView: View {
     }
 
     private func openFile(_ file: FileItem) {
+        PerfTrace.begin("open")
         // 1) rotate the identity
         viewerIdentity = UUID()
         // 2) set the file

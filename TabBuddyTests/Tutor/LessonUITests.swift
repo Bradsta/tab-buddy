@@ -2,9 +2,9 @@
 //  LessonUITests.swift
 //  TabBuddyTests
 //
-//  WP-E-b lesson experience: view-model logic with fake audio seams (step
-//  navigation, practice run state machine per pacing, quiz scoring and
-//  answer-by-playing, completion writing progress) and diagram geometry.
+//  Lesson page logic with fake audio seams: chapter sections and the done
+//  toggle, the Try it model (playback, loop, tempo, listening per pacing,
+//  play-along), Check yourself flashcards, song boxes, and diagram geometry.
 //
 
 import SwiftData
@@ -130,13 +130,13 @@ final class LessonUITests: XCTestCase {
         PracticeStep(exercise: spec, mistakeTips: tips)
     }
 
-    private func makeRun(_ spec: ExerciseSpec, instrument: TutorInstrument = .guitar, tips: [String] = [],
-                         intervals: [Interval]? = nil) -> (PracticeRunModel, FakeTutorListener, FakeSequencePlayer) {
+    private func makeTryIt(_ spec: ExerciseSpec, instrument: TutorInstrument = .guitar, tips: [String] = [],
+                           intervals: [Interval]? = nil) -> (TryItModel, FakeTutorListener, FakeSequencePlayer) {
         let listener = FakeTutorListener()
         let player = FakeSequencePlayer()
         player.listenerToCheck = listener
-        let model = PracticeRunModel(step: practice(spec, tips: tips), instrument: instrument, intervals: intervals,
-                                     listener: listener, player: player)
+        let model = TryItModel(step: practice(spec, tips: tips), instrument: instrument, intervals: intervals,
+                               listener: listener, player: player)
         model.autoTick = false
         return (model, listener, player)
     }
@@ -152,470 +152,363 @@ final class LessonUITests: XCTestCase {
     private func sampleLesson() -> Lesson {
         Lesson(id: "test.s1.l1", title: "Test lesson", summary: "", minutes: 5, steps: [
             .explain(ExplainStep(title: "Read", body: "Some **text**.")),
+            .quiz(QuizStep(title: "Quick check", questions: [QuizQuestion(prompt: "Q?", choices: ["a", "b"], answerIndex: 0,
+                                                                          explanation: "a")])),
             .practice(PracticeStep(exercise: ExerciseSpec(kind: .playNote, prompt: "Play E", notes: ["E2"]))),
-            .quiz(QuizStep(title: "Quiz", questions: [QuizQuestion(prompt: "Q?", choices: ["a", "b"], answerIndex: 0,
-                                                                   explanation: "a")])),
+            .demo(DemoStep(title: "Hear E", caption: "Low E.", playback: PlaybackSpec(notes: [["E2"]]))),
         ], reviewItems: [ReviewItemSeed(id: "test.r1", kind: .fact, prompt: "p", answer: "a")])
     }
 
-    // MARK: Step navigation
+    // MARK: Chapter page
 
-    func testStepNavigationGatesGradedSteps() {
-        let model = LessonPlayerModel(lesson: sampleLesson(), instrument: .guitar)
-        XCTAssertTrue(model.canAdvance)
-        XCTAssertEqual(model.progress, 0)
-        model.advance()
-        XCTAssertEqual(model.index, 1)
-        XCTAssertFalse(model.canAdvance, "practice needs a run or a skip")
-        XCTAssertFalse(model.returnContinues)
-        model.advance()
-        XCTAssertEqual(model.index, 1)
-        XCTAssertEqual(model.furthestReachable, 1)
-        model.go(to: 2)
-        XCTAssertEqual(model.index, 1, "cannot jump past an unfinished graded step")
-
-        model.record(.skipped(label: "Play E"), forStep: 1)
-        XCTAssertTrue(model.canAdvance)
-        model.advance()
-        XCTAssertEqual(model.index, 2)
-        XCTAssertFalse(model.returnContinues, "Return belongs to the quiz while unanswered")
-        model.record(StepOutcome(score: 1, passed: true, label: "Quiz"), forStep: 2)
-        XCTAssertTrue(model.returnContinues)
-        model.advance()
-        XCTAssertTrue(model.isShowingCompletion)
-        XCTAssertEqual(model.progress, 1)
-        model.back()
-        XCTAssertFalse(model.isShowingCompletion)
-        XCTAssertEqual(model.index, 2)
-        model.back()
-        XCTAssertEqual(model.index, 1)
+    func testSectionsKeepOrderWithCheckYourselfLast() {
+        let sections = LessonPageModel.sections(for: sampleLesson())
+        XCTAssertEqual(sections.map(\.kind), [.explain, .practice, .demo, .quiz])
+        XCTAssertEqual(sections.map(\.stepIndex), [0, 2, 3, 1])
+        XCTAssertEqual(sections.map(\.index), [0, 1, 2, 3])
+        XCTAssertEqual(sections.map(\.title), ["Read", "Play E", "Hear E", "Quick check"])
+        XCTAssertEqual(sections[3].kind.label, "Check yourself")
+        XCTAssertEqual(sections.map(\.number), [1, 2, 3, 4])
     }
 
-    func testRecordKeepsBetterOutcomeAndScore() {
-        let model = LessonPlayerModel(lesson: sampleLesson(), instrument: .guitar)
-        model.record(.skipped(label: "p"), forStep: 1)
-        model.record(StepOutcome(score: 0.6, passed: false, label: "p"), forStep: 1)
-        XCTAssertEqual(model.outcomes[1]?.score, 0.6)
-        model.record(StepOutcome(score: 0.4, passed: false, label: "p"), forStep: 1)
-        XCTAssertEqual(model.outcomes[1]?.score, 0.6, "keeps the best run")
-        model.record(StepOutcome(score: 1, passed: true, label: "q"), forStep: 2)
-        XCTAssertEqual(model.score, 0.8, accuracy: 1e-9)
-        XCTAssertEqual(model.skippedCount, 0)
-        XCTAssertNotNil(model.weakestSummary)
-    }
-
-    func testCompletionWritesProgressAndSeedsCards() throws {
+    func testDoneToggleWritesReadStateWithoutAttemptsOrCards() throws {
         let store = try TutorStore.inMemory()
         let lesson = sampleLesson()
-        let model = LessonPlayerModel(lesson: lesson, instrument: .guitar)
-        model.record(StepOutcome(score: 0.75, passed: true, label: "p"), forStep: 1)
-        model.record(StepOutcome(score: 1, passed: true, label: "q"), forStep: 2)
         let now = Date(timeIntervalSince1970: 1_800_000_000)
-        model.complete(store: store, now: now)
-        model.complete(store: store, now: now)   // idempotent
-        XCTAssertTrue(model.didSave)
+        let model = LessonPageModel(lesson: lesson, instrument: .guitar, store: store, now: { now })
+        XCTAssertFalse(model.isDone)
+        XCTAssertTrue(model.hasCheckYourself)
+        XCTAssertTrue(model.usesMicrophone)
+        XCTAssertEqual(model.section(forStep: 1)?.index, 3)
+
+        model.toggleDone()
+        XCTAssertTrue(model.isDone)
         let record = try XCTUnwrap(store.progress(lessonID: lesson.id, instrument: .guitar))
         XCTAssertEqual(record.progressStatus, .completed)
-        XCTAssertEqual(record.attempts, 1)
-        XCTAssertEqual(record.bestScore, 0.875, accuracy: 1e-9)
-        XCTAssertNotNil(store.reviewCard(itemID: "test.r1", instrument: .guitar))
+        XCTAssertEqual(record.attempts, 0, "done means read: no attempt is recorded")
+        XCTAssertEqual(record.bestScore, 0)
+        XCTAssertEqual(record.completedAt, now)
+        XCTAssertNil(store.reviewCard(itemID: "test.r1", instrument: .guitar), "no review cards are seeded")
+
+        model.toggleDone()
+        XCTAssertFalse(model.isDone)
+        XCTAssertEqual(store.progress(lessonID: lesson.id, instrument: .guitar)?.progressStatus, .notStarted)
+
+        // A new page for a done lesson opens done.
+        model.setDone(true)
+        XCTAssertTrue(LessonPageModel(lesson: lesson, instrument: .guitar, store: store).isDone)
     }
 
-    // MARK: Practice — wait mode
+    func testSeedIsStablePerSectionWithinAPageView() {
+        let a = LessonPageModel(lesson: sampleLesson(), instrument: .guitar, salt: 9)
+        let b = LessonPageModel(lesson: sampleLesson(), instrument: .guitar, salt: 9)
+        XCTAssertEqual(a.seed(for: a.sections[3]), b.seed(for: b.sections[3]))
+        XCTAssertNotEqual(a.seed(for: a.sections[1]), a.seed(for: a.sections[3]))
+    }
 
-    func testWaitModeAdvancesOnHitsAndGradesClean() async {
-        let (model, listener, _) = makeRun(ExerciseSpec(kind: .playNote, prompt: "Play", notes: ["E2", "A2", "D3"]))
-        XCTAssertEqual(model.pacing, .wait)
-        var finished: PracticeRunModel.RunResult?
-        model.onRunFinished = { finished = $0 }
-        await model.start()
-        XCTAssertEqual(model.phase, .listening)
+    // MARK: Try it — playback
+
+    func testPlayExampleUsesCurrentTempoAndLoops() {
+        let (model, _, player) = makeTryIt(ExerciseSpec(kind: .playNote, prompt: "Play", notes: ["E2", "A2"], tempoSteps: [60, 72]))
+        XCTAssertEqual(model.bpm, 60, "seeded from the tempo ladder")
+        XCTAssertEqual(model.tempoSteps, [60, 72])
+        XCTAssertFalse(model.supportsPlayAlong, "free-time passages wait; they do not play along")
+        model.setTempo(90)
+        model.loop = true
+        model.playExample()
+        XCTAssertTrue(model.isPlaying)
+        XCTAssertEqual(player.played.last?.bpm, 90)
+        XCTAssertEqual(player.played.last?.notes.map(\.pitches), [[40], [45]])
+        player.finish()
+        XCTAssertEqual(player.played.count, 2, "loop plays the example again")
+        XCTAssertTrue(model.isPlaying)
+        model.stopPlayback()
+        XCTAssertFalse(model.isPlaying)
+        XCTAssertNil(model.playbackIndex)
+    }
+
+    func testTempoIsClampedAndNudged() {
+        let (model, _, _) = makeTryIt(ExerciseSpec(kind: .playNote, prompt: "Play", notes: ["E2"]))
+        model.setTempo(1000)
+        XCTAssertEqual(model.bpm, TryItModel.tempoRange.upperBound)
+        model.setTempo(5)
+        XCTAssertEqual(model.bpm, TryItModel.tempoRange.lowerBound)
+        model.setTempo(80)
+        model.nudgeTempo(4)
+        XCTAssertEqual(model.bpm, 84)
+    }
+
+    func testChordChangesShowTheCycleNotTheGradingList() {
+        let (model, _, _) = makeTryIt(ExerciseSpec(kind: .chordChanges, prompt: "G to D", chords: ["G", "D"], durationSec: 60))
+        XCTAssertEqual(model.pacing, .countChanges)
+        XCTAssertEqual(model.events.map(\.chordName), ["G", "D", "G", "D"])
+        XCTAssertGreaterThan(model.passage?.events.count ?? 0, 4, "generator still pads for its own purposes")
+        XCTAssertEqual(model.exampleSequence?.notes.count, 4)
+    }
+
+    func testExamplesForHuntImproviseAndEcho() {
+        let (hunt, _, _) = makeTryIt(ExerciseSpec(kind: .findAllNotes, prompt: "Find C", durationSec: 30, pitchClass: "C"))
+        XCTAssertEqual(hunt.exampleSequence?.notes.map(\.pitches), [[48], [60], [72]])
+        XCTAssertNotNil(hunt.diagram)
+
+        let (free, _, _) = makeTryIt(ExerciseSpec(kind: .improvise, prompt: "Improvise", scale: "A minor pentatonic", durationSec: 10))
+        XCTAssertEqual(free.exampleSequence?.notes.count, 11, "pentatonic one octave up and down")
+        XCTAssertEqual(free.diagram?.scale, "A minor pentatonic")
+
+        let (echo, _, player) = makeTryIt(ExerciseSpec(kind: .intervalPlayback, prompt: "Echo", notes: ["C4", "G4"], repetitions: 2),
+                                          instrument: .piano)
+        XCTAssertTrue(echo.hasReference)
+        XCTAssertEqual(echo.roundCount, 2)
+        XCTAssertEqual(echo.round?.label, "perfect fifth")
+        echo.setTempo(100)
+        echo.playExample()
+        XCTAssertEqual(player.played.last?.bpm, 100)
+        XCTAssertEqual(player.played.last?.notes.map(\.pitches), [[60], [67]])
+        echo.selectRound(1)
+        XCTAssertEqual(echo.roundIndex, 1)
+        XCTAssertFalse(echo.isPlaying, "changing phrase stops playback")
+    }
+
+    // MARK: Try it — listening (wait)
+
+    func testListenMarksHeardInOrderAndWrapsAround() async {
+        let (model, listener, _) = makeTryIt(ExerciseSpec(kind: .playNote, prompt: "Play", notes: ["E2", "A2", "D3"]))
+        await model.startListening()
+        XCTAssertEqual(model.listenState, .listening)
         XCTAssertEqual(listener.armed.last?.count, 3)
 
         listener.verify(0, .hit)
+        XCTAssertEqual(model.heard, [0])
         XCTAssertEqual(model.cursor, 1)
-        XCTAssertEqual(model.marks[0], .hit)
         XCTAssertEqual(listener.armed.last?.count, 2, "re-armed with the remaining events")
+        XCTAssertEqual(model.statusTone, .good)
 
         listener.verify(1, .wrongPitch, unexpected: [46])
         XCTAssertEqual(model.cursor, 1)
-        XCTAssertEqual(model.marks[1], .retry)
-        XCTAssertEqual(model.feedback?.tone, .caution)
-        listener.verify(1, .hit)
+        XCTAssertFalse(model.heard.contains(1))
+        XCTAssertEqual(model.statusTone, .neutral, "misses are never shown as errors")
+        XCTAssertEqual(model.statusText, "Heard A♯2")
 
-        listener.verify(2, .uncertain)
-        XCTAssertEqual(model.marks[2], .notSure)
-        XCTAssertEqual(model.feedback?.tone, .neutral, "unsure is never shown as an error")
+        listener.verify(1, .uncertain)
+        XCTAssertEqual(model.statusTone, .neutral)
+        listener.verify(2, .hit)   // not the current target
+        XCTAssertEqual(model.cursor, 1)
+        listener.verify(1, .hit)
         listener.verify(2, .hit)
+        XCTAssertEqual(model.cursor, 0, "wraps around to keep going")
+        XCTAssertTrue(model.heard.isEmpty)
+        XCTAssertEqual(model.listenState, .listening, "no run end, listening continues")
+        XCTAssertTrue(listener.isListening)
 
-        XCTAssertEqual(model.phase, .finished)
+        model.stopListening()
+        XCTAssertEqual(model.listenState, .off)
         XCTAssertFalse(listener.isListening)
-        XCTAssertEqual(finished?.accuracy, 1)
-        XCTAssertEqual(finished?.passed, true)
-        XCTAssertTrue(model.hasPassed)
     }
 
-    func testWaitModeRepeatedMissesHalveCreditAndShowTips() async {
-        let (model, listener, _) = makeRun(ExerciseSpec(kind: .playNote, prompt: "Play", notes: ["E2", "A2"]),
-                                           tips: ["Press behind the fret."])
-        await model.start()
-        listener.verify(0, .missed)
-        listener.verify(0, .missed)
-        listener.verify(0, .missed)
-        XCTAssertEqual(model.coachMessage, .tip("Press behind the fret."))
-        listener.verify(0, .hit)
+    func testSkipAndClearWhileListening() async {
+        let (model, listener, _) = makeTryIt(ExerciseSpec(kind: .playNote, prompt: "Play", notes: ["E2", "A2"]))
+        await model.startListening()
+        model.skipCurrent()
+        XCTAssertEqual(model.cursor, 1)
+        XCTAssertTrue(model.heard.isEmpty, "a skipped target is neutral, not red")
         listener.verify(1, .hit)
-        XCTAssertEqual(model.phase, .finished)
-        XCTAssertEqual(model.lastResult?.accuracy ?? -1, 0.75, accuracy: 1e-9)
-        XCTAssertEqual(model.lastResult?.passed, false, "0.75 < 0.8")
-    }
-
-    func testSkipNoteAndIgnoresOtherEventIDs() async {
-        let (model, listener, _) = makeRun(ExerciseSpec(kind: .playNote, prompt: "Play", notes: ["E2", "A2"]))
-        await model.start()
-        listener.verify(1, .hit)   // not the current event
         XCTAssertEqual(model.cursor, 0)
-        model.skipCurrentEvent()
-        XCTAssertEqual(model.marks[0], .skipped)
-        listener.verify(1, .hit)
-        XCTAssertEqual(model.phase, .finished)
-        XCTAssertEqual(model.lastResult?.accuracy ?? -1, 0.5, accuracy: 1e-9)
-    }
-
-    func testPermissionDeniedState() async {
-        let (model, listener, _) = makeRun(ExerciseSpec(kind: .playNote, prompt: "Play", notes: ["E2"]))
-        listener.startError = TutorAudioError.permissionDenied
-        await model.start()
-        XCTAssertEqual(model.phase, .permissionDenied)
-        XCTAssertFalse(model.phase.isActive)
-    }
-
-    func testStopCancelsWaitRun() async {
-        let (model, listener, _) = makeRun(ExerciseSpec(kind: .playNote, prompt: "Play", notes: ["E2", "A2"]))
-        await model.start()
         listener.verify(0, .hit)
-        model.stopRun()
-        XCTAssertEqual(model.phase, .ready)
-        XCTAssertFalse(listener.isListening)
-        XCTAssertTrue(model.marks.isEmpty)
-        XCTAssertNil(model.lastResult)
+        XCTAssertEqual(model.heard, [0])
+        model.resetMarks()
+        XCTAssertTrue(model.heard.isEmpty)
+        XCTAssertEqual(model.cursor, 0)
+        XCTAssertEqual(listener.armed.last?.count, 2)
     }
 
-    func testStopWhileMicrophoneStartsLeavesRunStopped() async {
-        let (model, listener, _) = makeRun(ExerciseSpec(kind: .playNote, prompt: "Play", notes: ["E2"]))
+    func testPlaybackPausesListeningThenResumes() async {
+        let (model, listener, player) = makeTryIt(ExerciseSpec(kind: .playNote, prompt: "Play", notes: ["E2", "A2"]))
+        await model.startListening()
+        model.playExample()
+        XCTAssertFalse(listener.isListening, "output is muted while listening, so the microphone pauses")
+        XCTAssertEqual(model.listenState, .off)
+        XCTAssertFalse(player.playedWhileListening)
+        player.finish()
+        await waitUntil { model.listenState == .listening }
+        XCTAssertTrue(listener.isListening)
+
+        // Turning Listen on while a loop plays stops the loop.
+        model.stopListening()
+        model.loop = true
+        model.playExample()
+        await model.startListening()
+        XCTAssertFalse(model.isPlaying)
+        XCTAssertFalse(model.loop)
+        XCTAssertEqual(model.listenState, .listening)
+    }
+
+    func testPermissionDeniedAndUnexpectedStop() async {
+        let (model, listener, _) = makeTryIt(ExerciseSpec(kind: .playNote, prompt: "Play", notes: ["E2"]))
+        listener.startError = TutorAudioError.permissionDenied
+        await model.startListening()
+        XCTAssertEqual(model.listenState, .permissionDenied)
+        XCTAssertNotNil(model.exampleSequence, "the card still plays with the microphone off")
+
+        listener.startError = nil
+        await model.startListening()
+        XCTAssertEqual(model.listenState, .listening)
+        listener.simulateUnexpectedStop()
+        XCTAssertEqual(model.listenState, .off)
+        XCTAssertEqual(model.statusText, TutorListeningCopy.stoppedUnexpectedly)
+        XCTAssertEqual(model.statusTone, .neutral)
+    }
+
+    func testStopWhileMicrophoneStartsStaysOff() async {
+        let (model, listener, _) = makeTryIt(ExerciseSpec(kind: .playNote, prompt: "Play", notes: ["E2"]))
         listener.holdsStart = true
-        let task = Task { await model.start() }
+        let task = Task { await model.startListening() }
         await waitUntil { listener.isStarting }
-        model.stopRun()
-        XCTAssertEqual(model.phase, .ready)
+        XCTAssertEqual(model.listenState, .starting)
+        model.stopListening()
         listener.releaseStart()
         await task.value
-        XCTAssertEqual(model.phase, .ready)
+        XCTAssertEqual(model.listenState, .off)
         XCTAssertFalse(listener.isListening)
-
-        listener.holdsStart = false
-        await model.start()
-        XCTAssertEqual(model.phase, .listening)
-        XCTAssertTrue(listener.isListening)
     }
 
-    func testUnexpectedStopShowsNeutralRestartState() async {
-        let (model, listener, _) = makeRun(ExerciseSpec(kind: .playNote, prompt: "Play", notes: ["E2", "A2"]))
-        await model.start()
-        XCTAssertEqual(model.phase, .listening)
-        listener.simulateUnexpectedStop()
-        XCTAssertEqual(model.phase, .ready)
-        XCTAssertEqual(model.feedback?.text, TutorListeningCopy.stoppedUnexpectedly)
-        XCTAssertEqual(model.feedback?.tone, .neutral)
-        await model.start()
-        XCTAssertEqual(model.phase, .listening)
+    func testFindAllNotesAndImproviseOnlyAddGreen() async {
+        let (hunt, listener, _) = makeTryIt(ExerciseSpec(kind: .findAllNotes, prompt: "Find C", durationSec: 30, pitchClass: "C"))
+        await hunt.startListening()
+        XCTAssertEqual(listener.detectionSources, .monophonic)
+        listener.detect([60])
+        listener.detect([61])
+        listener.detect([72], confidence: 0.1)
+        XCTAssertEqual(hunt.found, [60])
+        XCTAssertEqual(hunt.statusTone, .neutral)
+        listener.detect([48])
+        XCTAssertEqual(hunt.found, [60, 48])
+        XCTAssertEqual(hunt.statusTone, .good)
+        XCTAssertEqual(hunt.listenState, .listening, "no timer ends the hunt")
+
+        let (free, freeListener, _) = makeTryIt(ExerciseSpec(kind: .improvise, prompt: "Improvise", scale: "A minor pentatonic", durationSec: 10))
+        await free.startListening()
+        freeListener.detect([57])
+        XCTAssertEqual(free.statusText, "A3")
+        XCTAssertEqual(free.statusTone, .good)
+        freeListener.detect([61])
+        XCTAssertEqual(free.statusText, "C♯4 (outside the scale)")
+        XCTAssertEqual(free.statusTone, .neutral)
     }
 
-    // MARK: Practice — timed
+    // MARK: Try it — play-along
 
-    func testTimedRunCountsInAndGradesAtEnd() async {
-        let (model, listener, _) = makeRun(ExerciseSpec(kind: .playSequence, prompt: "Play", notes: ["C4", "D4", "E4", "F4"],
-                                                        bpm: 60), instrument: .piano)
+    func testPlayAlongCountsInMovesCursorAndEndsWithoutAScore() async {
+        let (model, listener, _) = makeTryIt(ExerciseSpec(kind: .playSequence, prompt: "Play", notes: ["C4", "D4", "E4", "F4"], bpm: 60),
+                                             instrument: .piano)
         XCTAssertEqual(model.pacing, .timed)
+        XCTAssertEqual(model.listenMode, .playAlong, "timed passages default to play-along")
+        XCTAssertTrue(model.supportsPlayAlong)
         listener.takeClock = 1
-        await model.start()
-        guard case .countIn(_, let of) = model.phase else { return XCTFail("expected count-in, got \(model.phase)") }
-        XCTAssertEqual(of, 4)
+        await model.startListening()
+        XCTAssertEqual(model.countIn?.of, 4)
         let start = try! XCTUnwrap(listener.timedStart)
         XCTAssertEqual(start, 1 + 0.4 + 4, accuracy: 1e-9)
 
         listener.takeClock = start - 2.5
         model.tick()
-        XCTAssertEqual(model.phase, .countIn(beat: 2, of: 4))
+        XCTAssertEqual(model.countIn?.beat, 2)
         listener.takeClock = start + 1.2
         model.tick()
-        XCTAssertEqual(model.phase, .listening)
+        XCTAssertNil(model.countIn)
         XCTAssertEqual(model.cursor, 1)
-        XCTAssertEqual(model.pulseBeat, 1)
 
-        let events = model.events
-        for (i, e) in events.enumerated() {
-            listener.verify(e.id, .hit, heard: e.pitches, at: start + Double(i))
-            listener.detect(e.pitches, at: start + Double(i), source: .verifier)
-        }
+        for e in model.events { listener.verify(e.id, .hit, heard: e.pitches) }
+        XCTAssertEqual(model.heard, Set(model.events.map(\.id)))
         listener.takeClock = start + model.totalBeats + 1.1
         model.tick()
-        XCTAssertEqual(model.phase, .finished)
-        XCTAssertEqual(model.lastResult?.accuracy ?? 0, 1, accuracy: 1e-9)
-        XCTAssertEqual(model.lastResult?.passed, true)
-        XCTAssertTrue(events.allSatisfy { model.marks[$0.id] == .hit })
-    }
-
-    func testTimedRunWithNothingHeardIsNotAPass() async {
-        let (model, listener, _) = makeRun(ExerciseSpec(kind: .playSequence, prompt: "Play", notes: ["C4", "D4"], bpm: 90),
-                                           instrument: .piano)
-        await model.start()
-        listener.takeClock = 100
-        model.tick()
-        XCTAssertEqual(model.phase, .finished)
-        XCTAssertEqual(model.lastResult?.passed, false)
-    }
-
-    // MARK: Practice — duration modes
-
-    func testFindAllNotesTicksOffTargets() async {
-        let (model, listener, _) = makeRun(ExerciseSpec(kind: .findAllNotes, prompt: "Find C", durationSec: 30, pitchClass: "C"))
-        XCTAssertEqual(model.pacing, .anyOrder)
-        XCTAssertEqual(model.targetPitches, [48, 60, 72])
-        await model.start()
-        XCTAssertEqual(listener.detectionSources, .monophonic)
-        listener.detect([60])
-        listener.detect([61])
-        XCTAssertEqual(model.found, [60])
-        listener.takeClock = 10
-        model.tick()
-        XCTAssertEqual(model.remaining ?? 0, 20, accuracy: 1e-9)
-        listener.detect([48])
-        listener.detect([72], confidence: 0.1)   // too unsure to count
-        XCTAssertEqual(model.found.count, 2)
-        listener.takeClock = 31
-        model.tick()
-        XCTAssertEqual(model.phase, .finished)
-        XCTAssertEqual(model.lastResult?.accuracy ?? 0, 2.0 / 3, accuracy: 1e-9)
-    }
-
-    func testChordChangesCountsCleanHits() async {
-        let (model, listener, _) = makeRun(ExerciseSpec(kind: .chordChanges, prompt: "G to D", chords: ["G", "D"],
-                                                        durationSec: 20, passAccuracy: 0.5))
-        XCTAssertEqual(model.pacing, .countChanges)
-        await model.start()
-        let events = model.events
-        XCTAssertEqual(events.first?.chordName, "G")
-        listener.verify(events[0].id, .hit)
-        listener.verify(events[1].id, .partial)
-        listener.verify(events[1].id, .hit)
-        listener.verify(events[2].id, .hit)
-        XCTAssertEqual(model.cleanChords, 3)
-        listener.takeClock = 25
-        model.tick()
-        XCTAssertEqual(model.phase, .finished)
-        XCTAssertEqual(model.lastResult?.accuracy ?? 0, 3.0 / Double(events.count), accuracy: 1e-9)
-    }
-
-    func testImproviseScoresInScaleShare() async {
-        let (model, listener, _) = makeRun(ExerciseSpec(kind: .improvise, prompt: "Improvise", scale: "A minor pentatonic",
-                                                        durationSec: 10, passAccuracy: 0.7))
-        XCTAssertEqual(model.pacing, .free)
-        await model.start()
-        let notes = [57, 60, 62, 64, 67, 69, 72, 61, 57, 64]   // one C# outside the scale
-        for (i, n) in notes.enumerated() { listener.detect([n], at: Double(i) * 0.5) }
-        model.stopRun()
-        XCTAssertEqual(model.phase, .finished)
-        XCTAssertEqual(model.lastResult?.accuracy ?? 0, 0.9, accuracy: 1e-9)
-        XCTAssertEqual(model.lastResult?.passed, true)
-    }
-
-    func testImproviseWithTooFewNotesIsUnsure() async {
-        let (model, listener, _) = makeRun(ExerciseSpec(kind: .improvise, prompt: "Improvise", scale: "C major", durationSec: 5))
-        await model.start()
-        listener.detect([60])
-        listener.takeClock = 6
-        model.tick()
-        XCTAssertEqual(model.lastResult?.unsure, true)
-        XCTAssertEqual(model.lastResult?.passed, false)
-    }
-
-    func testSteadinessAndInScaleHelpers() {
-        XCTAssertEqual(PracticeRunModel.steadiness(onsets: [0, 0.5, 1.0, 1.5, 2.0]) ?? 0, 1, accuracy: 1e-9)
-        XCTAssertNil(PracticeRunModel.steadiness(onsets: [0, 0.5, 1.0]))
-        let uneven = PracticeRunModel.steadiness(onsets: [0, 0.2, 1.0, 1.2, 2.0, 2.2]) ?? 1
-        XCTAssertLessThan(uneven, 0.5)
-        let allowed = Set(Scale("C major")!.pitchClasses)
-        XCTAssertEqual(PracticeRunModel.inScaleShare([60, 62, 61, 64], allowed: allowed), 0.75)
-    }
-
-    // MARK: Practice — reference rounds
-
-    func testIntervalPlaybackStopsListeningForReference() async {
-        let (model, listener, player) = makeRun(ExerciseSpec(kind: .intervalPlayback, prompt: "Echo", notes: ["C4", "G4"],
-                                                             repetitions: 2), instrument: .piano)
-        XCTAssertTrue(model.hasReference)
-        XCTAssertEqual(model.roundCount, 2)
-        await model.start()
-        XCTAssertEqual(model.phase, .playingReference)
-        XCTAssertEqual(player.played.count, 1)
+        XCTAssertEqual(model.listenState, .off, "the run ends after the passage")
         XCTAssertFalse(listener.isListening)
-        player.finish()
-        await waitUntil { model.phase == .listening }
-        XCTAssertTrue(listener.isListening)
-        listener.verify(0, .hit)
-        listener.verify(1, .hit)
-        // Round 2: listening stops before the reference plays again.
-        XCTAssertEqual(model.roundIndex, 1)
-        XCTAssertEqual(model.phase, .playingReference)
-        XCTAssertFalse(listener.isListening)
-        XCTAssertFalse(player.playedWhileListening, "never plays while the microphone listens")
-        player.finish()
-        await waitUntil { model.phase == .listening }
-        model.replayReference()
-        XCTAssertEqual(model.phase, .playingReference)
-        XCTAssertFalse(listener.isListening)
-        player.finish()
-        await waitUntil { model.phase == .listening }
-        listener.verify(0, .hit)
-        listener.verify(1, .hit)
-        XCTAssertEqual(model.phase, .finished)
-        XCTAssertEqual(model.lastResult?.accuracy, 1)
-        XCTAssertFalse(player.playedWhileListening)
-    }
+        XCTAssertEqual(model.statusText, "Played through. Tap Listen to go again.")
+        XCTAssertEqual(model.heard.count, 4, "green marks stay visible")
 
-    func testTempoOfferAfterThreeCleanRuns() async {
-        let (model, listener, _) = makeRun(ExerciseSpec(kind: .playNote, prompt: "Play", notes: ["E2"], tempoSteps: [60, 70]))
-        XCTAssertEqual(model.bpm, 60)
-        for _ in 0..<3 {
-            await model.start()
-            listener.verify(0, .hit)
-        }
-        XCTAssertEqual(model.tempoOffer, 70)
-        model.acceptTempo()
-        XCTAssertEqual(model.bpm, 70)
-        XCTAssertNil(model.tempoOffer)
+        // Loop restarts the count-in instead of stopping.
+        model.loop = true
+        await model.startListening()
+        let second = try! XCTUnwrap(listener.timedStart)
+        listener.takeClock = second + model.totalBeats + 1.1
+        model.tick()
+        XCTAssertEqual(model.listenState, .listening)
+        XCTAssertNotNil(model.countIn)
+        XCTAssertTrue(model.heard.isEmpty)
+        model.stopListening()
+
+        // Switching to wait mode arms in wait mode.
+        model.setListenMode(.wait)
+        await model.startListening()
+        XCTAssertNil(model.countIn)
+        XCTAssertEqual(listener.armed.last?.count, 4)
     }
 
     func testGenerationErrorIsReported() {
-        let (model, _, _) = makeRun(ExerciseSpec(kind: .playNote, prompt: "Play"))
+        let (model, _, _) = makeTryIt(ExerciseSpec(kind: .playNote, prompt: "Play"))
         XCTAssertNil(model.exercise)
         XCTAssertNotNil(model.generationError)
+        XCTAssertFalse(model.supportsListening)
+        XCTAssertNil(model.exampleSequence)
     }
 
-    // MARK: Quiz
+    func testTipsAreStatic() {
+        let (model, _, _) = makeTryIt(ExerciseSpec(kind: .playNote, prompt: "Play", notes: ["E2"]), tips: ["Press behind the fret."])
+        XCTAssertEqual(model.tips, ["Press behind the fret."])
+    }
 
-    func testQuizStepScoring() {
+    // MARK: Songs
+
+    func testSongBoxBuildsTimedPassageWithPlayAlong() {
+        let song = SongStep(title: "Ode", caption: "Slow.", notes: [["E4"], ["E4"], ["F4"], ["G4"]], rhythm: "q q q q", bpm: 80)
+        let model = SongCardBuilder.model(for: song, instrument: .guitar, listener: FakeTutorListener(), player: FakeSequencePlayer())
+        XCTAssertNil(model.generationError)
+        XCTAssertEqual(model.pacing, .timed)
+        XCTAssertEqual(model.bpm, 80)
+        XCTAssertEqual(model.events.count, 4)
+        XCTAssertTrue(model.supportsPlayAlong)
+        XCTAssertEqual(model.prompt, "Slow.")
+        let broken = SongCardBuilder.exercise(for: SongStep(title: "X", rhythm: "q", bpm: 80), instrument: .guitar)
+        XCTAssertNil(broken.0)
+        XCTAssertNotNil(broken.1)
+    }
+
+    // MARK: Check yourself
+
+    func testCheckYourselfRevealsWithoutScoring() {
         let questions = (0..<3).map { QuizQuestion(prompt: "Q\($0)", choices: ["a", "b"], answerIndex: 0, explanation: "") }
-        let model = QuizStepModel(step: QuizStep(title: "T", questions: questions), instrument: .guitar, seed: 1)
+        let model = CheckYourselfModel(step: QuizStep(title: "T", questions: questions), instrument: .guitar, seed: 1)
         XCTAssertEqual(model.questions.count, 3)
-        model.next()
-        XCTAssertEqual(model.index, 0, "cannot skip an unanswered question")
-        model.record(correct: true)
-        model.record(correct: false)   // ignored: already answered
-        model.next()
-        model.record(correct: false)
-        model.next()
-        XCTAssertFalse(model.isFinished)
-        model.record(correct: true)
-        XCTAssertTrue(model.isFinished)
-        XCTAssertEqual(model.correctCount, 2)
-        XCTAssertEqual(model.score, 2.0 / 3, accuracy: 1e-9)
-        model.restart()
-        XCTAssertEqual(model.index, 0)
-        XCTAssertTrue(model.answers.isEmpty)
+        XCTAssertFalse(model.hasGenerator)
+        XCTAssertFalse(model.isRevealed(0))
+        model.reveal(0, choice: 1)
+        XCTAssertTrue(model.isRevealed(0))
+        XCTAssertEqual(model.choice(for: 0), 1)
+        model.reveal(0, choice: 0)
+        XCTAssertEqual(model.choice(for: 0), 1, "first reveal stands")
+        model.reveal(2)
+        XCTAssertTrue(model.isRevealed(2))
+        XCTAssertNil(model.choice(for: 2))
+        XCTAssertFalse(model.isRevealed(1), "questions are independent")
+        model.hideAll()
+        XCTAssertFalse(model.isRevealed(0))
     }
 
-    func testGeneratedQuizIsRepeatableForSeed() {
-        let step = QuizStep(title: "Notes", generator: QuizGeneratorSpec(kind: .noteOnKeyboard, params: ["range": "C4-B4"]), count: 4)
-        let a = QuizStepModel(step: step, instrument: .piano, seed: 7)
-        let b = QuizStepModel(step: step, instrument: .piano, seed: 7)
+    func testGeneratedSetIsRepeatableAndNewSetChanges() {
+        let fixed = [QuizQuestion(prompt: "Fixed", choices: ["a", "b"], answerIndex: 0, explanation: "")]
+        let step = QuizStep(title: "Notes", questions: fixed,
+                            generator: QuizGeneratorSpec(kind: .noteOnKeyboard, params: ["range": "C4-B4"]), count: 4)
+        let a = CheckYourselfModel(step: step, instrument: .piano, seed: 7)
+        let b = CheckYourselfModel(step: step, instrument: .piano, seed: 7)
         XCTAssertEqual(a.questions, b.questions)
-        XCTAssertEqual(a.questions.count, 4)
-    }
-
-    func testQuizQuestionAnswerOnce() {
-        let q = QuizQuestion(prompt: "Name the marked note.", choices: ["F", "G", "A", "B"], answerIndex: 1, explanation: "G")
-        let model = QuizQuestionModel(question: q, instrument: .guitar, listener: FakeTutorListener(), player: FakeSequencePlayer())
-        var reported: [Bool] = []
-        model.onAnswered = { reported.append($0) }
-        model.answer(0)
-        model.answer(1)
-        XCTAssertEqual(reported, [false])
-        XCTAssertFalse(model.isCorrect)
-    }
-
-    func testAnswerByPlayingNote() async {
-        let q = QuizQuestion(prompt: "Name the highlighted key.", choices: ["F♯/G♭", "G", "A", "C"], answerIndex: 0,
-                             explanation: "", playback: PlaybackSpec(notes: [["F#4"]]),
-                             diagram: Diagram(kind: .keyboard, notes: ["F#4"], pitchRange: ["C4", "B4"]))
-        let listener = FakeTutorListener()
-        let model = QuizQuestionModel(question: q, instrument: .piano, listener: listener, player: FakeSequencePlayer())
-        XCTAssertFalse(model.isEarQuestion)
-        guard case .note = model.playedKind else { return XCTFail("expected note kind") }
-        var reported: [Bool] = []
-        model.onAnswered = { reported.append($0) }
-        await model.startListening()
-        XCTAssertTrue(model.isListening)
-        listener.detect([66], confidence: 0.2)
-        XCTAssertTrue(reported.isEmpty, "unsure detections do not answer")
-        listener.detect([54])   // F#3: any octave counts
-        XCTAssertEqual(reported, [true])
-        XCTAssertFalse(listener.isListening)
-    }
-
-    func testQuizStopWhileMicrophoneStartsStaysStopped() async {
-        let q = QuizQuestion(prompt: "Name the highlighted key.", choices: ["F♯/G♭", "G", "A", "C"], answerIndex: 0,
-                             explanation: "", playback: PlaybackSpec(notes: [["F#4"]]),
-                             diagram: Diagram(kind: .keyboard, notes: ["F#4"], pitchRange: ["C4", "B4"]))
-        let listener = FakeTutorListener()
-        listener.holdsStart = true
-        let model = QuizQuestionModel(question: q, instrument: .piano, listener: listener, player: FakeSequencePlayer())
-        let task = Task { await model.startListening() }
-        await waitUntil { listener.isStarting }
-        model.stopListening()
-        listener.releaseStart()
-        await task.value
-        XCTAssertFalse(model.isListening)
-        XCTAssertFalse(listener.isListening)
-
-        listener.holdsStart = false
-        await model.startListening()
-        XCTAssertTrue(model.isListening)
-        listener.simulateUnexpectedStop()
-        XCTAssertFalse(model.isListening)
-        XCTAssertEqual(model.heardText, TutorListeningCopy.stoppedUnexpectedly)
-    }
-
-    func testPlayedAnswerKinds() {
-        let interval = QuizQuestion(prompt: "Listen: two notes, going up. Which interval is it?",
-                                    choices: ["Major third", "Perfect fifth", "Minor third"], answerIndex: 1,
-                                    explanation: "", playback: PlaybackSpec(notes: [["C4"], ["G4"]]))
-        let kind = PlayedAnswerKind.infer(interval)
-        XCTAssertEqual(kind?.choice(forNotes: [60, 67], chordPitches: []), 1)
-        XCTAssertEqual(kind?.choice(forNotes: [62, 65], chordPitches: []), 2)
-        XCTAssertNil(kind?.choice(forNotes: [60], chordPitches: []))
-
-        let quality = QuizQuestion(prompt: "What quality is it?", choices: ["Major", "Minor"], answerIndex: 1, explanation: "",
-                                   playback: PlaybackSpec(notes: [["A3", "C4", "E4"]]))
-        let qk = PlayedAnswerKind.infer(quality)
-        XCTAssertEqual(qk?.choice(forNotes: [], chordPitches: [57, 60, 64]), 1)
-        XCTAssertEqual(qk?.choice(forNotes: [], chordPitches: [55, 59, 62]), 0)
-
-        let fact = QuizQuestion(prompt: "How many half steps is a major third?", choices: ["3", "4", "7"], answerIndex: 1,
-                                explanation: "")
-        XCTAssertNil(PlayedAnswerKind.infer(fact))
-        let chords = QuizQuestion(prompt: "In C major, which chord is IV?", choices: ["F", "G", "C", "D"], answerIndex: 0,
-                                  explanation: "")
-        XCTAssertNil(PlayedAnswerKind.infer(chords), "chord symbols are not note answers")
-    }
-
-    func testEarQuestionDetection() {
-        let ear = QuizQuestion(prompt: "Listen: two notes together.", choices: ["a", "b"], answerIndex: 0, explanation: "",
-                               playback: PlaybackSpec(notes: [["C4", "E4"]]))
-        let model = QuizQuestionModel(question: ear, instrument: .piano, listener: FakeTutorListener(), player: FakeSequencePlayer())
-        XCTAssertTrue(model.isEarQuestion)
-        XCTAssertTrue(model.showsPlayButton)
+        XCTAssertEqual(a.questions.count, 5)
+        XCTAssertEqual(a.questions.first?.prompt, "Fixed")
+        a.reveal(1)
+        a.newSet()
+        XCTAssertEqual(a.setNumber, 1)
+        XCTAssertFalse(a.isRevealed(1))
+        XCTAssertEqual(a.questions.first, fixed[0], "fixed questions stay")
+        XCTAssertNotEqual(Array(a.questions.dropFirst()), Array(b.questions.dropFirst()), "a new set draws new questions")
     }
 
     // MARK: Diagram geometry
@@ -784,7 +677,7 @@ final class LessonUITests: XCTestCase {
     }
 
     func testBundledLessonsBuildEveryStep() throws {
-        // Every practice/song/quiz step in the bundled curriculum prepares without errors.
+        // Every Try it box, song, and Check yourself section in the bundled curriculum prepares without errors.
         let directory = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent().appendingPathComponent("TabBuddy/Tutor/Content")
         let content = CurriculumLoader.load(directory: directory)
@@ -793,20 +686,23 @@ final class LessonUITests: XCTestCase {
         for instrument in TutorInstrument.allCases {
             guard let course = content.course(instrument) else { continue }
             for location in course.allLessonLocations {
-                for (i, step) in location.lesson.steps.enumerated() {
-                    switch step {
+                let page = LessonPageModel(lesson: location.lesson, instrument: instrument, salt: 3)
+                XCTAssertEqual(page.sections.count, location.lesson.steps.count)
+                for section in page.sections {
+                    switch section.step {
                     case .practice(let s):
-                        let model = PracticeRunModel(step: s, instrument: instrument,
-                                                     intervals: ExerciseGenerator.intervals(forLesson: location.lesson),
-                                                     listener: FakeTutorListener(), player: FakeSequencePlayer())
-                        if let e = model.generationError { failures.append("\(location.lesson.id)#\(i): \(e)") }
+                        let model = TryItModel(step: s, instrument: instrument,
+                                               intervals: ExerciseGenerator.intervals(forLesson: location.lesson),
+                                               listener: FakeTutorListener(), player: FakeSequencePlayer())
+                        if let e = model.generationError { failures.append("\(location.lesson.id)#\(section.stepIndex): \(e)") }
+                        if model.exampleSequence == nil { failures.append("\(location.lesson.id)#\(section.stepIndex): no example") }
                     case .song(let s):
-                        let model = SongStepModel(song: s, instrument: instrument, listener: FakeTutorListener(),
-                                                  player: FakeSequencePlayer())
-                        if let e = model.error { failures.append("\(location.lesson.id)#\(i): \(e)") }
+                        let (_, error) = SongCardBuilder.exercise(for: s, instrument: instrument)
+                        if let error { failures.append("\(location.lesson.id)#\(section.stepIndex): \(error)") }
                     case .quiz(let s):
-                        let model = QuizStepModel(step: s, instrument: instrument, seed: 3)
-                        if let e = model.generationError { failures.append("\(location.lesson.id)#\(i): \(e)") }
+                        let model = CheckYourselfModel(step: s, instrument: instrument, seed: 3)
+                        if let e = model.generationError { failures.append("\(location.lesson.id)#\(section.stepIndex): \(e)") }
+                        if model.questions.isEmpty { failures.append("\(location.lesson.id)#\(section.stepIndex): no questions") }
                     default: break
                     }
                 }

@@ -2,9 +2,9 @@
 //  TutorShellTests.swift
 //  TabBuddyTests
 //
-//  WP-E-a tutor shell view-model logic: path node states (with branches),
-//  continue target, review session grading into the scheduler, review card
-//  construction, glossary search, song suggestions, and the calibration view
+//  Tutor shell view-model logic: contents node states (with branches), the
+//  next-up target, flashcards, quick practice specs and the exercise index,
+//  glossary search, song suggestions, shell state, and the calibration view
 //  model with a fake calibrator.
 //
 
@@ -84,7 +84,7 @@ final class TutorShellTests: XCTestCase {
         XCTAssertEqual(fresh.lesson?.id, "g.s0.l1")
         XCTAssertEqual(fresh.stageTitle, "Setup")
         XCTAssertEqual(fresh.minutes, 5)
-        XCTAssertEqual(fresh.buttonTitle, "Start lesson")
+        XCTAssertEqual(fresh.buttonTitle, "Open chapter")
 
         let resume = TutorPathModel(course: c, progress: PathProgress(course: c, statuses: [
             "g.s0.l1": .completed, "g.s0.l2": .completed, "g.s1.l1": .inProgress])).continueCard
@@ -92,7 +92,7 @@ final class TutorShellTests: XCTestCase {
         XCTAssertEqual(resume.lesson?.id, "g.s1.l1")
         XCTAssertEqual(resume.stageNumber, 1)
 
-        XCTAssertEqual(TutorPathModel.actionTitle(for: .completed), "Review lesson")
+        XCTAssertEqual(TutorPathModel.actionTitle(for: .completed), "Read again")
         XCTAssertNil(TutorPathModel.actionTitle(for: .locked))
     }
 
@@ -113,116 +113,209 @@ final class TutorShellTests: XCTestCase {
         XCTAssertEqual(progress.continueTarget?.id, "g.s0.l1")
     }
 
-    func testStepSummaries() {
-        let summaries = TutorStepSummary.summaries(for: lesson("x", "X", chords: ["E"]))
-        XCTAssertEqual(summaries.map(\.kind), [.explain, .practice])
-        XCTAssertEqual(summaries.map(\.usesMicrophone), [false, true])
+    func testStepSummariesFollowPageOrder() {
+        var l = lesson("x", "X", chords: ["E"])
+        l.steps.insert(.quiz(QuizStep(title: "Check", questions: [QuizQuestion(prompt: "?", choices: ["a", "b"], answerIndex: 0, explanation: "")])),
+                       at: 1)
+        let summaries = TutorStepSummary.summaries(for: l)
+        XCTAssertEqual(summaries.map(\.kind), [.explain, .practice, .quiz], "check yourself moves to the end")
+        XCTAssertEqual(summaries.map(\.usesMicrophone), [false, true, false])
+        XCTAssertEqual(summaries.map(\.index), [0, 1, 2])
+        XCTAssertEqual(summaries.map(\.kindLabel), ["Read", "Try it", "Check yourself"])
     }
 
-    // MARK: Reviews
-
-    private func card(_ id: String, _ kind: ReviewKind, prompt: String = "Q", answer: String) -> TutorReviewCard {
-        TutorReviewCard(itemID: id, kind: kind, prompt: prompt, answer: answer, state: ReviewState(due: Date()))
+    func testSectionLaunchNames() {
+        XCTAssertEqual(TutorSection(launchName: "practice"), .practice)
+        XCTAssertEqual(TutorSection(launchName: "Flashcards"), .flashcards)
+        XCTAssertNil(TutorSection(launchName: "reviews"))
+        XCTAssertNil(TutorSection(launchName: "review-session"))
+        XCTAssertEqual(TutorSection.allCases.count, 8)
+        XCTAssertEqual(TutorSection.path.title, "Contents")
     }
 
-    func testReviewPresentationByKind() {
-        XCTAssertEqual(TutorReviewCardBuilder.presentation(for: card("f", .fact, answer: "A"), seed: nil,
-                                                           instrument: .guitar), .fact)
+    // MARK: Flashcards
 
-        guard case .choice(let q) = TutorReviewCardBuilder.presentation(for: card("n", .noteName, answer: "G"),
-                                                                        seed: nil, instrument: .guitar) else {
-            return XCTFail("noteName should be multiple choice")
+    func testFlashcardDeckFromDoneChaptersAndOrderOnly() {
+        var c = course()
+        c.stages[0].lessons[0].reviewItems = [ReviewItemSeed(id: "r1", kind: .fact, prompt: "P1", answer: "A1"),
+                                               ReviewItemSeed(id: "r2", kind: .playNote, prompt: "Play A", answer: "A2")]
+        c.stages[1].lessons[0].reviewItems = [ReviewItemSeed(id: "r3", kind: .playChord, prompt: "Play C then G", answer: "C, G")]
+        let progress = PathProgress(course: c, statuses: ["g.s0.l1": .completed])
+        let model = TutorFlashcardsModel(course: c, progress: progress, instrument: .guitar, seed: 5)
+        XCTAssertEqual(model.allCards.count, 3)
+        XCTAssertEqual(model.scope, .done, "starts on read chapters when any card qualifies")
+        XCTAssertEqual(model.deck.map(\.id), ["r1", "r2"])
+        XCTAssertEqual(model.current?.lessonTitle, "One")
+        XCTAssertEqual(model.doneCardCount, 2)
+
+        model.flip()
+        XCTAssertTrue(model.revealed)
+        model.again()
+        XCTAssertEqual(model.deck.map(\.id), ["r2", "r1"], "Again moves the card to the back")
+        XCTAssertFalse(model.revealed)
+        model.gotIt()
+        XCTAssertEqual(model.deck.map(\.id), ["r1"])
+        XCTAssertEqual(model.gotItCount, 1)
+        model.again()
+        XCTAssertEqual(model.deck.map(\.id), ["r1"], "a single card stays")
+        model.gotIt()
+        XCTAssertTrue(model.isFinished)
+        model.reset()
+        XCTAssertEqual(model.remaining, 2)
+
+        model.setScope(.all)
+        XCTAssertEqual(model.deck.map(\.id), ["r1", "r2", "r3"])
+        model.shuffle()
+        XCTAssertEqual(Set(model.deck.map(\.id)), ["r1", "r2", "r3"])
+
+        // Play cards hear their answer through the synth instead of grading.
+        XCTAssertEqual(model.allCards[1].hearPitches, [[45]])
+        XCTAssertTrue(model.allCards[1].isPlayCard)
+        XCTAssertEqual(model.allCards[2].hearPitches.count, 2)
+        XCTAssertEqual(model.allCards[2].kindLabel, "Play the chord")
+
+        let none = TutorFlashcardsModel(course: c, progress: PathProgress(course: c, statuses: [:]), instrument: .guitar)
+        XCTAssertEqual(none.scope, .all, "with nothing read, browse everything")
+    }
+
+    func testFlashcardPitchTokens() {
+        XCTAssertEqual(TutorFlashcardBuilder.pitchTokens(in: "D3 (string 6, fret 10)"), ["D3"])
+        XCTAssertEqual(TutorFlashcardBuilder.pitchTokens(in: "C3 (string 5 fret 3), then C4 (string 3 fret 5)."), ["C3", "C4"])
+        XCTAssertEqual(TutorFlashcardBuilder.pitchTokens(in: "B♭4"), ["Bb4"])
+        let piano = TutorFlashcardBuilder.hearPitches(for: ReviewItemSeed(id: "x", kind: .playChord, prompt: "", answer: "Am7"), instrument: .piano)
+        XCTAssertEqual(piano.count, 1)
+        XCTAssertEqual(piano[0].count, 4)
+        XCTAssertEqual(TutorFlashcardBuilder.hearPitches(for: ReviewItemSeed(id: "y", kind: .fact, prompt: "", answer: "A2"), instrument: .guitar), [])
+    }
+
+    // MARK: Quick practice
+
+    func testScaleSpecGuitarWindowAndPiano() {
+        var spec = ScalePracticeSpec(root: .G, type: .major, octaves: 1, fretWindow: 0)
+        let up = spec.ascendingMIDI(instrument: .guitar)
+        XCTAssertEqual(up.first, 43, "G2 is the lowest G in the open position")
+        XCTAssertEqual(up.last, 55)
+        XCTAssertEqual(up.count, 8)
+        XCTAssertEqual(spec.pitches(instrument: .guitar).count, 15, "up and down")
+        let diagram = spec.diagram(instrument: .guitar)
+        XCTAssertEqual(diagram.kind, .fretboard)
+        XCTAssertEqual(diagram.fretRange, [0, 4])
+        XCTAssertEqual(diagram.scale, "G major")
+        XCTAssertEqual(FretboardDiagramModel(diagram: diagram).dots.count, 8)
+        let positions = spec.guitarPositions()
+        XCTAssertTrue(positions.allSatisfy { (0...4).contains($0.fret) })
+
+        spec.fretWindow = 5
+        let moved = spec.ascendingMIDI(instrument: .guitar)
+        XCTAssertEqual(PitchClass(moved.first!), SpelledNote.G.pitchClass)
+        XCTAssertTrue(spec.guitarPositions().allSatisfy { (5...9).contains($0.fret) })
+
+        spec.fretWindow = nil
+        spec.octaves = 2
+        XCTAssertEqual(spec.ascendingMIDI(instrument: .guitar).count, 15)
+        let exercise = spec.exercise(instrument: .guitar, bpm: 90)
+        XCTAssertEqual(exercise.pacing, .timed)
+        XCTAssertEqual(exercise.bpm, 90)
+        XCTAssertEqual(exercise.passage.events.count, 29)
+        XCTAssertEqual(exercise.scale?.name, "G major")
+
+        let piano = ScalePracticeSpec(root: SpelledNote("Eb")!, type: .minorPentatonic, octaves: 1, labels: .degrees)
+        let pianoUp = piano.ascendingMIDI(instrument: .piano)
+        XCTAssertEqual(pianoUp, [63, 66, 68, 70, 73, 75])
+        let pd = piano.diagram(instrument: .piano)
+        XCTAssertEqual(pd.kind, .keyboard)
+        XCTAssertEqual(pd.labels, .degrees)
+        XCTAssertEqual(pd.notes, ["Eb4", "Gb4", "Ab4", "Bb4", "Db5", "Eb5"], "spelled from the scale")
+        XCTAssertEqual(KeyboardDiagramModel(diagram: pd).marks.count, 6)
+    }
+
+    func testChordSpecVoicingDiagramAndStyles() {
+        var spec = ChordPracticeSpec(root: .A, quality: .minor, style: .block)
+        XCTAssertEqual(spec.title, "Am")
+        let gd = spec.diagram(instrument: .guitar)
+        XCTAssertEqual(gd.kind, .fretboard)
+        XCTAssertEqual(gd.labels, .fingers, "open shapes show finger numbers")
+        XCTAssertEqual(FretboardDiagramModel(diagram: gd).dots.count, 5)
+        let block = spec.example(instrument: .guitar, bpm: 80)
+        XCTAssertEqual(block.notes.count, 1)
+        XCTAssertEqual(block.notes[0].durationBeats, 4)
+        spec.style = .arpeggio
+        let arp = spec.example(instrument: .guitar, bpm: 80)
+        XCTAssertEqual(arp.notes.count, 5 + 3)
+        XCTAssertTrue(arp.notes.allSatisfy { $0.pitches.count == 1 })
+        spec.style = .strum
+        XCTAssertEqual(spec.example(instrument: .guitar, bpm: 80).notes.count, 8)
+
+        let exercise = spec.exercise(instrument: .piano, bpm: 80)
+        XCTAssertEqual(exercise.pacing, .wait)
+        XCTAssertEqual(exercise.passage.events.count, 1)
+        XCTAssertTrue(exercise.passage.events[0].octaveTolerant, "piano chord symbols carry no register")
+        XCTAssertEqual(exercise.passage.events[0].chordName, "Am")
+        XCTAssertEqual(spec.diagram(instrument: .piano).kind, .keyboard)
+    }
+
+    func testIntervalSpecDirectionsAndRange() {
+        var spec = IntervalPracticeSpec(root: Pitch("C4")!, interval: .M3, direction: .up)
+        XCTAssertEqual(spec.pitches(), [60, 64])
+        XCTAssertEqual(spec.caption, "Major third: C4 → E4, 4 half steps")
+        XCTAssertEqual(spec.example(instrument: .piano, bpm: 80).notes.count, 2)
+        spec.direction = .down
+        XCTAssertEqual(spec.pitches(), [60, 56])
+        XCTAssertEqual(spec.otherPitch.name, "Ab3")
+        spec.direction = .together
+        XCTAssertEqual(spec.pitches(), [60, 64], "together sounds the root and the note above it")
+        XCTAssertEqual(spec.example(instrument: .piano, bpm: 80).notes.count, 1)
+        XCTAssertEqual(spec.exercise(instrument: .piano, bpm: 80).passage.events.count, 1)
+        XCTAssertEqual(spec.diagram(instrument: .piano).kind, .keyboard)
+        XCTAssertTrue(spec.fits(.piano))
+        let low = IntervalPracticeSpec(root: Pitch("E2")!, interval: .P5, direction: .down)
+        XCTAssertFalse(low.fits(.guitar))
+        XCTAssertEqual(IntervalPracticeSpec.intervals.first, .m2)
+        XCTAssertEqual(IntervalPracticeSpec.defaultRoot(.guitar).midi, 45)
+    }
+
+    func testRhythmSpecPresetsAndErrors() {
+        let spec = RhythmPracticeSpec(tokens: "q q e e q")
+        XCTAssertNil(spec.error)
+        XCTAssertEqual(spec.title, "5 notes, 4 beats")
+        let exercise = spec.exercise(instrument: .guitar, bpm: 80)
+        XCTAssertEqual(exercise?.passage.events.count, 5)
+        XCTAssertEqual(exercise?.pacing, .timed)
+        XCTAssertEqual(spec.diagram().kind, .rhythm)
+        let rests = RhythmPracticeSpec(tokens: "q qr q qr")
+        XCTAssertEqual(rests.exercise(instrument: .piano, bpm: 60)?.passage.events.count, 2, "rests are silent")
+        let bad = RhythmPracticeSpec(tokens: "q x")
+        XCTAssertNotNil(bad.error)
+        XCTAssertNil(bad.exercise(instrument: .guitar, bpm: 80))
+        for preset in RhythmPracticeSpec.presets {
+            XCTAssertNil(RhythmPracticeSpec(tokens: preset.tokens).error, preset.name)
         }
-        XCTAssertEqual(q.choices.count, 4)
-        XCTAssertEqual(q.choices[q.answerIndex], "G")
-        XCTAssertEqual(Set(q.choices).count, 4)
-        XCTAssertFalse(q.choices.contains { $0.contains("#") }, "natural answers get natural distractors")
-
-        let binary = TutorReviewCardBuilder.question(for: card("q", .earQuality, prompt: "Major or minor?", answer: "Minor"),
-                                                     seed: nil)!
-        XCTAssertEqual(Set(binary.choices), ["Major", "Minor"])
-
-        let interval = TutorReviewCardBuilder.question(for: card("i", .earInterval, answer: "Perfect 5th"), seed: nil)!
-        XCTAssertEqual(interval.choices[interval.answerIndex], "Perfect 5th")
-        let step = TutorReviewCardBuilder.question(for: card("s", .earInterval, answer: "Whole step"), seed: nil)!
-        XCTAssertEqual(Set(step.choices), ["Half step", "Whole step"])
-
-        let seventh = TutorReviewCardBuilder.question(for: card("d", .earQuality, answer: "Dominant seventh"), seed: nil)!
-        XCTAssertFalse(seventh.choices.contains("Dominant 7th"), "synonym must not appear as a distractor")
-
-        let octave = TutorReviewCardBuilder.question(for: card("o", .noteName, answer: "C4 (middle C)"), seed: nil)!
-        XCTAssertTrue(octave.choices.filter { $0 != "C4 (middle C)" }.allSatisfy { $0.hasSuffix("4") })
-
-        // Same card, same choices.
-        XCTAssertEqual(TutorReviewCardBuilder.question(for: card("n", .noteName, answer: "G"), seed: nil), q)
     }
 
-    func testPlayTargetsFromAnswers() {
-        XCTAssertEqual(TutorReviewCardBuilder.pitchTokens(in: "D3 (string 6, fret 10)"), ["D3"])
-        XCTAssertEqual(TutorReviewCardBuilder.pitchTokens(in: "C3 (string 5 fret 3), then C4 (string 3 fret 5)."), ["C3", "C4"])
-        XCTAssertEqual(TutorReviewCardBuilder.pitchTokens(in: "B♭4"), ["Bb4"])
-
-        let notes = TutorReviewCardBuilder.playTargets(for: card("p", .playNote, answer: "A2"), seed: nil, instrument: .guitar)
-        XCTAssertEqual(notes.map(\.event.pitches), [[45]])
-
-        let chords = TutorReviewCardBuilder.playTargets(for: card("c", .playChord, answer: "C, G"), seed: nil, instrument: .guitar)
-        XCTAssertEqual(chords.map(\.label), ["C", "G"])
-        XCTAssertEqual(chords.map(\.event.id), [0, 1])
-        XCTAssertFalse(chords[0].event.pitches.isEmpty)
-
-        let piano = TutorReviewCardBuilder.playTargets(for: card("pc", .playChord, answer: "Am7"), seed: nil, instrument: .piano)
-        XCTAssertTrue(piano[0].event.octaveTolerant)
-
-        // Unparseable answers fall back to self-grading.
-        XCTAssertEqual(TutorReviewCardBuilder.presentation(for: card("u", .playNote, answer: "any"), seed: nil,
-                                                           instrument: .guitar), .fact)
+    func testExerciseIndexGroupsByKindWithSectionLinks() {
+        var c = course()
+        c.stages[0].lessons[1].steps.insert(.quiz(QuizStep(title: "Check", questions: [QuizQuestion(prompt: "?", choices: ["a", "b"], answerIndex: 0, explanation: "")])),
+                                             at: 1)
+        c.stages[0].lessons[1].steps.append(.song(SongStep(title: "Ode", notes: [["E4"]], rhythm: "q", bpm: 80)))
+        let entries = TutorExerciseIndex.entries(course: c)
+        XCTAssertEqual(entries.map(\.title), ["Play", "Ode", "Play"])
+        XCTAssertEqual(entries.map(\.group), [.chords, .songs, .chords])
+        XCTAssertEqual(entries[0].stepIndex, 2, "the quiz was inserted before it")
+        XCTAssertEqual(entries[0].sectionIndex, 1, "quiz sections move to the end, so the box is section 1")
+        XCTAssertEqual(entries[0].location, "Part 0 · Two")
+        XCTAssertEqual(entries[2].lessonID, "g.s1.l1")
+        let grouped = TutorExerciseIndex.grouped(course: c)
+        XCTAssertEqual(grouped.map(\.group), [.chords, .songs])
+        XCTAssertEqual(grouped[0].entries.count, 2)
+        XCTAssertEqual(ExerciseGroup.group(for: .scale), .scales)
+        XCTAssertEqual(ExerciseGroup.group(for: .strumRhythm), .strumming)
     }
 
-    func testReviewSessionGradesIntoScheduler() throws {
-        let store = try TutorStore.inMemory()
-        let past = Date().addingTimeInterval(-3600)
-        for (id, kind) in [("a", ReviewKind.fact), ("b", .noteName), ("c", .fact)] {
-            try store.addReviewCardIfMissing(ReviewCardRecord(itemID: id, instrument: .guitar, kind: kind.rawValue,
-                                                              prompt: "P", answer: "G", due: past))
-        }
-        let library = CurriculumLibrary(content: .empty)
-        let session = TutorReviewSessionModel(instrument: .guitar, store: store, library: library)
-        XCTAssertEqual(session.total, 3)
-
-        let first = try XCTUnwrap(session.current)
-        XCTAssertEqual(session.previewIntervals(for: first)[.again].map { Int($0) }, Int(ReviewScheduler.relearnDelay))
-        session.revealed = true
-        session.grade(.good)
-        let graded = try XCTUnwrap(store.reviewCard(itemID: first.itemID, instrument: .guitar))
-        XCTAssertEqual(graded.reps, 1)
-        XCTAssertGreaterThan(graded.due, Date())
-        XCTAssertFalse(session.revealed)
-
-        // Choice card: wrong answer → again, recorded on next().
-        let second = try XCTUnwrap(session.current)
-        session.answeredChoice(correct: false)
-        session.answeredChoice(correct: true)   // ignored after the first answer
-        XCTAssertEqual(session.autoGrade, .again)
-        session.next()
-        let again = try XCTUnwrap(store.reviewCard(itemID: second.itemID, instrument: .guitar))
-        XCTAssertEqual(again.reps, 1)
-        XCTAssertLessThanOrEqual(again.due.timeIntervalSinceNow, ReviewScheduler.relearnDelay + 5)
-
-        // Skip leaves the card due and unrecorded.
-        let third = try XCTUnwrap(session.current)
-        session.skip()
-        XCTAssertEqual(store.reviewCard(itemID: third.itemID, instrument: .guitar)?.reps, 0)
-        XCTAssertTrue(session.isFinished)
-        XCTAssertEqual(session.summary.reviewed, 2)
-        XCTAssertEqual(session.summary.again, 1)
-        XCTAssertEqual(session.summary.skipped, 1)
-        XCTAssertEqual(store.dueReviewCount(instrument: .guitar), 1)
-    }
-
-    func testIntervalCaption() {
-        XCTAssertEqual(TutorReviewSessionModel.intervalCaption(600), "10m")
-        XCTAssertEqual(TutorReviewSessionModel.intervalCaption(3 * 86_400), "3d")
-        XCTAssertEqual(TutorReviewSessionModel.intervalCaption(90 * 86_400), "3mo")
+    func testRootLabels() {
+        XCTAssertEqual(QuickPracticeRoots.all.count, 12)
+        XCTAssertEqual(QuickPracticeRoots.label(SpelledNote("C#")!), "C♯ / D♭")
+        XCTAssertEqual(QuickPracticeRoots.label(SpelledNote("Bb")!), "B♭ / A♯")
+        XCTAssertEqual(QuickPracticeRoots.label(.G), "G")
     }
 
     // MARK: Glossary
@@ -312,8 +405,10 @@ final class TutorShellTests: XCTestCase {
 
         state.seedProgress(firstLessons: 2)
         XCTAssertEqual(state.progress?.continueTarget?.id, "g.s1.l1")
-        XCTAssertEqual(state.practiceDays, 1)
-        XCTAssertEqual(state.todayMinutes, 10)
+        XCTAssertEqual(state.practiceDays, 1, "one day with chapters marked read")
+        XCTAssertEqual(state.todayMinutes, 10, "minutes of the chapters marked read today")
+        XCTAssertEqual(store.progress(lessonID: "g.s0.l1", instrument: .guitar)?.attempts, 0)
+        XCTAssertTrue(store.dueReviewCards(instrument: .guitar, asOf: .distantFuture).isEmpty, "no cards are seeded")
 
         state.setInstrument(.piano)
         XCTAssertEqual(store.settings().instrument, .piano)
@@ -330,18 +425,19 @@ final class TutorShellTests: XCTestCase {
         XCTAssertEqual(store.latency(forRoute: "r"), 0.05, "reset keeps calibration")
     }
 
-    func testLessonExitRecordsCompletionOnce() throws {
+    func testDoneTogglesCountOnlyCompletedChapters() throws {
         let store = try TutorStore.inMemory()
         let c = course()
         let content = CurriculumContent(courses: [.guitar: c], glossary: [], stageFiles: [:], loadIssues: [])
         let state = TutorShellState(store: store, library: CurriculumLibrary(content: content))
         let first = c.stages[0].lessons[0]
-        state.lessonDidExit(first, completed: false)
-        XCTAssertNil(store.progress(lessonID: first.id, instrument: .guitar))
-        state.lessonDidExit(first, completed: true)
-        state.lessonDidExit(first, completed: true)
-        XCTAssertEqual(store.progress(lessonID: first.id, instrument: .guitar)?.attempts, 1)
+        state.setLessonDone(first, done: true)
         XCTAssertEqual(state.progress?.state(of: first.id), .completed)
+        XCTAssertEqual(state.todayMinutes, 5)
+        state.setLessonDone(first, done: false)
+        XCTAssertEqual(state.progress?.state(of: first.id), .available)
+        XCTAssertEqual(state.todayMinutes, 0)
+        XCTAssertEqual(state.practiceDays, 0)
     }
 
     // MARK: Games

@@ -2,10 +2,10 @@
 //  TutorPathModel.swift
 //  TabBuddy
 //
-//  View model for the tutor path map: stages → lesson nodes with states from
-//  `PathProgress`, optional side branches placed after the lesson that
-//  unlocks them, the "Continue" target, and locked-lesson explanations.
-//  Pure value logic (tested in TutorShellTests).
+//  View model for the book's contents: stages (parts) → lesson nodes
+//  (chapters) with states from `PathProgress`, optional side branches placed
+//  after the lesson that suggests them, and the "Next up" target. Done means
+//  read. Pure value logic (tested in TutorShellTests).
 //
 
 import Foundation
@@ -63,9 +63,9 @@ struct TutorContinueCard: Hashable {
 
     var buttonTitle: String {
         switch kind {
-        case .start: return "Start lesson"
-        case .resume: return "Continue lesson"
-        case .finished: return "Review any lesson"
+        case .start: return "Open chapter"
+        case .resume: return "Continue chapter"
+        case .finished: return "Open any chapter"
         }
     }
 }
@@ -129,19 +129,21 @@ struct TutorPathModel {
         return nil
     }
 
-    /// Button title in the lesson detail for a state; nil when locked.
+    /// Button title in the chapter detail for a state; nil when locked.
     static func actionTitle(for state: LessonState) -> String? {
         switch state {
         case .locked: return nil
-        case .available: return "Start"
-        case .inProgress: return "Continue"
-        case .completed: return "Review lesson"
+        case .available: return "Open chapter"
+        case .inProgress: return "Continue chapter"
+        case .completed: return "Read again"
         }
     }
 }
 
-// MARK: - Lesson step overview
+// MARK: - Chapter section overview
 
+/// Sections of a chapter in page order (quiz steps last), for the chapter
+/// detail's contents list. `index` is the section index used by jump links.
 struct TutorStepSummary: Hashable, Identifiable {
     enum Kind: String, Hashable { case explain, demo, practice, quiz, song }
     var kind: Kind
@@ -163,22 +165,18 @@ struct TutorStepSummary: Hashable, Identifiable {
     var kindLabel: String {
         switch kind {
         case .explain: return "Read"
-        case .demo: return "Listen"
-        case .practice: return "Play"
-        case .quiz: return "Quiz"
+        case .demo: return "Example"
+        case .practice: return "Try it"
+        case .quiz: return "Check yourself"
         case .song: return "Song"
         }
     }
 
     static func summaries(for lesson: Lesson) -> [TutorStepSummary] {
-        lesson.steps.enumerated().map { i, step in
-            switch step {
-            case .explain(let s): return TutorStepSummary(kind: .explain, title: s.title, usesMicrophone: false, index: i)
-            case .demo(let s): return TutorStepSummary(kind: .demo, title: s.title, usesMicrophone: false, index: i)
-            case .practice(let s): return TutorStepSummary(kind: .practice, title: s.exercise.prompt, usesMicrophone: true, index: i)
-            case .quiz(let s): return TutorStepSummary(kind: .quiz, title: s.title, usesMicrophone: false, index: i)
-            case .song(let s): return TutorStepSummary(kind: .song, title: s.title, usesMicrophone: true, index: i)
-            }
+        LessonPageModel.sections(for: lesson).map { section in
+            let mic = section.kind == .practice || section.kind == .song
+            return TutorStepSummary(kind: Kind(rawValue: section.kind.rawValue) ?? .explain, title: section.title,
+                                    usesMicrophone: mic, index: section.index)
         }
     }
 }

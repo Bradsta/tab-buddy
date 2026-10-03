@@ -98,9 +98,18 @@ struct TabText: UIViewRepresentable {
     }
 
     private func adjustFontSizeToFit(textView: UITextView) {
+        // The font is monospaced, so the widest line is the longest line times
+        // one glyph advance. Measuring the whole document through TextKit laid
+        // out every line on the main thread each time a tab opened.
         let currentFont = UIFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
-        let textAttributes: [NSAttributedString.Key: Any] = [.font: currentFont]
-        let textWidth = (content as NSString).size(withAttributes: textAttributes).width
+        let charWidth = ("M" as NSString).size(withAttributes: [.font: currentFont]).width
+        var longest = 0, current = 0
+        for scalar in content.unicodeScalars {
+            if scalar == "\n" || scalar == "\r" { longest = max(longest, current); current = 0 }
+            else { current += scalar == "\t" ? 4 : 1 }
+        }
+        longest = max(longest, current)
+        let textWidth = CGFloat(longest) * charWidth
 
         let bufferWidth = 50.0
         let availableWidth = textView.bounds.width - textView.textContainerInset.left - textView.textContainerInset.right - bufferWidth

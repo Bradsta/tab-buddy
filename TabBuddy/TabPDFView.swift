@@ -79,6 +79,7 @@ struct TabPDFView: View {
             pdfDocument = loaded.document
             isLightBackground = loaded.isLight
             isLoading = false
+            PerfTrace.endAfterCommit("open", "pdf")
         } catch {
             guard !Task.isCancelled else { return }
             loadError = error.localizedDescription

@@ -8,16 +8,18 @@
 
 import SwiftUI
 
-/// Sections of the tutor shell (sidebar on iPad, rows on iPhone).
+/// Sections of the tutor shell (sidebar on iPad, rows on iPhone). `path` is
+/// the book's contents: stages as parts, lessons as chapters.
 enum TutorSection: String, Hashable, CaseIterable, Identifiable {
-    case path, reviews, songs, games, glossary, calibration, settings
+    case path, practice, flashcards, songs, games, glossary, calibration, settings
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .path: return "Path"
-        case .reviews: return "Reviews"
+        case .path: return "Contents"
+        case .practice: return "Practice"
+        case .flashcards: return "Flashcards"
         case .songs: return "Songs you know"
         case .games: return "Games"
         case .glossary: return "Glossary"
@@ -28,8 +30,9 @@ enum TutorSection: String, Hashable, CaseIterable, Identifiable {
 
     var systemImage: String {
         switch self {
-        case .path: return "point.topleft.down.to.point.bottomright.curvepath"
-        case .reviews: return "rectangle.stack"
+        case .path: return "book"
+        case .practice: return "music.quarternote.3"
+        case .flashcards: return "rectangle.stack"
         case .songs: return "music.note.list"
         case .games: return "gamecontroller"
         case .glossary: return "character.book.closed"
@@ -38,7 +41,7 @@ enum TutorSection: String, Hashable, CaseIterable, Identifiable {
         }
     }
 
-    /// ⌘1 … ⌘7.
+    /// ⌘1 … ⌘8.
     var shortcut: KeyEquivalent {
         KeyEquivalent(Character(String((TutorSection.allCases.firstIndex(of: self) ?? 0) + 1)))
     }
@@ -163,7 +166,7 @@ struct TutorShellMicDeniedNotice: View {
             Label("Microphone access is off", systemImage: "mic.slash")
                 .font(.headline)
                 .foregroundStyle(DS.cautionText)
-            Text("Listening exercises need the microphone. Quizzes and reading still work without it.")
+            Text("Listening needs the microphone. Reading, examples, and Check yourself work without it.")
                 .foregroundStyle(DS.fg2)
             Button("Open Settings") {
                 if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }

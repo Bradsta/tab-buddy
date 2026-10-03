@@ -112,6 +112,10 @@ final class NoteTranscriberCore {
 
     /// Live pitch of the most recent frame (for UI feedback), even between notes.
     private(set) var livePitch: (frequency: Double, midi: Int, confidence: Double)?
+    /// Smallest-lag CMNDF dip under `yinThreshold` in the latest frame (standard
+    /// YIN absolute-threshold rule), using the parabola-vertex depth. Feeds
+    /// `livePitch`; the event path keeps its salience vote.
+    private var liveFirstDip: (frequency: Double, aperiodicity: Float)?
 
     // MARK: - Init
 
@@ -213,6 +217,7 @@ final class NoteTranscriberCore {
         lastEmittedMidi = -1
         lastEmittedTime = -1e9
         livePitch = nil
+        liveFirstDip = nil
     }
 
     // MARK: - Input
@@ -295,8 +300,13 @@ final class NoteTranscriberCore {
 
         // --- Pitch (YIN candidate dips)
         let candidates = yinCandidates()
+        // Live pitch (tuner/meter): the first dip under the threshold, not the
+        // deepest. CMNDF dips repeat at 2T, 3T, … and the raw sample depth at
+        // those multiples is often lower than at T (the integer lag quantizes
+        // a short period such as the open high E, 48.5 samples at 16 kHz, much
+        // worse than its multiples), so the deepest dip read E4 as A2.
         let bestDip = candidates.min(by: { $0.aperiodicity < $1.aperiodicity })
-        if let p = bestDip, p.aperiodicity < 0.5 {
+        if let p = liveFirstDip ?? bestDip.flatMap({ $0.aperiodicity < 0.5 ? $0 : nil }) {
             let midiF = 69.0 + 12.0 * log2(p.frequency / 440.0)
             livePitch = (p.frequency, Int(midiF.rounded()), Double(1 - p.aperiodicity))
         } else {
@@ -620,6 +630,8 @@ final class NoteTranscriberCore {
         }
 
         var results: [(frequency: Double, aperiodicity: Float)] = []
+        var firstDip: (frequency: Double, aperiodicity: Float)?
+        let threshold = cfg.yinThreshold
         buffer.withUnsafeBufferPointer { ptr in
             let x = ptr.baseAddress! + (n - need)
 
@@ -661,8 +673,17 @@ final class NoteTranscriberCore {
                 let frequency = rate / refined
                 guard frequency >= cfg.minFreq && frequency <= cfg.maxFreq else { continue }
                 results.append((frequency, max(0, s1)))
+                // Depth at the interpolated minimum: the sampled value at an
+                // integer lag overstates the dip for short periods.
+                if firstDip == nil {
+                    let vertex = denom > 0 && abs(adjust) <= 0.5
+                        ? s1 - (s0 - s2) * (s0 - s2) / (4 * denom) : s1
+                    let depth = max(0, min(s1, vertex))
+                    if depth < threshold { firstDip = (frequency, depth) }
+                }
             }
         }
+        liveFirstDip = firstDip
         results.sort { $0.aperiodicity < $1.aperiodicity }
         if results.count > 6 { results.removeLast(results.count - 6) }
         return results

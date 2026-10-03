@@ -3,6 +3,16 @@
 (async () => {
     const status = document.getElementById('status');
     let api, score, runtimeURL, disposed = false, previousTick = 0, lastUpdate = 0;
+    // A warm shell (index.html?warm=1) loads the runtime, font, and soundfont and
+    // waits for loadScore(); a plain page loads its score at once.
+    const autoload = !new URLSearchParams(location.search).has('warm');
+    let pendingLoad = false;
+    const loadScore = () => {
+        if (disposed) return;
+        if (!api) { pendingLoad = true; return; }
+        status.textContent = 'Loading Guitar Pro score…';
+        api.load('score');
+    };
     let options = { speed: 1, track: 0, solo: false, sound: true, metronome: false,
         zoom: 1, notation: 'original', follow: 'follow', smoothSpeed: 0, smoothLoop: false, loop: false, start: 0, end: 1 };
     const state = { ready: false, playing: false, bar: 0, time: 0, total: 0,
@@ -64,7 +74,7 @@
         send();
     };
     const seek = bar => {
-        if (!state.ready) return;
+        if (!state.ready || !score) return;
         bar = Math.floor(clamp(bar, 0, score.masterBars.length - 1));
         previousTick = 0;
         api.tickPosition = api.tickCache.getMasterBar(score.masterBars[bar]).start;
@@ -144,7 +154,7 @@
         }
         return notes.sort((a, b) => a.start - b.start);
     };
-    window.tabBuddyPlayer = { state, configure, seek, exportNotes,
+    window.tabBuddyPlayer = { state, configure, seek, exportNotes, loadScore,
         scrollToTop: () => { scroll.scrollTop = 0; },
         play: () => { if (state.ready) api.play(); }, pause: () => api?.pause() };
     window.pausePlayback = () => api?.pause();
@@ -239,6 +249,9 @@
             if (document.hidden) api.pause();
             updateScrollClock();
         });
-        api.load('score');
+        state.shell = true;
+        send();
+        if (autoload || pendingLoad) loadScore();
+        else status.textContent = '';
     } catch (error) { fail(error); }
 })();

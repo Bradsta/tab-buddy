@@ -10,12 +10,25 @@
 import SwiftUI
 import SwiftData
 
+/// The library facts a card needs for its menu and delete confirmation. Passed by
+/// value so 200 visible cards do not each observe every `LibraryManager` publish.
+struct LibraryCardContext: Equatable {
+    var mode: LibraryMode?
+    var storageOption: LibraryStorageOption?
+    var libraryName: String?
+
+    @MainActor static var current: LibraryCardContext {
+        let manager = LibraryManager.shared
+        return LibraryCardContext(mode: manager.mode, storageOption: manager.storageOption, libraryName: manager.libraryName)
+    }
+}
+
 struct FileCardView: View, Equatable {
     @Environment(\.modelContext) private var context
     @Environment(\.undoManager) private var undoManager
-    @ObservedObject private var libraryManager = LibraryManager.shared
 
     @Bindable var file: FileItem
+    var library: LibraryCardContext = .current
 
     /// Blue-tinted "active" treatment for the Jump back in rail.
     var isRail: Bool = false
@@ -39,7 +52,7 @@ struct FileCardView: View, Equatable {
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.file == rhs.file && lhs.isRail == rhs.isRail
             && lhs.isSelecting == rhs.isSelecting && lhs.isSelected == rhs.isSelected
-            && lhs.availability == rhs.availability
+            && lhs.availability == rhs.availability && lhs.library == rhs.library
     }
 
     private var isPDF: Bool { file.filename.lowercased().hasSuffix(".pdf") }
@@ -78,12 +91,12 @@ struct FileCardView: View, Equatable {
         .sheet(isPresented: $showDetails) { ScoreDetailsView(file: file) }
         .sheet(isPresented: $showTags) { TagEditorView(file: file) }
         .sheet(isPresented: $showRename) { renameSheet }
-        .alert(libraryManager.mode == .externalFolder ? "Move file to the Trash?" : "Delete this file?",
+        .alert(library.mode == .externalFolder ? "Move file to the Trash?" : "Delete this file?",
                isPresented: $showFileDeleteConfirmation) {
-            Button(libraryManager.mode == .externalFolder ? "Move to Trash" : "Delete File", role: .destructive) {
-                if libraryManager.mode == .externalFolder {
+            Button(library.mode == .externalFolder ? "Move to Trash" : "Delete File", role: .destructive) {
+                if library.mode == .externalFolder {
                     // Errors (including "couldn't move to the Trash") appear in the library's error banner.
-                    Task { try? await libraryManager.deleteUnderlyingFile(file, context: context) }
+                    Task { try? await LibraryManager.shared.deleteUnderlyingFile(file, context: context) }
                 } else {
                     onDelete()
                 }
@@ -97,10 +110,10 @@ struct FileCardView: View, Equatable {
     /// Names the exact file. A folder you chose only ever moves the file to the Trash.
     private var deleteMessage: String {
         let path = file.effectiveRelativePath ?? file.filename
-        let folder = libraryManager.libraryName.map { "“\($0)”" } ?? "your folder"
-        if libraryManager.mode == .externalFolder {
+        let folder = library.libraryName.map { "“\($0)”" } ?? "your folder"
+        if library.mode == .externalFolder {
             var message = "Moves “\(path)” in \(folder) to the Trash and removes it from the library."
-            if libraryManager.storageOption == .hybrid {
+            if library.storageOption == .hybrid {
                 message += " Its library info is removed on all your devices."
             }
             return message + " If the Trash isn’t available for this folder, the file is kept."
@@ -253,7 +266,7 @@ struct FileCardView: View, Equatable {
             showRename = true
         } label: { Label("Rename", systemImage: "pencil") }
         Divider()
-        if libraryManager.mode == .externalFolder {
+        if library.mode == .externalFolder {
             Button { onDelete() } label: {
                 Label("Remove from Library", systemImage: "minus.circle")
             }

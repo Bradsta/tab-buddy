@@ -37,6 +37,9 @@ final class LibraryBrowserIndex: ObservableObject {
     @Published private(set) var folderMembers: [String: [FileItem]] = [:]
     @Published private(set) var recent: [FileItem] = []
     @Published private(set) var instruments: [Instrument] = []
+    /// Any catalog entry still waiting for a legacy bookmark import. Read from the
+    /// snapshot so the status banner does not fault every model on each redraw.
+    @Published private(set) var hasLegacyImports = false
     private(set) var libraryFiles: [FileItem] = []
     private var rows: [Row] = []
     private var completedRequest: Request?
@@ -125,6 +128,7 @@ final class LibraryBrowserIndex: ObservableObject {
         completedRequest = nil
         rows = []; models = [:]; rowOffsets = [:]; libraryFiles = []
         visible = []; folders = []; folderMembers = [:]; recent = []; instruments = []
+        hasLegacyImports = false
         revision += 1
     }
 
@@ -139,9 +143,11 @@ final class LibraryBrowserIndex: ObservableObject {
         var offsets: [PersistentIdentifier: Int] = [:]
         var library: [FileItem] = []
         var kinds = Set<String>()
+        var legacy = false
         for (index, item) in files.enumerated() {
             guard !Task.isCancelled else { return }
             if item.modelContext != nil && !item.isDeleted && (item.libraryID == nil || item.libraryID == libraryID) && isShown(item) {
+                if !legacy && item.needsLibraryMigration { legacy = true }
                 let row = Self.snapshot(item)
                 kinds.formUnion(row.instruments)
                 offsets[item.persistentModelID] = snapshots.count
@@ -156,6 +162,7 @@ final class LibraryBrowserIndex: ObservableObject {
         guard !Task.isCancelled else { return }
         rows = snapshots; models = byID; rowOffsets = offsets; libraryFiles = library
         instruments = Instrument.allCases.filter { kinds.contains($0.rawValue) }
+        if hasLegacyImports != legacy { hasLegacyImports = legacy }
         hasSnapshot = true
         revision += 1
     }

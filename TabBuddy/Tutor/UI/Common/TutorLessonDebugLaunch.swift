@@ -4,8 +4,8 @@
 //
 //  DEBUG-only launch arguments for checking lesson screens directly:
 //
-//    -TutorLessonDemo guitar.s3.l1     open that lesson in LessonPlayerView
-//    -TutorLessonStep 4                start at step 4 (0-based) of that lesson
+//    -TutorLessonDemo guitar.s3.l1     open that chapter in LessonPageView
+//    -TutorLessonStep 4                scroll to section 4 (0-based page order)
 //    -TutorDiagramGallery              every diagram kind for both instruments
 //    -TutorForceWidth 500              lay the screen out in a 500 pt column
 //                                      (Split View / compact check)
@@ -26,7 +26,7 @@ enum TutorLessonDebugLaunch {
     }
 
     static var lessonID: String? { value(after: "-TutorLessonDemo") }
-    static var startStep: Int? { value(after: "-TutorLessonStep").flatMap(Int.init) }
+    static var startSection: Int? { value(after: "-TutorLessonStep").flatMap(Int.init) }
     static var showsGallery: Bool { arguments.contains("-TutorDiagramGallery") }
     static var forcedWidth: CGFloat? { value(after: "-TutorForceWidth").flatMap(Double.init).map { CGFloat($0) } }
 
@@ -43,7 +43,7 @@ enum TutorLessonDebugLaunch {
             return AnyView(ForcedWidth(width: forcedWidth) { DiagramGalleryView() })
         }
         if let id = lessonID {
-            return AnyView(ForcedWidth(width: forcedWidth) { DebugLessonHost(lessonID: id, startStep: startStep) })
+            return AnyView(ForcedWidth(width: forcedWidth) { DebugLessonHost(lessonID: id, startSection: startSection) })
         }
         #endif
         return nil
@@ -70,23 +70,22 @@ struct ForcedWidth<Content: View>: View {
     }
 }
 
-/// Loads the bundled curriculum and presents one lesson.
+/// Loads the bundled curriculum and presents one chapter.
 struct DebugLessonHost: View {
     let lessonID: String
-    var startStep: Int?
+    var startSection: Int?
     @ObservedObject private var library = CurriculumLibrary.shared
-    @State private var exited: Bool?
+    @State private var closed = false
 
     var body: some View {
         Group {
-            if let exited {
+            if closed {
                 VStack(spacing: 12) {
-                    Text(exited ? "Lesson completed" : "Lesson closed").font(.title2)
-                    Button("Open again") { self.exited = nil }
+                    Text("Chapter closed").font(.title2)
+                    Button("Open again") { closed = false }
                 }
             } else if let found {
-                LessonPlayerView(lesson: found.0, instrument: found.1) { completed in exited = completed }
-                    .modifier(DebugStartStep(step: startStep))
+                LessonPageView(lesson: found.0, instrument: found.1, initialSection: startSection) { closed = true }
             } else if library.isLoaded {
                 Text("No lesson \"\(lessonID)\" in the bundled curriculum.").padding()
             } else {
@@ -101,23 +100,6 @@ struct DebugLessonHost: View {
             if let lesson = library.course(for: instrument)?.lesson(id: lessonID) { return (lesson, instrument) }
         }
         return nil
-    }
-}
-
-/// Hands the requested start step to `LessonPlayerView` (read on appear).
-private struct DebugStartStep: ViewModifier {
-    var step: Int?
-    func body(content: Content) -> some View {
-        content.environment(\.tutorDebugStartStep, step)
-    }
-}
-
-private struct DebugStartStepKey: EnvironmentKey { static let defaultValue: Int? = nil }
-
-extension EnvironmentValues {
-    var tutorDebugStartStep: Int? {
-        get { self[DebugStartStepKey.self] }
-        set { self[DebugStartStepKey.self] = newValue }
     }
 }
 

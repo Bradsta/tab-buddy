@@ -2,12 +2,13 @@
 //  TutorPathView.swift
 //  TabBuddy
 //
-//  The learning path: a "Continue" hero card, summary cards (reviews, songs,
-//  today), then each stage as a header followed by its lesson nodes on a
-//  vertical rail. The order is a recommendation; every lesson opens, and the
-//  lesson detail can mark a lesson done to skip it. Optional side branches
-//  hang off the rail after the lesson they suggest following. Tapping a node
-//  opens the lesson detail (popover on iPad, sheet on iPhone).
+//  The book's contents: a "Next up" hero card, summary cards (practice,
+//  songs, today), then each stage as a part header followed by its chapters
+//  on a vertical rail. The order is a recommendation; every chapter opens,
+//  and the chapter detail can mark it read. Optional side branches hang off
+//  the rail after the chapter they suggest following. Tapping a node opens
+//  the chapter detail (popover on iPad, sheet on iPhone) with its sections
+//  as jump links.
 //
 
 import SwiftUI
@@ -18,8 +19,9 @@ struct TutorPathView<Header: View>: View {
     let isCompact: Bool
     /// Stage id to scroll to (sidebar selection); cleared after scrolling.
     @Binding var scrollTarget: String?
-    var onStart: (Lesson) -> Void
-    /// Marks a lesson done (skip ahead) or not done.
+    /// Opens a chapter, optionally at one section.
+    var onStart: (LessonLaunch) -> Void
+    /// Marks a chapter read (done) or not.
     var onSetDone: (Lesson, Bool) -> Void = { _, _ in }
     @ViewBuilder var header: Header
 
@@ -35,7 +37,7 @@ struct TutorPathView<Header: View>: View {
                         stageBlock(section, isFirst: index == 0, isLast: index == model.sections.count - 1)
                             .id(section.id)
                     }
-                    Text("Side branches are optional. The main path never waits for them.")
+                    Text("Side branches are optional. The main chapters never wait for them. Done means read: nothing is scored.")
                         .font(.footnote)
                         .foregroundStyle(DS.fg3)
                         .padding(.top, 24)
@@ -80,13 +82,13 @@ struct TutorPathView<Header: View>: View {
     private func stageHeader(_ section: TutorStageSection) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Stage \(section.stage.order)".uppercased())
+                Text("Part \(section.stage.order)".uppercased())
                     .font(.caption.weight(.semibold))
                     .tracking(1)
                     .foregroundStyle(section.isCurrent ? DS.accentStrong : DS.fg3)
                 if section.isCurrent { TutorShellChip(text: "You are here") }
                 Spacer()
-                Text("\(section.completedCount) of \(section.nodes.count) · \(Int((section.completion * 100).rounded()))%")
+                Text("\(section.completedCount) of \(section.nodes.count) read")
                     .font(.subheadline.monospacedDigit())
                     .foregroundStyle(DS.fg2)
             }
@@ -156,9 +158,9 @@ struct TutorPathView<Header: View>: View {
         .popover(isPresented: Binding(get: { selectedLessonID == node.id },
                                       set: { if !$0, selectedLessonID == node.id { selectedLessonID = nil } })) {
             TutorLessonDetailView(node: node, stage: stage, instrument: instrument,
-                                  onStart: { lesson in
+                                  onStart: { launch in
                                       selectedLessonID = nil
-                                      onStart(lesson)
+                                      onStart(launch)
                                   },
                                   onSetDone: { lesson, done in
                                       selectedLessonID = nil
@@ -173,13 +175,13 @@ struct TutorPathView<Header: View>: View {
     private func meta(_ node: TutorPathNode) -> String {
         var parts = ["\(node.lesson.minutes) min"]
         switch node.state {
-        case .completed: parts.append("Done")
-        case .inProgress: parts.append("In progress")
+        case .completed: parts.append("Read")
+        case .inProgress: parts.append("Started")
         case .locked: parts.append("Locked")
         case .available: break
         }
         if node.lesson.steps.contains(where: { if case .practice = $0 { return true }; return false }) {
-            parts.append("Mic")
+            parts.append("Try it")
         }
         return parts.joined(separator: " · ")
     }
@@ -188,8 +190,8 @@ struct TutorPathView<Header: View>: View {
         switch state {
         case .locked: return "locked"
         case .available: return "available"
-        case .inProgress: return "in progress"
-        case .completed: return "completed"
+        case .inProgress: return "started"
+        case .completed: return "read"
         }
     }
 
@@ -214,7 +216,7 @@ struct TutorPathView<Header: View>: View {
                     TutorShellChip(text: "Optional detour", systemImage: "arrow.triangle.branch",
                               fill: DS.surfaceInset, foreground: DS.fg2)
                     Spacer()
-                    Text("\(Int((branch.completion * 100).rounded()))%")
+                    Text("\(branch.nodes.filter { $0.state == .completed }.count) of \(branch.nodes.count) read")
                         .font(.subheadline.monospacedDigit())
                         .foregroundStyle(DS.fg2)
                 }
@@ -272,9 +274,9 @@ struct TutorPathView<Header: View>: View {
         .popover(isPresented: Binding(get: { selectedLessonID == node.id },
                                       set: { if !$0, selectedLessonID == node.id { selectedLessonID = nil } })) {
             TutorLessonDetailView(node: node, stage: stage, instrument: instrument,
-                                  onStart: { lesson in
+                                  onStart: { launch in
                                       selectedLessonID = nil
-                                      onStart(lesson)
+                                      onStart(launch)
                                   },
                                   onSetDone: { lesson, done in
                                       selectedLessonID = nil
@@ -302,7 +304,7 @@ struct TutorContinueHero: View {
             Text(eyebrow)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(DS.accentStrong)
-            Text(card.lesson?.title ?? "You finished the path")
+            Text(card.lesson?.title ?? "You read every chapter")
                 .font(isCompact ? .title.weight(.bold) : .largeTitle.weight(.bold))
                 .foregroundStyle(DS.fg1)
                 .fixedSize(horizontal: false, vertical: true)
@@ -313,15 +315,15 @@ struct TutorContinueHero: View {
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 16) {
                     Label("\(card.minutes) min", systemImage: "clock")
-                    Label("\(lesson.steps.count) steps", systemImage: "list.bullet")
+                    Label("\(lesson.steps.count) sections", systemImage: "list.bullet")
                     if lesson.steps.contains(where: { if case .practice = $0 { return true }; return false }) {
-                        Label("Uses the mic", systemImage: "mic")
+                        Label("Try it boxes", systemImage: "music.quarternote.3")
                     }
                 }
                 .font(.subheadline)
                 .foregroundStyle(DS.fg2)
             } else {
-                Text("Every main-path lesson is done. Replay any lesson, keep up your reviews, or try a side branch.")
+                Text("Every main-path chapter is marked read. Reread any chapter, open Practice, or try a side branch.")
                     .foregroundStyle(DS.fg2)
             }
             HStack(spacing: 12) {
@@ -329,7 +331,7 @@ struct TutorContinueHero: View {
                     Button {
                         onStart(lesson)
                     } label: {
-                        Label(card.buttonTitle, systemImage: "play.fill")
+                        Label(card.buttonTitle, systemImage: "book")
                             .font(.headline)
                             .padding(.horizontal, 8)
                             .frame(minHeight: 36)
@@ -339,7 +341,7 @@ struct TutorContinueHero: View {
                     .keyboardShortcut(.defaultAction)
                     .hoverEffect(.lift)
                 } else {
-                    Button("Show the path", action: onReviewPath)
+                    Button("Show the contents", action: onReviewPath)
                         .buttonStyle(.bordered)
                         .controlSize(.large)
                 }
@@ -361,16 +363,16 @@ struct TutorContinueHero: View {
 
     private var eyebrow: String {
         switch card.kind {
-        case .finished: return "Path complete"
-        case .resume: return "Pick up where you left off · Stage \(card.stageNumber): \(card.stageTitle)"
-        case .start: return "Up next · Stage \(card.stageNumber): \(card.stageTitle)"
+        case .finished: return "Book complete"
+        case .resume: return "Keep reading · Part \(card.stageNumber): \(card.stageTitle)"
+        case .start: return "Next up · Part \(card.stageNumber): \(card.stageTitle)"
         }
     }
 
     private var progressLine: String {
-        let pct = "\(Int((overallCompletion * 100).rounded()))% of the main path"
+        let pct = "\(Int((overallCompletion * 100).rounded()))% of the main chapters read"
         guard practiceDays > 0 else { return pct }
-        return pct + " · practiced on \(practiceDays) \(practiceDays == 1 ? "day" : "days")"
+        return pct + " · read on \(practiceDays) \(practiceDays == 1 ? "day" : "days")"
     }
 }
 
@@ -380,7 +382,7 @@ struct TutorLessonDetailView: View {
     let node: TutorPathNode
     let stage: Stage
     let instrument: TutorInstrument
-    var onStart: (Lesson) -> Void
+    var onStart: (LessonLaunch) -> Void
     var onSetDone: (Lesson, Bool) -> Void = { _, _ in }
     var onClose: () -> Void
 
@@ -390,7 +392,7 @@ struct TutorLessonDetailView: View {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(node.isBranch ? "Optional · Stage \(stage.order)" : "Stage \(stage.order) · Lesson \(node.number)")
+                        Text(node.isBranch ? "Optional · Part \(stage.order)" : "Part \(stage.order) · Chapter \(node.number)")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(DS.accentStrong)
                         Text(lesson.title)
@@ -413,8 +415,8 @@ struct TutorLessonDetailView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 14) {
                     Label("\(lesson.minutes) min", systemImage: "clock")
-                    Label("\(lesson.steps.count) steps", systemImage: "list.bullet")
-                    if node.state == .completed { Label("Done", systemImage: "checkmark.circle") }
+                    Label("\(lesson.steps.count) sections", systemImage: "list.bullet")
+                    if node.state == .completed { Label("Read", systemImage: "checkmark.circle") }
                 }
                 .font(.subheadline)
                 .foregroundStyle(DS.fg2)
@@ -429,21 +431,31 @@ struct TutorLessonDetailView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("Steps")
+                    Text("In this chapter")
                         .font(.headline)
                         .padding(.bottom, 6)
                     ForEach(TutorStepSummary.summaries(for: lesson)) { step in
-                        HStack(alignment: .firstTextBaseline, spacing: 10) {
-                            Image(systemName: step.systemImage)
-                                .frame(width: 22)
-                                .foregroundStyle(DS.accent)
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(step.kindLabel).font(.caption.weight(.semibold)).foregroundStyle(DS.fg3)
-                                Text(step.title).font(.subheadline).foregroundStyle(DS.fg1)
-                                    .fixedSize(horizontal: false, vertical: true)
+                        Button {
+                            onStart(LessonLaunch(lesson: lesson, sectionIndex: step.index))
+                        } label: {
+                            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                                Text("\(step.index + 1)")
+                                    .font(.subheadline.weight(.bold).monospacedDigit())
+                                    .frame(width: 22, alignment: .trailing)
+                                    .foregroundStyle(DS.accentStrong)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(step.kindLabel).font(.caption.weight(.semibold)).foregroundStyle(DS.fg3)
+                                    Text(step.title).font(.subheadline).foregroundStyle(DS.fg1)
+                                        .multilineTextAlignment(.leading)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                Spacer(minLength: 0)
                             }
+                            .padding(.vertical, 6)
+                            .contentShape(Rectangle())
                         }
-                        .padding(.vertical, 6)
+                        .buttonStyle(.plain)
+                        .hoverEffect(.highlight)
                     }
                 }
 
@@ -460,7 +472,7 @@ struct TutorLessonDetailView: View {
             if let title = TutorPathModel.actionTitle(for: node.state) {
                 VStack(spacing: 10) {
                     Button {
-                        onStart(lesson)
+                        onStart(LessonLaunch(lesson: lesson))
                     } label: {
                         Text(title)
                             .font(.headline)
@@ -473,14 +485,14 @@ struct TutorLessonDetailView: View {
                     Button {
                         onSetDone(lesson, !done)
                     } label: {
-                        Label(done ? "Mark as not done" : "Mark as done (skip)",
-                              systemImage: done ? "arrow.uturn.backward" : "forward.end")
+                        Label(done ? "Mark as not done" : "Mark as done",
+                              systemImage: done ? "arrow.uturn.backward" : "checkmark.circle")
                             .frame(maxWidth: .infinity, minHeight: 28)
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.large)
-                    .accessibilityHint(done ? "Returns this lesson to your path."
-                                            : "Skips this lesson. You can still open it any time.")
+                    .accessibilityHint(done ? "Marks this chapter as not read."
+                                            : "Marks this chapter as read. You can still open it any time.")
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 16)

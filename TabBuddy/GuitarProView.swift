@@ -33,7 +33,7 @@ struct GuitarProView: View {
                 measureTransport
             }
         }
-        .onChange(of: player.ready) { if $0 { syncDisplay(); saveMetadata() } }
+        .onChange(of: player.ready) { if $0 { PerfTrace.endAfterCommit("open", "guitar-pro ready"); syncDisplay(); saveMetadata() } }
         .onChange(of: player.selectedTrack) { _ in player.applyOptions() }
         .onChange(of: player.solo) { _ in player.applyOptions() }
         .onChange(of: notation) { _ in file?.preferredNotation = notation; try? context.save(); syncDisplay() }
@@ -170,7 +170,7 @@ final class GuitarProPlayer: NSObject, ObservableObject, WKScriptMessageHandler,
 
     /// Only supported operations can cross the native/web boundary, with their required arguments.
     enum Command {
-        case play, pause, scrollToTop
+        case play, pause, scrollToTop, loadScore
         case seek(Int)
         case configure([String: Any])
         case exportNotes(Int)
@@ -182,6 +182,7 @@ final class GuitarProPlayer: NSObject, ObservableObject, WKScriptMessageHandler,
             case .play: (method, argument) = ("play", nil)
             case .pause: (method, argument) = ("pause", nil)
             case .scrollToTop: (method, argument) = ("scrollToTop", nil)
+            case .loadScore: (method, argument) = ("loadScore", nil)
             case .seek(let bar): (method, argument) = ("seek", bar)
             case .configure(let options): (method, argument) = ("configure", options)
             case .exportNotes(let track): (method, argument) = ("exportNotes", track)
@@ -269,62 +270,194 @@ struct GuitarProScoreView: UIViewRepresentable {
     let url: URL
     let player: GuitarProPlayer
 
+    final class Coordinator {
+        var relay: GuitarProMessageRelay?
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
     func makeUIView(context: Context) -> WKWebView {
-        let configuration = WKWebViewConfiguration()
-        configuration.websiteDataStore = .nonPersistent()
-        configuration.mediaTypesRequiringUserActionForPlayback = []
-        configuration.setURLSchemeHandler(GuitarProResourceHandler(scoreURL: url), forURLScheme: "tabbuddy-gp")
-        configuration.userContentController.add(player, name: "player")
-        let view = WKWebView(frame: .zero, configuration: configuration)
-        player.webView = view
-        view.navigationDelegate = player
-        view.isOpaque = false
-        view.load(URLRequest(url: URL(string: "tabbuddy-gp://player/index.html")!))
-        return view
+        let pool = GuitarProWebViewPool.shared
+        let shell = pool.take() ?? GuitarProWebViewPool.makeShell(warm: false)
+        shell.handler.scoreURL = url
+        shell.relay.target = player
+        context.coordinator.relay = shell.relay
+        player.webView = shell.webView
+        shell.webView.navigationDelegate = player
+        if shell.isWarm {
+            // Runtime, font, and soundfont are already loaded: only the score.
+            player.send(.loadScore)
+        } else {
+            shell.webView.load(URLRequest(url: URL(string: "tabbuddy-gp://player/index.html")!))
+        }
+        // Prepare the next open after this score has had time to render.
+        pool.scheduleWarm()
+        return shell.webView
     }
     func updateUIView(_ view: WKWebView, context: Context) {}
-    static func dismantleUIView(_ view: WKWebView, coordinator: ()) {
+    static func dismantleUIView(_ view: WKWebView, coordinator: Coordinator) {
         view.evaluateJavaScript("window.disposePlayer?.()", completionHandler: nil)
+        coordinator.relay?.target = nil
         view.configuration.userContentController.removeScriptMessageHandler(forName: "player")
         view.stopLoading()
         view.navigationDelegate = nil
     }
 }
 
+/// Forwards the page's messages to the current player, so one web view can be
+/// prepared before a score is chosen and handed to a player later.
+final class GuitarProMessageRelay: NSObject, WKScriptMessageHandler {
+    weak var target: WKScriptMessageHandler?
+    /// The page has created its alphaTab runtime (fonts and soundfont may still be loading).
+    private(set) var shellReady = false
+
+    func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+        if let body = message.body as? [String: Any], body["shell"] as? Bool == true { shellReady = true }
+        target?.userContentController(controller, didReceive: message)
+    }
+}
+
+/// Keeps one Guitar Pro web view warm: alphaTab runtime parsed, Bravura font and
+/// the soundfont loaded, no score. Opening a score then costs only the score load
+/// instead of a cold web process start. Dropped on memory warnings and when its
+/// web process ends; the next open falls back to a cold start.
+@MainActor
+final class GuitarProWebViewPool: NSObject, WKNavigationDelegate {
+    static let shared = GuitarProWebViewPool()
+
+    struct Shell {
+        let webView: WKWebView
+        let handler: GuitarProResourceHandler
+        let relay: GuitarProMessageRelay
+        let isWarm: Bool
+    }
+
+    private var warm: Shell?
+    private var warmTask: Task<Void, Never>?
+    private var memoryObserver: NSObjectProtocol?
+
+    override init() {
+        super.init()
+        memoryObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main) { [weak self] _ in
+                Task { @MainActor in self?.drop() }
+            }
+    }
+
+    /// The warm shell when its runtime is ready; otherwise nil (a cold shell is cheaper
+    /// than waiting on a half-started one).
+    func take() -> Shell? {
+        warmTask?.cancel(); warmTask = nil
+        guard let shell = warm else { return nil }
+        warm = nil
+        guard shell.relay.shellReady else { discard(shell); return nil }
+        shell.webView.navigationDelegate = nil
+        return shell
+    }
+
+    func scheduleWarm(after seconds: Double = 2.0) {
+        guard warm == nil, warmTask == nil else { return }
+        warmTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(seconds))
+            guard !Task.isCancelled, let self, self.warm == nil else { self?.warmTask = nil; return }
+            let shell = Self.makeShell(warm: true)
+            shell.webView.navigationDelegate = self
+            shell.webView.load(URLRequest(url: URL(string: "tabbuddy-gp://player/index.html?warm=1")!))
+            self.warm = shell
+            self.warmTask = nil
+        }
+    }
+
+    func drop() {
+        warmTask?.cancel(); warmTask = nil
+        if let shell = warm { warm = nil; discard(shell) }
+    }
+
+    private func discard(_ shell: Shell) {
+        shell.webView.evaluateJavaScript("window.disposePlayer?.()", completionHandler: nil)
+        shell.webView.configuration.userContentController.removeScriptMessageHandler(forName: "player")
+        shell.webView.stopLoading()
+        shell.webView.navigationDelegate = nil
+    }
+
+    static func makeShell(warm: Bool) -> Shell {
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = .nonPersistent()
+        configuration.mediaTypesRequiringUserActionForPlayback = []
+        let handler = GuitarProResourceHandler(scoreURL: nil)
+        configuration.setURLSchemeHandler(handler, forURLScheme: "tabbuddy-gp")
+        let relay = GuitarProMessageRelay()
+        configuration.userContentController.add(relay, name: "player")
+        let view = WKWebView(frame: .zero, configuration: configuration)
+        view.isOpaque = false
+        return Shell(webView: view, handler: handler, relay: relay, isWarm: warm)
+    }
+
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        if warm?.webView === webView { drop() }
+    }
+
+    func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
+                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        decisionHandler(action.request.url?.scheme == "tabbuddy-gp" ? .allow : .cancel)
+    }
+}
+
 final class GuitarProResourceHandler: NSObject, WKURLSchemeHandler {
-    private let scoreURL: URL
-    init(scoreURL: URL) { self.scoreURL = scoreURL }
+    /// The score served at `/score`; set before the page asks for it. Main thread only.
+    var scoreURL: URL?
+    /// Tasks still waiting for a response, so a stopped task is never answered.
+    private var active = Set<ObjectIdentifier>()
+    private static let readQueue = DispatchQueue(label: "GuitarProResourceHandler.read", qos: .userInitiated, attributes: .concurrent)
+
+    init(scoreURL: URL?) { self.scoreURL = scoreURL }
 
     func webView(_ webView: WKWebView, start task: WKURLSchemeTask) {
         guard let url = task.request.url, url.host == "player" else {
             task.didFailWithError(URLError(.unsupportedURL)); return
         }
+        let id = ObjectIdentifier(task)
+        active.insert(id)
+        let score = scoreURL
+        // Reading the 1 MB runtime, the font, and the soundfont on the main thread
+        // stalled the push animation; deliver on main, read elsewhere.
+        Self.readQueue.async {
+            let result = Result { try Self.read(path: url.path, scoreURL: score) }
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.active.remove(id) != nil else { return }
+                switch result {
+                case .success(let (data, mime)):
+                    task.didReceive(URLResponse(url: url, mimeType: mime, expectedContentLength: data.count, textEncodingName: nil))
+                    task.didReceive(data)
+                    task.didFinish()
+                case .failure(let error):
+                    task.didFailWithError(error)
+                }
+            }
+        }
+    }
+
+    func webView(_ webView: WKWebView, stop task: WKURLSchemeTask) {
+        active.remove(ObjectIdentifier(task))
+    }
+
+    private static func read(path: String, scoreURL: URL?) throws -> (Data, String) {
         // Explicit allowlist prevents score content from accessing other local files.
         let types = ["/index.html": "text/html", "/player.js": "text/javascript",
                      "/player.css": "text/css", "/alphaTab.min.js": "text/javascript",
                      "/font/Bravura.woff2": "font/woff2", "/soundfont/sonivox.sf2": "application/octet-stream"]
-        do {
-            let data: Data
-            let mime: String
-            if url.path == "/score" {
-                var result: Result<Data, Error> = .failure(CocoaError(.fileReadUnknown))
-                NSFileCoordinator().coordinate(readingItemAt: scoreURL, options: [], error: nil) { readURL in
-                    result = Result { try Data(contentsOf: readURL) }
-                }
-                data = try result.get()
-                mime = "application/octet-stream"
-            } else {
-                guard let type = types[url.path],
-                      let root = Bundle.main.url(forResource: "GuitarProAssets", withExtension: nil) else {
-                    throw URLError(.fileDoesNotExist)
-                }
-                data = try Data(contentsOf: root.appendingPathComponent(String(url.path.dropFirst())))
-                mime = type
+        if path == "/score" {
+            guard let scoreURL else { throw URLError(.fileDoesNotExist) }
+            var result: Result<Data, Error> = .failure(CocoaError(.fileReadUnknown))
+            NSFileCoordinator().coordinate(readingItemAt: scoreURL, options: [], error: nil) { readURL in
+                result = Result { try Data(contentsOf: readURL) }
             }
-            task.didReceive(URLResponse(url: url, mimeType: mime, expectedContentLength: data.count, textEncodingName: nil))
-            task.didReceive(data)
-            task.didFinish()
-        } catch { task.didFailWithError(error) }
+            return (try result.get(), "application/octet-stream")
+        }
+        guard let type = types[path],
+              let root = Bundle.main.url(forResource: "GuitarProAssets", withExtension: nil) else {
+            throw URLError(.fileDoesNotExist)
+        }
+        return (try Data(contentsOf: root.appendingPathComponent(String(path.dropFirst()))), type)
     }
-    func webView(_ webView: WKWebView, stop task: WKURLSchemeTask) {}
 }

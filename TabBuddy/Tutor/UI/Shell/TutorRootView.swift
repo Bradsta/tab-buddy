@@ -3,15 +3,16 @@
 //  TabBuddy
 //
 //  Tutor entry (AppPage.tutor). Regular width (iPad full screen, large Split
-//  View / Stage Manager windows): a sidebar with the instrument switch,
-//  stages, and the practice/help sections, next to a detail pane. Compact
-//  width (iPhone, narrow iPad windows): one scrolling home whose sections
-//  push onto the app's navigation stack. The two columns are drawn here
-//  rather than with NavigationSplitView because this view is itself pushed
-//  inside ContentView's NavigationStack, where a split view cannot nest.
+//  View / Stage Manager windows): a sidebar with the instrument switch, the
+//  book's parts (stages), and the practice/help sections, next to a detail
+//  pane. Compact width (iPhone, narrow iPad windows): one scrolling contents
+//  page whose sections push onto the app's navigation stack. The two columns
+//  are drawn here rather than with NavigationSplitView because this view is
+//  itself pushed inside ContentView's NavigationStack, where a split view
+//  cannot nest.
 //
-//  Lessons open full screen in `LessonPlayerView`; progress refreshes when
-//  the player closes.
+//  Chapters open full screen in `LessonPageView`; progress refreshes when
+//  the page closes.
 //
 
 import SwiftData
@@ -30,8 +31,8 @@ struct TutorRootView: View {
     @State private var section: TutorSection = .path
     @State private var compactRoute: TutorSection?
     @State private var scrollTarget: String?
-    @State private var activeLesson: Lesson?
-    @State private var reviewing = false
+    @State private var activeLesson: LessonLaunch?
+    @State private var practiceTab: TutorPracticeView.Tab?
     @State private var didApplyLaunchOptions = false
 
     private var isCompact: Bool { sizeClass == .compact }
@@ -68,16 +69,11 @@ struct TutorRootView: View {
             state.refresh()
             songs.loadIfNeeded(context: modelContext)
         }
-        .fullScreenCover(item: $activeLesson) { lesson in
-            LessonPlayerView(lesson: lesson, instrument: state.instrument) { completed in
+        .fullScreenCover(item: $activeLesson) { launch in
+            LessonPageView(lesson: launch.lesson, instrument: state.instrument, initialSection: launch.sectionIndex,
+                           store: state.store) {
                 activeLesson = nil
-                state.lessonDidExit(lesson, completed: completed)
-            }
-        }
-        .fullScreenCover(isPresented: $reviewing) {
-            TutorReviewSessionView(instrument: state.instrument, store: state.store, library: library) {
-                reviewing = false
-                state.refresh()
+                state.lessonDidClose()
             }
         }
         .navigationDestination(item: $compactRoute) { route in
@@ -108,7 +104,7 @@ struct TutorRootView: View {
         Group {
             if let model = state.pathModel {
                 TutorPathView(model: model, instrument: state.instrument, isCompact: true,
-                              scrollTarget: $scrollTarget, onStart: start,
+                              scrollTarget: $scrollTarget, onStart: open,
                               onSetDone: { state.setLessonDone($0, done: $1) }) {
                     VStack(alignment: .leading, spacing: 16) {
                         TutorInstrumentPicker()
@@ -134,7 +130,7 @@ struct TutorRootView: View {
 
     private var compactLinks: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
-            ForEach([TutorSection.glossary, .games, .calibration, .settings]) { s in
+            ForEach([TutorSection.practice, .flashcards, .games, .glossary, .calibration, .settings]) { s in
                 Button { compactRoute = s } label: {
                     Label(s.title, systemImage: s.systemImage)
                         .font(.subheadline.weight(.medium))
@@ -158,15 +154,23 @@ struct TutorRootView: View {
         case .path:
             if let model = state.pathModel {
                 TutorPathView(model: model, instrument: state.instrument, isCompact: isCompact,
-                              scrollTarget: $scrollTarget, onStart: start,
+                              scrollTarget: $scrollTarget, onStart: open,
                               onSetDone: { state.setLessonDone($0, done: $1) }) {
                     pathHeader(model)
                 }
             } else {
                 missingCourse
             }
-        case .reviews:
-            TutorReviewsPane(onStart: { reviewing = true })
+        case .practice:
+            TutorPracticeView(instrument: state.instrument, course: state.course, initialTab: practiceTab, onOpenLesson: open)
+                .id(state.instrument)
+        case .flashcards:
+            if let course = state.course, let progress = state.progress {
+                TutorFlashcardsView(course: course, progress: progress, instrument: state.instrument)
+                    .id("\(state.instrument.rawValue)-\(progress.completedLessonIDs.count)")
+            } else {
+                missingCourse
+            }
         case .songs:
             TutorSongsView(loader: songs, onOpenSong: onOpenSong)
         case .games:
@@ -184,7 +188,7 @@ struct TutorRootView: View {
     private func pathHeader(_ model: TutorPathModel) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             TutorContinueHero(card: model.continueCard, overallCompletion: model.progress.overallCompletion,
-                              practiceDays: state.practiceDays, isCompact: isCompact, onStart: start,
+                              practiceDays: state.practiceDays, isCompact: isCompact, onStart: { open(LessonLaunch(lesson: $0)) },
                               onReviewPath: { scrollTarget = model.sections.first?.id })
             summaryCards(model)
         }
@@ -194,7 +198,12 @@ struct TutorRootView: View {
     private func summaryCards(_ model: TutorPathModel) -> some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: isCompact ? 240 : 210), spacing: 14, alignment: .top)],
                   alignment: .leading, spacing: 14) {
-            TutorReviewsDueCard(count: state.dueCount, onStart: { reviewing = true })
+            TutorPracticeCard(onOpen: { tab in
+                practiceTab = tab
+                if isCompact { compactRoute = .practice } else { section = .practice }
+            }, onFlashcards: {
+                if isCompact { compactRoute = .flashcards } else { section = .flashcards }
+            })
             TutorSongsCard(loader: songs, course: model.course, progress: model.progress) {
                 if isCompact { compactRoute = .songs } else { section = .songs }
             }
@@ -208,9 +217,9 @@ struct TutorRootView: View {
                                description: Text("The bundled lesson files could not be read."))
     }
 
-    private func start(_ lesson: Lesson) {
+    private func open(_ launch: LessonLaunch) {
         TutorSynth.shared.stop()
-        activeLesson = lesson
+        activeLesson = launch
     }
 
     // MARK: Launch options (DEBUG)
@@ -223,7 +232,7 @@ struct TutorRootView: View {
         var target: TutorSection?
         if TutorLaunchOptions.calibration { target = .calibration }
         if let name = TutorLaunchOptions.section, let s = TutorSection(launchName: name) { target = s }
-        if TutorLaunchOptions.section == "review-session" { reviewing = true }
+        if let tab = TutorLaunchOptions.practiceTab.flatMap(TutorPracticeView.Tab.init(rawValue:)) { practiceTab = tab }
         if let target {
             if isCompact { compactRoute = target } else { section = target }
         }
@@ -243,7 +252,7 @@ private struct TutorSidebar: View {
                 TutorInstrumentPicker()
                     .padding(.horizontal, 4)
 
-                group("Learn") {
+                group("Book") {
                     row(.path)
                     if let model = state.pathModel {
                         ForEach(model.sections) { s in
@@ -253,7 +262,7 @@ private struct TutorSidebar: View {
                             } label: {
                                 HStack(spacing: 10) {
                                     TutorShellRing(value: s.completion, size: 20)
-                                    Text("\(s.stage.order). \(s.stage.title)")
+                                    Text("Part \(s.stage.order). \(s.stage.title)")
                                         .font(.subheadline)
                                         .foregroundStyle(s.isCurrent ? DS.fg1 : DS.fg2)
                                         .fontWeight(s.isCurrent ? .semibold : .regular)
@@ -273,7 +282,8 @@ private struct TutorSidebar: View {
                 }
 
                 group("Practice") {
-                    row(.reviews, badge: state.dueCount)
+                    row(.practice)
+                    row(.flashcards)
                     row(.songs)
                     row(.games)
                 }
@@ -301,7 +311,7 @@ private struct TutorSidebar: View {
         }
     }
 
-    private func row(_ s: TutorSection, badge: Int = 0) -> some View {
+    private func row(_ s: TutorSection) -> some View {
         Button {
             section = s
         } label: {
@@ -313,14 +323,6 @@ private struct TutorSidebar: View {
                     .font(.body.weight(section == s ? .semibold : .regular))
                     .foregroundStyle(DS.fg1)
                 Spacer()
-                if badge > 0 {
-                    Text("\(badge)")
-                        .font(.caption.weight(.bold).monospacedDigit())
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 2)
-                        .foregroundStyle(.white)
-                        .background(DS.accent, in: Capsule())
-                }
             }
             .padding(.horizontal, 10)
             .frame(minHeight: 44)
@@ -331,7 +333,7 @@ private struct TutorSidebar: View {
         .buttonStyle(.plain)
         .hoverEffect(.highlight)
         .keyboardShortcut(s.shortcut, modifiers: .command)
-        .accessibilityLabel(badge > 0 ? "\(s.title), \(badge) due" : s.title)
+        .accessibilityLabel(s.title)
         .accessibilityAddTraits(section == s ? .isSelected : [])
     }
 }
@@ -354,29 +356,31 @@ struct TutorInstrumentPicker: View {
 
 // MARK: - Summary cards
 
-struct TutorReviewsDueCard: View {
-    let count: Int
-    var onStart: () -> Void
+/// Quick links into the Practice section and Flashcards.
+struct TutorPracticeCard: View {
+    var onOpen: (TutorPracticeView.Tab) -> Void
+    var onFlashcards: () -> Void
 
     var body: some View {
         TutorShellCard(padding: 18) {
             VStack(alignment: .leading, spacing: 8) {
-                Label("Reviews due (\(count))", systemImage: "rectangle.stack")
+                Label("Practice", systemImage: "music.quarternote.3")
                     .font(.headline)
-                    .lineLimit(1)
                     .foregroundStyle(DS.fg1)
-                Text(count > 0
-                     ? "Short recall checks keep what you learned. About \(max(1, count / 3)) min."
-                     : "Nothing due. Cards appear a day after you finish a lesson.")
+                Text("Scales, chords, intervals, and rhythms at your own tempo, without opening a chapter.")
                     .font(.subheadline)
                     .foregroundStyle(DS.fg2)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
-                if count > 0 {
-                    Button("Start reviews", action: onStart)
-                        .buttonStyle(.bordered)
-                        .keyboardShortcut("r", modifiers: .command)
+                FlowLayout(spacing: 6, lineSpacing: 6) {
+                    Button("Scales") { onOpen(.scales) }
+                    Button("Chords") { onOpen(.chords) }
+                    Button("Intervals") { onOpen(.intervals) }
+                    Button("Rhythms") { onOpen(.rhythms) }
+                    Button("Flashcards", action: onFlashcards)
                 }
+                .buttonStyle(.bordered)
+                .font(.subheadline.weight(.medium))
             }
         }
     }
@@ -393,10 +397,10 @@ struct TutorTodayCard: View {
                     .font(.headline)
                     .foregroundStyle(DS.fg1)
                 Text(minutes >= goal
-                     ? "About \(minutes) min of lessons today. Goal of \(goal) min met."
+                     ? "About \(minutes) min of chapters marked read today. Goal of \(goal) min met."
                      : minutes > 0
-                     ? "About \(minutes) of \(goal) min, counted from lessons."
-                     : "Goal: \(goal) min. A short session still counts.")
+                     ? "About \(minutes) of \(goal) min, counted from chapters marked read."
+                     : "Goal: \(goal) min, counted from chapters you mark as read. A short read still counts.")
                     .font(.subheadline)
                     .foregroundStyle(DS.fg2)
                     .fixedSize(horizontal: false, vertical: true)
@@ -404,49 +408,5 @@ struct TutorTodayCard: View {
                 Spacer(minLength: 0)
             }
         }
-    }
-}
-
-// MARK: - Reviews pane (regular width)
-
-struct TutorReviewsPane: View {
-    var onStart: () -> Void
-    @EnvironmentObject private var state: TutorShellState
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Reviews")
-                    .font(.largeTitle.weight(.bold))
-                Text("Spaced repetition brings back each fact, note, and chord just before you would forget it. Cards come from lessons you finished.")
-                    .font(.title3)
-                    .foregroundStyle(DS.fg2)
-                    .fixedSize(horizontal: false, vertical: true)
-                TutorShellCard {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(state.dueCount == 0 ? "Nothing due right now" : "\(state.dueCount) cards due")
-                            .font(.title2.weight(.semibold))
-                        Text("Facts: recall, then rate how it went. Note and ear cards: pick an answer. Play cards: the microphone listens; you can skip them.")
-                            .foregroundStyle(DS.fg2)
-                            .fixedSize(horizontal: false, vertical: true)
-                        if state.dueCount > 0 {
-                            Button {
-                                onStart()
-                            } label: {
-                                Label("Start reviews", systemImage: "play.fill")
-                                    .font(.headline)
-                                    .frame(minHeight: 36)
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.large)
-                            .keyboardShortcut(.defaultAction)
-                        }
-                    }
-                }
-            }
-            .padding(32)
-            .tutorReadableWidth(760)
-        }
-        .background(DS.paper)
     }
 }

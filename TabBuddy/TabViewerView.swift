@@ -126,11 +126,14 @@ struct TabViewerView: View {
     private func resolveFile() {
         fileAccessTask?.cancel()
         fileAccessError = nil
+        PerfTrace.lap("open", "lease requested")
         fileAccessTask = Task {
             guard let file else { return }
+            PerfTrace.lap("open", "lease task running")
             do {
                 let lease = try await LibraryManager.shared.acquireFile(file)
                 guard !Task.isCancelled else { lease.close(); return }
+                PerfTrace.lap("open", "lease")
                 fileLease?.close()
                 fileLease = lease
                 resolvedFileURL = lease.url
@@ -163,6 +166,7 @@ struct TabViewerView: View {
                 let contents = try readResult.get()
                 DispatchQueue.main.async {
                     guard textLoadGeneration == generation else { return }
+                    PerfTrace.lap("open", "text read")
                     // Normalize line endings (\r\n → \n) so UITextView and parser agree
                     textContent = contents.replacingOccurrences(of: "\r\n", with: "\n")
                                          .replacingOccurrences(of: "\r", with: "\n")
@@ -218,6 +222,7 @@ struct TabViewerView: View {
         }
         .sheet(isPresented: $showDetails) { if let file { ScoreDetailsView(file: file) } }
         .onAppear {
+            PerfTrace.lap("open", "viewer appeared")
             isVisible = true
             if viewerSession != nil {
                 // Back from something that covered the viewer: keep the file,
@@ -279,6 +284,7 @@ struct TabViewerView: View {
             if isPDF { loadCanonicalMap() }
         }
         .onDisappear {
+            PerfTrace.lap("back", "viewer gone")
             isVisible = false
             stopAutoScroll()
             playbackCoordinator.pause()
@@ -323,6 +329,7 @@ struct TabViewerView: View {
         .onChange(of: textContent) { _ in
             // Parse tab structure when text content loads
             if !isPDF && !isGuitarPro {
+                if textContent != "Loading…" { PerfTrace.endAfterCommit("open", "text") }
                 parseTextTab()
             }
         }
@@ -421,7 +428,7 @@ struct TabViewerView: View {
             ],
             switchSelection: playerAvailable ? viewSwitchSelection : nil,
             backLabel: "Library",
-            onBack: { if !path.isEmpty { path.removeLast() } }
+            onBack: { if !path.isEmpty { PerfTrace.begin("back"); path.removeLast() } }
         )
     }
 

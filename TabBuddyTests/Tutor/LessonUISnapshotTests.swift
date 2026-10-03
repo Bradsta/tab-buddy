@@ -2,8 +2,8 @@
 //  LessonUISnapshotTests.swift
 //  TabBuddyTests
 //
-//  Renders lesson screens into PNGs for visual review at iPad portrait,
-//  iPad landscape, Split View, and iPhone widths. Skipped unless the
+//  Renders chapter pages and the Practice section into PNGs for visual review
+//  at iPad portrait, iPad landscape, Split View, and iPhone widths. Skipped unless the
 //  TUTOR_SNAPSHOT_DIR environment variable names an output folder (pass it as
 //  TEST_RUNNER_TUTOR_SNAPSHOT_DIR to xcodebuild). Not an assertion suite.
 //
@@ -61,14 +61,14 @@ final class LessonUISnapshotTests: XCTestCase {
     }
 
     private func lessonHost(_ id: String, step: Int) -> some View {
-        DebugLessonHost(lessonID: id, startStep: step)
+        DebugLessonHost(lessonID: id, startSection: step)
     }
 
-    /// Index of the first step matching `match` in a lesson.
+    /// Page section index of the first section matching `match` in a lesson.
     private func stepIndex(_ id: String, _ match: (LessonStep) -> Bool) -> Int? {
         for instrument in TutorInstrument.allCases {
             if let lesson = CurriculumLibrary.shared.course(for: instrument)?.lesson(id: id) {
-                return lesson.steps.firstIndex(where: match)
+                return LessonPageModel.sections(for: lesson).first { match($0.step) }?.index
             }
         }
         return nil
@@ -77,7 +77,7 @@ final class LessonUISnapshotTests: XCTestCase {
     private func firstLesson(_ instrument: TutorInstrument, _ match: (LessonStep) -> Bool) -> (String, Int)? {
         guard let course = CurriculumLibrary.shared.course(for: instrument) else { return nil }
         for location in course.allLessonLocations {
-            if let i = location.lesson.steps.firstIndex(where: match) { return (location.lesson.id, i) }
+            if let s = LessonPageModel.sections(for: location.lesson).first(where: { match($0.step) }) { return (location.lesson.id, s.index) }
         }
         return nil
     }
@@ -86,6 +86,12 @@ final class LessonUISnapshotTests: XCTestCase {
         try await render(DiagramGalleryView(), size: .portrait, name: "gallery-guitar", height: 2700)
         try await render(PianoGallery(), size: .portrait, name: "gallery-piano", height: 2700)
         try await render(DiagramGalleryView(), size: .phone, name: "gallery-guitar", height: 3600)
+    }
+
+    func testChapterTop() async throws {
+        for size in [Size.portrait, .landscape, .phone] {
+            try await render(lessonHost("guitar.s3.l1", step: 0), size: size, name: "chapter-top", height: 1800)
+        }
     }
 
     func testExplainAndDemo() async throws {
@@ -133,18 +139,13 @@ final class LessonUISnapshotTests: XCTestCase {
         }
     }
 
-    func testCompletion() async throws {
-        let lesson = try XCTUnwrap(CurriculumLibrary.shared.course(for: .guitar)?.lesson(id: "guitar.s3.l1"))
-        let model = LessonPlayerModel(lesson: lesson, instrument: .guitar)
-        model.record(StepOutcome(score: 0.7, passed: false, weakest: .weakest(item: "E", accuracy: 0.5), label: "Practice"),
-                     forStep: 5)
-        model.record(.skipped(label: "Other"), forStep: 6)
-        let store = try TutorStore.inMemory()
-        let view = ScrollView {
-            LessonCompletionView(model: model, store: store, onDone: {}, onReview: {}).padding(32)
-        }.background(DS.paper)
-        try await render(view, size: .portrait, name: "completion")
-        try await render(view, size: .phone, name: "completion")
+    func testPracticeSection() async throws {
+        for tab in TutorPracticeView.Tab.allCases {
+            let view = TutorPracticeView(instrument: .guitar, course: CurriculumLibrary.shared.course(for: .guitar), initialTab: tab) { _ in }
+            try await render(view, size: .landscape, name: "practice-\(tab.rawValue)", height: 1400)
+        }
+        let piano = TutorPracticeView(instrument: .piano, course: CurriculumLibrary.shared.course(for: .piano), initialTab: .scales) { _ in }
+        try await render(piano, size: .portrait, name: "practice-scales-piano")
     }
 }
 

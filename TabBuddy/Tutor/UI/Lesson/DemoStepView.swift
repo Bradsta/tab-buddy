@@ -2,9 +2,10 @@
 //  DemoStepView.swift
 //  TabBuddy
 //
-//  Listen steps: the synth plays `ExerciseGenerator.playback(for:)` and the
-//  diagram lights up the sounding notes in sync. `DemoPlaybackModel` is also
-//  used by explain steps' "Hear it" button.
+//  Worked examples: a figure-style card where the synth plays
+//  `ExerciseGenerator.playback(for:)` and the diagram lights up the sounding
+//  notes in sync, with the caption underneath. `DemoPlaybackModel` is also
+//  used by explain sections' "Hear it" button and by flashcards.
 //
 
 import SwiftUI
@@ -154,14 +155,15 @@ struct PlaybackStrip: View {
 struct DemoStepView: View {
     let step: DemoStep
     let instrument: TutorInstrument
-    var onPlayed: () -> Void = {}
+    /// Figure number in the chapter ("Example 2").
+    var figureNumber: Int? = nil
 
     @StateObject private var model: DemoPlaybackModel
 
-    init(step: DemoStep, instrument: TutorInstrument, onPlayed: @escaping () -> Void = {}) {
+    init(step: DemoStep, instrument: TutorInstrument, figureNumber: Int? = nil) {
         self.step = step
         self.instrument = instrument
-        self.onPlayed = onPlayed
+        self.figureNumber = figureNumber
         _model = StateObject(wrappedValue: DemoPlaybackModel(spec: step.playback, instrument: instrument,
                                                              player: TutorSequencePlayer.shared))
     }
@@ -169,30 +171,35 @@ struct DemoStepView: View {
     var body: some View {
         WidthReader { width in
             let wide = TutorLayout.isWide(width) && shownDiagram != nil
-            Group {
+            VStack(alignment: .leading, spacing: 14) {
                 if wide {
-                    HStack(alignment: .top, spacing: 32) {
-                        VStack(alignment: .leading, spacing: 18) { header; controls }
-                            .frame(width: min(380, width * 0.36))
+                    HStack(alignment: .top, spacing: 24) {
                         diagram.frame(maxWidth: .infinity)
+                        controls.frame(width: TutorLayout.sidePanelWidth)
                     }
                 } else {
-                    VStack(alignment: .leading, spacing: 20) { header; diagram; controls }
+                    diagram
+                    controls
                 }
+                caption
             }
         }
+        .padding(18)
+        .background(DS.surface, in: RoundedRectangle(cornerRadius: DS.radiusCard, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: DS.radiusCard, style: .continuous).strokeBorder(DS.separator))
         .onDisappear { model.stop() }
-        .onChange(of: model.didPlay) { _, played in if played { onPlayed() } }
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(step.title)
-                .font(.largeTitle.weight(.bold))
-                .foregroundStyle(DS.fg1)
-                .fixedSize(horizontal: false, vertical: true)
+    /// Figure-style caption under the example.
+    private var caption: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            if let figureNumber {
+                Text("Example \(figureNumber).")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(DS.accentStrong)
+            }
             Text(step.caption)
-                .font(.title3)
+                .font(.subheadline)
                 .foregroundStyle(DS.fg2)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -202,15 +209,13 @@ struct DemoStepView: View {
     private var diagram: some View {
         if let diagram = shownDiagram {
             DiagramView(diagram: diagram, instrument: instrument, highlightedMIDI: model.highlighted)
-                .padding(18)
-                .background(DS.surface, in: RoundedRectangle(cornerRadius: DS.radiusCard, style: .continuous))
         }
     }
 
     private var shownDiagram: Diagram? { step.diagram ?? model.autoDiagram }
 
     private var controls: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             Button {
                 model.toggle()
             } label: {
@@ -218,7 +223,6 @@ struct DemoStepView: View {
                       systemImage: model.isPlaying ? "stop.fill" : "play.fill")
             }
             .buttonStyle(TutorPrimaryButtonStyle())
-            .keyboardShortcut("p", modifiers: [])
             .disabled(model.sequence == nil)
             if !model.stripItems.isEmpty {
                 PlaybackStrip(items: model.stripItems, current: model.currentIndex)
@@ -228,7 +232,7 @@ struct DemoStepView: View {
                                 systemImage: "speaker.slash", tone: .neutral)
             }
             if let error = model.error {
-                TutorMessageRow(text: "This demo could not be prepared (\(error)).", systemImage: "exclamationmark.circle", tone: .neutral)
+                TutorMessageRow(text: "This example could not be prepared (\(error)).", systemImage: "exclamationmark.circle", tone: .neutral)
             }
         }
     }

@@ -203,7 +203,16 @@ final class LibraryManager: ObservableObject {
         defaults.set(libraryID.uuidString, forKey: Self.pendingScanKey)
     }
 
-    func refreshStorageAvailability() {
+    private var lastAvailabilityRefresh: Date?
+
+    /// `url(forUbiquityContainerIdentifier:)` can take hundreds of milliseconds and runs on
+    /// the file-service actor, which also serves every score open. The library root's
+    /// `.task` restarts on every return from a score, so repeat checks within a few
+    /// seconds are skipped unless forced (account change, Check Again).
+    func refreshStorageAvailability(force: Bool = false) {
+        let now = Date()
+        if !force, iCloudAvailable != nil, let last = lastAvailabilityRefresh, now.timeIntervalSince(last) < 10 { return }
+        lastAvailabilityRefresh = now
         Task { iCloudAvailable = await files.isICloudAvailable() }
     }
 
@@ -1344,29 +1353,33 @@ final class LibraryManager: ObservableObject {
         lastSuccessfulScan = mount?.lastSuccessfulScan
         let bookmark = mount?.bookmarkData.isEmpty == false ? mount?.bookmarkData : nil
         accessNeeded = effectiveMode == .externalFolder && bookmark == nil
+        // Read the model before suspending: a store reload (option switch, test host
+        // setup) invalidates `descriptor`, and SwiftData asserts on a later getter.
+        let libraryID = descriptor.id
+        let displayName = descriptor.displayName
         Task {
             await files.setOfflineAccess(keepAvailableOffline)
-            await updateCachedAvailability(libraryID: descriptor.id, context: context)
-            await files.configure(LibraryConfiguration(id: descriptor.id,
+            await updateCachedAvailability(libraryID: libraryID, context: context)
+            await files.configure(LibraryConfiguration(id: libraryID,
                                                        mode: effectiveMode,
-                                                       displayName: descriptor.displayName,
+                                                       displayName: displayName,
                                                        externalBookmark: bookmark))
             if effectiveMode == .externalFolder, let bookmark {
                 var stale = false
                 Self.activeRoot = try? URL(resolvingBookmarkData: bookmark, options: [],
                                            bookmarkDataIsStale: &stale)
                 let ubiquitous = await files.rootIsUbiquitous()
-                if activeLibraryID == descriptor.id { isCloudBackedLocation = ubiquitous }
-                if let root = Self.activeRoot { checkMarkerInBackground(root: root, libraryID: descriptor.id, securityScoped: true) }
+                if activeLibraryID == libraryID { isCloudBackedLocation = ubiquitous }
+                if let root = Self.activeRoot { checkMarkerInBackground(root: root, libraryID: libraryID, securityScoped: true) }
             } else if effectiveMode != .externalFolder {
                 do {
                     // Known library ID: never blocks on an evicted marker (offline launch).
                     let root = try await files.configureManagedLibrary(
-                        id: descriptor.id, mode: effectiveMode, displayName: descriptor.displayName
+                        id: libraryID, mode: effectiveMode, displayName: displayName
                     )
                     Self.activeRoot = root
                     accessNeeded = false
-                    checkMarkerInBackground(root: root, libraryID: descriptor.id, securityScoped: false)
+                    checkMarkerInBackground(root: root, libraryID: libraryID, securityScoped: false)
                 } catch {
                     Self.activeRoot = nil
                     accessNeeded = true
