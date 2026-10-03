@@ -20,7 +20,13 @@ struct TabParser {
         //  inserting blanks between every line for \r\n files)
         let normalized = text.replacingOccurrences(of: "\r\n", with: "\n")
                              .replacingOccurrences(of: "\r", with: "\n")
-        let lines = normalized.components(separatedBy: "\n").map(normalizeDialect)
+        var lines = normalized.components(separatedBy: "\n").map(normalizeDialect)
+        // Blank TabBuddy's own embedded metadata block so it is not read as a section
+        // label that hides the real foreword (title, capo). Blanking keeps line indices.
+        if lines.first == EmbeddedScoreMetadata.start,
+           let end = lines.firstIndex(of: EmbeddedScoreMetadata.end) {
+            for i in 0...end { lines[i] = "" }
+        }
         let systemGroups = detectSystems(lines: lines)
         let firstTabLine = systemGroups.first?.tabLineIndices.first ?? lines.count
         var metadata = parseMetadata(lines: lines, firstTabContentLine: firstTabLine)
@@ -184,7 +190,14 @@ struct TabParser {
             let words = ["intro", "verse", "chorus", "bridge", "solo", "outro",
                          "interlude", "pre-chorus", "prechorus", "refrain", "coda",
                          "ending", "instrumental", "breakdown", "tag", "riff", "hook"]
-            for w in words where bare == w || bare.hasPrefix(w + " ") { return true }
+            // "Verse 2", "Intro (x2)", "Chorus Riff" are labels; a title such as
+            // "Bridge to Terabithia" has other words after the section word.
+            let qualifiers: Set<String> = ["part", "riff", "solo", "lead", "fill", "main", "end",
+                                           "again", "repeat", "only", "guitar", "rhythm", "chords"]
+            for w in words where bare == w || bare.hasPrefix(w + " ") {
+                let rest = bare.dropFirst(w.count).split(whereSeparator: { !$0.isLetter }).map(String.init)
+                if rest.allSatisfy({ $0.count < 3 || qualifiers.contains($0) || words.contains($0) }) { return true }
+            }
             return false
         }
         var forewordEnd = max(0, min(firstTabContentLine, lines.count, 30))
@@ -331,7 +344,13 @@ struct TabParser {
             || before.contains("rhythm") || before.contains("rhytm")
             || before.contains("metr") || line.lowercased().contains("metrum")
         let hasParenPrefix = trimmedBefore.hasSuffix("(")  // "(4/4)"
-        let atLineStart = trimmedBefore.isEmpty            // "4/4" at start
+        // "4/4" at start — but not a fraction describing something else
+        // ("1/2 step bend", "1/2 step down", "3/4 capo").
+        let after = String(line[match.upperBound...]).lowercased()
+        let describesOther = after.range(
+            of: #"^\s*(?:steps?|bends?|tones?|capo|frets?|down|up|notes?)\b"#,
+            options: .regularExpression) != nil
+        let atLineStart = trimmedBefore.isEmpty && !describesOther
         let afterTempoNotation = trimmedBefore.range(of: #"[qehsw♩♪]\s*=\s*\d+\s*$"#, options: .regularExpression) != nil  // "Q=60  4/4"
         let isSignature = before.contains("signature")     // "Time Signature: ..."
 
@@ -347,13 +366,15 @@ struct TabParser {
         let lower = line.lowercased()
 
         // "tempo: 120 bpm" or "tempo: 56"
-        if let range = lower.range(of: #"tempo\s*[:=]\s*\d+"#, options: .regularExpression) {
-            return extractFirstNumber(from: String(lower[range]))
+        if let range = lower.range(of: #"tempo\s*[:=]\s*\d+"#, options: .regularExpression),
+           let num = extractFirstNumber(from: String(lower[range])), num >= 30, num <= 300 {
+            return num
         }
 
         // "♩ = 66", "q = 103", "Q=60" (note value = BPM)
-        if let range = lower.range(of: #"[♩♪qehsw]\s*=\s*\d+"#, options: .regularExpression) {
-            return extractFirstNumber(from: String(lower[range]))
+        if let range = lower.range(of: #"[♩♪qehsw]\s*=\s*\d+"#, options: .regularExpression),
+           let num = extractFirstNumber(from: String(lower[range])), num >= 30, num <= 300 {
+            return num
         }
 
         // "E = 140 bpm" — letter followed by = number AND "bpm" somewhere on the line
@@ -1351,8 +1372,11 @@ struct TabParser {
             for (stringIdx, lineIdx) in stringOrder {
                 let chars = Array(lines[lineIdx])
                 let mask = masks[lineIdx] ?? []
+                // A digit continuing a run that began one column earlier (the "2" of
+                // "12") belongs to that note, not to a new one at this column.
                 if col < chars.count && chars[col].isNumber,
-                   !(col < mask.count && mask[col]) {
+                   !(col < mask.count && mask[col]),
+                   !(col > columnRange.lowerBound && chars[col - 1].isNumber) {
                     // Read multi-digit fret
                     var fretStr = String(chars[col])
                     var nextCol = col + 1

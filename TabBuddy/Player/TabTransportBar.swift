@@ -13,6 +13,7 @@
 //  sections beneath shared sound, metronome, and count-in controls.
 //
 
+import AVFoundation
 import SwiftUI
 
 // MARK: - Shared transport primitives (DESIGN.md §5 control anatomy)
@@ -287,6 +288,21 @@ struct TabTransportBar<Display: View>: View {
         .onChange(of: coordinator.bpm) { externalPlayback?.tempo($0) }
         .onChange(of: metronome.isEnabled) { externalPlayback?.metronome($0) }
         .onChange(of: scenePhase) { if $0 != .active { stopPlayback() } }
+        // A call, Siri, unplugged headphones, or an engine reconfiguration stops the
+        // audio engines; stop the transport too rather than run a silent playhead.
+        .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)) { note in
+            let type = (note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt)
+                .flatMap(AVAudioSession.InterruptionType.init(rawValue:))
+            if type == .began { stopPlayback() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)) { note in
+            let reason = (note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt)
+                .flatMap(AVAudioSession.RouteChangeReason.init(rawValue:))
+            if reason == .oldDeviceUnavailable { stopPlayback() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .AVAudioEngineConfigurationChange)) { _ in
+            if coordinator.isPlaying || countingIn { stopPlayback() }
+        }
         .onDisappear {
             stopPlayback()
             coordinator.onLoopCompleted = nil
@@ -448,12 +464,14 @@ struct TabTransportBar<Display: View>: View {
         let beats = max(1, countInBars) * meter
         let interval = UInt64((60.0 / max(1, coordinator.bpm)) * 1_000_000_000)
         countInTask = Task { @MainActor in
+            // A cancelled task must not touch countingIn: stopPlayback/runCountIn own it,
+            // and a newer count-in may already be running when this one wakes.
             for b in 0..<beats {
-                if Task.isCancelled { countingIn = false; return }
+                if Task.isCancelled { return }
                 metronome.playClick(beatInMeasure: b % meter, beatsPerMeasure: meter, force: true)
                 try? await Task.sleep(nanoseconds: interval)
             }
-            if Task.isCancelled { countingIn = false; return }
+            if Task.isCancelled { return }
             countingIn = false
             then()
         }

@@ -91,33 +91,18 @@ struct FileCardView: View, Equatable {
         .sheet(isPresented: $showDetails) { ScoreDetailsView(file: file) }
         .sheet(isPresented: $showTags) { TagEditorView(file: file) }
         .sheet(isPresented: $showRename) { renameSheet }
-        .alert(library.mode == .externalFolder ? "Move file to the Trash?" : "Delete this file?",
-               isPresented: $showFileDeleteConfirmation) {
-            Button(library.mode == .externalFolder ? "Move to Trash" : "Delete File", role: .destructive) {
-                if library.mode == .externalFolder {
-                    // Errors (including "couldn't move to the Trash") appear in the library's error banner.
-                    Task { try? await LibraryManager.shared.deleteUnderlyingFile(file, context: context) }
-                } else {
-                    onDelete()
-                }
-            }
+        .alert("Delete this file?", isPresented: $showFileDeleteConfirmation) {
+            Button("Delete File", role: .destructive) { onDelete() }
             Button("Cancel", role: .cancel) { }
         } message: {
             Text(deleteMessage)
         }
     }
 
-    /// Names the exact file. A folder you chose only ever moves the file to the Trash.
+    /// Names the exact file. Only the app-managed library folder offers deletion;
+    /// a folder you chose only offers Remove from Library.
     private var deleteMessage: String {
         let path = file.effectiveRelativePath ?? file.filename
-        let folder = library.libraryName.map { "“\($0)”" } ?? "your folder"
-        if library.mode == .externalFolder {
-            var message = "Moves “\(path)” in \(folder) to the Trash and removes it from the library."
-            if library.storageOption == .hybrid {
-                message += " Its library info is removed on all your devices."
-            }
-            return message + " If the Trash isn’t available for this folder, the file is kept."
-        }
         return "Deletes “\(path)” from the library folder. This can’t be undone."
     }
 
@@ -269,9 +254,6 @@ struct FileCardView: View, Equatable {
         if library.mode == .externalFolder {
             Button { onDelete() } label: {
                 Label("Remove from Library", systemImage: "minus.circle")
-            }
-            Button(role: .destructive) { showFileDeleteConfirmation = true } label: {
-                Label("Move File to Trash", systemImage: "trash")
             }
         } else {
             Button(role: .destructive) { showFileDeleteConfirmation = true } label: {

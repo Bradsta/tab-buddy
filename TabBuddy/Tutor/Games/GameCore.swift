@@ -87,6 +87,9 @@ enum GamePhase: Equatable {
     case results
     case micDenied
     case unavailable(String)
+    /// Listening stopped without the game asking (call, Siri, route or audio
+    /// configuration change). Nothing is scored; Retry starts over.
+    case interrupted
 
     var isActive: Bool {
         switch self {
@@ -173,6 +176,15 @@ class GameModel: ObservableObject {
     private var countdownStart: TimeInterval = 0
     private(set) var playStart: TimeInterval = 0
     private var ticker: Task<Void, Never>?
+    private var stopToken: TutorObserverToken?
+
+    /// Which clock `now` reads. Chosen once when the countdown begins and kept
+    /// for the whole game, so the time base never changes inside a phase.
+    private enum TimeBase { case wall, take }
+    private var timeBase: TimeBase = .wall
+    /// Last take-clock reading; `now` holds it if the input stops, so elapsed
+    /// time never jumps by mixing the take clock with the wall clock.
+    private var lastTakeTime: TimeInterval = 0
 
     init(gameID: String, instrument: TutorInstrument, dependencies: GameDependencies) {
         self.gameID = gameID
@@ -221,16 +233,25 @@ class GameModel: ObservableObject {
         return level > 1 ? base + ".level\(level)" : base
     }
 
-    /// Time base: the listener's take clock while listening (detections use
-    /// it), the wall clock otherwise.
-    var now: TimeInterval { listener.isListening ? listener.takeClock : clock.now }
+    /// Time base: the listener's take clock for games that listen from the
+    /// start (detections use it), the wall clock otherwise. Fixed for the
+    /// whole game; if the microphone stops, the take time holds still.
+    var now: TimeInterval {
+        switch timeBase {
+        case .wall:
+            return clock.now
+        case .take:
+            if listener.isListening { lastTakeTime = listener.takeClock }
+            return lastTakeTime
+        }
+    }
 
     var isListening: Bool { listener.isListening }
     var elapsed: TimeInterval { now - playStart }
 
     // MARK: Controls
 
-    /// Starts a game from the intro, results, or an error state.
+    /// Starts a game from the intro, results, an error, or an interruption.
     func start() async {
         guard !phase.isActive else { return }
         stopTicker()
@@ -265,6 +286,13 @@ class GameModel: ObservableObject {
         feedback = nil
     }
 
+    /// After listening stopped unexpectedly: starts the current level over,
+    /// reopening the microphone.
+    func retry() async {
+        guard phase == .interrupted else { return }
+        await start()
+    }
+
     /// Back to the intro card (change level or mode).
     func showIntro() {
         cancel()
@@ -293,7 +321,28 @@ class GameModel: ObservableObject {
             listener.stop()
             return false
         }
+        observeUnexpectedStop()
         return true
+    }
+
+    private func observeUnexpectedStop() {
+        guard stopToken == nil else { return }
+        stopToken = listener.observeUnexpectedStop { [weak self] in
+            self?.listeningStoppedUnexpectedly()
+        }
+    }
+
+    /// Freezes the game without scoring it: no results, no attempt, no best.
+    func listeningStoppedUnexpectedly() {
+        guard phase.isActive else { return }
+        stopTicker()
+        player.stop()
+        listener.disarm()
+        closeMicrophone()
+        feedback = nil
+        result = nil
+        remaining = nil
+        phase = .interrupted
     }
 
     func closeMicrophone() {
@@ -315,6 +364,12 @@ class GameModel: ObservableObject {
     // MARK: Clock
 
     private func beginCountdown() {
+        if listener.isListening {
+            timeBase = .take
+            lastTakeTime = listener.takeClock
+        } else {
+            timeBase = .wall
+        }
         countdownStart = now
         if countdownSeconds > 0 {
             phase = .countdown(Int(ceil(countdownSeconds)))
@@ -333,6 +388,12 @@ class GameModel: ObservableObject {
 
     /// Advances the countdown, the game timer, and the game's own clock.
     func tick() {
+        // The take clock froze because the input went away; the notification
+        // may not have arrived yet. Never score on a frozen or foreign clock.
+        if timeBase == .take, phase.isActive, !listener.isListening {
+            listeningStoppedUnexpectedly()
+            return
+        }
         let t = now
         switch phase {
         case .countdown:

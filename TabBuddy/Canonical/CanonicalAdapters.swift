@@ -153,7 +153,8 @@ enum CanonicalAdapters {
                                           noteValue: tab.noteValue,
                                           measureCount: max(tab.measureCount, 1),
                                           bpm: tab.bpm ?? 120,
-                                          tuningMIDI: tab.tuningMIDI)
+                                          tuningMIDI: tab.tuningMIDI,
+                                          beatCounts: tab.measures.map(\.beatCount))
         map.tuning = tab.tuningName
         map.capoSemitones = tab.capoOffsets.first
         map.key = keyName(forFifths: tab.keyFifths)
@@ -285,7 +286,7 @@ enum CanonicalAdapters {
         if let artist = tab.artist { lines.append(artist) }
         var tuningLine = "Tuning: \(tab.tuningName)  (\(labels.joined()))"
         if let capo = tab.capoOffsets.first, capo > 0 { tuningLine += "  Capo \(capo)" }
-        if let bpm = tab.bpm { tuningLine += "  Tempo: \(Int(bpm))" }
+        if let bpm = tab.bpm, bpm.isFinite, abs(bpm) < 1e9 { tuningLine += "  Tempo: \(Int(bpm))" }
         lines.append(tuningLine)
         if tab.provenance.isFreeTime { lines.append("(free time — unmetered, even spacing)") }
         lines.append("")

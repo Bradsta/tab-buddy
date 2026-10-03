@@ -84,6 +84,8 @@ final class TryItModel: ObservableObject {
 
     private var listenGeneration = 0
     private var resumeListeningAfterPlayback = false
+    /// True while `player.play` runs, so a synchronous completion does not loop.
+    private var startingPlayback = false
     private var ticker: Task<Void, Never>?
     private var passageStart: TimeInterval = 0
     private var countInBeats = 4
@@ -273,12 +275,16 @@ final class TryItModel: ObservableObject {
             cancelListening(keepMarks: true)
         }
         isPlaying = true
+        startingPlayback = true
+        defer { startingPlayback = false }
         let started = player.play(sequence, instrument: instrument, onStep: { [weak self] i in
             self?.playbackIndex = i
         }, completion: { [weak self] in
             guard let self else { return }
             self.playbackIndex = nil
-            if self.loop, self.isPlaying {
+            // Muted output completes synchronously inside play(); looping from there
+            // would recurse without bound.
+            if self.loop, self.isPlaying, !self.startingPlayback {
                 self.playExample()
                 return
             }

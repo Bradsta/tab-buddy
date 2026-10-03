@@ -24,7 +24,7 @@ final class HuntGameModel: GameModel {
     static let gameDuration: TimeInterval = 30
 
     private var rng: SeededRandom
-    private let seed: UInt64
+    private var seed: UInt64
 
     init(instrument: TutorInstrument, dependencies: GameDependencies, seed: UInt64 = UInt64(Date().timeIntervalSince1970)) {
         self.seed = seed
@@ -67,6 +67,7 @@ final class HuntGameModel: GameModel {
     }
 
     override func resetGame() {
+        seed &+= 1   // "Play again" gets a new target order, as in the other games.
         rng = SeededRandom(seed: seed &+ UInt64(level))
         found = []
         totalFound = 0

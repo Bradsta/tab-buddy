@@ -31,6 +31,10 @@ final class LibraryManager: ObservableObject {
     private var scanTask: Task<Void, Never>?
     private var moveTask: Task<Void, Never>?
     private var importingSharedFiles = false
+    /// Unstructured tasks that touch a model context after suspending. A store reload
+    /// cancels and awaits them first (`finishDatabaseWork`): SwiftData traps when a
+    /// model from a released container is read.
+    private var contextWork: [UUID: Task<Void, Never>] = [:]
     private var activeImports = 0
     private var pendingMutations = 0
     private var offlineTask: Task<Void, Never>?
@@ -155,7 +159,7 @@ final class LibraryManager: ObservableObject {
         libraryName = url.lastPathComponent
         mode = .externalFolder
         isConfiguring = true
-        Task {
+        track(Task {
             defer { isConfiguring = false }
             let scoped = url.startAccessingSecurityScopedResource()
             defer { if scoped { url.stopAccessingSecurityScopedResource() } }
@@ -180,7 +184,7 @@ final class LibraryManager: ObservableObject {
                 lastError = error.localizedDescription
                 accessNeeded = true
             }
-        }
+        })
     }
 
     /// Migrates the pre-option sync flag, remembers where this option's songs live,
@@ -225,7 +229,7 @@ final class LibraryManager: ObservableObject {
             return
         }
         isConfiguring = true
-        Task {
+        track(Task {
             defer { isConfiguring = false }
             do {
                 let available = await files.isICloudAvailable()
@@ -257,7 +261,7 @@ final class LibraryManager: ObservableObject {
             } catch {
                 lastError = error.localizedDescription
             }
-        }
+        })
     }
 
     /// Adopt the exact selected folder and read its songs in place, as the location of
@@ -267,7 +271,7 @@ final class LibraryManager: ObservableObject {
         let option: LibraryStorageOption = option == .iCloudOnly ? .localOnly : option
         isConfiguring = true
         let scoped = url.startAccessingSecurityScopedResource()
-        Task {
+        track(Task {
             defer {
                 if scoped { url.stopAccessingSecurityScopedResource() }
                 isConfiguring = false
@@ -306,7 +310,7 @@ final class LibraryManager: ObservableObject {
                 lastError = error.localizedDescription
                 if let previous = activeDescriptor(context: context) { apply(descriptor: previous, context: context) }
             }
-        }
+        })
     }
 
     /// Renews this device's authorization for the current library folder (Reconnect
@@ -317,7 +321,7 @@ final class LibraryManager: ObservableObject {
         let existingDescriptor = activeDescriptor(context: context)
         let descriptor = existingDescriptor
             ?? LibraryDescriptor(mode: .externalFolder, displayName: url.lastPathComponent)
-        Task {
+        track(Task {
             defer { isConfiguring = false }
             do {
                 let bookmark = try await files.connectExternalRoot(
@@ -360,7 +364,7 @@ final class LibraryManager: ObservableObject {
                 lastError = error.localizedDescription
                 accessNeeded = true
             }
-        }
+        })
     }
 
     // MARK: - Storage options
@@ -447,7 +451,7 @@ final class LibraryManager: ObservableObject {
         guard let planned = plannedLocation(for: option) else { return .needsFolder }
         let previous = currentLocation
         isConfiguring = true
-        Task {
+        track(Task {
             defer { isConfiguring = false }
             do {
                 var location = planned
@@ -467,7 +471,7 @@ final class LibraryManager: ObservableObject {
             } catch {
                 lastError = error.localizedDescription
             }
-        }
+        })
         return .started
     }
 
@@ -476,7 +480,7 @@ final class LibraryManager: ObservableObject {
     func useAppFolder(context: ModelContext) {
         guard !isBusyForStorageChange, storageOption == .localOnly, mode == .externalFolder else { return }
         isConfiguring = true
-        Task {
+        track(Task {
             defer { isConfiguring = false }
             do {
                 let id = try await files.existingManagedLibraryID(mode: .managedLocal) ?? UUID()
@@ -489,7 +493,7 @@ final class LibraryManager: ObservableObject {
             } catch {
                 lastError = error.localizedDescription
             }
-        }
+        })
     }
 
     /// Point this device at an existing location without touching any song file.
@@ -607,10 +611,10 @@ final class LibraryManager: ObservableObject {
         defer {
             refreshOfflineCopies(context: context)
             presenceVerificationNeeded = true
-            Task {
+            track(Task {
                 if storageOption?.syncsMetadata == true { await verifyUnknownPresence(context: context) }
                 startBackgroundProcessing(context: context)
-            }
+            })
         }
         let commit: @MainActor @Sendable ([LibraryFileRecord]) async throws -> Void = { records in
             await self.reconcile(records: records, descriptor: descriptor, context: context, isCompleteScan: false, readMetadata: false)
@@ -650,15 +654,34 @@ final class LibraryManager: ObservableObject {
                 options: [.skipsHiddenFiles]
               ), !urls.isEmpty else { return }
         importingSharedFiles = true
-        Task {
+        track(Task {
             defer { importingSharedFiles = false }
-            do {
-                _ = try await importFiles(urls, context: context)
-                for url in urls { try? FileManager.default.removeItem(at: url) }
-            } catch {
-                lastError = error.localizedDescription
+            // Import one staged file at a time and remove only what was imported, so a
+            // later failure cannot re-import earlier files and a skipped file is not lost.
+            var firstFailure: String?
+            var unsupported = 0
+            for url in urls {
+                if Task.isCancelled { break }   // Store reload: the rest stay staged.
+                guard GuitarProFileType.supports(extension: url.pathExtension) else {
+                    // Nothing could ever import it; discard instead of reporting it forever.
+                    try? FileManager.default.removeItem(at: url)
+                    unsupported += 1
+                    continue
+                }
+                do {
+                    if try await importFiles([url], context: context) > 0 {
+                        try? FileManager.default.removeItem(at: url)
+                    }
+                } catch {
+                    if firstFailure == nil { firstFailure = error.localizedDescription }
+                }
             }
-        }
+            if let firstFailure {
+                lastError = firstFailure
+            } else if unsupported > 0 {
+                lastError = "\(unsupported) shared file\(unsupported == 1 ? " has" : "s have") an unsupported type and \(unsupported == 1 ? "was" : "were") discarded. Supported: PDF, text, and Guitar Pro."
+            }
+        })
     }
 
     func migrateLegacyImports(context: ModelContext) {
@@ -666,12 +689,13 @@ final class LibraryManager: ObservableObject {
         let legacy = ((try? context.fetch(FetchDescriptor<FileItem>())) ?? [])
             .filter { $0.needsLibraryMigration && !$0.bookmark.isEmpty }
         guard !legacy.isEmpty else { return }
-        Task {
+        track(Task {
             for item in legacy {
+                if Task.isCancelled { return }
                 do {
                     let source = try await files.acquireLegacyFile(bookmark: item.bookmark)
+                    defer { source.close() }
                     let records = try await files.importFiles([source.url])
-                    source.close()
                     guard let record = records.first else { continue }
                     item.libraryID = descriptor.id
                     item.storageRelativePath = record.relativePath
@@ -689,7 +713,7 @@ final class LibraryManager: ObservableObject {
                 }
             }
             TagIndexer.rebuild(in: context)
-        }
+        })
     }
 
     func rescan(context: ModelContext) {
@@ -824,8 +848,9 @@ final class LibraryManager: ObservableObject {
             for (index, item) in items.enumerated() {
                 do {
                     // A song already missing from the folder has no file to delete.
-                    if deleteFiles && availability[item.id] != .missing {
-                        guard let relative = item.effectiveRelativePath else { throw LibraryFileError.invalidRelativePath }
+                    // A legacy item with no library path has no library file to delete.
+                    if deleteFiles && availability[item.id] != .missing,
+                       let relative = item.effectiveRelativePath {
                         try await files.deleteUnderlyingFile(relativePath: relative)
                     }
                     for presence in byFile[item.id] ?? [] { context.delete(presence) }
@@ -861,6 +886,7 @@ final class LibraryManager: ObservableObject {
     func deleteUnderlyingFile(_ item: FileItem, context: ModelContext) async throws {
         await finishScanBeforeMutation()
         guard !isRemoving, !isMoving, !isConfiguring, activeImports == 0, item.modelContext != nil else { throw LibraryFileError.libraryBusy }
+        guard mode != .externalFolder else { throw LibraryFileError.externalFileDeletionNotAllowed }
         guard let relative = item.effectiveRelativePath else { throw LibraryFileError.invalidRelativePath }
         isRemoving = true
         activeImports += 1
@@ -1226,8 +1252,22 @@ final class LibraryManager: ObservableObject {
         }
     }
 
+    private func track(_ task: Task<Void, Never>) {
+        let id = UUID()
+        contextWork[id] = task
+        Task { await task.value; self.contextWork[id] = nil }
+    }
+
     /// Reloading SwiftData must not leave work holding the previous model context.
     func finishDatabaseWork() async {
+        // Tracked work may start more tracked work (apply → background processing);
+        // drain until none is left.
+        while !contextWork.isEmpty {
+            let pending = Array(contextWork.values)
+            contextWork.removeAll()
+            for task in pending { task.cancel() }
+            for task in pending { await task.value }
+        }
         pauseBackgroundProcessing()
         await processingTask?.value
         mergeScheduleTask?.cancel()
@@ -1300,6 +1340,8 @@ final class LibraryManager: ObservableObject {
 
     private func updateCachedAvailability(libraryID: UUID, context: ModelContext) async {
         let paths = (try? await files.cachedPaths(libraryID: libraryID)) ?? []
+        // The store may be reloading; don't read models from its context.
+        guard !Task.isCancelled else { return }
         let items = (try? context.fetch(FetchDescriptor<FileItem>())) ?? []
         cachedFileIDs = Set(items.filter { $0.libraryID == libraryID && paths.contains($0.effectiveRelativePath ?? "") }.map(\.id))
     }
@@ -1357,8 +1399,9 @@ final class LibraryManager: ObservableObject {
         // setup) invalidates `descriptor`, and SwiftData asserts on a later getter.
         let libraryID = descriptor.id
         let displayName = descriptor.displayName
-        Task {
+        track(Task {
             await files.setOfflineAccess(keepAvailableOffline)
+            guard !Task.isCancelled else { return }
             await updateCachedAvailability(libraryID: libraryID, context: context)
             await files.configure(LibraryConfiguration(id: libraryID,
                                                        mode: effectiveMode,
@@ -1386,8 +1429,9 @@ final class LibraryManager: ObservableObject {
                     lastError = error.localizedDescription
                 }
             }
+            guard !Task.isCancelled else { return }
             startBackgroundProcessing(context: context)
-        }
+        })
     }
 
     /// Validates the active folder's marker after launch without blocking it. Only a

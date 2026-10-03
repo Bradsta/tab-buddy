@@ -8,7 +8,7 @@
 //    -TutorOpen -TutorGame rhythm-tapper       open that game
 //    -TutorInstrument piano                    instrument (default: guitar,
 //                                              or the only one the game supports)
-//    -TutorGamePhase play|results              sample state, fake audio, and an
+//    -TutorGamePhase play|results|interrupted  sample state, fake audio, and an
 //                                              in-memory score store
 //    -TutorForceWidth 500                      narrow column (Split View check)
 //
@@ -141,6 +141,7 @@ private struct DebugPhaseView: View {
         case "results": model.debugShow(.results)
         case "countdown": model.debugShow(.countdown(2))
         case "mic-off": model.debugShow(.micDenied)
+        case "interrupted": model.debugShow(.interrupted)
         default: break
         }
         return model

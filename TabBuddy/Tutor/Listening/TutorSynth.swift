@@ -170,6 +170,8 @@ final class TutorSynth: ObservableObject {
                 onStep?(i)
                 for (k, p) in step.sorted().enumerated() {
                     if k > 0 && strum > 0 { try? await Task.sleep(nanoseconds: UInt64(strum * 1e9)) }
+                    // stop() may have silenced the chord mid-strum; don't restart its strings.
+                    guard !Task.isCancelled else { break }
                     self.noteOn(p, velocity: velocity)
                 }
                 try? await Task.sleep(nanoseconds: UInt64(max(0, stepSeconds - strum * Double(step.count - 1)) * 1e9))

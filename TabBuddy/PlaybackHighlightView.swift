@@ -121,12 +121,13 @@ final class PlaybackHighlightOverlay: UIView {
         let text = textView.text ?? ""
         let lines = text.components(separatedBy: "\n")
 
+        // NSRange locations are UTF-16 offsets, not Character counts.
         // Get Y for the first line of the system
         var charIndexStart = 0
         for i in 0..<min(lineRange.lowerBound, lines.count) {
-            charIndexStart += lines[i].count + 1
+            charIndexStart += lines[i].utf16.count + 1
         }
-        let safeStart = min(charIndexStart, max(0, text.count - 1))
+        let safeStart = min(charIndexStart, max(0, text.utf16.count - 1))
         let nsRangeStart = NSRange(location: safeStart, length: 1)
         let glyphRangeStart = textView.layoutManager.glyphRange(
             forCharacterRange: nsRangeStart, actualCharacterRange: nil
@@ -140,9 +141,9 @@ final class PlaybackHighlightOverlay: UIView {
         let lastLine = lineRange.lowerBound + lineRange.count - 1
         var charIndexEnd = 0
         for i in 0..<min(lastLine + 1, lines.count) {
-            charIndexEnd += lines[i].count + 1
+            charIndexEnd += lines[i].utf16.count + 1
         }
-        let safeEnd = min(max(0, charIndexEnd - 1), max(0, text.count - 1))
+        let safeEnd = min(max(0, charIndexEnd - 1), max(0, text.utf16.count - 1))
         let nsRangeEnd = NSRange(location: safeEnd, length: 1)
         let glyphRangeEnd = textView.layoutManager.glyphRange(
             forCharacterRange: nsRangeEnd, actualCharacterRange: nil

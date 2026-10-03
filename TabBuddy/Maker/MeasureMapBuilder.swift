@@ -19,7 +19,8 @@ enum MeasureMapBuilder {
         noteValue: Int,
         measureCount: Int,
         bpm: Double,
-        tuningMIDI: [Int]
+        tuningMIDI: [Int],
+        beatCounts: [Int]? = nil
     ) -> MeasureMap {
         // Group notes by measure index
         var notesByMeasure: [Int: [ComposedNote]] = [:]
@@ -56,7 +57,8 @@ enum MeasureMapBuilder {
             measures.append(Measure(
                 rect: .zero,
                 measureNumber: i + 1,
-                beatCount: beatsPerMeasure,
+                // Free-time and uneven measures keep their own length in playback.
+                beatCount: beatCounts.flatMap { $0.indices.contains(i) && $0[i] > 0 ? $0[i] : nil } ?? beatsPerMeasure,
                 notes: noteEvents.isEmpty ? nil : noteEvents,
                 columnRange: nil
             ))

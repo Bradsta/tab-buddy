@@ -349,7 +349,7 @@ struct TabViewerView: View {
                 startAutoScroll()
             }
         }
-        .sheet(isPresented: $showTags)   { TagEditorView(file: file!) }
+        .sheet(isPresented: $showTags)   { if let file { TagEditorView(file: file) } }
             .sheet(isPresented: $showRename) { renameSheet               }
             .onDisappear { stopAutoScroll() }           // safety
     }
@@ -1101,10 +1101,10 @@ struct TabViewerView: View {
                     let lines = textContent.components(separatedBy: "\n")
                     var charIndex = 0
                     for i in 0..<min(lineRange.lowerBound, lines.count) {
-                        charIndex += lines[i].count + 1 // +1 for newline
+                        charIndex += lines[i].utf16.count + 1 // +1 for newline; NSRange is UTF-16
                     }
 
-                    let safeCharIndex = min(charIndex, max(0, textView.text.count - 1))
+                    let safeCharIndex = min(charIndex, max(0, textView.text.utf16.count - 1))
                     let nsRange = NSRange(location: safeCharIndex, length: 1)
                     let glyphRange = textView.layoutManager.glyphRange(
                         forCharacterRange: nsRange, actualCharacterRange: nil

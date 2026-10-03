@@ -6,6 +6,69 @@ it lives, and what's next. Newest first.
 
 ---
 
+## 2026-10-03 — Bug-hunt fixes
+
+The fixes below came from a static review of library, parsing, player and Tutor code.
+
+- **Share import**:
+  - `importPendingSharedFiles` imports staged files one at a time and deletes each one only after it is imported. Before, a later copy failure kept every staged file, so the next launch imported the earlier files again as duplicates named "(2)".
+  - Unsupported extensions were deleted without being imported. They now stay staged and are reported.
+- **Removal**: a legacy item with no library path can be removed from the catalog in managed modes. It previously failed with `invalidRelativePath`.
+- **Legacy migration**: the source lease now closes when the import throws.
+- **Parser and canonical (converter v20)**:
+  - TabBuddy's own `[TabBuddy Metadata v1]` header no longer reads as a section label. It had dropped the foreword: title, artist, and capo, so a capo-2 tab sounded 2 semitones low.
+  - The tail digit of a multi-digit fret that is not left-aligned no longer creates a phantom note.
+  - `tempo:` and `note =` BPMs are range-checked to 30–300.
+  - MusicXML `fmt` no longer traps on huge integers.
+  - `esc` strips C0 control characters that made the canonical file unreadable.
+- **Audio**:
+  - `PitchDetector` removes any existing tap before installing one. A second start after a failed `engine.start()` raised an NSException.
+  - A stop during the mic permission prompt now prevents setup, so the mic no longer starts with no screen attached.
+  - An input format of 0 Hz or 0 channels is rejected.
+- **Transport**: a cancelled count-in task no longer clears `countingIn` for a newer count-in.
+- **Reader**:
+  - The tags sheet no longer force-unwraps `file`.
+  - The highlight and auto-scroll `NSRange` math uses UTF-16 offsets.
+- **Tutor**:
+  - With loop on and output muted, Try It no longer recurses without bound through the synchronous completion.
+  - Note Hunt "Play again" gets a new target order.
+  - A cancelled guitar strum does not restart chord tones after `stop()`.
+  - The VoiceOver beat label shows a correct beat during count-in.
+  - A failed mic start resets the session mode from `.measurement`.
+
+Validation (unsigned, iPad simulator 985EC883, serial):
+- Whole `TabBuddyTests`: 393 passed, 3 skipped. 3 new regression tests are in `ForewordCapoRhythmFreeTimeTests`, and `GoldenImportTests` passes.
+- `LessonUITests` was rerun after the Try It loop change: 29 passed.
+- `LibraryStorageOptionTests.testHybridReadsFolderInPlaceAndLocalOnlyKeepsTheSameFolder` crashes the test host on the clean `ff17d0a` too. A SwiftData trap in `LibraryManager.updateCachedAvailability` reads `FileItem` after the store was reloaded. It is not fixed.
+
+Not verified: the share-extension flow on device, and mic start or stop races on device.
+
+### Follow-ups (same day, decisions from review)
+
+- **Store reload crash**: `LibraryManager` now tracks the unstructured tasks that touch a model context after suspending: apply, configuration and option switches, the import follow-up, share import, and legacy migration. `finishDatabaseWork` cancels them, then awaits them, before any store reload. `updateCachedAvailability` and `apply` stop after cancellation. `LibraryStorageOptionTests` keeps its managers and containers alive until an async teardown drains them, the way the app does. The earlier test-host crash came from a previous test's `apply` task reading a released in-memory store.
+- **Deletion policy**: files in a folder the user chose (`.externalFolder`, which covers Local only with a chosen folder and Hybrid) are never deleted. The card offers only Remove from Library, and both `deleteUnderlyingFile` paths throw `externalFileDeletionNotAllowed`. The app-managed folder still deletes (Trash, then permanent removal).
+- **MusicXML timing**: canonical files now store explicit positions:
+  - `<forward>`/`<backup>` place notes, and `release` carries the rest of a note's length.
+  - A per-measure `<time>` keeps each measure's beat count.
+  - `tabbuddy-timing=explicit` marks the scheme.
+  - PDF playback builds its measure map with each measure's beat count.
+  - Older files decode as before, except that an overrunning measure is scaled into the bar instead of clamped. Converter v20 covers this, so existing canonicals re-derive.
+- **Games**: an unexpected mic stop puts the game in a "Listening stopped" state with Retry. No attempt is recorded and bests don't change. Each game uses one time base for the whole run.
+- **Audio interruptions**: the tuner and live transcription restart after an interruption ends or the engine is reconfigured. Reader playback stops on an interruption, a headphone unplug, or an engine reconfiguration.
+- **Smaller fixes**:
+  - Unsupported shared files are discarded.
+  - OCR stats are task-local per conversion job.
+  - The Tab Maker guitar staff range is E2–E6 (steps −12…16).
+  - Fractions that describe bends, steps or capo are not time signatures.
+  - Titles that begin with a section word keep the foreword.
+  - Playback advances by real elapsed time, with steps capped at 0.25 s.
+
+Validation (unsigned, iPad simulator 985EC883, serial):
+- Whole `TabBuddyTests`: 397 tests, 9 skipped, 0 failures, no host restarts. New tests cover MusicXML round trips (8), game interruption (5), external-folder deletion, staff range, time-signature and title heuristics.
+- The "Listening stopped" screen was checked visually on the iPad simulator (`-TutorGame fretboard-hunt -TutorGamePhase interrupted`).
+
+Not verified on device: real interruptions and route changes, the tuner restart, and PDF playback against regenerated canonicals.
+
 ## 2026-09-25 — Library data-safety follow-ups (re-review)
 
 A re-review of the data-safety fixes gave a conditional go and found eight more issues:

@@ -49,6 +49,13 @@ private final class GameFakeListener: TutorListening {
 
     func disarm() {}
 
+    /// What `TutorListener` does when the shared session stops under it
+    /// (call, Siri, route or configuration change).
+    func stopUnexpectedly() {
+        isListening = false
+        NotificationCenter.default.post(name: .tutorListenerDidStopUnexpectedly, object: self)
+    }
+
     var lastArmed: ExpectedEvent? { armed.last?.events.first }
 
     func verify(_ id: Int, _ grade: EventGrade, unexpected: [Int] = []) {
@@ -733,6 +740,127 @@ final class GamesTests: XCTestCase {
         XCTAssertEqual(model.phase, .intro)
         XCTAssertFalse(listener.isListening)
         XCTAssertNil(scores.best(for: model.scoreKey, instrument: .guitar))
+    }
+
+    // MARK: Listening stopped unexpectedly
+
+    func testUnexpectedStopMidGameInterruptsWithoutScoringAndRetryStartsFresh() async {
+        let model = HuntGameModel(instrument: .guitar, dependencies: deps, seed: 1)
+        await startAndPlay(model)
+        listener.detect(60)
+        XCTAssertEqual(model.totalFound, 1)
+        advance(model, 10)
+
+        listener.stopUnexpectedly()
+        XCTAssertEqual(model.phase, .interrupted)
+        XCTAssertNil(model.result)
+        XCTAssertNil(model.feedback)
+        XCTAssertNil(model.remaining)
+        // Time passing (and the wall clock far from the take clock) changes nothing.
+        clock.now += 10_000
+        advance(model, 60)
+        XCTAssertEqual(model.phase, .interrupted)
+        XCTAssertNil(model.result)
+        XCTAssertNil(store.progress(lessonID: model.scoreKey, instrument: .guitar))
+        XCTAssertNil(model.best)
+        listener.detect(48)
+        XCTAssertEqual(model.totalFound, 1)
+
+        await model.retry()
+        XCTAssertTrue(listener.isListening)
+        XCTAssertEqual(listener.startCount, 2)
+        if case .countdown = model.phase {} else { XCTFail("countdown expected, got \(model.phase)") }
+        advance(model, model.countdownSeconds + 0.01)
+        XCTAssertEqual(model.phase, .playing)
+        XCTAssertEqual(model.totalFound, 0)
+        XCTAssertEqual(model.remaining ?? 0, model.duration ?? -1, accuracy: 0.001)
+        listener.detect(model.targets[0])
+        XCTAssertEqual(model.totalFound, 1)
+        advance(model, 29)
+        XCTAssertEqual(model.phase, .playing)
+
+        // The observer survives the retry: a second stop interrupts again.
+        listener.stopUnexpectedly()
+        XCTAssertEqual(model.phase, .interrupted)
+        XCTAssertNil(store.progress(lessonID: model.scoreKey, instrument: .guitar))
+    }
+
+    func testUnexpectedStopDuringCountdownInterrupts() async {
+        let model = ChordSprintModel(instrument: .guitar, dependencies: deps)
+        model.autoTick = false
+        await model.start()
+        if case .countdown = model.phase {} else { XCTFail("countdown expected") }
+        listener.stopUnexpectedly()
+        XCTAssertEqual(model.phase, .interrupted)
+        advance(model, 100)
+        XCTAssertEqual(model.phase, .interrupted)
+        XCTAssertNil(model.result)
+    }
+
+    func testScaleRunnerInterruptedRecordsNoAttempt() async {
+        let model = ScaleRunnerModel(instrument: .guitar, dependencies: deps)
+        await startAndPlay(model)
+        let armed = try! XCTUnwrap(listener.armed.last)
+        for e in armed.events { listener.verify(e.id, .hit) }
+        advance(model, 4.5 + Double(model.notes.count) + 1.5, steps: 20)
+        XCTAssertEqual(model.bpm, 66)
+
+        listener.stopUnexpectedly()
+        XCTAssertEqual(model.phase, .interrupted)
+        clock.now += 10_000
+        advance(model, 300, steps: 10)
+        XCTAssertEqual(model.phase, .interrupted)
+        XCTAssertNil(model.result)
+        XCTAssertNil(store.progress(lessonID: model.scoreKey, instrument: .guitar))
+
+        await model.retry()
+        advance(model, model.countdownSeconds + 0.01)
+        XCTAssertEqual(model.phase, .playing)
+        XCTAssertEqual(model.bpm, 60)
+        XCTAssertEqual(model.cleanRuns, 0)
+        XCTAssertEqual(model.runState, .countIn)
+    }
+
+    func testInputLostBeforeNotificationNeverUsesAForeignClock() async {
+        // Take clock and wall clock are far apart (seconds since mic start vs. since boot).
+        let model = NoteRushModel(instrument: .guitar, dependencies: deps, seed: 8)
+        model.playOnInstrument = true
+        await startAndPlay(model)
+        advance(model, 5)
+        XCTAssertEqual(model.phase, .playing)
+        let remaining = model.remaining
+
+        // Input gone, notification not yet delivered: the next tick interrupts
+        // instead of reading the wall clock and timing out.
+        listener.isListening = false
+        clock.now += 10_000
+        model.tick()
+        XCTAssertEqual(model.phase, .interrupted)
+        XCTAssertNil(model.result)
+        XCTAssertNotNil(remaining)
+        XCTAssertNil(store.progress(lessonID: model.scoreKey, instrument: .guitar))
+    }
+
+    func testTapGamesKeepTheWallClockWhenTheMicOpensMidGame() async {
+        // Interval Duel opens the microphone after each sound; its clock stays the wall clock.
+        let model = EarGameModel(kind: .interval, instrument: .piano, dependencies: deps, seed: 4)
+        model.answerByPlaying = true
+        await startAndPlay(model)
+        let before = model.now
+        player.finish()
+        await Task.yield()
+        try? await Task.sleep(nanoseconds: 20_000_000)
+        XCTAssertTrue(listener.isListening)
+        listener.takeClock = 5
+        XCTAssertEqual(model.now, before, accuracy: 0.001)
+
+        // Its answer microphone stopping unexpectedly also interrupts, unscored.
+        listener.stopUnexpectedly()
+        XCTAssertEqual(model.phase, .interrupted)
+        XCTAssertNil(store.progress(lessonID: model.scoreKey, instrument: .piano))
+        await model.retry()
+        if case .countdown = model.phase {} else { XCTFail("countdown expected, got \(model.phase)") }
+        XCTAssertEqual(model.roundIndex, 0)
     }
 
     func testRegistryHasEveryGameAndDestinations() {

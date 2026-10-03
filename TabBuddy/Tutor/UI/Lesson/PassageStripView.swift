@@ -116,6 +116,6 @@ struct BeatPulseView: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(active ? "Beat \((beat % max(1, beatsPerMeasure)) + 1)" : "Beat indicator")
+        .accessibilityLabel(active ? "Beat \(((beat % max(1, beatsPerMeasure)) + max(1, beatsPerMeasure)) % max(1, beatsPerMeasure) + 1)" : "Beat indicator")
     }
 }

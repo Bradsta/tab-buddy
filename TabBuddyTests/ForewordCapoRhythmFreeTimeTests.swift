@@ -319,4 +319,45 @@ final class ForewordCapoRhythmFreeTimeTests: XCTestCase {
             XCTAssertEqual(RhythmDuration.nearest(toBeats: d.rawValue), d)
         }
     }
+
+    // MARK: - Regressions (2026-10-03 bug hunt)
+
+    func testEmbeddedMetadataHeaderDoesNotHideForeword() throws {
+        let header = [EmbeddedScoreMetadata.start, "title: Header Title", EmbeddedScoreMetadata.end, ""]
+            .joined(separator: "\n")
+        let tab = canonical(header + cometFixture)
+        XCTAssertEqual(tab.title, "Test Title Song")
+        XCTAssertEqual(tab.capoOffsets, [2, 2, 2, 2, 2, 2])
+    }
+
+    func testUnalignedMultiDigitFretAddsNoPhantomNote() {
+        let text = "e|--12--|\nB|---3--|\nG|------|\nD|------|\nA|------|\nE|------|"
+        let frets = TabParser.parse(text).allMeasures.flatMap { $0.notes ?? [] }.flatMap(\.frets).compactMap { $0 }
+        XCTAssertEqual(frets.sorted(), [3, 12])
+    }
+
+    func testGuitarStaffStepRangeMatchesMIDIRange() {
+        XCTAssertEqual(StaffPitchMapper.midiPitch(staffStep: StaffPitchMapper.guitarLowestStep), StaffPitchMapper.guitarLowestMIDI)
+        XCTAssertEqual(StaffPitchMapper.midiPitch(staffStep: StaffPitchMapper.guitarHighestStep), StaffPitchMapper.guitarHighestMIDI)
+    }
+
+    func testFractionDescribingABendIsNotATimeSignature() {
+        let map = TabParser.parse("1/2 step bend on the high notes\n" + cometFixture)
+        XCTAssertEqual(map.timeSignature?.beats, 6, "the real 6/4 still wins")
+        XCTAssertNil(TabParser.parse("1/2 step down\ne|--0--|\nB|--1--|\nG|--0--|\nD|--2--|\nA|--3--|\nE|-----|").timeSignature?.beats)
+    }
+
+    func testTitleStartingWithSectionWordKeepsForeword() {
+        let tab = canonical("Bridge to Terabithia\nCapo 2\n\ne|--0--|\nB|--1--|\nG|--0--|\nD|--2--|\nA|--3--|\nE|-----|")
+        XCTAssertEqual(tab.title, "Bridge to Terabithia")
+        XCTAssertEqual(tab.capoOffsets.first, 2)
+        let labeled = TabParser.parse("Verse 2\ne|--0--|\nB|--1--|\nG|--0--|\nD|--2--|\nA|--3--|\nE|-----|")
+        XCTAssertNotEqual(labeled.title, "Verse 2", "a real section label still ends the foreword")
+    }
+
+    func testTempoOutsidePlausibleRangeIsIgnored() {
+        XCTAssertNil(TabParser.parse("Tempo: 6/8\n" + cometFixture).bpm)
+        XCTAssertEqual(TabParser.parse("Tempo: 6/8\nBPM: 90\n" + cometFixture).bpm, 90)
+        XCTAssertNil(TabParser.parse("tempo: 99999999999999999999\n" + cometFixture).bpm)
+    }
 }

@@ -178,6 +178,7 @@ enum LibraryFileError: LocalizedError, Equatable {
     /// The saved folder's marker names a different library than the catalog expects.
     case markerIdentityMismatch(expected: UUID, found: UUID)
     case trashUnavailable(String)
+    case externalFileDeletionNotAllowed
 
     var errorDescription: String? {
         switch self {
@@ -197,6 +198,8 @@ enum LibraryFileError: LocalizedError, Equatable {
             return "iCloud Drive kept more than one library marker in this folder (\(names.joined(separator: ", "))). Use Settings → Resolve Library Marker to keep the one that matches this library; the other copy moves to the Trash."
         case .markerIdentityMismatch(let expected, let found):
             return "The folder’s library marker (\(found.uuidString.prefix(8))) doesn’t match this device’s library (\(expected.uuidString.prefix(8))). Nothing was changed. Choose the folder again in Settings."
+        case .externalFileDeletionNotAllowed:
+            return "TabBuddy never deletes files in a folder you chose. Remove the song from the library instead; the file stays in the folder."
         case .trashUnavailable(let path):
             return "“\(path)” couldn’t be moved to the Trash, so it wasn’t deleted. Delete it in the Files app if you still want to remove it."
         }

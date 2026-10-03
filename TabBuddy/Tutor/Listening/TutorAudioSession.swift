@@ -330,6 +330,7 @@ final class TutorAudioSession: ObservableObject {
             detachClickPlayer()
             _ = pipeline.finish()
             unmute()
+            scheduleModeReset()
             throw TutorAudioError.engineFailed(error.localizedDescription)
         }
         routeKey = Self.currentRouteKey()

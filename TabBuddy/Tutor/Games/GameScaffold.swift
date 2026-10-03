@@ -4,8 +4,8 @@
 //
 //  The screen every game shares: intro card (how to play, what it trains,
 //  microphone use, level and mode options, personal best), visual countdown,
-//  play area with a stats bar and feedback line, results card, and the
-//  microphone-off state. Regular width puts options and stats in a side
+//  play area with a stats bar and feedback line, results card, the
+//  microphone-off state, and the listening-stopped (interrupted) card. Regular width puts options and stats in a side
 //  column; compact width stacks them. Keyboard: Space or Return starts and
 //  replays; games add their own keys.
 //
@@ -58,6 +58,8 @@ struct GameScreen<Model: GameModel, Options: View, Play: View>: View {
                 Button("Back") { model.showIntro() }
                     .buttonStyle(TutorSecondaryButtonStyle())
             }
+        case .interrupted:
+            interrupted(wide: wide)
         }
     }
 
@@ -65,7 +67,7 @@ struct GameScreen<Model: GameModel, Options: View, Play: View>: View {
 
     @ViewBuilder
     private var startShortcuts: some View {
-        if model.phase == .intro || model.phase == .results {
+        if model.phase == .intro || model.phase == .results || model.phase == .interrupted {
             ZStack {
                 KeyboardShortcutButton(key: .space) { Task { await model.start() } }
                 KeyboardShortcutButton(key: .return) { Task { await model.start() } }
@@ -335,6 +337,48 @@ struct GameScreen<Model: GameModel, Options: View, Play: View>: View {
                                     : "Personal best: \(model.formatScore(previous))"
         }
         return result.isNewBest ? "First score saved" : "No score saved yet"
+    }
+
+    // MARK: Interrupted
+
+    /// Listening stopped mid-game (call, Siri, headphones, audio change).
+    /// The game was not scored; Retry starts the level over.
+    private func interrupted(wide: Bool) -> some View {
+        let message = VStack(alignment: .leading, spacing: 12) {
+            Label("Listening stopped", systemImage: "mic.slash")
+                .font(wide ? .title.weight(.bold) : .title2.weight(.bold))
+                .foregroundStyle(DS.fg1)
+            Text("A call, Siri, headphones, or another audio change stopped the microphone. This game was not scored.")
+                .font(wide ? .title3 : .body)
+                .foregroundStyle(DS.fg2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
+        let actions = VStack(alignment: .leading, spacing: 14) {
+            Button {
+                Task { await model.retry() }
+            } label: {
+                Label("Retry", systemImage: "arrow.clockwise")
+            }
+            .buttonStyle(TutorPrimaryButtonStyle())
+            .accessibilityHint("Starts this level over. Space or Return also retries")
+            Button("Back") { model.showIntro() }
+                .buttonStyle(TutorSecondaryButtonStyle(fullWidth: true))
+        }
+        return Group {
+            if wide {
+                HStack(alignment: .top, spacing: 32) {
+                    TutorCard(padding: 24) { message }
+                    actions.frame(width: TutorLayout.sidePanelWidth)
+                }
+                .padding(.top, 40)
+            } else {
+                VStack(alignment: .leading, spacing: 20) {
+                    TutorCard { message }
+                    actions
+                }
+            }
+        }
     }
 
     // MARK: Microphone off

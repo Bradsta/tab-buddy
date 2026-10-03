@@ -248,12 +248,14 @@ final class CanonicalConverter: ObservableObject {
     /// Read, parse, encode, and write the canonical for one job. Pure value I/O —
     /// safe to run off the main actor.
     private nonisolated static func process(_ job: Job) async -> Outcome {
-        guard let (text, source) = await extractText(bookmark: job.bookmark, relativePath: job.relativePath),
-              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return .failure(job.id)
+        // Jobs run concurrently; OCR stats must belong to this document only.
+        await PDFTabExtractor.$ocrStats.withValue(PDFTabExtractor.OCRStats()) {
+            guard let (text, source) = await extractText(bookmark: job.bookmark, relativePath: job.relativePath),
+                  !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                return .failure(job.id)
+            }
+            return processText(job, text: text, source: source)
         }
-
-        return processText(job, text: text, source: source)
     }
 
     private nonisolated static func processText(_ job: Job, text: String, source: Provenance.SourceType) -> Outcome {

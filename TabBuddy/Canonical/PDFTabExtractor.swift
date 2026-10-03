@@ -349,7 +349,22 @@ enum PDFTabExtractor {
     /// OCR stats from the most recent asciiTab run (image-only pages):
     /// candidates = digit-sized ink blobs found in staves, classified = blobs
     /// a digit could be read from. Drives honest provenance confidence.
-    private(set) static var lastOCRStats: (candidates: Int, classified: Int) = (0, 0)
+    /// Per-conversion counters. The library converter runs several documents at
+    /// once, so each job binds its own instance (`$ocrStats.withValue`); unbound
+    /// callers (tools, tests) share a fallback instance.
+    final class OCRStats: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value = (candidates: 0, classified: 0)
+        var current: (candidates: Int, classified: Int) { lock.withLock { value } }
+        func add(candidates: Int, classified: Int) {
+            lock.withLock { value = (value.candidates + candidates, value.classified + classified) }
+        }
+        func reset() { lock.withLock { value = (0, 0) } }
+    }
+    @TaskLocal static var ocrStats: OCRStats?
+    private static let unboundOCRStats = OCRStats()
+    private static var activeOCRStats: OCRStats { ocrStats ?? unboundOCRStats }
+    static var lastOCRStats: (candidates: Int, classified: Int) { activeOCRStats.current }
 
     /// OCR fallback for image-only pages (scans with TAB staves but no text
     /// layer), built for 1:1 fidelity on engraved scores:
@@ -835,13 +850,12 @@ enum PDFTabExtractor {
             }
         }
 
-        lastOCRStats = (lastOCRStats.candidates + totalCandidates,
-                        lastOCRStats.classified + totalClassified)
+        activeOCRStats.add(candidates: totalCandidates, classified: totalClassified)
         return out
     }
 
     /// Reset per-document OCR stats (call before a document conversion).
-    static func resetOCRStats() { lastOCRStats = (0, 0) }
+    static func resetOCRStats() { activeOCRStats.reset() }
 
     // MARK: - Note assembly
 

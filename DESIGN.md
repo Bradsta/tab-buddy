@@ -18,7 +18,7 @@ Supersedes the single **Sync library with iCloud** switch and the Advanced **Use
 - **Removal wording states the scope**: chosen-folder removal says files stay in the folder; iCloud only and Hybrid say library info is removed on all devices; app-local deletion says files are deleted on this device. Local only on a store that has mirrored adds that removals apply on other devices if syncing is turned back on.
 - **First sync on a device**: the switch alert to Hybrid or iCloud only adds **Export a Library Backup First** (exports, then the user switches again) and asks the user not to edit while library info merges.
 - **Merge status**: while a duplicate merge runs, the bottom status panel shows a spinner, "Merging library info from your other devices… (n of total)", and "Please don't edit songs until this finishes." Only that subview observes merge progress; the library list refreshes once when the merge ends.
-- **Delete File for a chosen folder** is labeled "Move File to Trash"; the alert ("Move file to the Trash?") names the relative path and folder and says the file is kept if the Trash is unavailable.
+- **A chosen folder offers no file deletion.** Its card menu has only **Remove from Library** (catalog and metadata only; the file stays). **Delete** appears only for the app-managed library folder, and its alert names the relative path.
 - **Marker errors** (evicted or conflicting `.tabbuddy-library.json`) appear as the library error text with the recovery step, instead of creating a new library.
 - **Reader redirect**: if the open score's record is merged or removed from another device, the reader reopens on the surviving record, or closes with a "Song moved" alert.
 - iPad-first sheet; rows and descriptions wrap in compact width. Screenshots checked on the iPad and iPhone simulators (unconfigured and Local only states).
@@ -41,6 +41,7 @@ iPad is the primary device; iPhone and narrow Split View/Stage Manager windows m
 - **Tap targets** are at least 44 pt, with larger primary actions readable from a music stand.
 - **Placement advice** assumes an iPad on a stand 0.5–1.5 m from the instrument. It names where the microphones are and suggests moving the device before asking the player to play louder.
 - **Games and goals without pressure.** Games keep personal bests only; there are no streaks, lives, or loss for missed days. The daily goal is described as a guide, not a streak. Games explain what they train and whether they use the microphone, and offer a tap alternative when the microphone is off. Levels keep separate bests so higher levels are compared fairly.
+- **Listening stopped mid-game.** A full-screen "Listening stopped" state (mic.slash) explains that the microphone was stopped and the game was not scored. It offers Retry (primary; Space or Return) and Back. On iPad the message sits in a card with the actions in a side column.
 - **Microphone denied.** The Listen switch explains how to enable it in Settings. Reading, examples, Play example, Check yourself, flashcards, ear games, and the glossary keep working.
 
 ## Large-operation feedback (2026-09-07)

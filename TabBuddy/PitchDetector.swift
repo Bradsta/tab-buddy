@@ -42,6 +42,48 @@ final class PitchDetector: ObservableObject {
 
     private let engine = AVAudioEngine()
     private var core: NoteTranscriberCore?
+    /// True from startListening until stopListening, including while the permission
+    /// prompt is up, so a stop that arrives before setup finishes still wins.
+    private var wantsListening = false
+    private var permissionPending = false
+    private var audioObservers: [NSObjectProtocol] = []
+
+    init() {
+        let center = NotificationCenter.default
+        // A route or format change stops the engine and invalidates the tap's
+        // format; an interruption (call, Siri) stops it outright. Restart while the
+        // screen still wants to listen instead of showing a dead tuner.
+        audioObservers.append(center.addObserver(forName: .AVAudioEngineConfigurationChange,
+                                                 object: engine, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.restartIfWanted() }
+        })
+        audioObservers.append(center.addObserver(forName: AVAudioSession.interruptionNotification,
+                                                 object: nil, queue: .main) { [weak self] note in
+            let type = (note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt)
+                .flatMap(AVAudioSession.InterruptionType.init(rawValue:))
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                if type == .began { self.halt() } else if type == .ended { self.restartIfWanted() }
+            }
+        })
+    }
+
+    deinit {
+        for observer in audioObservers { NotificationCenter.default.removeObserver(observer) }
+    }
+
+    /// Stops the engine without dropping the intent to listen.
+    private func halt() {
+        engine.inputNode.removeTap(onBus: 0)
+        engine.stop()
+        isListening = false
+    }
+
+    private func restartIfWanted() {
+        guard wantsListening else { return }
+        halt()
+        setupAndStart()
+    }
 
     // Standard tuning open-string MIDI notes (low E to high E)
     private static let openStringMIDI: [Int] = [40, 45, 50, 55, 59, 64]
@@ -51,21 +93,28 @@ final class PitchDetector: ObservableObject {
     // MARK: - Lifecycle
 
     func startListening() {
-        guard !isListening else { return }
+        guard !isListening, !permissionPending else { return }
+        wantsListening = true
+        permissionPending = true
 
         AVAudioApplication.requestRecordPermission { [weak self] granted in
             DispatchQueue.main.async {
+                guard let self else { return }
+                self.permissionPending = false
                 guard granted else {
-                    self?.permissionDenied = true
+                    self.wantsListening = false
+                    self.permissionDenied = true
                     return
                 }
-                self?.permissionDenied = false
-                self?.setupAndStart()
+                self.permissionDenied = false
+                guard self.wantsListening, !self.isListening else { return }
+                self.setupAndStart()
             }
         }
     }
 
     func stopListening() {
+        wantsListening = false
         guard isListening else { return }
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
@@ -87,15 +136,24 @@ final class PitchDetector: ObservableObject {
             try session.setActive(true)
         } catch {
             print("Audio session error: \(error)")
+            wantsListening = false
             return
         }
 
         let inputNode = engine.inputNode
         let inputFormat = inputNode.outputFormat(forBus: 0)
+        // A route with no usable input reports a 0 Hz / 0-channel format; installTap would throw.
+        guard inputFormat.sampleRate > 0, inputFormat.channelCount > 0 else {
+            print("No usable audio input")
+            wantsListening = false
+            return
+        }
         let core = NoteTranscriberCore(sampleRate: inputFormat.sampleRate)
         self.core = core
 
         // Buffers arrive on a background thread, serially per bus.
+        // A bus may hold only one tap; clear any left by an earlier failed start.
+        inputNode.removeTap(onBus: 0)
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) {
             [weak self] buffer, _ in
             self?.processBuffer(buffer, core: core)
@@ -106,6 +164,8 @@ final class PitchDetector: ObservableObject {
             isListening = true
         } catch {
             print("Engine start error: \(error)")
+            inputNode.removeTap(onBus: 0)
+            wantsListening = false
         }
     }
 

@@ -130,6 +130,7 @@ final class PlaybackCoordinator: NSObject, ObservableObject {
 
     private func startDisplayLink() {
         stopDisplayLink()
+        lastTickTimestamp = nil
         // Use a non-@MainActor wrapper since CADisplayLink target must be NSObject
         let link = CADisplayLink(target: self, selector: #selector(tick(_:)))
         if #available(iOS 15.0, *) {
@@ -141,6 +142,8 @@ final class PlaybackCoordinator: NSObject, ObservableObject {
         displayLink = link
     }
 
+    private var lastTickTimestamp: CFTimeInterval?
+
     private func stopDisplayLink() {
         displayLink?.invalidate()
         displayLink = nil
@@ -150,7 +153,15 @@ final class PlaybackCoordinator: NSObject, ObservableObject {
         let measures = cachedMeasures
         guard !measures.isEmpty else { return }
 
-        let dt = link.targetTimestamp - link.timestamp
+        // Advance by real elapsed time so dropped frames don't slow the tempo. Cap
+        // the step so a long main-thread stall doesn't skip ahead several measures.
+        let dt: Double
+        if let last = lastTickTimestamp {
+            dt = min(max(0, link.timestamp - last), 0.25)
+        } else {
+            dt = link.targetTimestamp - link.timestamp
+        }
+        lastTickTimestamp = link.timestamp
         let beatsPerSecond = bpm / 60.0
         let beatsElapsed = beatsPerSecond * dt
 

@@ -1154,6 +1154,25 @@ final class LibraryStorageOptionTests: XCTestCase {
         try FileManager.default.createDirectory(at: temporaryRoot, withIntermediateDirectories: true)
     }
 
+    /// Managers and containers live until teardown so a manager's unstructured work
+    /// is drained (`finishDatabaseWork`) before its store is released, as the app
+    /// does before a reload. Otherwise it can touch a released store in a later test.
+    private var managers: [LibraryManager] = []
+    private var containers: [ModelContainer] = []
+
+    @MainActor
+    private func retained(_ manager: LibraryManager) -> LibraryManager {
+        managers.append(manager)
+        return manager
+    }
+
+    override func tearDown() async throws {
+        for manager in managers { await manager.finishDatabaseWork() }
+        managers.removeAll()
+        containers.removeAll()
+        try await super.tearDown()
+    }
+
     override func tearDownWithError() throws {
         try? FileManager.default.removeItem(at: temporaryRoot)
         for suite in suites { UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite) }
@@ -1169,7 +1188,9 @@ final class LibraryStorageOptionTests: XCTestCase {
                                         LibraryMoveJob.self, TagStat.self])
 
     private func makeContainer() throws -> ModelContainer {
-        try ModelContainer(for: Self.schema, configurations: [ModelConfiguration(schema: Self.schema, isStoredInMemoryOnly: true)])
+        let container = try ModelContainer(for: Self.schema, configurations: [ModelConfiguration(schema: Self.schema, isStoredInMemoryOnly: true)])
+        containers.append(container)
+        return container
     }
 
     @MainActor
@@ -1263,7 +1284,7 @@ final class LibraryStorageOptionTests: XCTestCase {
         let service = LibraryFileService(localDocumentsURL: appDocuments, cloudContainer: { nil })
         let container = try makeContainer()
         let context = container.mainContext
-        let manager = LibraryManager(files: service, defaults: defaults)
+        let manager = retained(LibraryManager(files: service, defaults: defaults))
         func listing() -> [String] { ((try? FileManager.default.subpathsOfDirectory(atPath: folder.path)) ?? []).sorted() }
 
         manager.useExistingFolder(url: folder, context: context, option: .hybrid)
@@ -1305,7 +1326,7 @@ final class LibraryStorageOptionTests: XCTestCase {
         let cloud = temporaryRoot.appendingPathComponent("Cloud")
         let service = LibraryFileService(localDocumentsURL: temporaryRoot.appendingPathComponent("App"), cloudContainer: { cloud })
         let container = try makeContainer()
-        let manager = LibraryManager(files: service, defaults: defaults)
+        let manager = retained(LibraryManager(files: service, defaults: defaults))
         manager.configureManaged(context: container.mainContext, useICloud: true)
         try await settle(manager)
         XCTAssertEqual(manager.storageOption, .iCloudOnly)
@@ -1325,7 +1346,7 @@ final class LibraryStorageOptionTests: XCTestCase {
         try Data("here".utf8).write(to: folder.appendingPathComponent("here.txt"))
         let container = try makeContainer()
         let context = container.mainContext
-        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        let manager = retained(LibraryManager(files: LibraryFileService(), defaults: defaults))
         manager.useExistingFolder(url: folder, context: context, option: .hybrid)
         try await settle(manager)
         let libraryID = try XCTUnwrap(manager.activeLibraryID)
@@ -1412,7 +1433,7 @@ final class LibraryStorageOptionTests: XCTestCase {
         let synced = record("song.pdf", library: libraryID, importedAt: .distantPast)
         context.insert(synced)
         try context.save()
-        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        let manager = retained(LibraryManager(files: LibraryFileService(), defaults: defaults))
         manager.bootstrap(context: context)
         XCTAssertTrue(manager.isConfigured)
         XCTAssertEqual(manager.activeLibraryID, libraryID)
@@ -1612,7 +1633,7 @@ final class LibraryStorageOptionTests: XCTestCase {
                                     measureAccuracy: [:], measureTendency: [:], suggestions: [])
         try tutor.saveTake(scoreKey: second.id.uuidString, scoreTitle: "Song", measures: 0...1, bpm: 90, analysis: analysis)
         defaults.set(Data("gp".utf8), forKey: "guitarPro.practice.\(second.id.uuidString)")
-        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        let manager = retained(LibraryManager(files: LibraryFileService(), defaults: defaults))
         manager.rekeyPracticeTakes = { map in _ = try? tutor.rekeyTakes(map) }
         manager.bootstrap(context: context)
         let summary = try await XCTUnwrapAsync(await manager.mergeDuplicates(context: context))
@@ -1858,7 +1879,7 @@ final class LibraryStorageOptionTests: XCTestCase {
         try Data("tab".utf8).write(to: folder.appendingPathComponent("song.txt"))
         let container = try makeContainer()
         let context = container.mainContext
-        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        let manager = retained(LibraryManager(files: LibraryFileService(), defaults: defaults))
         manager.useExistingFolder(url: folder, context: context, option: .hybrid)
         try await settle(manager)
         XCTAssertEqual(manager.lastError, LibraryFileError.markerNotDownloaded.localizedDescription)
@@ -1919,7 +1940,7 @@ final class LibraryStorageOptionTests: XCTestCase {
         let defaults = try makeDefaults()
         defaults.set(try marked.bookmarkData(), forKey: LibraryManager.legacyBookmarkKey)
         let container = try makeContainer()
-        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        let manager = retained(LibraryManager(files: LibraryFileService(), defaults: defaults))
         manager.bootstrap(context: container.mainContext)
         try await settle(manager)
         XCTAssertNil(manager.lastError)
@@ -1932,7 +1953,7 @@ final class LibraryStorageOptionTests: XCTestCase {
         let otherDefaults = try makeDefaults()
         otherDefaults.set(try evicted.bookmarkData(), forKey: LibraryManager.legacyBookmarkKey)
         let other = try makeContainer()
-        let second = LibraryManager(files: LibraryFileService(), defaults: otherDefaults)
+        let second = retained(LibraryManager(files: LibraryFileService(), defaults: otherDefaults))
         second.bootstrap(context: other.mainContext)
         try await settle(second)
         XCTAssertEqual(second.lastError, LibraryFileError.markerNotDownloaded.localizedDescription)
@@ -1978,7 +1999,7 @@ final class LibraryStorageOptionTests: XCTestCase {
         try payload.write(to: newURL)
         let container = try makeContainer()
         let context = container.mainContext
-        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        let manager = retained(LibraryManager(files: LibraryFileService(), defaults: defaults))
         manager.useExistingFolder(url: folder, context: context, option: .hybrid)
         try await settle(manager)
         manager.rescan(context: context)
@@ -2046,7 +2067,7 @@ final class LibraryStorageOptionTests: XCTestCase {
         try Data("here".utf8).write(to: folder.appendingPathComponent("here.txt"))
         let container = try makeContainer()
         let context = container.mainContext
-        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        let manager = retained(LibraryManager(files: LibraryFileService(), defaults: defaults))
         XCTAssertFalse(manager.hasEverMirrored)
         XCTAssertTrue(manager.offersBackupBeforeSwitching(to: .hybrid))
         manager.useExistingFolder(url: folder, context: context, option: .hybrid)
@@ -2136,7 +2157,7 @@ final class LibraryStorageOptionTests: XCTestCase {
             try tutor.saveTake(scoreKey: id.uuidString, scoreTitle: "Song", measures: 0...1, bpm: 90, analysis: analysis)
             defaults.set(Data("gp".utf8), forKey: "guitarPro.practice.\(id.uuidString)")
         }
-        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        let manager = retained(LibraryManager(files: LibraryFileService(), defaults: defaults))
         var rekeyCalls = 0
         manager.rekeyPracticeTakes = { map in rekeyCalls += 1; _ = try? tutor.rekeyTakes(map) }
         var longestStall: Duration = .zero
@@ -2221,7 +2242,7 @@ final class LibraryStorageOptionTests: XCTestCase {
             context.insert(record("s\(index).txt", library: library, importedAt: Date(timeIntervalSince1970: Double(index) + 0.5)))
         }
         try context.save()
-        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        let manager = retained(LibraryManager(files: LibraryFileService(), defaults: defaults))
         let first = Task { await manager.mergeDuplicates(context: context) }
         while !manager.isMergingDuplicates { await Task.yield() }
         let second = await manager.mergeDuplicates(context: context)
@@ -2265,7 +2286,7 @@ final class LibraryStorageOptionTests: XCTestCase {
         // This device had the original file before it was renamed.
         context.insert(FilePresence(fileID: original.id, availability: .available, lastSeenAt: .now))
         try context.save()
-        let manager = LibraryManager(files: service, defaults: try makeDefaults())
+        let manager = retained(LibraryManager(files: service, defaults: try makeDefaults()))
         let file = LibraryFileRecord(relativePath: "renamed.txt", filename: "renamed.txt",
                                      byteSize: Int64(values.fileSize ?? 0), modificationDate: values.contentModificationDate)
         await manager.reconcile(records: [file], descriptor: descriptor, context: context,
@@ -2412,6 +2433,24 @@ final class LibraryStorageOptionTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: file.path), "Only the app-managed folder falls back to removal")
     }
 
+    /// 2026-10-03: a folder the user chose never has files deleted, only catalog removal.
+    func testChosenFolderFileIsNeverDeleted() async throws {
+        let folder = temporaryRoot.appendingPathComponent("Chosen", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let file = folder.appendingPathComponent("keep.txt")
+        try Data("song".utf8).write(to: file)
+        let service = LibraryFileService(localDocumentsURL: temporaryRoot.appendingPathComponent("App"))
+        await service.configure(LibraryConfiguration(id: UUID(), mode: .externalFolder, displayName: "Chosen",
+                                                     externalBookmark: try folder.bookmarkData()))
+        do {
+            try await service.deleteUnderlyingFile(relativePath: "keep.txt")
+            XCTFail("Deleting a chosen folder's file must throw")
+        } catch {
+            XCTAssertEqual(error as? LibraryFileError, .externalFileDeletionNotAllowed)
+        }
+        XCTAssertTrue(FileManager.default.fileExists(atPath: file.path))
+    }
+
 
     // MARK: - Re-review fixes (2026-09-25)
 
@@ -2425,7 +2464,7 @@ final class LibraryStorageOptionTests: XCTestCase {
         for index in 0..<300 { try Data("song \(index)".utf8).write(to: folder.appendingPathComponent("s\(index).txt")) }
         let container = try makeContainer()
         let context = container.mainContext
-        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        let manager = retained(LibraryManager(files: LibraryFileService(), defaults: defaults))
         manager.useExistingFolder(url: folder, context: context, option: .localOnly)
         try await settle(manager)
         manager.rescan(context: context)
@@ -2468,7 +2507,7 @@ final class LibraryStorageOptionTests: XCTestCase {
         try Data("dup".utf8).write(to: folder.appendingPathComponent("dup.txt"))
         let container = try makeContainer()
         let context = container.mainContext
-        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        let manager = retained(LibraryManager(files: LibraryFileService(), defaults: defaults))
         manager.useExistingFolder(url: folder, context: context, option: .hybrid)
         try await settle(manager)
         manager.rescan(context: context)
@@ -2505,7 +2544,7 @@ final class LibraryStorageOptionTests: XCTestCase {
         try Data("same bytes".utf8).write(to: fileURL)
         let container = try makeContainer()
         let context = container.mainContext
-        let manager = LibraryManager(files: LibraryFileService(), defaults: defaults)
+        let manager = retained(LibraryManager(files: LibraryFileService(), defaults: defaults))
         manager.useExistingFolder(url: folder, context: context, option: .hybrid)
         try await settle(manager)
         manager.rescan(context: context)

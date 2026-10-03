@@ -306,5 +306,13 @@ enum CanonicalConverterVersion {
     //      systems at "100%" confidence).
     // v18: normalize tuning names and infer custom tunings from string labels.
     // v19: preserve physical string counts and instrument tuning across adapters.
-    static let current = 19
+    // v20: skip TabBuddy's embedded metadata block before reading the foreword
+    //      (capo/title were lost), drop phantom notes from the tail digit of an
+    //      unaligned multi-digit fret, range-check tempo:/note= BPMs, ignore
+    //      fractions describing bends/steps/capo as time signatures, and keep
+    //      titles such as "Bridge to Terabithia" out of section-label detection.
+    //      MusicXML now encodes explicit timing (<forward>/<backup>, `release`,
+    //      per-measure <time>, `tabbuddy-timing=explicit`) so note positions and
+    //      free-time/uneven beat counts survive the round trip into PDF playback.
+    static let current = 20
 }

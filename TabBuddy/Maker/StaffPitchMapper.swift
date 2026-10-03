@@ -115,7 +115,8 @@ enum StaffPitchMapper {
         max(guitarLowestMIDI, min(guitarHighestMIDI, midi))
     }
 
-    /// Staff step range for guitar (E2 to E6)
-    static let guitarLowestStep = -8   // E2
-    static let guitarHighestStep = 20  // E6
+    /// Staff step range for guitar (E2 to E6), matching the MIDI clamp above.
+    /// Steps are concert pitch with 0 = C4, so E2 is two octaves (14 steps) below E4.
+    static let guitarLowestStep = -12  // E2
+    static let guitarHighestStep = 16  // E6
 }

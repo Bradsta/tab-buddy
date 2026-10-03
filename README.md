@@ -98,7 +98,7 @@ Opening the app uses your saved library without rescanning the folder. After cha
 
 **Remove All Files** and Delete Selected say what they do before you confirm: for a chosen folder (Local only or Hybrid) they remove catalog entries only and your files stay in the folder; in Hybrid and iCloud only the removed library info is removed on all your devices; the app's own libraries delete the song files. In Hybrid, songs hidden on this device are never removed from it. The same applies in Local only on a device that has synced library info before, because those removals would reach your other devices if you turn Hybrid or iCloud only back on; the confirmation says so.
 
-For a chosen folder, a card's **Move File to Trash** names the exact file and moves it to the Trash. If the Trash isn't available for that folder, the file is kept and TabBuddy asks you to delete it in the Files app.
+TabBuddy never deletes files in a folder you chose. A card's **Remove from Library** removes the song and its library info; the file stays in the folder. Delete it in the Files app if you want it gone. **Delete** is offered only for TabBuddy's own library folder.
 
 Signing uses `com.gamicarts.TabBuddy` and the `iCloud.com.gamicarts.TabBuddy.library` container. Simulator tests cover local fallback, option switching without copying, metadata connection changes, duplicate merging with simulated two-device stores, and offline copies through isolated storage roots. They do not use CloudKit; a signed build on two devices signed into the same iCloud account is needed to verify live synchronization.
 

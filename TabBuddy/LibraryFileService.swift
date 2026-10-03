@@ -755,19 +755,18 @@ actor LibraryFileService {
         return (try? lease.url.resourceValues(forKeys: [.isUbiquitousItemKey]))?.isUbiquitousItem == true
     }
 
-    /// Deletes one song file the user explicitly confirmed. A folder the user chose
-    /// (Local only or Hybrid) only ever moves the file to the Trash; if the Trash is
-    /// unavailable there the file stays and `trashUnavailable` is thrown. Only the
-    /// app-managed library folder falls back to permanent removal.
+    /// Deletes one song file the user explicitly confirmed, in the app-managed library
+    /// folder only (Trash first, then permanent removal). A folder the user chose is
+    /// never touched: those songs are only removed from the library catalog.
     func deleteUnderlyingFile(relativePath: String) throws {
         let normalized = try Self.normalizedRelativePath(relativePath)
         guard let configuration else { throw LibraryFileError.notConfigured }
+        guard configuration.mode != .externalFolder else { throw LibraryFileError.externalFileDeletionNotAllowed }
         let lease = try acquireRoot()
         defer { lease.close() }
         let url = lease.url.appendingPathComponent(normalized)
         guard Self.contains(url, in: lease.url) else { throw LibraryFileError.invalidRelativePath }
-        try Self.deleteFile(at: url, displayPath: normalized,
-                            allowPermanentRemoval: configuration.mode != .externalFolder)
+        try Self.deleteFile(at: url, displayPath: normalized, allowPermanentRemoval: true)
     }
 
     /// Trash first; permanent removal only when allowed (the app-managed folder).
