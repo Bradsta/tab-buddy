@@ -29,12 +29,37 @@ Defaults should work without choosing a directory, having an iCloud account, or 
 Both features listen through the device microphone only (no MIDI input), work fully offline (no network calls, LLM, or downloaded models), and mute all app audio while listening; timing cues are visual (count-in, beat pulse, cursor). Listening checks sounding pitch, not string or fret. A detection the listener cannot decide is `uncertain` and shown as a neutral "not sure", never as a wrong note. Lessons are not graded at all; only Library Practice and Games score anything.
 
 - **Tutor** (graduation-cap **Tutor** button in the library toolbar beside Tuner; `AppPage.tutor`): acoustic guitar and piano courses laid out as a book. **Contents** lists stages 0–8 as parts and lessons as chapters, with optional side branches suggested after a named chapter. Every chapter is open. **Done means read**: the chapter page and the chapter detail offer **Mark as done** / **Mark as not done** (`TutorStore.setLessonCompleted`, no attempt, no score, no cards). **Next up** points to the first main-path chapter not marked read.
+  - **Chapter pacing** (2026-10-05). A chapter opens on an overview, then shows one section per page.
+    - Page dots (larger for Try it pages) can be tapped. Back/Next and ←/→ move between pages.
+    - The last page is the **Practice routine** and Done. Contents ▸ "One section at a time" (`tutor.lessonStepMode`) switches back to the single scrolling page.
+    - The routine (`ChapterRoutineBuilder`) runs about 5–13 minutes:
+      - a 2-minute warm-up from the previous chapter's first practice item;
+      - up to three of this chapter's Try it items, 3 minutes each;
+      - the chapter's song, 4 minutes, if it has one.
+    - Each segment shows its Try it box and a countdown that never advances by itself. Finishing records the day (`PracticeMemory.recordRoutine`, once per day), and the page suggests repeating it on a few days before moving on. Nothing is scored.
+    - Timed Try it boxes add **Learn it in steps**: Listen (example) → Notes (wait mode) → Slow (play along at the lowest tempo) → Tempo (play along at full tempo). A step is ticked once used.
+    - Piano content does not mark hands, so hands-separate steps are not generated.
   - Guitar: 56 main-path chapters and 4 branches (Rhythm reading, Fingerstyle basics, Songs you know, Blues shuffle; 12 chapters).
   - Piano: 45 main-path chapters and 2 branches (Reading the grand staff, Pedal basics; 7 chapters).
   - `tutor-glossary.json` has 253 terms.
   - **Chapter page** (`LessonPageView`, one scrolling document): chapter header, a table of contents with jump links (a card at the top in regular width; a Contents menu in the top bar everywhere), then every step as a numbered section with a heading, in authored order except that quiz steps are collected at the end as **Check yourself**. Section kinds: **Read** (markdown, diagram beside the prose, "Hear it"), **Example** (figure-style card: synth playback with diagram highlighting and the caption underneath; examples authored without a diagram get an automatic fretboard/keyboard chord diagram), **Try it** (see below), **Song** (a Try it box over the excerpt, grouped by measure), and **Check yourself** (every question is a flashcard: tapping any choice or Show answer reveals the correct answer and the explanation; generated questions are drawn once per page view with a **New set** button; no score or count). No step gating and no completion screen.
   - **Try it** boxes (`TryItModel`): prompt, diagram, **Play example** on the synth at an adjustable tempo (30–220 BPM, seeded from the step's `bpm` / first `tempoSteps` value; the ladder shows as tempo chips), **Loop**, and a **Listen** switch. Listening only turns heard notes green: wait mode arms the current target and moves on when it is heard (**Next** skips, the cursor wraps around at the end); **Play along** (timed passages and songs) counts in visually and moves the cursor at the tempo. Note hunts tick off pitches, improvising names the last heard note. Playing the example pauses the microphone (output is muted while listening) and resumes it afterwards. `mistakeTips` are a static **Tips** disclosure. There is no pass/fail, run end, clean-changes goal, or tip rotation; `passAccuracy`, `tempoSteps`, and the generator's chord-change goals stay in the content and generator for compatibility but are not shown. Chord-change drills show the chord cycle twice rather than the generator's padded list. With the microphone off the box still reads and plays.
-  - **Practice** section: direct practice without opening a chapter. **Scales** (root, every `ScaleType`, 1–2 octaves, note-name or degree labels; guitar adds a five-fret position window or the course default start), **Chords** (root × `ChordQuality`, block / arpeggio / strum example, finger numbers for open shapes), **Intervals** (interval m2–P8 from a movable root, up / down / together), **Rhythms** (presets plus a free token field, rhythm strip, click-like playback; no listening), and **Exercises** (every Try it box and song in the course grouped by kind with its chapter; tapping opens the chapter at that section). All four cards are Try it boxes with Play example, loop, tempo, and Listen.
+  - **Practice** section (reworked 2026-10-05), with direct practice and no menus:
+    - **For you** opens the next chapter's practice items and recent items, already filled in. A chapter's Try it box also has **Practice this in Practice**.
+    - **Scales:**
+      - Key on a circle of fifths (guitar) or a one-octave keyboard strip (piano).
+      - Scale-type chips for the types the chapters through the next one use; **More** shows every type.
+      - 1–2 octaves and names/degrees as segmented controls.
+      - Guitar positions are five boxes on a full-neck fretboard (`GuitarScalePositions`; the major/minor-pentatonic skeleton gives the CAGED boxes for 7-note scales). Tap a box or a chip; **Full neck** plays the course default.
+    - **Chords:**
+      - The key's chords as large Roman-numeral chips with a letters toggle, plus 7, maj7, sus2 and sus4 on the tonic.
+      - **One chord** plays block, arpeggio or strum.
+      - **Changes** builds an ordered tray of 2–4 chords for a One Minute Changes drill. The microphone counts clean changes (+1 taps if the mic is off). Runs are saved per chord set, regardless of order, with last, best and a sparkline against the beginner goal.
+    - **Technique** (piano): an exam-chart grid with keys across and exercises down (five-finger, scale 1 octave, scale 2 octaves, broken and blocked triads, arpeggio), with RH/LH/Together. Each cell shows new, practicing (best tempo) or at goal (the row's target ♩). Tap a cell to drill it.
+    - **Intervals**, **Rhythms** and **Exercises** are unchanged.
+    - Each item remembers its last tempo. The tempo chips show five steps around it.
+    - `PracticeMemory` (UserDefaults JSON `tutor.practiceMemory.v1`, device-local, never synced) stores per-item stats, up to 8 recents per instrument, and up to 60 changes runs per chord set.
+    - In regular width the Tutor sidebar hides itself in Practice below 1100 pt (iPad portrait). The toolbar button (⌃⌘S) toggles it.
   - **Flashcards** section: the course's `reviewItems`, scoped to chapters marked read (or all chapters). Flip to reveal; **Got it** removes the card for the session, **Again** moves it to the back; Shuffle and Start over. Play cards ("play E2", "play Am") show "Hear it" through the synth instead of listening. Nothing is graded or stored.
   - Other sections: Songs you know (library scores whose chord symbols use chords from chapters marked read, read from stored canonical MusicXML `<harmony>` and from local text tabs, up to 300 files under 512 KB each, with no iCloud downloads; Guitar Pro chord names are not read), Games, Glossary, Calibration, and Tutor settings (instrument, daily goal, per-instrument progress reset).
   - **Daily goal / Today / reading days** count only chapters marked read: today's minutes are the `minutes` of chapters whose `completedAt` falls today; reading days are the distinct `completedAt` days. The goal is a guide, not a streak.
@@ -245,7 +270,7 @@ Local discovery-source acquisition is documented in `Tools/TAB_CORPUS.md`. `Tool
 | `-TutorInstrument guitar\|piano` | Tutor instrument (also selects a game's instrument). |
 | `-TutorSeedProgress <n>` | Mark the first n main-path chapters read. |
 | `-TutorSection path\|practice\|flashcards\|songs\|games\|glossary\|calibration\|settings` | Open a tutor section. |
-| `-TutorPracticeTab scales\|chords\|intervals\|rhythms\|exercises` | Tab of the Practice section (with `-TutorSection practice`). |
+| `-TutorPracticeTab technique\|scales\|chords\|intervals\|rhythms\|exercises` | Tab of the Practice section (with `-TutorSection practice`). |
 | `-TutorCalibration` | Open the tutor on Calibration. |
 | `-TutorLessonDemo <lessonID>` / `-TutorLessonStep <n>` | Open a chapter page, optionally scrolled to a 0-based section (page order, Check yourself last). |
 | `-TutorDiagramGallery` (+ `-TutorGalleryPiano`) | Every diagram kind. |

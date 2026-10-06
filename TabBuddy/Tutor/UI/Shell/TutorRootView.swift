@@ -32,6 +32,10 @@ struct TutorRootView: View {
     @State private var compactRoute: TutorSection?
     @State private var scrollTarget: String?
     @State private var activeLesson: LessonLaunch?
+    /// An item opened from a chapter's "Practice this".
+    @State private var practiceLaunch: PracticeLaunch?
+    /// User's sidebar choice for the current section; nil follows the automatic rule.
+    @State private var sidebarOverride: Bool?
     @State private var practiceTab: TutorPracticeView.Tab?
     @State private var didApplyLaunchOptions = false
 
@@ -75,6 +79,12 @@ struct TutorRootView: View {
                 activeLesson = nil
                 state.lessonDidClose()
             }
+            .environment(\.tutorOpenPractice) { launch in
+                activeLesson = nil
+                state.lessonDidClose()
+                practiceLaunch = launch
+                if isCompact { compactRoute = .practice } else { section = .practice }
+            }
         }
         .navigationDestination(item: $compactRoute) { route in
             sectionContent(route)
@@ -86,16 +96,39 @@ struct TutorRootView: View {
 
     // MARK: Regular width
 
+    /// Whether the sidebar shows. Automatic: Practice hides it below 1100 pt so
+    /// the fretboard or keyboard gets the width (iPad portrait leaves ~480 pt otherwise).
+    private func sidebarShown(width: CGFloat) -> Bool {
+        if let sidebarOverride { return sidebarOverride }
+        return !(section == .practice && width < 1100)
+    }
+
     private var splitLayout: some View {
-        HStack(spacing: 0) {
-            TutorSidebar(section: $section, scrollTarget: $scrollTarget)
-                .frame(width: 300)
-            DS.separator.frame(width: 1).ignoresSafeArea(edges: .bottom)
-            sectionContent(section)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(DS.paper)
+        GeometryReader { geo in
+            let shown = sidebarShown(width: geo.size.width)
+            HStack(spacing: 0) {
+                if shown {
+                    TutorSidebar(section: $section, scrollTarget: $scrollTarget)
+                        .frame(width: 300)
+                        .transition(.move(edge: .leading))
+                    DS.separator.frame(width: 1).ignoresSafeArea(edges: .bottom)
+                }
+                sectionContent(section)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(DS.paper)
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        withAnimation(.easeOut(duration: 0.2)) { sidebarOverride = !shown }
+                    } label: { Image(systemName: "sidebar.left") }
+                    .accessibilityLabel(shown ? "Hide Tutor sidebar" : "Show Tutor sidebar")
+                    .keyboardShortcut("s", modifiers: [.command, .control])
+                }
+            }
         }
         .background(DS.paper)
+        .onChange(of: section) { _, _ in sidebarOverride = nil }
     }
 
     // MARK: Compact width
@@ -162,7 +195,10 @@ struct TutorRootView: View {
                 missingCourse
             }
         case .practice:
-            TutorPracticeView(instrument: state.instrument, course: state.course, initialTab: practiceTab, onOpenLesson: open)
+            TutorPracticeView(instrument: state.instrument, course: state.course, initialTab: practiceTab,
+                              nextLesson: state.pathModel?.continueCard.lesson,
+                              chapterLabel: state.pathModel.map { "Next up · Part \($0.continueCard.stageNumber)" },
+                              initialLaunch: practiceLaunch, onOpenLesson: open)
                 .id(state.instrument)
         case .flashcards:
             if let course = state.course, let progress = state.progress {

@@ -4,7 +4,9 @@
 //
 //  The notes or chords of a passage as chips grouped into measures. Heard
 //  events are green with a check; the listening target has an accent ring;
-//  the chip sounding in the example is filled. Nothing is ever red.
+//  the chip sounding in the example is filled. Nothing is ever red. Guitar
+//  single notes read as tab (fret over string name), as guitarists read them;
+//  a long measure wraps inside its box instead of overflowing.
 //
 
 import SwiftUI
@@ -23,7 +25,7 @@ struct PassageStripView: View {
     var body: some View {
         FlowLayout(spacing: 10, lineSpacing: 10) {
             ForEach(measures, id: \.measure) { group in
-                HStack(spacing: 6) {
+                FlowLayout(spacing: 6, lineSpacing: 6) {
                     ForEach(group.items, id: \.offset) { item in
                         chip(item.offset, item.element)
                     }
@@ -61,6 +63,22 @@ struct PassageStripView: View {
         e.chordName ?? e.pitches.map { NoteNaming.displayName(midi: $0) }.joined(separator: " ")
     }
 
+    /// Standard-tuning string names by guitarist number (1 = high e).
+    static let stringNames = ["e", "B", "G", "D", "A", "E"]
+
+    /// Tab reading for a single fretted note: (fret, string name).
+    static func tab(_ e: ExpectedEvent) -> (fret: String, string: String)? {
+        guard e.chordName == nil, e.pitches.count == 1, let f = e.fretting, f.count == 1 else { return nil }
+        let n = f[0].guitarString
+        guard (1...stringNames.count).contains(n) else { return nil }
+        return (String(f[0].fret), stringNames[n - 1])
+    }
+
+    static func spokenLabel(_ e: ExpectedEvent) -> String {
+        guard let tab = tab(e) else { return label(e) }
+        return "\(label(e)), \(tab.string) string fret \(tab.fret)"
+    }
+
     private func chip(_ index: Int, _ event: ExpectedEvent) -> some View {
         let isHeard = heard.contains(event.id)
         let isCursor = cursor == index
@@ -69,9 +87,20 @@ struct PassageStripView: View {
             if isHeard {
                 Image(systemName: "checkmark").font(.caption.weight(.bold))
             }
-            Text(Self.label(event))
-                .font(large ? .title3.weight(.semibold) : .headline)
-                .lineLimit(1)
+            if let tab = Self.tab(event) {
+                VStack(spacing: 0) {
+                    Text(tab.fret)
+                        .font((large ? Font.title3 : .headline).weight(.bold).monospacedDigit())
+                    Text(tab.string)
+                        .font(.caption2.weight(.semibold))
+                        .opacity(0.7)
+                }
+                .frame(minWidth: large ? 24 : 18)
+            } else {
+                Text(Self.label(event))
+                    .font(large ? .title3.weight(.semibold) : .headline)
+                    .lineLimit(1)
+            }
         }
         .foregroundStyle(isPlaying ? .white : (isHeard ? Color.green : DS.fg1))
         .padding(.horizontal, large ? 14 : 10)
@@ -90,9 +119,9 @@ struct PassageStripView: View {
 
     private var accessibilityText: String {
         let parts = events.enumerated().map { i, e -> String in
-            if heard.contains(e.id) { return "\(Self.label(e)) heard" }
-            if cursor == i { return "\(Self.label(e)) current" }
-            return Self.label(e)
+            if heard.contains(e.id) { return "\(Self.spokenLabel(e)) heard" }
+            if cursor == i { return "\(Self.spokenLabel(e)) current" }
+            return Self.spokenLabel(e)
         }
         return "Passage: " + parts.joined(separator: ", ")
     }

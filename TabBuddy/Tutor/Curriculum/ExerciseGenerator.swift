@@ -167,7 +167,8 @@ enum ExerciseGenerator {
                 let rhythm = try parse(rhythmText, "rhythm", RhythmPattern.init(parsing:))
                 let (groups, durations) = try applyRhythm(rhythm, toSounded: line)
                 result.rounds = [ExerciseRound(reference: nil,
-                                               expected: passage(groups, durations: durations, bpm: bpm, context: context))]
+                                               expected: passage(groups, durations: durations, bpm: bpm,
+                                                                 beatsPerMeasure: beatsPerMeasure(for: spec), context: context))]
             } else {
                 result.rounds = [ExerciseRound(reference: nil,
                                                expected: passage(line, bpm: bpm, context: context, freeTime: spec.bpm == nil))]
@@ -222,7 +223,8 @@ enum ExerciseGenerator {
                 }
             }
             result.rounds = [ExerciseRound(reference: nil,
-                                           expected: passage(groups, durations: durations, bpm: bpm, context: context,
+                                           expected: passage(groups, durations: durations, bpm: bpm,
+                                                             beatsPerMeasure: beatsPerMeasure(for: spec), context: context,
                                                              names: names, fretting: fretting))]
             result.pacing = .timed
             result.gradeChordsByPitchClass = instrument == .piano
@@ -538,6 +540,16 @@ enum ExerciseGenerator {
 
     /// Builds the passage with `PassageBuilder` and attaches names/fret hints.
     /// Empty groups are rests (no event, time still advances).
+    /// Meter of a content exercise: a time signature named in the prompt or the
+    /// rhythm diagram's caption ("3/4 pattern…"), else the diagram's rhythm length
+    /// (three beats = 3/4), else 4. Same rule as the rhythm diagram, so the Try it
+    /// strip's measures match the diagram above it.
+    static func beatsPerMeasure(for spec: ExerciseSpec) -> Int {
+        let text = [spec.prompt, spec.diagram?.caption ?? ""].joined(separator: " ")
+        let pattern = spec.diagram?.kind == .rhythm ? spec.diagram?.rhythm.flatMap { RhythmPattern($0) } : nil
+        return RhythmStripModel.inferBeatsPerMeasure(pattern: pattern, caption: text)
+    }
+
     static func passage(_ groups: [[Int]], durations: [Double]? = nil, bpm: Double, beatsPerMeasure: Int = 4,
                         context: InstrumentContext, freeTime: Bool = false,
                         names: [String?]? = nil, fretting: [[FretPosition]?]? = nil) -> ExpectedPassage {

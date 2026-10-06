@@ -33,43 +33,32 @@ struct ScalePracticeSpec: Hashable {
     var type: ScaleType = .major
     /// 1 or 2.
     var octaves: Int = 1
-    /// Guitar only: lowest fret of a five-fret window (0 = open position). Nil uses the course's default start.
-    var fretWindow: Int? = nil
+    /// Guitar only: box position 1...5 on the neck (`GuitarScalePositions`). Nil plays
+    /// the course's default fingering.
+    var position: Int? = nil
     var labels: Diagram.Labels = .noteNames
-
-    /// Window starts offered for guitar.
-    static let fretWindows: [Int] = [0, 2, 4, 5, 7, 9, 12]
-    static let windowSpan = 4
 
     var scale: Scale { Scale(root: root, type: type) }
     var title: String { scale.displayName }
 
-    func windowRange(_ start: Int) -> ClosedRange<Int> { start...(start + Self.windowSpan) }
+    /// The selected guitar box, if any.
+    func guitarPosition(layout: FretboardLayout = .standardGuitar) -> GuitarScalePosition? {
+        guard let position else { return nil }
+        return GuitarScalePositions.positions(for: scale, layout: layout).first { $0.index == position }
+    }
 
-    /// Guitar positions inside the window, lowest pitch first (one per pitch).
+    /// Guitar fret positions of the ascending run inside the selected box.
     func guitarPositions(layout: FretboardLayout = .standardGuitar) -> [FretPosition] {
-        guard let start = fretWindow else { return [] }
-        let all = layout.positions(in: scale, fretRange: windowRange(start))
-        var byMIDI: [Int: FretPosition] = [:]
-        for p in all {
-            guard let midi = layout.midi(at: p) else { continue }
-            // Prefer the lower fret, then the lower string, for one position per pitch.
-            if let existing = byMIDI[midi], (existing.fret, -existing.string) <= (p.fret, -p.string) { continue }
-            byMIDI[midi] = p
-        }
-        let sorted = byMIDI.sorted { $0.key < $1.key }
-        guard let first = sorted.first(where: { PitchClass($0.key) == root.pitchClass }) else { return sorted.map(\.value) }
-        let top = first.key + 12 * max(1, octaves)
-        let run = sorted.filter { $0.key >= first.key && $0.key <= top }
-        return run.map(\.value)
+        guard let box = guitarPosition(layout: layout) else { return [] }
+        return GuitarScalePositions.run(in: box, scale: scale, octaves: max(1, octaves), layout: layout)
     }
 
     /// Ascending pitches of one run (root to top).
     func ascendingMIDI(instrument: TutorInstrument, layout: FretboardLayout = .standardGuitar) -> [Int] {
         let context = InstrumentContext.standard(instrument)
-        if instrument == .guitar, fretWindow != nil {
-            let fromWindow = guitarPositions(layout: layout).compactMap { layout.midi(at: $0) }
-            if fromWindow.count >= 3 { return fromWindow }
+        if instrument == .guitar, position != nil {
+            let fromBox = guitarPositions(layout: layout).compactMap { layout.midi(at: $0) }
+            if fromBox.count >= 3 { return fromBox }
         }
         return context.scalePitches(scale, octaves: max(1, octaves), upAndDown: false).map(\.midi)
     }
@@ -84,11 +73,11 @@ struct ScalePracticeSpec: Hashable {
         switch instrument {
         case .guitar:
             let layout = FretboardLayout.standardGuitar
-            if fretWindow != nil {
+            if let box = guitarPosition(layout: layout) {
                 let positions = guitarPositions(layout: layout)
-                if positions.count >= 3, let start = fretWindow {
+                if positions.count >= 3 {
                     return Diagram(kind: .fretboard, scale: scale.name, notes: positions.map(\.notation), labels: labels,
-                                   fretRange: [start, start + Self.windowSpan], caption: caption)
+                                   fretRange: [box.fretRange.lowerBound, box.fretRange.upperBound], caption: caption)
                 }
             }
             let midis = ascendingMIDI(instrument: instrument)
@@ -110,6 +99,25 @@ struct ScalePracticeSpec: Hashable {
         }
     }
 
+    func launch(instrument: TutorInstrument) -> PracticeLaunch {
+        PracticeLaunch(instrument: instrument, kind: .scale, root: root.name, type: type.rawValue,
+                       position: instrument == .guitar ? position : nil, octaves: octaves)
+    }
+
+    init(root: SpelledNote = .C, type: ScaleType = .major, octaves: Int = 1, position: Int? = nil, labels: Diagram.Labels = .noteNames) {
+        self.root = root
+        self.type = type
+        self.octaves = octaves
+        self.position = position
+        self.labels = labels
+    }
+
+    init?(launch: PracticeLaunch) {
+        guard launch.kind == .scale, let root = SpelledNote(launch.root) else { return nil }
+        self.init(root: root, type: launch.type.flatMap(ScaleType.init(rawValue:)) ?? .major, octaves: launch.octaves,
+                  position: launch.position)
+    }
+
     var caption: String {
         let notes = scale.notes.map(\.displayName).joined(separator: " ")
         return "\(scale.displayName): \(notes)"
@@ -119,7 +127,7 @@ struct ScalePracticeSpec: Hashable {
         let context = InstrumentContext.standard(instrument)
         let line = pitches(instrument: instrument).map { [$0] }
         var fretting: [[FretPosition]?]? = nil
-        if instrument == .guitar, fretWindow != nil {
+        if instrument == .guitar, position != nil {
             let positions = guitarPositions()
             let byMIDI = Dictionary(positions.compactMap { p in FretboardLayout.standardGuitar.midi(at: p).map { ($0, p) } },
                                     uniquingKeysWith: { a, _ in a })
@@ -152,6 +160,10 @@ struct ChordPracticeSpec: Hashable {
 
     var chord: Chord { Chord(root: root, quality: quality) }
     var title: String { chord.displaySymbol }
+
+    func launch(instrument: TutorInstrument) -> PracticeLaunch {
+        PracticeLaunch(instrument: instrument, kind: .chord, root: root.name, type: quality.rawValue)
+    }
 
     func voicing(instrument: TutorInstrument) -> InstrumentContext.Voicing {
         InstrumentContext.standard(instrument).voicing(for: chord)

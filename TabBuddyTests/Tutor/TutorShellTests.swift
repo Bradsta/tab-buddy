@@ -191,26 +191,29 @@ final class TutorShellTests: XCTestCase {
     // MARK: Quick practice
 
     func testScaleSpecGuitarWindowAndPiano() {
-        var spec = ScalePracticeSpec(root: .G, type: .major, octaves: 1, fretWindow: 0)
+        var spec = ScalePracticeSpec(root: .G, type: .major, octaves: 1, position: 1)
+        let box = try! XCTUnwrap(spec.guitarPosition())
+        XCTAssertEqual(box.fretRange, 2...5, "G major position 1 sits around the low-E G at fret 3")
         let up = spec.ascendingMIDI(instrument: .guitar)
-        XCTAssertEqual(up.first, 43, "G2 is the lowest G in the open position")
+        XCTAssertEqual(up.first, 43, "G2 is the lowest G in position 1")
         XCTAssertEqual(up.last, 55)
         XCTAssertEqual(up.count, 8)
         XCTAssertEqual(spec.pitches(instrument: .guitar).count, 15, "up and down")
         let diagram = spec.diagram(instrument: .guitar)
         XCTAssertEqual(diagram.kind, .fretboard)
-        XCTAssertEqual(diagram.fretRange, [0, 4])
+        XCTAssertEqual(diagram.fretRange, [2, 5])
         XCTAssertEqual(diagram.scale, "G major")
         XCTAssertEqual(FretboardDiagramModel(diagram: diagram).dots.count, 8)
-        let positions = spec.guitarPositions()
-        XCTAssertTrue(positions.allSatisfy { (0...4).contains($0.fret) })
 
-        spec.fretWindow = 5
+        spec.position = 3
         let moved = spec.ascendingMIDI(instrument: .guitar)
         XCTAssertEqual(PitchClass(moved.first!), SpelledNote.G.pitchClass)
-        XCTAssertTrue(spec.guitarPositions().allSatisfy { (5...9).contains($0.fret) })
+        let third = try! XCTUnwrap(spec.guitarPosition())
+        XCTAssertTrue(spec.guitarPositions().allSatisfy { (third.fretRange.lowerBound - 1...third.fretRange.upperBound + 1).contains($0.fret) })
+        XCTAssertEqual(spec.launch(instrument: .guitar).position, 3)
+        XCTAssertEqual(ScalePracticeSpec(launch: spec.launch(instrument: .guitar)), spec)
 
-        spec.fretWindow = nil
+        spec.position = nil
         spec.octaves = 2
         XCTAssertEqual(spec.ascendingMIDI(instrument: .guitar).count, 15)
         let exercise = spec.exercise(instrument: .guitar, bpm: 90)

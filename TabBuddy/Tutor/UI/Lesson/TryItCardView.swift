@@ -16,6 +16,8 @@ struct TryItCardView: View {
     var showsPrompt = true
     /// Group the passage into measures even in wait mode (songs).
     var alwaysShowMeasures = false
+    /// Off when the host already shows the instrument (Practice's full-neck picker).
+    var showsDiagram = true
 
     var body: some View {
         WidthReader { width in
@@ -58,7 +60,7 @@ struct TryItCardView: View {
                     BeatPulseView(beat: Int(floor(model.currentBeat)), beatsPerMeasure: model.passage?.beatsPerMeasure ?? 4,
                                   active: true)
                 }
-                if let diagram = model.diagram, !(model.hasReference && !revealed) {
+                if showsDiagram, let diagram = model.diagram, !(model.hasReference && !revealed) {
                     DiagramView(diagram: diagram, instrument: model.instrument, highlightedMIDI: model.highlightedMIDI)
                 }
                 switch model.pacing {
@@ -175,6 +177,7 @@ struct TryItCardView: View {
 
     private var controls: some View {
         VStack(alignment: .leading, spacing: 14) {
+            if model.supportsPlayAlong { LearnStepsStrip(model: model) }
             Button {
                 model.togglePlayback()
             } label: {
@@ -202,8 +205,21 @@ struct TryItCardView: View {
             }
 
             if !model.tips.isEmpty { tipsDisclosure }
+
+            if let openPractice, let exercise = model.exercise,
+               let launch = PracticeSuggestions.launch(from: exercise, instrument: model.instrument) {
+                Button { openPractice(launch) } label: {
+                    Label("Practice this in Practice", systemImage: "arrow.up.forward.square")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .buttonStyle(.bordered)
+                .tint(DS.accentStrong)
+                .accessibilityHint("Opens Practice with this item, its key, and its tempo memory")
+            }
         }
     }
+
+    @Environment(\.tutorOpenPractice) private var openPractice
 
     private var tempoRow: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -303,5 +319,88 @@ struct TryItCardView: View {
                 .foregroundStyle(DS.fg1)
         }
         .tint(DS.accentStrong)
+    }
+}
+
+/// "Learn it in steps" for a timed passage (Skoove, Piano Marvel, Playground
+/// Sessions): Listen → Notes (the app waits for each note) → Slow (play along
+/// at the lowest tempo) → Up to tempo. Each step sets up the Try it controls;
+/// the learner can skip any step. A step is ticked once it has been used.
+struct LearnStepsStrip: View {
+    @ObservedObject var model: TryItModel
+    @State private var used: Set<Step> = []
+
+    enum Step: Int, CaseIterable, Identifiable {
+        case listen, notes, slow, tempo
+        var id: Int { rawValue }
+        var title: String {
+            switch self {
+            case .listen: return "Listen"
+            case .notes: return "Notes"
+            case .slow: return "Slow"
+            case .tempo: return "Tempo"
+            }
+        }
+        var hint: String {
+            switch self {
+            case .listen: return "Plays the example"
+            case .notes: return "Listens and waits for each note"
+            case .slow: return "Play along at the slowest tempo"
+            case .tempo: return "Play along at the full tempo"
+            }
+        }
+    }
+
+    private var slowBPM: Double { model.tempoSteps.first ?? TryItModel.clampTempo((model.passage?.bpm ?? model.bpm) * 0.7) }
+    private var fullBPM: Double { model.tempoSteps.last ?? model.passage?.bpm ?? model.bpm }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Learn it in steps")
+                .font(.caption.weight(.semibold))
+                .textCase(.uppercase)
+                .tracking(0.6)
+                .foregroundStyle(DS.fg3)
+            HStack(spacing: 4) {
+                ForEach(Step.allCases) { step in
+                    Button { run(step) } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: used.contains(step) ? "checkmark.circle.fill" : "\(step.rawValue + 1).circle")
+                            Text(step.title).lineLimit(1).minimumScaleFactor(0.8)
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(used.contains(step) ? DS.accentStrong : DS.fg2)
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .background(used.contains(step) ? DS.accentSoft : DS.surfaceInset,
+                                    in: RoundedRectangle(cornerRadius: DS.radiusControl, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .hoverEffect(.highlight)
+                    .accessibilityLabel("Step \(step.rawValue + 1), \(step.title)")
+                    .accessibilityHint(step.hint)
+                    .accessibilityAddTraits(used.contains(step) ? .isSelected : [])
+                }
+            }
+        }
+    }
+
+    private func run(_ step: Step) {
+        used.insert(step)
+        switch step {
+        case .listen:
+            if model.isListening { model.stopListening() }
+            if !model.isPlaying { model.playExample() }
+        case .notes:
+            model.setListenMode(.wait)
+            if !model.isListening { Task { await model.startListening() } }
+        case .slow:
+            model.setTempo(slowBPM)
+            model.setListenMode(.playAlong)
+            if !model.isListening { Task { await model.startListening() } }
+        case .tempo:
+            model.setTempo(fullBPM)
+            model.setListenMode(.playAlong)
+            if !model.isListening { Task { await model.startListening() } }
+        }
     }
 }

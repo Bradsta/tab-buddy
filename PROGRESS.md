@@ -6,6 +6,44 @@ it lives, and what's next. Newest first.
 
 ---
 
+## 2026-10-05 — Chapter pacing
+
+- Chapters step through one section per page (overview → sections → routine and Done), with tappable page dots, Back/Next and ←/→. The scrolling page remains a Contents option.
+- End-of-chapter **Practice routine** (`ChapterRoutine.swift`): warm-up from the previous chapter, up to three Try it items, then the song, each with a countdown. Days are recorded in `PracticeMemory`.
+- **Learn it in steps** on timed Try it boxes.
+
+Validation:
+- Whole `TabBuddyTests` on the unsigned iPad simulator 985EC883 (serial): 430 tests, 0 unexpected failures. Two new routine tests first failed for want of a curriculum load and were fixed; `ChapterRoutineTests` (5) then passed on its own.
+- Overview, Try it page, routine overview and runner were checked visually on iPad portrait.
+
+Not verified: iPhone layout, VoiceOver on the page dots, and hands-separate steps (piano content has no hand data).
+
+## 2026-10-05 — Practice section redesign
+
+The Practice section was redesigned from research into guitar and piano teaching material (JustinGuitar, Fender Play, Yousician, oolimo, ChordBank, Simply Piano, flowkey, Piano Marvel, RCM and ABRSM technique charts, Faber, Alfred).
+
+What changed:
+- The dropdown and chip-row pickers are replaced by a circle-of-fifths or keyboard-strip key picker, scale-type chips, and guitar positions on a full-neck fretboard (`GuitarScalePositions`, `FullNeckPositionPicker`).
+- Chords use the key's I–vii° chips (`DiatonicChordRow`) and a One Minute Changes drill (`ChordChangesDrill`) whose runs are saved per chord set.
+- Piano has a technique grid (`PianoTechnique`, `PianoTechniqueGridView`).
+- A "For you" row and "Practice this in Practice" from chapter Try it boxes (`PracticeSuggestions`, `tutorOpenPractice`).
+- Each item remembers its tempo (`PracticeMemory`).
+- The Tutor sidebar can collapse; it hides itself in Practice on iPad portrait.
+
+Fixes made on the way:
+- A Try it strip grouped a 3/4 exercise into measures of four. The generator now reads the meter from the prompt or the rhythm diagram (`ExerciseGenerator.beatsPerMeasure(for:)`).
+- Long measures wrap inside their box.
+- Guitar notes show as tab.
+
+Validation:
+- Whole `TabBuddyTests` on the unsigned iPad simulator 985EC883 (serial): 425 tests, 9 skipped, 0 failures. New tests are `GuitarScalePositionsTests` (7), `PianoTechniqueTests` (9), `ChordChangesDrillTests` (11), and the 3/4 meter test.
+- Scales, Chords and Technique were checked visually in iPad portrait.
+
+Not verified:
+- Mic counting of chord changes and hands-together technique detection on a device.
+- iPhone layouts beyond compile.
+- VoiceOver on the neck boxes.
+
 ## 2026-10-03 — Bug-hunt fixes
 
 The fixes below came from a static review of library, parsing, player and Tutor code.

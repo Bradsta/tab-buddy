@@ -710,4 +710,15 @@ final class LessonUITests: XCTestCase {
         }
         XCTAssertEqual(failures, [])
     }
+
+    // 2026-10-05: a 3/4 Try it groups its strip in measures of three.
+    func testThreeFourSequenceUsesThreeBeatMeasures() throws {
+        let spec = ExerciseSpec(kind: .playSequence, prompt: "3/4 pattern: E then B B. Four measures.",
+                                notes: ["E2", "B3", "B3", "E2", "B3", "B3"], bpm: 70, rhythm: "q q q q q q",
+                                diagram: Diagram(kind: .rhythm, rhythm: "q q q"))
+        let exercise = try ExerciseGenerator.generate(spec, context: .standard(.guitar))
+        XCTAssertEqual(exercise.passage.beatsPerMeasure, 3)
+        XCTAssertEqual(exercise.passage.events.map(\.measureIndex), [0, 0, 0, 1, 1, 1])
+        XCTAssertEqual(ExerciseGenerator.beatsPerMeasure(for: ExerciseSpec(kind: .playSequence, prompt: "Play it")), 4)
+    }
 }

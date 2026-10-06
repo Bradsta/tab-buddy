@@ -32,6 +32,10 @@ struct LessonPageView: View {
 
     @StateObject private var model: LessonPageModel
     @Environment(\.horizontalSizeClass) private var sizeClass
+    /// Step through one section at a time (default) or read the whole page.
+    @AppStorage("tutor.lessonStepMode") private var stepMode = true
+    /// Page in step mode: 0 = overview, 1...n = sections, n + 1 = routine and done.
+    @State private var page = 0
 
     init(lesson: Lesson, instrument: TutorInstrument, initialSection: Int? = nil, store: TutorStore? = nil,
          onExit: @escaping () -> Void) {
@@ -46,6 +50,15 @@ struct LessonPageView: View {
     private var gutter: CGFloat { compact ? 16 : 32 }
 
     var body: some View {
+        Group {
+            if stepMode { steppedBody } else { scrollingBody }
+        }
+        .background(DS.paper.ignoresSafeArea())
+        .background(KeyboardShortcutButton(key: "d", modifiers: .command) { model.toggleDone() })
+        .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private var scrollingBody: some View {
         VStack(spacing: 0) {
             ScrollViewReader { proxy in
                 topBar(proxy)
@@ -58,6 +71,7 @@ struct LessonPageView: View {
                             sectionView(section)
                                 .id(section.id)
                         }
+                        routineSection
                         doneCard
                     }
                     .frame(maxWidth: 1180, alignment: .leading)
@@ -77,9 +91,211 @@ struct LessonPageView: View {
                 }
             }
         }
-        .background(DS.paper.ignoresSafeArea())
-        .background(KeyboardShortcutButton(key: "d", modifiers: .command) { model.toggleDone() })
-        .toolbar(.hidden, for: .navigationBar)
+    }
+
+    // MARK: Step mode
+
+    private var pageCount: Int { model.sections.count + 2 }
+
+    private var steppedBody: some View {
+        VStack(spacing: 0) {
+            ScrollViewReader { proxy in
+                topBar(proxy)
+            }
+            pageDots
+            Hairline()
+            ScrollView {
+                VStack(alignment: .leading, spacing: compact ? 24 : 32) {
+                    pageContent
+                }
+                .frame(maxWidth: 1180, alignment: .leading)
+                .padding(.horizontal, gutter)
+                .padding(.vertical, compact ? 20 : 28)
+                .frame(maxWidth: .infinity)
+                .id(page)
+            }
+            .scrollDismissesKeyboard(.interactively)
+            Hairline()
+            pageNav
+        }
+        .background(KeyboardShortcutButton(key: .leftArrow) { go(page - 1) })
+        .background(KeyboardShortcutButton(key: .rightArrow) { go(page + 1) })
+        .onAppear {
+            if let initialSection, model.sections.indices.contains(initialSection) { page = initialSection + 1 }
+        }
+    }
+
+    private func go(_ target: Int) {
+        let clamped = min(max(0, target), pageCount - 1)
+        guard clamped != page else { return }
+        TutorSynth.shared.stop()
+        withAnimation(DS.motionFast) { page = clamped }
+    }
+
+    @ViewBuilder
+    private var pageContent: some View {
+        if page == 0 {
+            chapterHeader
+            if model.sections.count > 1 { overviewList }
+            Button { go(1) } label: {
+                Label("Start reading", systemImage: "arrow.right")
+                    .font(.title3.weight(.semibold))
+            }
+            .buttonStyle(TutorPrimaryButtonStyle())
+            .frame(maxWidth: 320)
+        } else if page <= model.sections.count {
+            sectionView(model.sections[page - 1])
+        } else {
+            routineSection
+            doneCard
+        }
+    }
+
+    /// Overview contents: tapping a row jumps to that page.
+    private var overviewList: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("In this chapter")
+                .font(.headline)
+                .foregroundStyle(DS.fg1)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 8, alignment: .topLeading)],
+                      alignment: .leading, spacing: 4) {
+                ForEach(model.sections) { section in
+                    Button { go(section.index + 1) } label: { contentsRow(section) }
+                        .buttonStyle(.plain)
+                        .hoverEffect(.highlight)
+                }
+                Button { go(pageCount - 1) } label: {
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        Image(systemName: "timer").foregroundStyle(DS.accentStrong).frame(width: 22, alignment: .trailing)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Practice routine").font(.body).foregroundStyle(DS.fg1)
+                            Text("Repeat daily").font(.caption).foregroundStyle(DS.fg3)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.vertical, 6).padding(.horizontal, 8).frame(minHeight: 44).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .hoverEffect(.highlight)
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DS.surface, in: RoundedRectangle(cornerRadius: DS.radiusCard, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: DS.radiusCard, style: .continuous).strokeBorder(DS.separator))
+    }
+
+    private func contentsRow(_ section: LessonSection) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Text("\(section.number)")
+                .font(.subheadline.weight(.bold).monospacedDigit())
+                .foregroundStyle(DS.accentStrong)
+                .frame(width: 22, alignment: .trailing)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(section.title)
+                    .font(.body)
+                    .foregroundStyle(DS.fg1)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(2)
+                Text(section.kind.label)
+                    .font(.caption)
+                    .foregroundStyle(DS.fg3)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 6)
+        .padding(.horizontal, 8)
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
+    }
+
+    /// One dot per page; practice pages are larger. Tap to jump.
+    private var pageDots: some View {
+        HStack(spacing: 6) {
+            ForEach(0..<pageCount, id: \.self) { i in
+                let isPractice = i > 0 && i <= model.sections.count
+                    && [.practice, .song].contains(model.sections[i - 1].kind)
+                Button { go(i) } label: {
+                    Capsule()
+                        .fill(i == page ? DS.accentStrong : (i < page ? DS.accent.opacity(0.45) : DS.surfaceInset))
+                        .frame(width: i == page ? 22 : (isPractice ? 12 : 8), height: 8)
+                        .frame(minWidth: 16, minHeight: 28)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(pageTitle(i))
+                .accessibilityAddTraits(i == page ? .isSelected : [])
+            }
+        }
+        .padding(.horizontal, gutter)
+        .padding(.bottom, 4)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .background(BarMaterial())
+    }
+
+    private func pageTitle(_ i: Int) -> String {
+        if i == 0 { return "Overview" }
+        if i <= model.sections.count { let s = model.sections[i - 1]; return "\(s.number). \(s.title)" }
+        return "Practice routine and done"
+    }
+
+    private var pageNav: some View {
+        HStack(spacing: 12) {
+            Button { go(page - 1) } label: {
+                Label("Back", systemImage: "chevron.left").font(.headline)
+            }
+            .buttonStyle(TutorSecondaryButtonStyle())
+            .frame(maxWidth: 180)
+            .disabled(page == 0)
+            .opacity(page == 0 ? 0.4 : 1)
+            Spacer(minLength: 8)
+            Text(page == 0 ? "Overview" : (page <= model.sections.count ? "\(page) of \(model.sections.count)" : "Routine"))
+                .font(.subheadline.monospacedDigit())
+                .foregroundStyle(DS.fg3)
+            Spacer(minLength: 8)
+            if page < pageCount - 1 {
+                Button { go(page + 1) } label: {
+                    Label(page == model.sections.count ? "Routine" : "Next", systemImage: "chevron.right")
+                        .labelStyle(TrailingIconLabelStyle())
+                        .font(.headline)
+                }
+                .buttonStyle(TutorPrimaryButtonStyle())
+                .frame(maxWidth: 220)
+            } else {
+                Button {
+                    TutorSynth.shared.stop()
+                    if !model.isDone { model.toggleDone() }
+                    onExit()
+                } label: {
+                    Label(model.isDone ? "Close" : "Done, close", systemImage: "checkmark")
+                        .font(.headline)
+                }
+                .buttonStyle(TutorPrimaryButtonStyle())
+                .frame(maxWidth: 220)
+            }
+        }
+        .padding(.horizontal, gutter)
+        .padding(.vertical, 10)
+        .background(BarMaterial())
+    }
+
+    // MARK: Routine
+
+    private var routineSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 6) {
+                Label("PRACTICE ROUTINE", systemImage: "timer")
+                    .font(.caption.weight(.bold))
+                    .tracking(0.8)
+                    .foregroundStyle(DS.accentStrong)
+                Text("Practice this chapter")
+                    .font((compact ? Font.title2 : .title).weight(.bold))
+                    .foregroundStyle(DS.fg1)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isHeader)
+            ChapterRoutineView(lesson: lesson, instrument: instrument, intervals: model.intervals, stage: model.stage)
+        }
     }
 
     // MARK: Chrome
@@ -113,15 +329,26 @@ struct LessonPageView: View {
             Spacer(minLength: 8)
             if model.sections.count > 1 {
                 Menu {
-                    Button { withAnimation(DS.motionSlow) { proxy.scrollTo("chapter-top", anchor: .top) } } label: {
-                        Label("Top of chapter", systemImage: "arrow.up.to.line")
+                    Button {
+                        if stepMode { go(0) } else { withAnimation(DS.motionSlow) { proxy.scrollTo("chapter-top", anchor: .top) } }
+                    } label: {
+                        Label(stepMode ? "Overview" : "Top of chapter", systemImage: "arrow.up.to.line")
                     }
                     Divider()
                     ForEach(model.sections) { section in
-                        Button { withAnimation(DS.motionSlow) { proxy.scrollTo(section.id, anchor: .top) } } label: {
+                        Button {
+                            if stepMode { go(section.index + 1) }
+                            else { withAnimation(DS.motionSlow) { proxy.scrollTo(section.id, anchor: .top) } }
+                        } label: {
                             Label("\(section.number). \(section.title)", systemImage: section.kind.systemImage)
                         }
                     }
+                    Button { if stepMode { go(pageCount - 1) } } label: {
+                        Label("Practice routine", systemImage: "timer")
+                    }
+                    .disabled(!stepMode)
+                    Divider()
+                    Toggle(isOn: $stepMode) { Label("One section at a time", systemImage: "rectangle.split.1x2") }
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "list.bullet")
@@ -352,5 +579,15 @@ struct TryItLessonCard: View {
 
     var body: some View {
         TryItCardView(model: model, showsPrompt: false)
+    }
+}
+
+/// "Next ›": title first, icon after.
+struct TrailingIconLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 6) {
+            configuration.title
+            configuration.icon
+        }
     }
 }
